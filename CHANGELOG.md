@@ -11,6 +11,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - `AuthorityFactory`: Allows anyone to deploy `Authority` contracts. Supports deterministic deployment.
 - `HistoryFactory`: Allows anyone to deploy `History` contracts. Supports deterministic deployment.
+- `AuthorityHistoryPairFactory`: Allows anyone to deploy `Authority` and `History` contract pairs (such that `History` is owned by `Authority`, and `Authority` stores/retrieves claims from `History`). Supports deterministic deployment.
 
 ### Removed
 
