@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 - `abi` directory to the `@cartesi/rollups` package, ideal for language bindings.
+- `ComplexVouchers`: Allows DApp developers to generate more complex vouchers. See [RFP #003](https://governance.cartesi.io/t/rfp-003-beginner-solidity-complex-vouchers/90).
 
 ### Removed
 

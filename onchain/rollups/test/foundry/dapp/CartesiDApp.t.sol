@@ -11,6 +11,7 @@ import {Proof} from "contracts/dapp/ICartesiDApp.sol";
 import {IConsensus} from "contracts/consensus/IConsensus.sol";
 import {OutputValidityProof, LibOutputValidation} from "contracts/library/LibOutputValidation.sol";
 import {OutputEncoding} from "contracts/common/OutputEncoding.sol";
+import {ComplexVouchers} from "contracts/outputs/ComplexVouchers.sol";
 
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {IERC721} from "@openzeppelin/contracts/token/ERC721/IERC721.sol";
@@ -21,6 +22,7 @@ import {SimpleConsensus} from "../util/SimpleConsensus.sol";
 import {SimpleERC20} from "../util/SimpleERC20.sol";
 import {SimpleERC721} from "../util/SimpleERC721.sol";
 import {SimpleERC721Receiver} from "../util/SimpleERC721Receiver.sol";
+import {SimpleCounter} from "../util/SimpleCounter.sol";
 
 import "forge-std/console.sol";
 
@@ -36,7 +38,15 @@ contract CartesiDAppTest is TestBase {
         DummyNotice,
         ERC20TransferVoucher,
         ETHWithdrawalVoucher,
-        ERC721TransferVoucher
+        ERC721TransferVoucher,
+        ExpirableVoucher,
+        TargetedVoucher,
+        FutureVoucher,
+        IncVoucher,
+        OrderedVoucher,
+        AtomicVoucher,
+        ComposedVoucher1,
+        ComposedVoucher2
     }
 
     error UnexpectedOutputEnum(
@@ -57,6 +67,8 @@ contract CartesiDAppTest is TestBase {
     IERC20 erc20Token;
     IERC721 erc721Token;
     IERC721Receiver erc721Receiver;
+    ComplexVouchers complex;
+    SimpleCounter counter;
 
     struct Voucher {
         address destination;
@@ -76,6 +88,7 @@ contract CartesiDAppTest is TestBase {
     address constant tokenOwner = address(bytes20(keccak256("tokenOwner")));
     address constant recipient = address(bytes20(keccak256("recipient")));
     address constant noticeSender = address(bytes20(keccak256("noticeSender")));
+    address constant txOrigin = address(bytes20(keccak256("txOrigin")));
     bytes32 constant salt = keccak256("salt");
     bytes32 constant templateHash = keccak256("templateHash");
 
@@ -535,6 +548,214 @@ contract CartesiDAppTest is TestBase {
         executeVoucher(voucher, proof);
     }
 
+    // test expirable voucher
+    function testExpirableComplex(
+        uint256 _inputIndex,
+        uint256 _numInputsAfter
+    ) public {
+        Voucher memory voucher = getVoucher(OutputName.ExpirableVoucher);
+        Proof memory proof = setupVoucherProof(
+            OutputName.ExpirableVoucher,
+            _inputIndex,
+            _numInputsAfter
+        );
+
+        // move time foward after the expiration date
+        skip(2 hours);
+
+        // should fail to execute voucher after its expiration date
+        bool success = executeVoucher(voucher, proof);
+
+        assertEq(success, false);
+
+        // go back in time before the expiration
+        rewind(2 hours);
+
+        // now the voucher is valid and should be executed
+        success = executeVoucher(voucher, proof);
+
+        assertEq(success, true);
+    }
+
+    // test targeted voucher
+    function testTargetedComplex(
+        uint256 _inputIndex,
+        uint256 _numInputsAfter
+    ) public {
+        Voucher memory voucher = getVoucher(OutputName.TargetedVoucher);
+        Proof memory proof = setupVoucherProof(
+            OutputName.TargetedVoucher,
+            _inputIndex,
+            _numInputsAfter
+        );
+
+        vm.prank(address(this), address(0));
+
+        // try to execute a voucher that cannot be executed by the tx.origin
+        bool success = executeVoucher(voucher, proof);
+
+        assertEq(success, false);
+
+        vm.prank(address(this), txOrigin);
+
+        // now execute a voucher that has the tx.origin address on the allowed addresses list
+        success = executeVoucher(voucher, proof);
+
+        assertEq(success, true);
+    }
+
+    // test a future voucher
+    function testFutureComplex(
+        uint256 _inputIndex,
+        uint256 _numInputsAfter
+    ) public {
+        Voucher memory voucher = getVoucher(OutputName.FutureVoucher);
+        Proof memory proof = setupVoucherProof(
+            OutputName.FutureVoucher,
+            _inputIndex,
+            _numInputsAfter
+        );
+
+        // Fail to execute voucher before the correct time
+        bool success = executeVoucher(voucher, proof);
+
+        assertEq(success, false);
+
+        // move foward 2 hours
+        skip(2 hours);
+
+        // now the voucher can be executed
+        success = executeVoucher(voucher, proof);
+
+        assertEq(success, true);
+    }
+
+    // Test ordered voucher
+    function testOrderedComplex() public {
+        // create 2 vouchers and their proofs, voucher 2 can only be executed after voucher 1
+        Voucher memory voucher1 = getVoucher(OutputName.IncVoucher);
+        Proof memory proof1 = setupVoucherProof(
+            OutputName.IncVoucher,
+            uint256(OutputName.IncVoucher),
+            0
+        );
+
+        Voucher memory voucher2 = getVoucher(OutputName.OrderedVoucher);
+        Proof memory proof2 = setupVoucherProof(
+            OutputName.OrderedVoucher,
+            uint256(OutputName.OrderedVoucher),
+            0
+        );
+
+        // assert the counter starts as 0
+        assertEq(counter.get(), 0);
+
+        // try to execute voucher 1 and fail
+        bool success = executeVoucher(voucher2, proof2);
+
+        assertEq(success, false);
+
+        // execute voucher 1 and verify the counter increment
+        success = executeVoucher(voucher1, proof1);
+
+        assertEq(success, true);
+        assertEq(counter.get(), 1);
+
+        // Now that voucher 1 has been executed, voucher 2 can also be executed
+        success = executeVoucher(voucher2, proof2);
+
+        assertEq(success, true);
+        assertEq(counter.get(), 1);
+    }
+
+    function testAtomicVoucher(
+        uint256 _inputIndex,
+        uint256 _numInputsAfter
+    ) public {
+        Voucher memory voucher = getVoucher(OutputName.AtomicVoucher);
+        Proof memory proof = setupVoucherProof(
+            OutputName.AtomicVoucher,
+            _inputIndex,
+            _numInputsAfter
+        );
+
+        assertEq(counter.get(), 0);
+
+        bool success = executeVoucher(voucher, proof);
+        assertEq(success, true);
+        assertEq(counter.get(), 1);
+    }
+
+    function testComposedVoucher1(
+        uint256 _inputIndex,
+        uint256 _numInputsAfter
+    ) public {
+        Voucher memory voucher = getVoucher(OutputName.ComposedVoucher1);
+        Proof memory proof = setupVoucherProof(
+            OutputName.ComposedVoucher1,
+            _inputIndex,
+            _numInputsAfter
+        );
+
+        assertEq(counter.get(), 0);
+
+        bool success = executeVoucher(voucher, proof);
+        assertEq(success, false);
+
+        skip(2 hours);
+
+        success = executeVoucher(voucher, proof);
+        assertEq(success, false);
+
+        vm.startPrank(address(this), txOrigin);
+        rewind(2 hours);
+
+        success = executeVoucher(voucher, proof);
+        assertEq(success, false);
+
+        skip(2 hours);
+
+        success = executeVoucher(voucher, proof);
+        assertEq(success, true);
+
+        assertEq(counter.get(), 1);
+    }
+
+    function testComposedVoucher2(
+        uint256 _inputIndex,
+        uint256 _numInputsAfter
+    ) public {
+        Voucher memory voucher = getVoucher(OutputName.ComposedVoucher2);
+        Proof memory proof = setupVoucherProof(
+            OutputName.ComposedVoucher2,
+            _inputIndex,
+            _numInputsAfter
+        );
+
+        assertEq(counter.get(), 0);
+
+        bool success = executeVoucher(voucher, proof);
+        assertEq(success, false);
+
+        skip(2 hours);
+
+        success = executeVoucher(voucher, proof);
+        assertEq(success, false);
+
+        vm.startPrank(address(this), txOrigin);
+
+        success = executeVoucher(voucher, proof);
+        assertEq(success, false);
+
+        rewind(2 hours);
+
+        success = executeVoucher(voucher, proof);
+        assertEq(success, true);
+
+        assertEq(address(complex).balance, 0);
+        assertEq(counter.get(), 2);
+    }
+
     // test migration
 
     function testMigrateToConsensus(
@@ -586,6 +807,8 @@ contract CartesiDAppTest is TestBase {
         erc20Token = deployERC20Deterministically();
         erc721Token = deployERC721Deterministically();
         erc721Receiver = deployERC721ReceiverDeterministically();
+        complex = deployComplexVouchersDeterministically();
+        counter = deploySimpleCounterDeterministically();
     }
 
     function deployDAppDeterministically() internal returns (CartesiDApp) {
@@ -614,6 +837,22 @@ contract CartesiDAppTest is TestBase {
     {
         vm.prank(tokenOwner);
         return new SimpleERC721Receiver{salt: salt}();
+    }
+
+    function deployComplexVouchersDeterministically()
+        internal
+        returns (ComplexVouchers)
+    {
+        vm.prank(dappOwner);
+        return new ComplexVouchers{salt: salt}();
+    }
+
+    function deploySimpleCounterDeterministically()
+        internal
+        returns (SimpleCounter)
+    {
+        vm.prank(dappOwner);
+        return new SimpleCounter{salt: salt}();
     }
 
     function addVoucher(address destination, bytes memory payload) internal {
@@ -674,7 +913,25 @@ contract CartesiDAppTest is TestBase {
     }
 
     function generateOutputs() internal {
+        addDummyNotice();
+        addERC20TransferVoucher();
+        addEtherTransferVoucher();
+        addERC721TransferVoucher();
+        addExpirableVoucher();
+        addTargetedVoucher();
+        addFutureVoucher();
+        addIncVoucher();
+        addOrderedVoucher();
+        addAtomicVoucher();
+        addComposedVoucher1();
+        addComposedVoucher2();
+    }
+
+    function addDummyNotice() internal {
         addNotice(abi.encode(bytes4(0xfafafafa)));
+    }
+
+    function addERC20TransferVoucher() internal {
         addVoucher(
             address(erc20Token),
             abi.encodeWithSelector(
@@ -683,6 +940,9 @@ contract CartesiDAppTest is TestBase {
                 transferAmount
             )
         );
+    }
+
+    function addEtherTransferVoucher() internal {
         addVoucher(
             address(dapp),
             abi.encodeWithSelector(
@@ -691,6 +951,9 @@ contract CartesiDAppTest is TestBase {
                 transferAmount
             )
         );
+    }
+
+    function addERC721TransferVoucher() internal {
         addVoucher(
             address(erc721Token),
             abi.encodeWithSignature(
@@ -698,6 +961,152 @@ contract CartesiDAppTest is TestBase {
                 dapp,
                 erc721Receiver,
                 tokenId
+            )
+        );
+    }
+
+    function addExpirableVoucher() internal {
+        addVoucher(
+            address(complex),
+            abi.encodeWithSelector(
+                ComplexVouchers.checkTimestampUpperBound.selector,
+                block.timestamp + 1 hours
+            )
+        );
+    }
+
+    function addTargetedVoucher() internal {
+        address[] memory validAddresses = new address[](1);
+        validAddresses[0] = txOrigin;
+        addVoucher(
+            address(complex),
+            abi.encodeWithSelector(
+                ComplexVouchers.checkIfTxOriginIsInArray.selector,
+                validAddresses
+            )
+        );
+    }
+
+    function addFutureVoucher() internal {
+        addVoucher(
+            address(complex),
+            abi.encodeWithSelector(
+                ComplexVouchers.checkTimestampLowerBound.selector,
+                block.timestamp + 1 hours
+            )
+        );
+    }
+
+    function addIncVoucher() internal {
+        addVoucher(
+            address(counter),
+            abi.encodeWithSelector(SimpleCounter.inc.selector)
+        );
+    }
+
+    function addOrderedVoucher() internal {
+        addVoucher(
+            address(complex),
+            abi.encodeWithSelector(
+                ComplexVouchers.checkIfVoucherWasExecuted.selector,
+                dapp,
+                7,
+                0
+            )
+        );
+    }
+
+    function addAtomicVoucher() internal {
+        ComplexVouchers.Voucher[] memory vs = new ComplexVouchers.Voucher[](1);
+
+        vs[0] = ComplexVouchers.Voucher({
+            destination: address(counter),
+            payload: abi.encodeWithSelector(SimpleCounter.inc.selector)
+        });
+
+        addVoucher(
+            address(complex),
+            abi.encodeWithSelector(
+                ComplexVouchers.executeAtomicVoucherSequence.selector,
+                vs
+            )
+        );
+    }
+
+    function addComposedVoucher1() internal {
+        address[] memory validAddresses = new address[](1);
+
+        validAddresses[0] = txOrigin;
+
+        ComplexVouchers.Voucher[] memory vs = new ComplexVouchers.Voucher[](3);
+
+        vs[0] = ComplexVouchers.Voucher({
+            destination: address(complex),
+            payload: abi.encodeWithSelector(
+                ComplexVouchers.checkTimestampLowerBound.selector,
+                block.timestamp + 1 hours
+            )
+        });
+
+        vs[1] = ComplexVouchers.Voucher({
+            destination: address(complex),
+            payload: abi.encodeWithSelector(
+                ComplexVouchers.checkIfTxOriginIsInArray.selector,
+                validAddresses
+            )
+        });
+
+        vs[2] = ComplexVouchers.Voucher({
+            destination: address(counter),
+            payload: abi.encodeWithSelector(SimpleCounter.inc.selector)
+        });
+
+        addVoucher(
+            address(complex),
+            abi.encodeWithSelector(
+                ComplexVouchers.executeAtomicVoucherSequence.selector,
+                vs
+            )
+        );
+    }
+
+    function addComposedVoucher2() internal {
+        address[] memory validAddresses = new address[](3);
+
+        validAddresses[0] = txOrigin;
+        validAddresses[1] = address(complex);
+        validAddresses[2] = address(counter);
+
+        ComplexVouchers.Voucher[] memory vs = new ComplexVouchers.Voucher[](4);
+
+        vs[0] = ComplexVouchers.Voucher({
+            destination: address(complex),
+            payload: abi.encodeWithSelector(
+                ComplexVouchers.checkTimestampUpperBound.selector,
+                block.timestamp + 2 hours
+            )
+        });
+
+        vs[1] = ComplexVouchers.Voucher({
+            destination: address(complex),
+            payload: abi.encodeWithSelector(
+                ComplexVouchers.checkIfTxOriginIsInArray.selector,
+                validAddresses
+            )
+        });
+
+        for (uint256 i = 2; i <= 3; ++i) {
+            vs[i] = ComplexVouchers.Voucher({
+                destination: address(counter),
+                payload: abi.encodeWithSelector(SimpleCounter.inc.selector)
+            });
+        }
+
+        addVoucher(
+            address(complex),
+            abi.encodeWithSelector(
+                ComplexVouchers.executeAtomicVoucherSequence.selector,
+                vs
             )
         );
     }
