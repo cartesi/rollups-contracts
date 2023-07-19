@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 - `AuthorityFactory`: Allows anyone to deploy `Authority` contracts. Supports deterministic deployment.
+- `HistoryFactory`: Allows anyone to deploy `History` contracts. Supports deterministic deployment.
 
 ### Removed
 
