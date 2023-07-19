@@ -14,6 +14,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `HistoryFactory`: Allows anyone to deploy `History` contracts. Supports deterministic deployment.
 - `AuthorityHistoryPairFactory`: Allows anyone to deploy `Authority` and `History` contract pairs (such that `History` is owned by `Authority`, and `Authority` stores/retrieves claims from `History`). Supports deterministic deployment.
 
+### Changed
+
+- `Authority`: Removed deployment files and script.
+- `History`: Removed deployment files and script.
+
 ### Removed
 
 - `docker-bake*.hcl`
