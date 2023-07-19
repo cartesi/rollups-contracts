@@ -7,6 +7,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- `AuthorityFactory`: Allows anyone to deploy `Authority` contracts. Supports deterministic deployment.
+
+### Removed
+
+- `docker-bake*.hcl`
+- `.dockerignore`
+- `onchain/Dockerfile`
+- `offchain` (now maintained in [`cartesi/rollups-node`](https://github.com/cartesi/rollups-node))
+- `grpc-interfaces` submodule
+- `rollups-cli` package
+
 ## [1.0.0] 2023-08-22
 
 ### Added
