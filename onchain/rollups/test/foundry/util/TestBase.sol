@@ -17,4 +17,26 @@ contract TestBase is Test {
         vm.assume(addr != MULTICALL3_ADDRESS);
         _;
     }
+
+    function contains(
+        address[] memory array,
+        address elem
+    ) internal pure returns (bool) {
+        for (uint256 i; i < array.length; ++i) {
+            if (array[i] == elem) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    function generateAddresses(
+        uint256 n
+    ) internal pure returns (address[] memory) {
+        address[] memory array = new address[](n);
+        for (uint256 i; i < n; ++i) {
+            array[i] = vm.addr(i + 1);
+        }
+        return array;
+    }
 }
