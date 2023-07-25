@@ -5,7 +5,6 @@ pragma solidity ^0.8.8;
 
 import {IConsensus} from "./IConsensus.sol";
 import {InputRange} from "../common/InputRange.sol";
-import {LibInputRange} from "../library/LibInputRange.sol";
 
 /// @notice Stores epoch hashes for several DApps and input ranges.
 /// @dev This contract was designed to be inherited by implementations of the `IConsensus` interface
