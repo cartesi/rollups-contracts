@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- `Quorum`: Consensus reached by the majority of signers
+
 ## [1.1.0] - 2023-10-04
 
 ### Added
