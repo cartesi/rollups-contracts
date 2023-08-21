@@ -8,11 +8,13 @@ assignees: ''
 
 ## 📚 Context
 
-On-chain or Off-chain?
+Which dependencies should be bumped, and to which versions?
+Are there any clear benefits? (new features were added, bugs were fixed, etc)
+Are there any clear downsides? (requires refactoring, bugs were introduced, etc)
 
 ## 📈 Subtasks
 
-- [ ] Update major versions in `Cargo.toml` and/or `packages.json`.
+- [ ] Update major versions in `packages.json`.
 - [ ] If an update requires major work, create the corresponding issue.
-- [ ] Update the dependencies in the lock file (`Cargo.lock` and/or `yarn.lock`).
+- [ ] Update the dependencies in `yarn.lock`.
 - [ ] Verify whether everything is working as expected.
