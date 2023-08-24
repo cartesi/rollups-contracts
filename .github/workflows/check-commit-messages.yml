@@ -1,0 +1,15 @@
+# yaml-language-server: $schema=https://json.schemastore.org/github-workflow.json
+name: Check commit messages
+on: [push]
+jobs:
+  commit_messages:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+
+      - name: Run cocogitto
+        uses: cocogitto/cocogitto-action@v3
+        with:
+          check-latest-tag-only: true
