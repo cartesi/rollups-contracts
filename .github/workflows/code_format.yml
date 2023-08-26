@@ -1,5 +1,5 @@
 # yaml-language-server: $schema=https://json.schemastore.org/github-workflow.json
-name: Format onchain code
+name: Format code
 on:
   push:
     paths:
