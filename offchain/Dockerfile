@@ -103,8 +103,3 @@ FROM runtime AS host_runner
 COPY --from=builder /usr/src/app/offchain/target/release/cartesi-rollups-host-runner /opt/cartesi/bin/cartesi-rollups-host-runner
 USER cartesi
 ENTRYPOINT ["/opt/cartesi/bin/cartesi-rollups-host-runner"]
-
-FROM scratch AS deployments
-
-WORKDIR /opt/cartesi/share/deployments
-COPY onchain/rollups/export/abi .

@@ -55,3 +55,8 @@ CMD ["node"]
 FROM base as cli
 COPY --from=cli-builder /usr/local/bin/cartesi-rollups /usr/local/bin/
 ENTRYPOINT ["cartesi-rollups"]
+
+# this stage copies the contract ABI files
+FROM scratch AS deployments
+WORKDIR /opt/cartesi/share/deployments
+COPY onchain/rollups/export/abi .
