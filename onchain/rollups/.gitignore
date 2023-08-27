@@ -1,4 +1,5 @@
 /artifacts
+/abi
 cache
 forge-cache
 contracts.json
