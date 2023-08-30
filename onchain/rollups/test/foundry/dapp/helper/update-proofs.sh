@@ -60,13 +60,16 @@ fi
 echo2 $CYAN "Updating proofs..."
 echo
 
-echo3 $GREEN "Running yarn and prettier..."
+echo3 $GREEN "Running yarn install..."
 echo
 
-yarn
+yarn install
 echo
 
-yarn prettier --write
+echo3 $GREEN "Running yarn fmt:write..."
+echo
+
+yarn fmt:write
 echo
 
 echo3 $GREEN "Building contracts..."
