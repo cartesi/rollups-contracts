@@ -1,7 +1,7 @@
 {
     "private": true,
     "scripts": {
-        "prettier:rollups": "yarn workspace @cartesi/rollups prettier"
+        "fmt:check": "yarn workspace @cartesi/rollups fmt:check"
     },
     "workspaces": [
         "rollups"

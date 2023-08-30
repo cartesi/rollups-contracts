@@ -17,4 +17,4 @@ jobs:
         with:
           node-version: "16"
       - run: yarn install
-      - run: yarn prettier:rollups
+      - run: yarn fmt:check
