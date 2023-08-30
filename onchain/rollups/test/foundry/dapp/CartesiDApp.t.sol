@@ -590,10 +590,7 @@ contract CartesiDAppTest is TestBase {
         return new SimpleERC721Receiver{salt: salt}();
     }
 
-    function addVoucher(
-        address destination,
-        bytes memory payload
-    ) internal {
+    function addVoucher(address destination, bytes memory payload) internal {
         uint256 index = outputEnums.length;
         outputEnums.push(LibServerManager.OutputEnum.VOUCHER);
         vouchers[index] = Voucher(destination, payload);
@@ -606,9 +603,7 @@ contract CartesiDAppTest is TestBase {
         return vouchers[inputIndex];
     }
 
-    function addNotice(
-        bytes memory notice
-    ) internal {
+    function addNotice(bytes memory notice) internal {
         uint256 index = outputEnums.length;
         outputEnums.push(LibServerManager.OutputEnum.NOTICE);
         notices[index] = notice;
@@ -623,22 +618,31 @@ contract CartesiDAppTest is TestBase {
 
     function generateOutputs() internal {
         addNotice(abi.encode(bytes4(0xfafafafa)));
-        addVoucher(address(erc20Token), abi.encodeWithSelector(
-            IERC20.transfer.selector,
-            recipient,
-            transferAmount
-        ));
-        addVoucher(address(dapp), abi.encodeWithSelector(
-            CartesiDApp.withdrawEther.selector,
-            recipient,
-            transferAmount
-        ));
-        addVoucher(address(erc721Token), abi.encodeWithSignature(
-            "safeTransferFrom(address,address,uint256)",
-            dapp,
-            erc721Receiver,
-            tokenId
-        ));
+        addVoucher(
+            address(erc20Token),
+            abi.encodeWithSelector(
+                IERC20.transfer.selector,
+                recipient,
+                transferAmount
+            )
+        );
+        addVoucher(
+            address(dapp),
+            abi.encodeWithSelector(
+                CartesiDApp.withdrawEther.selector,
+                recipient,
+                transferAmount
+            )
+        );
+        addVoucher(
+            address(erc721Token),
+            abi.encodeWithSignature(
+                "safeTransferFrom(address,address,uint256)",
+                dapp,
+                erc721Receiver,
+                tokenId
+            )
+        );
     }
 
     function writeInputs() internal {
