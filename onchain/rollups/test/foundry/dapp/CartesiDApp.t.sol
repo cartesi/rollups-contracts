@@ -28,15 +28,21 @@ contract EtherReceiver {
     receive() external payable {}
 }
 
-// Outputs
-// 0: notice 0xfafafafa
-// 1: voucher ERC-20 transfer
-// 2: voucher ETH withdrawal
-// 3: voucher ERC-721 transfer
-
 contract CartesiDAppTest is TestBase {
     using LibServerManager for LibServerManager.RawFinishEpochResponse;
     using LibServerManager for LibServerManager.Proof;
+
+    // Outputs
+    // 0: notice 0xfafafafa
+    // 1: voucher ERC-20 transfer
+    // 2: voucher ETH withdrawal
+    // 3: voucher ERC-721 transfer
+    enum OutputCase {
+        Notice,
+        ERC20Voucher,
+        ETHVoucher,
+        ERC721Voucher
+    }
 
     error ProofNotFound(
         LibServerManager.OutputEnum outputEnum,
@@ -120,8 +126,12 @@ contract CartesiDAppTest is TestBase {
         uint256 _inputIndex,
         uint256 _numInputsAfter
     ) public {
-        bytes memory notice = getNotice(0);
-        Proof memory proof = setupNoticeProof(0, _inputIndex, _numInputsAfter);
+        bytes memory notice = getNotice(uint256(OutputCase.Notice));
+        Proof memory proof = setupNoticeProof(
+            uint256(OutputCase.Notice),
+            _inputIndex,
+            _numInputsAfter
+        );
 
         bool ret = validateNotice(notice, proof);
         assertEq(ret, true);
@@ -140,8 +150,12 @@ contract CartesiDAppTest is TestBase {
         uint256 _inputIndex,
         uint256 _numInputsAfter
     ) public {
-        Voucher memory voucher = getVoucher(1);
-        Proof memory proof = setupVoucherProof(1, _inputIndex, _numInputsAfter);
+        Voucher memory voucher = getVoucher(uint256(OutputCase.ERC20Voucher));
+        Proof memory proof = setupVoucherProof(
+            uint256(OutputCase.ERC20Voucher),
+            _inputIndex,
+            _numInputsAfter
+        );
 
         // not able to execute voucher because dapp has 0 balance
         assertEq(erc20Token.balanceOf(address(dapp)), 0);
@@ -183,8 +197,12 @@ contract CartesiDAppTest is TestBase {
         uint256 _inputIndex,
         uint256 _numInputsAfter
     ) public {
-        Voucher memory voucher = getVoucher(1);
-        Proof memory proof = setupVoucherProof(1, _inputIndex, _numInputsAfter);
+        Voucher memory voucher = getVoucher(uint256(OutputCase.ERC20Voucher));
+        Proof memory proof = setupVoucherProof(
+            uint256(OutputCase.ERC20Voucher),
+            _inputIndex,
+            _numInputsAfter
+        );
 
         // fund dapp
         uint256 dappInitBalance = 100;
@@ -211,8 +229,12 @@ contract CartesiDAppTest is TestBase {
         uint128 _inputIndex,
         uint128 _numInputsAfter
     ) public {
-        Voucher memory voucher = getVoucher(1);
-        Proof memory proof = setupVoucherProof(1, _inputIndex, _numInputsAfter);
+        Voucher memory voucher = getVoucher(uint256(OutputCase.ERC20Voucher));
+        Proof memory proof = setupVoucherProof(
+            uint256(OutputCase.ERC20Voucher),
+            _inputIndex,
+            _numInputsAfter
+        );
 
         // before executing voucher
         bool executed = dapp.wasVoucherExecuted(
@@ -251,8 +273,12 @@ contract CartesiDAppTest is TestBase {
         uint256 _inputIndex,
         uint256 _numInputsAfter
     ) public {
-        Voucher memory voucher = getVoucher(1);
-        Proof memory proof = setupVoucherProof(1, _inputIndex, _numInputsAfter);
+        Voucher memory voucher = getVoucher(uint256(OutputCase.ERC20Voucher));
+        Proof memory proof = setupVoucherProof(
+            uint256(OutputCase.ERC20Voucher),
+            _inputIndex,
+            _numInputsAfter
+        );
 
         proof.validity.vouchersEpochRootHash = bytes32(uint256(0xdeadbeef));
 
@@ -264,8 +290,12 @@ contract CartesiDAppTest is TestBase {
         uint256 _inputIndex,
         uint256 _numInputsAfter
     ) public {
-        Voucher memory voucher = getVoucher(1);
-        Proof memory proof = setupVoucherProof(1, _inputIndex, _numInputsAfter);
+        Voucher memory voucher = getVoucher(uint256(OutputCase.ERC20Voucher));
+        Proof memory proof = setupVoucherProof(
+            uint256(OutputCase.ERC20Voucher),
+            _inputIndex,
+            _numInputsAfter
+        );
 
         proof.validity.outputHashesRootHash = bytes32(uint256(0xdeadbeef));
 
@@ -279,8 +309,12 @@ contract CartesiDAppTest is TestBase {
         uint256 _inputIndex,
         uint256 _numInputsAfter
     ) public {
-        Voucher memory voucher = getVoucher(1);
-        Proof memory proof = setupVoucherProof(1, _inputIndex, _numInputsAfter);
+        Voucher memory voucher = getVoucher(uint256(OutputCase.ERC20Voucher));
+        Proof memory proof = setupVoucherProof(
+            uint256(OutputCase.ERC20Voucher),
+            _inputIndex,
+            _numInputsAfter
+        );
 
         proof.validity.outputIndexWithinInput = 0xdeadbeef;
 
@@ -291,8 +325,12 @@ contract CartesiDAppTest is TestBase {
     }
 
     function testRevertsInputIndexOOB(uint256 _inputIndex) public {
-        Voucher memory voucher = getVoucher(1);
-        Proof memory proof = setupVoucherProof(1, _inputIndex, 0);
+        Voucher memory voucher = getVoucher(uint256(OutputCase.ERC20Voucher));
+        Proof memory proof = setupVoucherProof(
+            uint256(OutputCase.ERC20Voucher),
+            _inputIndex,
+            0
+        );
 
         // If the input index within epoch were 0, then there would be no way for the
         // input index in input box to be out of bounds because every claim is non-empty,
@@ -329,8 +367,12 @@ contract CartesiDAppTest is TestBase {
         uint256 _inputIndex,
         uint256 _numInputsAfter
     ) public {
-        Voucher memory voucher = getVoucher(2);
-        Proof memory proof = setupVoucherProof(2, _inputIndex, _numInputsAfter);
+        Voucher memory voucher = getVoucher(uint256(OutputCase.ETHVoucher));
+        Proof memory proof = setupVoucherProof(
+            uint256(OutputCase.ETHVoucher),
+            _inputIndex,
+            _numInputsAfter
+        );
 
         // not able to execute voucher because dapp has 0 balance
         assertEq(address(dapp).balance, 0);
@@ -447,8 +489,12 @@ contract CartesiDAppTest is TestBase {
         uint256 _inputIndex,
         uint256 _numInputsAfter
     ) public {
-        Voucher memory voucher = getVoucher(3);
-        Proof memory proof = setupVoucherProof(3, _inputIndex, _numInputsAfter);
+        Voucher memory voucher = getVoucher(uint256(OutputCase.ERC721Voucher));
+        Proof memory proof = setupVoucherProof(
+            uint256(OutputCase.ERC721Voucher),
+            _inputIndex,
+            _numInputsAfter
+        );
 
         // not able to execute voucher because dapp doesn't have the nft
         assertEq(erc721Token.ownerOf(tokenId), tokenOwner);
