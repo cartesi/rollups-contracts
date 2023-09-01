@@ -6,7 +6,7 @@ on:
       - '.github/workflows/code_format.yml'
       - 'onchain/**'
 jobs:
-  onchain:
+  check-code-format:
     runs-on: ubuntu-22.04
     defaults:
       run:
