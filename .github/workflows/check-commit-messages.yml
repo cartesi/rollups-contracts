@@ -2,7 +2,7 @@
 name: Check commit messages
 on: [push]
 jobs:
-  commit_messages:
+  check-commit-messages:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
