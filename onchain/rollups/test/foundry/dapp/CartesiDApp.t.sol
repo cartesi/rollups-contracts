@@ -573,34 +573,6 @@ contract CartesiDAppTest is TestBase {
         dapp.migrateToConsensus(consensus);
     }
 
-    // Store proof in storage
-    // Mock consensus so that calls to `getClaim` return
-    // values that can be used to validate the proof.
-    function registerProof(
-        uint256 _inputIndex,
-        uint256 _numInputsAfter,
-        Proof memory _proof
-    ) internal {
-        // check if `_inputIndex` and `_numInputsAfter` are valid
-        vm.assume(_proof.validity.inputIndexWithinEpoch <= _inputIndex);
-        vm.assume(_numInputsAfter <= type(uint256).max - _inputIndex);
-
-        // calculate epoch hash from proof
-        bytes32 epochHash = calculateEpochHash(_proof.validity);
-
-        // calculate input index range based on proof and fuzzy variables
-        uint256 firstInputIndex = _inputIndex -
-            _proof.validity.inputIndexWithinEpoch;
-        uint256 lastInputIndex = _inputIndex + _numInputsAfter;
-
-        // mock the consensus contract to return the right epoch hash
-        vm.mockCall(
-            address(consensus),
-            abi.encodeWithSelector(IConsensus.getClaim.selector),
-            abi.encode(epochHash, firstInputIndex, lastInputIndex)
-        );
-    }
-
     function deployContracts() internal {
         consensus = deployConsensusDeterministically();
         dapp = deployDAppDeterministically();
@@ -808,7 +780,7 @@ contract CartesiDAppTest is TestBase {
         uint256 _numInputsAfter
     ) internal returns (Proof memory) {
         Proof memory proof = getNoticeProof(_inputIndexWithinEpoch);
-        registerProof(_inputIndex, _numInputsAfter, proof);
+        mockConsensus(_inputIndex, _numInputsAfter, proof);
         return proof;
     }
 
@@ -818,7 +790,7 @@ contract CartesiDAppTest is TestBase {
         uint256 _numInputsAfter
     ) internal returns (Proof memory) {
         Proof memory proof = getVoucherProof(_inputIndexWithinEpoch);
-        registerProof(_inputIndex, _numInputsAfter, proof);
+        mockConsensus(_inputIndex, _numInputsAfter, proof);
         return proof;
     }
 
@@ -882,5 +854,32 @@ contract CartesiDAppTest is TestBase {
         LibServerManager.Proof memory p
     ) internal pure returns (Proof memory) {
         return Proof({validity: convert(p.validity), context: p.context});
+    }
+
+    // Mock consensus so that calls to `getClaim` return
+    // values that can be used to validate the proof.
+    function mockConsensus(
+        uint256 _inputIndex,
+        uint256 _numInputsAfter,
+        Proof memory _proof
+    ) internal {
+        // check if `_inputIndex` and `_numInputsAfter` are valid
+        vm.assume(_proof.validity.inputIndexWithinEpoch <= _inputIndex);
+        vm.assume(_numInputsAfter <= type(uint256).max - _inputIndex);
+
+        // calculate epoch hash from proof
+        bytes32 epochHash = calculateEpochHash(_proof.validity);
+
+        // calculate input index range based on proof and fuzzy variables
+        uint256 firstInputIndex = _inputIndex -
+            _proof.validity.inputIndexWithinEpoch;
+        uint256 lastInputIndex = _inputIndex + _numInputsAfter;
+
+        // mock the consensus contract to return the right epoch hash
+        vm.mockCall(
+            address(consensus),
+            abi.encodeWithSelector(IConsensus.getClaim.selector),
+            abi.encode(epochHash, firstInputIndex, lastInputIndex)
+        );
     }
 }
