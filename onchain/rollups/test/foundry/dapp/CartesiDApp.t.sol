@@ -81,6 +81,7 @@ contract CartesiDAppTest is TestBase {
         deployContracts();
         generateOutputs();
         writeInputs();
+        removeExtraInputs();
         readFinishEpochResponse();
     }
 
@@ -658,6 +659,31 @@ contract CartesiDAppTest is TestBase {
         }
     }
 
+    function getInputPath(
+        string memory inputIndexStr
+    ) internal view returns (string memory) {
+        string memory root = vm.projectRoot();
+        return
+            string.concat(
+                root,
+                "/test",
+                "/foundry",
+                "/dapp",
+                "/helper",
+                "/input",
+                "/",
+                inputIndexStr,
+                ".json"
+            );
+    }
+
+    function getInputPath(
+        uint256 inputIndex
+    ) internal view returns (string memory) {
+        string memory inputIndexStr = vm.toString(inputIndex);
+        return getInputPath(inputIndexStr);
+    }
+
     function writeInput(
         uint256 inputIndex,
         address sender,
@@ -667,19 +693,17 @@ contract CartesiDAppTest is TestBase {
         string memory objectKey = string.concat("input", inputIndexStr);
         vm.serializeAddress(objectKey, "sender", sender);
         string memory json = vm.serializeBytes(objectKey, "payload", payload);
-        string memory root = vm.projectRoot();
-        string memory path = string.concat(
-            root,
-            "/test",
-            "/foundry",
-            "/dapp",
-            "/helper",
-            "/input",
-            "/",
-            inputIndexStr,
-            ".json"
-        );
+        string memory path = getInputPath(inputIndexStr);
         vm.writeJson(json, path);
+    }
+
+    function removeExtraInputs() internal {
+        uint256 inputIndex = outputEnums.length;
+        string memory path = getInputPath(inputIndex);
+        while (vm.isFile(path)) {
+            vm.removeFile(path);
+            path = getInputPath(++inputIndex);
+        }
     }
 
     function readFinishEpochResponse() internal {
