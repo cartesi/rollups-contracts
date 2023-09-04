@@ -695,6 +695,9 @@ contract CartesiDAppTest is TestBase {
             "/finish_epoch_response.json"
         );
 
+        // Require file to be in path
+        require(vm.isFile(path), "Please run `yarn proofs:setup`");
+
         // Read contents of JSON file
         string memory json = vm.readFile(path);
 
