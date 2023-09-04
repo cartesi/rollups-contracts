@@ -69,6 +69,7 @@
         "typescript": "^5"
     },
     "files": [
+        "abi",
         "contracts",
         "deployments/*/*.json",
         "deployments/*/.chainid",
