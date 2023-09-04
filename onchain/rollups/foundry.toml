@@ -7,7 +7,7 @@ cache_path  = 'forge-cache'
 solc_version = '0.8.19'
 fs_permissions = [
     { access = "read", path = "./test/foundry/dapp/helper/output/"},
-    { access = "write", path = "./test/foundry/dapp/helper/input/"}
+    { access = "read-write", path = "./test/foundry/dapp/helper/input/"}
 ]
 
 [invariant]
@@ -15,4 +15,4 @@ runs = 32
 depth = 100
 fail_on_revert = true
 
-# See more config options https://book.getfoundry.sh/reference/config.html
+# See more config options https://book.getfoundry.sh/reference/config/
