@@ -6,6 +6,8 @@ pragma solidity ^0.8.8;
 import {CartesiDApp} from "./CartesiDApp.sol";
 import {IConsensus} from "../consensus/IConsensus.sol";
 
+import {ENS} from "@ensdomains/ens-contracts/contracts/registry/ENS.sol";
+
 /// @title Cartesi DApp Factory interface
 interface ICartesiDAppFactory {
     // Events
@@ -65,4 +67,9 @@ interface ICartesiDAppFactory {
         bytes32 _templateHash,
         bytes32 _salt
     ) external view returns (address);
+
+    /// @notice Get the ENS registry used to set the `name()` record for the
+    /// reverse ENS record associated with the DApp contracts deployed by this factory.
+    /// @return The ENS registry.
+    function ens() external returns (ENS);
 }

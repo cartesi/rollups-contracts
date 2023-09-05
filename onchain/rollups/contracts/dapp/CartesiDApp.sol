@@ -8,6 +8,9 @@ import {IConsensus} from "../consensus/IConsensus.sol";
 import {LibOutputValidation, OutputValidityProof} from "../library/LibOutputValidation.sol";
 import {Bitmask} from "@cartesi/util/contracts/Bitmask.sol";
 
+import {ENS} from "@ensdomains/ens-contracts/contracts/registry/ENS.sol";
+import {ADDR_REVERSE_NODE} from "@ensdomains/ens-contracts/contracts/reverseRegistrar/ReverseRegistrar.sol";
+import {IReverseRegistrar} from "@ensdomains/ens-contracts/contracts/reverseRegistrar/IReverseRegistrar.sol";
 import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
 import {ERC721Holder} from "@openzeppelin/contracts/token/ERC721/utils/ERC721Holder.sol";
 import {ERC1155Holder} from "@openzeppelin/contracts/token/ERC1155/utils/ERC1155Holder.sol";
@@ -83,19 +86,29 @@ contract CartesiDApp is
     /// @dev See the `wasVoucherExecuted` function.
     mapping(uint256 => uint256) internal voucherBitmask;
 
+    /// @notice The ENS registry.
+    ENS public immutable ens;
+
     /// @notice The current consensus contract.
     /// @dev See the `getConsensus` and `migrateToConsensus` functions.
     IConsensus internal consensus;
 
     /// @notice Creates a `CartesiDApp` contract.
     /// @param _consensus The initial consensus contract
+    /// @param _ens The ENS registry
     /// @param _owner The initial DApp owner
     /// @param _templateHash The initial machine state hash
     /// @dev Calls the `join` function on `_consensus`.
-    constructor(IConsensus _consensus, address _owner, bytes32 _templateHash) {
+    constructor(
+        IConsensus _consensus,
+        ENS _ens,
+        address _owner,
+        bytes32 _templateHash
+    ) {
         transferOwnership(_owner);
         templateHash = _templateHash;
         consensus = _consensus;
+        ens = _ens;
 
         _consensus.join();
     }
@@ -237,5 +250,11 @@ contract CartesiDApp is
         if (!sent) {
             revert EtherTransferFailed();
         }
+    }
+
+    function setName(
+        string memory name
+    ) external override onlyOwner returns (bytes32) {
+        return IReverseRegistrar(ens.owner(ADDR_REVERSE_NODE)).setName(name);
     }
 }

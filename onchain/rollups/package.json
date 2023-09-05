@@ -32,9 +32,11 @@
     },
     "dependencies": {
         "@cartesi/util": "6.0.0",
+        "@ensdomains/ens-contracts": "0.0.22",
         "@openzeppelin/contracts": "4.9.2"
     },
     "devDependencies": {
+        "@ethereum-waffle/ens": "^4.0.3",
         "@ethersproject/abi": "^5",
         "@ethersproject/bytes": "^5",
         "@ethersproject/providers": "^5",

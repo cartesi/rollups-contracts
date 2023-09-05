@@ -12,6 +12,7 @@ import {IConsensus} from "contracts/consensus/IConsensus.sol";
 import {OutputValidityProof, LibOutputValidation} from "contracts/library/LibOutputValidation.sol";
 import {OutputEncoding} from "contracts/common/OutputEncoding.sol";
 
+import {ENS} from "@ensdomains/ens-contracts/contracts/registry/ENS.sol";
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {IERC721} from "@openzeppelin/contracts/token/ERC721/IERC721.sol";
 import {IERC721Receiver} from "@openzeppelin/contracts/token/ERC721/IERC721Receiver.sol";
@@ -54,6 +55,7 @@ contract CartesiDAppTest is TestBase {
 
     CartesiDApp dapp;
     IConsensus consensus;
+    ENS ens;
     IERC20 erc20Token;
     IERC721 erc721Token;
     IERC721Receiver erc721Receiver;
@@ -98,7 +100,7 @@ contract CartesiDAppTest is TestBase {
         bytes32 _templateHash
     ) public {
         vm.expectRevert("Ownable: new owner is the zero address");
-        new CartesiDApp(consensus, address(0), _templateHash);
+        new CartesiDApp(consensus, ens, address(0), _templateHash);
     }
 
     function testConstructor(address _owner, bytes32 _templateHash) public {
@@ -115,7 +117,7 @@ contract CartesiDAppTest is TestBase {
         emit OwnershipTransferred(address(this), _owner);
 
         // perform call to constructor
-        dapp = new CartesiDApp(consensus, _owner, _templateHash);
+        dapp = new CartesiDApp(consensus, ens, _owner, _templateHash);
 
         // check set values
         assertEq(address(dapp.getConsensus()), address(consensus));
@@ -549,7 +551,7 @@ contract CartesiDAppTest is TestBase {
         vm.assume(address(_newOwner) != address(0));
         vm.assume(_nonZeroAddress != address(0));
 
-        dapp = new CartesiDApp(consensus, _owner, _templateHash);
+        dapp = new CartesiDApp(consensus, ens, _owner, _templateHash);
 
         IConsensus newConsensus = new SimpleConsensus();
 
@@ -590,7 +592,13 @@ contract CartesiDAppTest is TestBase {
 
     function deployDAppDeterministically() internal returns (CartesiDApp) {
         vm.prank(dappOwner);
-        return new CartesiDApp{salt: salt}(consensus, dappOwner, templateHash);
+        return
+            new CartesiDApp{salt: salt}(
+                consensus,
+                ens,
+                dappOwner,
+                templateHash
+            );
     }
 
     function deployConsensusDeterministically() internal returns (IConsensus) {

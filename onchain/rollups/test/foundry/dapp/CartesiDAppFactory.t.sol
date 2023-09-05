@@ -4,6 +4,9 @@
 /// @title Cartesi DApp Factory Test
 pragma solidity ^0.8.8;
 
+import {ENS} from "@ensdomains/ens-contracts/contracts/registry/ENS.sol";
+import {ENSRegistry} from "@ensdomains/ens-contracts/contracts/registry/ENSRegistry.sol";
+import {PublicResolver} from "@ensdomains/ens-contracts/contracts/resolvers/PublicResolver.sol";
 import {TestBase} from "../util/TestBase.sol";
 import {SimpleConsensus} from "../util/SimpleConsensus.sol";
 import {CartesiDAppFactory} from "contracts/dapp/CartesiDAppFactory.sol";
@@ -13,10 +16,12 @@ import {Vm} from "forge-std/Vm.sol";
 
 contract CartesiDAppFactoryTest is TestBase {
     CartesiDAppFactory factory;
+    ENS ens;
     IConsensus consensus;
 
     function setUp() public {
-        factory = new CartesiDAppFactory();
+        ens = new ENSRegistry();
+        factory = new CartesiDAppFactory(ens);
         consensus = new SimpleConsensus();
     }
 

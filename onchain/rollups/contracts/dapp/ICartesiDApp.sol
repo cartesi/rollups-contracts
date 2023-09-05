@@ -6,6 +6,8 @@ pragma solidity ^0.8.8;
 import {IConsensus} from "../consensus/IConsensus.sol";
 import {OutputValidityProof} from "../library/LibOutputValidation.sol";
 
+import {ENS} from "@ensdomains/ens-contracts/contracts/registry/ENS.sol";
+
 /// @notice Data for validating outputs.
 /// @param validity A validity proof for the output
 /// @param context Data for querying the right claim from the current consensus contract
@@ -80,4 +82,16 @@ interface ICartesiDApp {
     /// @notice Get the current consensus.
     /// @return The current consensus
     function getConsensus() external view returns (IConsensus);
+
+    /// @notice Get the ENS registry used to set the `name()` record for the
+    /// reverse ENS record associated with the DApp contract.
+    /// @return The ENS registry.
+    function ens() external returns (ENS);
+
+    // @notice Sets the `name()` record for the reverse ENS record associated with
+    // the DApp contract. First updates the resolver to the default reverse
+    // resolver if necessary.
+    // @param name The name to set for the DApp contract address
+    // @return The ENS node hash of the reverse record
+    function setName(string memory _name) external returns (bytes32);
 }
