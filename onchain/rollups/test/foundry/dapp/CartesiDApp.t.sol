@@ -32,16 +32,11 @@ contract CartesiDAppTest is TestBase {
     using LibServerManager for LibServerManager.RawFinishEpochResponse;
     using LibServerManager for LibServerManager.Proof;
 
-    // Outputs
-    // 0: notice 0xfafafafa
-    // 1: voucher ERC-20 transfer
-    // 2: voucher ETH withdrawal
-    // 3: voucher ERC-721 transfer
-    enum OutputCase {
-        Notice,
-        ERC20Voucher,
-        ETHVoucher,
-        ERC721Voucher
+    enum OutputName {
+        DummyNotice,
+        ERC20TransferVoucher,
+        ETHWithdrawalVoucher,
+        ERC721TransferVoucher
     }
 
     error ProofNotFound(
@@ -126,9 +121,9 @@ contract CartesiDAppTest is TestBase {
         uint256 _inputIndex,
         uint256 _numInputsAfter
     ) public {
-        bytes memory notice = getNotice(uint256(OutputCase.Notice));
+        bytes memory notice = getNotice(OutputName.DummyNotice);
         Proof memory proof = setupNoticeProof(
-            uint256(OutputCase.Notice),
+            OutputName.DummyNotice,
             _inputIndex,
             _numInputsAfter
         );
@@ -150,9 +145,9 @@ contract CartesiDAppTest is TestBase {
         uint256 _inputIndex,
         uint256 _numInputsAfter
     ) public {
-        Voucher memory voucher = getVoucher(uint256(OutputCase.ERC20Voucher));
+        Voucher memory voucher = getVoucher(OutputName.ERC20TransferVoucher);
         Proof memory proof = setupVoucherProof(
-            uint256(OutputCase.ERC20Voucher),
+            OutputName.ERC20TransferVoucher,
             _inputIndex,
             _numInputsAfter
         );
@@ -197,9 +192,9 @@ contract CartesiDAppTest is TestBase {
         uint256 _inputIndex,
         uint256 _numInputsAfter
     ) public {
-        Voucher memory voucher = getVoucher(uint256(OutputCase.ERC20Voucher));
+        Voucher memory voucher = getVoucher(OutputName.ERC20TransferVoucher);
         Proof memory proof = setupVoucherProof(
-            uint256(OutputCase.ERC20Voucher),
+            OutputName.ERC20TransferVoucher,
             _inputIndex,
             _numInputsAfter
         );
@@ -229,9 +224,9 @@ contract CartesiDAppTest is TestBase {
         uint128 _inputIndex,
         uint128 _numInputsAfter
     ) public {
-        Voucher memory voucher = getVoucher(uint256(OutputCase.ERC20Voucher));
+        Voucher memory voucher = getVoucher(OutputName.ERC20TransferVoucher);
         Proof memory proof = setupVoucherProof(
-            uint256(OutputCase.ERC20Voucher),
+            OutputName.ERC20TransferVoucher,
             _inputIndex,
             _numInputsAfter
         );
@@ -273,9 +268,9 @@ contract CartesiDAppTest is TestBase {
         uint256 _inputIndex,
         uint256 _numInputsAfter
     ) public {
-        Voucher memory voucher = getVoucher(uint256(OutputCase.ERC20Voucher));
+        Voucher memory voucher = getVoucher(OutputName.ERC20TransferVoucher);
         Proof memory proof = setupVoucherProof(
-            uint256(OutputCase.ERC20Voucher),
+            OutputName.ERC20TransferVoucher,
             _inputIndex,
             _numInputsAfter
         );
@@ -290,9 +285,9 @@ contract CartesiDAppTest is TestBase {
         uint256 _inputIndex,
         uint256 _numInputsAfter
     ) public {
-        Voucher memory voucher = getVoucher(uint256(OutputCase.ERC20Voucher));
+        Voucher memory voucher = getVoucher(OutputName.ERC20TransferVoucher);
         Proof memory proof = setupVoucherProof(
-            uint256(OutputCase.ERC20Voucher),
+            OutputName.ERC20TransferVoucher,
             _inputIndex,
             _numInputsAfter
         );
@@ -309,9 +304,9 @@ contract CartesiDAppTest is TestBase {
         uint256 _inputIndex,
         uint256 _numInputsAfter
     ) public {
-        Voucher memory voucher = getVoucher(uint256(OutputCase.ERC20Voucher));
+        Voucher memory voucher = getVoucher(OutputName.ERC20TransferVoucher);
         Proof memory proof = setupVoucherProof(
-            uint256(OutputCase.ERC20Voucher),
+            OutputName.ERC20TransferVoucher,
             _inputIndex,
             _numInputsAfter
         );
@@ -325,9 +320,9 @@ contract CartesiDAppTest is TestBase {
     }
 
     function testRevertsInputIndexOOB(uint256 _inputIndex) public {
-        Voucher memory voucher = getVoucher(uint256(OutputCase.ERC20Voucher));
+        Voucher memory voucher = getVoucher(OutputName.ERC20TransferVoucher);
         Proof memory proof = setupVoucherProof(
-            uint256(OutputCase.ERC20Voucher),
+            OutputName.ERC20TransferVoucher,
             _inputIndex,
             0
         );
@@ -351,7 +346,11 @@ contract CartesiDAppTest is TestBase {
         // so the proof would succeed but the input would be out of bounds
         vm.mockCall(
             address(consensus),
-            abi.encodeWithSelector(IConsensus.getClaim.selector),
+            abi.encodeWithSelector(
+                IConsensus.getClaim.selector,
+                address(dapp),
+                proof.context
+            ),
             abi.encode(epochHash, _inputIndex, _inputIndex)
         );
 
@@ -367,9 +366,9 @@ contract CartesiDAppTest is TestBase {
         uint256 _inputIndex,
         uint256 _numInputsAfter
     ) public {
-        Voucher memory voucher = getVoucher(uint256(OutputCase.ETHVoucher));
+        Voucher memory voucher = getVoucher(OutputName.ETHWithdrawalVoucher);
         Proof memory proof = setupVoucherProof(
-            uint256(OutputCase.ETHVoucher),
+            OutputName.ETHWithdrawalVoucher,
             _inputIndex,
             _numInputsAfter
         );
@@ -489,9 +488,9 @@ contract CartesiDAppTest is TestBase {
         uint256 _inputIndex,
         uint256 _numInputsAfter
     ) public {
-        Voucher memory voucher = getVoucher(uint256(OutputCase.ERC721Voucher));
+        Voucher memory voucher = getVoucher(OutputName.ERC721TransferVoucher);
         Proof memory proof = setupVoucherProof(
-            uint256(OutputCase.ERC721Voucher),
+            OutputName.ERC721TransferVoucher,
             _inputIndex,
             _numInputsAfter
         );
@@ -622,6 +621,12 @@ contract CartesiDAppTest is TestBase {
         return vouchers[inputIndex];
     }
 
+    function getVoucher(
+        OutputName _outputName
+    ) internal view returns (Voucher memory) {
+        return getVoucher(uint256(_outputName));
+    }
+
     function addNotice(bytes memory notice) internal {
         uint256 index = outputEnums.length;
         outputEnums.push(LibServerManager.OutputEnum.NOTICE);
@@ -633,6 +638,12 @@ contract CartesiDAppTest is TestBase {
     ) internal view returns (bytes memory) {
         assert(outputEnums[inputIndex] == LibServerManager.OutputEnum.NOTICE);
         return notices[inputIndex];
+    }
+
+    function getNotice(
+        OutputName _outputName
+    ) internal view returns (bytes memory) {
+        return getNotice(uint256(_outputName));
     }
 
     function generateOutputs() internal {
@@ -775,21 +786,23 @@ contract CartesiDAppTest is TestBase {
     }
 
     function setupNoticeProof(
-        uint256 _inputIndexWithinEpoch,
+        OutputName _outputName,
         uint256 _inputIndex,
         uint256 _numInputsAfter
     ) internal returns (Proof memory) {
-        Proof memory proof = getNoticeProof(_inputIndexWithinEpoch);
+        uint256 inputIndexWithinEpoch = uint256(_outputName);
+        Proof memory proof = getNoticeProof(inputIndexWithinEpoch);
         mockConsensus(_inputIndex, _numInputsAfter, proof);
         return proof;
     }
 
     function setupVoucherProof(
-        uint256 _inputIndexWithinEpoch,
+        OutputName _outputName,
         uint256 _inputIndex,
         uint256 _numInputsAfter
     ) internal returns (Proof memory) {
-        Proof memory proof = getVoucherProof(_inputIndexWithinEpoch);
+        uint256 inputIndexWithinEpoch = uint256(_outputName);
+        Proof memory proof = getVoucherProof(inputIndexWithinEpoch);
         mockConsensus(_inputIndex, _numInputsAfter, proof);
         return proof;
     }
@@ -878,7 +891,11 @@ contract CartesiDAppTest is TestBase {
         // mock the consensus contract to return the right epoch hash
         vm.mockCall(
             address(consensus),
-            abi.encodeWithSelector(IConsensus.getClaim.selector),
+            abi.encodeWithSelector(
+                IConsensus.getClaim.selector,
+                address(dapp),
+                _proof.context
+            ),
             abi.encode(epochHash, firstInputIndex, lastInputIndex)
         );
     }
