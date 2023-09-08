@@ -45,6 +45,8 @@ contract CartesiDAppTest is TestBase {
         uint256 inputIndex
     );
 
+    error InputIndexOutOfBounds(uint256 length, uint256 inputIndex);
+
     error ProofNotFound(
         LibServerManager.OutputEnum outputEnum,
         uint256 inputIndex
@@ -620,6 +622,13 @@ contract CartesiDAppTest is TestBase {
         vouchers[index] = Voucher(destination, payload);
     }
 
+    function checkInputIndex(uint256 inputIndex) internal view {
+        uint256 length = outputEnums.length;
+        if (inputIndex >= length) {
+            revert InputIndexOutOfBounds(length, inputIndex);
+        }
+    }
+
     function checkOutputEnum(
         uint256 inputIndex,
         LibServerManager.OutputEnum expected
@@ -633,6 +642,7 @@ contract CartesiDAppTest is TestBase {
     function getVoucher(
         uint256 inputIndex
     ) internal view returns (Voucher memory) {
+        checkInputIndex(inputIndex);
         checkOutputEnum(inputIndex, LibServerManager.OutputEnum.VOUCHER);
         return vouchers[inputIndex];
     }
@@ -652,6 +662,7 @@ contract CartesiDAppTest is TestBase {
     function getNotice(
         uint256 inputIndex
     ) internal view returns (bytes memory) {
+        checkInputIndex(inputIndex);
         checkOutputEnum(inputIndex, LibServerManager.OutputEnum.NOTICE);
         return notices[inputIndex];
     }
