@@ -39,6 +39,12 @@ contract CartesiDAppTest is TestBase {
         ERC721TransferVoucher
     }
 
+    error UnexpectedOutputEnum(
+        LibServerManager.OutputEnum expected,
+        LibServerManager.OutputEnum obtained,
+        uint256 inputIndex
+    );
+
     error ProofNotFound(
         LibServerManager.OutputEnum outputEnum,
         uint256 inputIndex
@@ -614,10 +620,20 @@ contract CartesiDAppTest is TestBase {
         vouchers[index] = Voucher(destination, payload);
     }
 
+    function checkOutputEnum(
+        uint256 inputIndex,
+        LibServerManager.OutputEnum expected
+    ) internal view {
+        LibServerManager.OutputEnum obtained = outputEnums[inputIndex];
+        if (expected != obtained) {
+            revert UnexpectedOutputEnum(expected, obtained, inputIndex);
+        }
+    }
+
     function getVoucher(
         uint256 inputIndex
     ) internal view returns (Voucher memory) {
-        assert(outputEnums[inputIndex] == LibServerManager.OutputEnum.VOUCHER);
+        checkOutputEnum(inputIndex, LibServerManager.OutputEnum.VOUCHER);
         return vouchers[inputIndex];
     }
 
@@ -636,7 +652,7 @@ contract CartesiDAppTest is TestBase {
     function getNotice(
         uint256 inputIndex
     ) internal view returns (bytes memory) {
-        assert(outputEnums[inputIndex] == LibServerManager.OutputEnum.NOTICE);
+        checkOutputEnum(inputIndex, LibServerManager.OutputEnum.NOTICE);
         return notices[inputIndex];
     }
 
