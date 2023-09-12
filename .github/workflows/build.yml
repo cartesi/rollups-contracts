@@ -28,7 +28,7 @@ jobs:
 
       - uses: foundry-rs/foundry-toolchain@v1
         with:
-          version: nightly-b1c03fa5f21b5872ba5f91085b9d8ae04a008f8d
+          version: nightly # FIXME: wait for the next monthly pinned binaries
 
       - name: Install dependencies
         run: yarn install
