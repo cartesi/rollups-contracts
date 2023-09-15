@@ -1,9 +1,9 @@
 ---
 name: 🔍 Smart contract audit
 about: Detect vulnerabilities in smart contracts
-title: ''
-labels: onchain
-assignees: ''
+title: ""
+labels: T-audit, A-contracts
+assignees: ""
 ---
 
 ## 🚩 Vulnerabilities
@@ -12,6 +12,7 @@ Listed below are some well documented vulnerabilities that affect smart contract
 You can find many others from the list of references.
 
 ### External calls
+
 - [ ] Unchecked Call Return Value [(SWC-104)](https://swcregistry.io/docs/SWC-104)
 - [ ] Re-entrancy attacks [(SWC-107)](https://swcregistry.io/docs/SWC-107)
 - [ ] Delegate Call to Untrusted Callee [(SWC-112)](https://swcregistry.io/docs/SWC-112)
@@ -20,15 +21,18 @@ You can find many others from the list of references.
 - [ ] Untrustworthy Data Feeds [(Al-Breiki et al., 2020)](https://doi.org/10.1109/ACCESS.2021.3140091)
 
 ### Denial-of-Service attacks
+
 - [ ] Failed Call [(SWC-113)](https://swcregistry.io/docs/SWC-113)
 - [ ] Block Gas Limit [(SWC-128)](https://swcregistry.io/docs/SWC-128)
 - [ ] Unexpected Ether balance [(SWC-132)](https://swcregistry.io/docs/SWC-132)
 
 ### Miner attacks
+
 - [ ] Transaction Order Dependence [(SWC-114)](https://swcregistry.io/docs/SWC-114)
 - [ ] Weak Sources of Randomness from Chain Attributes [(SWC-120)](https://swcregistry.io/docs/SWC-120)
 
 ### Authorization
+
 - [ ] Unprotected Ether Withdrawal [(SWC-105)](https://swcregistry.io/docs/SWC-105)
 - [ ] Unprotected Self-Destruct [(SWC-106)](https://swcregistry.io/docs/SWC-106)
 - [ ] State Variable Default Visibility [(SWC-108)](https://swcregistry.io/docs/SWC-108)
@@ -38,6 +42,7 @@ You can find many others from the list of references.
 - [ ] Lack of Proper Signature Verification [(SWC-122)](https://swcregistry.io/docs/SWC-122)
 
 ### Programming errors
+
 - [ ] Integer Underflow and Overflow [(SWC-101)](https://swcregistry.io/docs/SWC-101)
 - [ ] Use of Deprecated Solidity Functions [(SWC-111)](https://swcregistry.io/docs/SWC-111)
 - [ ] Block values as a proxy for time [(SWC-116)](https://swcregistry.io/docs/SWC-116)
@@ -53,6 +58,7 @@ You can find many others from the list of references.
 - [ ] Unencrypted Private Data On-Chain [(SWC-136)](https://swcregistry.io/docs/SWC-136)
 
 ### Compiler
+
 - [ ] Outdated Compiler Version [(SWC-102)](https://swcregistry.io/docs/SWC-102)
 - [ ] Floating Pragma [(SWC-103)](https://swcregistry.io/docs/SWC-103)
 

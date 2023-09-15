@@ -1,9 +1,9 @@
 ---
 name: ⛽ Gas optimization
 about: Reduce gas usage of smart contracts
-title: ''
-labels: onchain
-assignees: ''
+title: ""
+labels: T-perf, A-contracts
+assignees: ""
 ---
 
 ## 🚶 Steps

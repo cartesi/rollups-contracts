@@ -1,9 +1,9 @@
 ---
 name: 🐛 Bug report
 about: Something isn't working as expected
-title: ''
-labels: bug
-assignees: ''
+title: ""
+labels: T-bug
+assignees: ""
 ---
 
 ## 🙂 Expected behavior
