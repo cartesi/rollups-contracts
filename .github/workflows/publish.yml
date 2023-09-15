@@ -25,12 +25,12 @@ jobs:
 
       - name: Publish package
         if: ${{ ! contains(github.ref_name, '-rc.') }}
-        run: yarn publish --access public
+        run: yarn npm publish --access public
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
 
       - name: Publish release candidate
         if: ${{ contains(github.ref_name, '-rc.') }}
-        run: yarn publish --access public --tag rc
+        run: yarn npm publish --access public --tag rc
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
