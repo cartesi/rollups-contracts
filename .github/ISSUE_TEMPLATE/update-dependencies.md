@@ -1,9 +1,9 @@
 ---
 name: ⬆️  Dependency bump
 about: Checklist for bumping dependencies
-title: ''
-labels: chore
-assignees: ''
+title: ""
+labels: T-bump
+assignees: ""
 ---
 
 ## 📚 Context
