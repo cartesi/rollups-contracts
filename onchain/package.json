@@ -8,5 +8,6 @@
     ],
     "devDependencies": {
         "prettier": "^3"
-    }
+    },
+    "packageManager": "yarn@3.6.4"
 }
