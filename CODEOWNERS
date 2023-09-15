@@ -1,2 +1,10 @@
-CODEOWNERS @guidanoli
+# ABOUT CODE OWNERS
+
+# These owners will be the default owners for everything in
+# the repo. Unless a later match takes precedence,
+# @pedroargento @guidanoli @xdaniortega @ZzzzHui will be requested
+# for review when someone opens a pull request.
+* @pedroargento @guidanoli @xdaniortega @ZzzzHui
+
+# CI automation tasks
 /.github/workflows/ @guidanoli
