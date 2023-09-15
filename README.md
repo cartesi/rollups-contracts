@@ -17,7 +17,7 @@ If you are interested in taking a look at the off-chain part, please, head over 
 
 ## Dependencies
 
-- [Yarn](https://classic.yarnpkg.com/en/docs/install)
+- [Yarn](https://yarnpkg.com/getting-started/install)
 - [Forge](https://book.getfoundry.sh/getting-started/installation)
 - [Docker](https://docs.docker.com/get-docker/)
 
@@ -30,7 +30,7 @@ In order to properly initialize them, please, run the following command.
 git submodule update --init --recursive
 ```
 
-This repository uses [Yarn](https://classic.yarnpkg.com/en/docs/install) to manage JavaScript dependencies.
+This repository uses [Yarn](https://yarnpkg.com/getting-started/install) to manage JavaScript dependencies.
 In order to install them, please, run the following commands.
 
 ```sh
@@ -88,7 +88,7 @@ graph TD
     ERC1155BatchPortal[ERC-1155 Batch Transfer Portal]:::core
     DAppAddressRelay[DApp Address Relay]:::core
     Consensus:::external
-    
+
     ERC20[Any ERC-20 token]:::external
     ERC721[Any ERC-721 token]:::external
     ERC1155[Any ERC-1155 token]:::external
