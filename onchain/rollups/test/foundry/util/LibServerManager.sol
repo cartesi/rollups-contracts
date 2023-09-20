@@ -173,12 +173,12 @@ library LibServerManager {
     function proves(
         Proof memory p,
         OutputEnum outputEnum,
-        uint256 inputIndex,
+        uint256 inputIndexWithinEpoch,
         uint256 outputIndex
     ) internal pure returns (bool) {
         return
             p.outputEnum == outputEnum &&
-            p.inputIndex == inputIndex &&
+            p.validity.inputIndexWithinEpoch == inputIndexWithinEpoch &&
             p.outputIndex == outputIndex;
     }
 }

@@ -42,14 +42,17 @@ contract CartesiDAppTest is TestBase {
     error UnexpectedOutputEnum(
         LibServerManager.OutputEnum expected,
         LibServerManager.OutputEnum obtained,
-        uint256 inputIndex
+        uint256 inputIndexWithinEpoch
     );
 
-    error InputIndexOutOfBounds(uint256 length, uint256 inputIndex);
+    error InputIndexWithinEpochOutOfBounds(
+        uint256 length,
+        uint256 inputIndexWithinEpoch
+    );
 
     error ProofNotFound(
         LibServerManager.OutputEnum outputEnum,
-        uint256 inputIndex
+        uint256 inputIndexWithinEpoch
     );
 
     CartesiDApp dapp;
@@ -622,29 +625,43 @@ contract CartesiDAppTest is TestBase {
         vouchers[index] = Voucher(destination, payload);
     }
 
-    function checkInputIndex(uint256 inputIndex) internal view {
+    function checkInputIndexWithinEpoch(
+        uint256 inputIndexWithinEpoch
+    ) internal view {
         uint256 length = outputEnums.length;
-        if (inputIndex >= length) {
-            revert InputIndexOutOfBounds(length, inputIndex);
+        if (inputIndexWithinEpoch >= length) {
+            revert InputIndexWithinEpochOutOfBounds(
+                length,
+                inputIndexWithinEpoch
+            );
         }
     }
 
     function checkOutputEnum(
-        uint256 inputIndex,
+        uint256 inputIndexWithinEpoch,
         LibServerManager.OutputEnum expected
     ) internal view {
-        LibServerManager.OutputEnum obtained = outputEnums[inputIndex];
+        LibServerManager.OutputEnum obtained = outputEnums[
+            inputIndexWithinEpoch
+        ];
         if (expected != obtained) {
-            revert UnexpectedOutputEnum(expected, obtained, inputIndex);
+            revert UnexpectedOutputEnum(
+                expected,
+                obtained,
+                inputIndexWithinEpoch
+            );
         }
     }
 
     function getVoucher(
-        uint256 inputIndex
+        uint256 inputIndexWithinEpoch
     ) internal view returns (Voucher memory) {
-        checkInputIndex(inputIndex);
-        checkOutputEnum(inputIndex, LibServerManager.OutputEnum.VOUCHER);
-        return vouchers[inputIndex];
+        checkInputIndexWithinEpoch(inputIndexWithinEpoch);
+        checkOutputEnum(
+            inputIndexWithinEpoch,
+            LibServerManager.OutputEnum.VOUCHER
+        );
+        return vouchers[inputIndexWithinEpoch];
     }
 
     function getVoucher(
@@ -660,11 +677,14 @@ contract CartesiDAppTest is TestBase {
     }
 
     function getNotice(
-        uint256 inputIndex
+        uint256 inputIndexWithinEpoch
     ) internal view returns (bytes memory) {
-        checkInputIndex(inputIndex);
-        checkOutputEnum(inputIndex, LibServerManager.OutputEnum.NOTICE);
-        return notices[inputIndex];
+        checkInputIndexWithinEpoch(inputIndexWithinEpoch);
+        checkOutputEnum(
+            inputIndexWithinEpoch,
+            LibServerManager.OutputEnum.NOTICE
+        );
+        return notices[inputIndexWithinEpoch];
     }
 
     function getNotice(
@@ -716,7 +736,7 @@ contract CartesiDAppTest is TestBase {
     }
 
     function getInputPath(
-        string memory inputIndexStr
+        string memory inputIndexWithinEpochStr
     ) internal view returns (string memory) {
         string memory root = vm.projectRoot();
         return
@@ -728,37 +748,44 @@ contract CartesiDAppTest is TestBase {
                 "/helper",
                 "/input",
                 "/",
-                inputIndexStr,
+                inputIndexWithinEpochStr,
                 ".json"
             );
     }
 
     function getInputPath(
-        uint256 inputIndex
+        uint256 inputIndexWithinEpoch
     ) internal view returns (string memory) {
-        string memory inputIndexStr = vm.toString(inputIndex);
-        return getInputPath(inputIndexStr);
+        string memory inputIndexWithinEpochStr = vm.toString(
+            inputIndexWithinEpoch
+        );
+        return getInputPath(inputIndexWithinEpochStr);
     }
 
     function writeInput(
-        uint256 inputIndex,
+        uint256 inputIndexWithinEpoch,
         address sender,
         bytes memory payload
     ) internal {
-        string memory inputIndexStr = vm.toString(inputIndex);
-        string memory objectKey = string.concat("input", inputIndexStr);
+        string memory inputIndexWithinEpochStr = vm.toString(
+            inputIndexWithinEpoch
+        );
+        string memory objectKey = string.concat(
+            "input",
+            inputIndexWithinEpochStr
+        );
         vm.serializeAddress(objectKey, "sender", sender);
         string memory json = vm.serializeBytes(objectKey, "payload", payload);
-        string memory path = getInputPath(inputIndexStr);
+        string memory path = getInputPath(inputIndexWithinEpochStr);
         vm.writeJson(json, path);
     }
 
     function removeExtraInputs() internal {
-        uint256 inputIndex = outputEnums.length;
-        string memory path = getInputPath(inputIndex);
+        uint256 inputIndexWithinEpoch = outputEnums.length;
+        string memory path = getInputPath(inputIndexWithinEpoch);
         while (vm.isFile(path)) {
             vm.removeFile(path);
-            path = getInputPath(++inputIndex);
+            path = getInputPath(++inputIndexWithinEpoch);
         }
     }
 
@@ -835,20 +862,30 @@ contract CartesiDAppTest is TestBase {
     }
 
     function getNoticeProof(
-        uint256 inputIndex
+        uint256 inputIndexWithinEpoch
     ) internal view returns (Proof memory) {
-        return getProof(LibServerManager.OutputEnum.NOTICE, inputIndex, 0);
+        return
+            getProof(
+                LibServerManager.OutputEnum.NOTICE,
+                inputIndexWithinEpoch,
+                0
+            );
     }
 
     function getVoucherProof(
-        uint256 inputIndex
+        uint256 inputIndexWithinEpoch
     ) internal view returns (Proof memory) {
-        return getProof(LibServerManager.OutputEnum.VOUCHER, inputIndex, 0);
+        return
+            getProof(
+                LibServerManager.OutputEnum.VOUCHER,
+                inputIndexWithinEpoch,
+                0
+            );
     }
 
     function getProof(
         LibServerManager.OutputEnum outputEnum,
-        uint256 inputIndex,
+        uint256 inputIndexWithinEpoch,
         uint256 outputIndex
     ) internal view returns (Proof memory) {
         // Decode ABI-encoded data into raw struct
@@ -864,13 +901,13 @@ contract CartesiDAppTest is TestBase {
         LibServerManager.Proof[] memory proofs = response.proofs;
         for (uint256 i; i < proofs.length; ++i) {
             LibServerManager.Proof memory proof = proofs[i];
-            if (proof.proves(outputEnum, inputIndex, outputIndex)) {
+            if (proof.proves(outputEnum, inputIndexWithinEpoch, outputIndex)) {
                 return convert(proof);
             }
         }
 
         // If a proof was not found, raise an error
-        revert ProofNotFound(outputEnum, inputIndex);
+        revert ProofNotFound(outputEnum, inputIndexWithinEpoch);
     }
 
     function convert(
