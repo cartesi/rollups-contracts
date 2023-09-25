@@ -4,6 +4,7 @@
 pragma solidity ^0.8.8;
 
 import {PaymentSplitter} from "@openzeppelin/contracts/finance/PaymentSplitter.sol";
+import {BitMaps} from "@openzeppelin/contracts/utils/structs/BitMaps.sol";
 
 import {AbstractConsensus} from "../AbstractConsensus.sol";
 import {IConsensus} from "../IConsensus.sol";
@@ -12,40 +13,39 @@ import {IHistory} from "../../history/IHistory.sol";
 /// @title Quorum consensus
 /// @notice A consensus model controlled by a small set of addresses, the validators.
 ///         In this version, the validator set is immutable.
-/// @dev This contract uses OpenZeppelin `PaymentSplitter`.
-///      For more information on `PaymentSplitter`, please consult OpenZeppelin's official documentation.
+/// @dev This contract uses OpenZeppelin `PaymentSplitter` and `BitMaps`.
+///      For more information on those, please consult OpenZeppelin's official documentation.
 contract Quorum is AbstractConsensus, PaymentSplitter {
+    using BitMaps for BitMaps.BitMap;
+
     /// @notice The history contract.
     /// @dev See the `getHistory` function.
     IHistory internal immutable history;
 
     // Quorum members
-    // Map an address to true if it's a validator
-    mapping(address => bool) public validators;
+    // Map an address to its index in the validator set.
+    // The first validator has index 1. Thus, index 0 means the address is not in the validator set.
+    mapping(address => uint256) public validatorIndex;
     uint256 public immutable numOfValidators;
 
     // Quorum votes
     struct Votes {
+        // how many has voted
         uint256 count;
-        // Map an address to true if it has voted
-        mapping(address => bool) voted;
+        // use BitMap to record who has voted
+        BitMaps.BitMap votedBitMap;
     }
     // Map a claim to struct Votes
     mapping(bytes => Votes) internal votes;
 
     /// @notice Raised if not a validator
     error OnlyValidator();
-    modifier onlyValidator() {
-        if (!validators[msg.sender]) {
-            revert OnlyValidator();
-        }
-        _;
-    }
 
     /// @notice Construct a Quorum consensus
     /// @param _validators the list of validators
     /// @param _shares the list of shares
     /// @param _history the history contract
+    /// @dev PaymentSplitter checks for duplicates in _validators
     constructor(
         address[] memory _validators,
         uint256[] memory _shares,
@@ -53,7 +53,7 @@ contract Quorum is AbstractConsensus, PaymentSplitter {
     ) PaymentSplitter(_validators, _shares) {
         // Add the array of validators into the quorum
         for (uint256 i; i < _validators.length; ++i) {
-            validators[_validators[i]] = true;
+            validatorIndex[_validators[i]] = i + 1; // index starts from 1
         }
         numOfValidators = _validators.length;
         history = _history;
@@ -68,12 +68,17 @@ contract Quorum is AbstractConsensus, PaymentSplitter {
     /// @dev Can only be called by a validator,
     ///      and the `Quorum` contract must have ownership over
     ///      its current history contract.
-    function submitClaim(bytes calldata _claimData) external onlyValidator {
-        Votes storage claimVotes = votes[_claimData];
+    function submitClaim(bytes calldata _claimData) external {
+        // only validators can submit claims
+        uint256 index = validatorIndex[msg.sender];
+        if (index == 0) {
+            revert OnlyValidator();
+        }
 
         // If the msg.sender hasn't submitted the same claim before
-        if (!claimVotes.voted[msg.sender]) {
-            claimVotes.voted[msg.sender] = true;
+        Votes storage claimVotes = votes[_claimData];
+        if (!claimVotes.votedBitMap.get(index)) {
+            claimVotes.votedBitMap.set(index);
 
             // If this claim has now just over half of the quorum's votes,
             // then we can submit it to the history contract.
