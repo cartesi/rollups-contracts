@@ -7,3 +7,6 @@
 [submodule "onchain/rollups/lib/forge-std"]
 	path = onchain/rollups/lib/forge-std
 	url = https://github.com/foundry-rs/forge-std
+[submodule "onchain/rollups/lib/openzeppelin-contracts"]
+	path = onchain/rollups/lib/openzeppelin-contracts
+	url = https://github.com/OpenZeppelin/openzeppelin-contracts.git

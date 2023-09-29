@@ -24,7 +24,7 @@
         "info": "npm-scripts-info",
         "proofs:update": "./test/foundry/dapp/helper/update-proofs.sh",
         "proofs:setup": "./test/foundry/dapp/helper/update-proofs.sh --setup",
-        "prepack": "run-s build tsc:prod copy-dts",
+        "prestart": "run-s build tsc:prod copy-dts",
         "start": "hardhat node",
         "test": "forge test -vvv",
         "tsc": "tsc",
