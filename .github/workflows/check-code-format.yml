@@ -3,7 +3,7 @@ name: Check code format
 on:
   push:
     paths:
-      - '.github/workflows/code_format.yml'
+      - '.github/workflows/check-code-format.yml'
       - 'onchain/**'
 jobs:
   check-code-format:
