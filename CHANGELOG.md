@@ -21,6 +21,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `rollups-cli` package
 - `onchain/rollups/abi`
 
+## Changed
+
+- Updated yarn version to 3.6.3 (berry)
+
 ## [1.0.0] 2023-08-22
 
 ### Added
