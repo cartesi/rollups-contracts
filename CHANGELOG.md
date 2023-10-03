@@ -11,11 +11,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - `abi` directory to the `@cartesi/rollups` package, ideal for language bindings.
 - `outputsEpochRootHash` field to `OutputValidityProof`
+- `executeVoucher` function to `CartesiDApp` with an extra `value` parameter
 
 ### Changed
 
 - Merged the tree of vouchers and the tree of notices into one tree of outputs
 - Updated the encoding of outputs, to use `abi.encodeWithSignature` instead of `abi.encode`, in order to add a 4-byte header
+- Updated the encoding of vouchers, to include the amount of Wei to be passed along the call
 
 ### Removed
 

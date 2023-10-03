@@ -70,12 +70,6 @@ contract CartesiDApp is
     /// @notice Raised when executing an already executed voucher.
     error VoucherReexecutionNotAllowed();
 
-    /// @notice Raised when the transfer fails.
-    error EtherTransferFailed();
-
-    /// @notice Raised when a mehtod is not called by DApp itself.
-    error OnlyDApp();
-
     /// @notice The initial machine state hash.
     /// @dev See the `getTemplateHash` function.
     bytes32 internal immutable templateHash;
@@ -104,9 +98,10 @@ contract CartesiDApp is
 
     function executeVoucher(
         address _destination,
+        uint256 _value,
         bytes calldata _payload,
         Proof calldata _proof
-    ) external override nonReentrant returns (bool) {
+    ) public override nonReentrant returns (bool) {
         bytes32 epochHash;
         uint256 firstInputIndex;
         uint256 lastInputIndex;
@@ -124,7 +119,7 @@ contract CartesiDApp is
 
         // reverts if proof isn't valid
         _proof.validity.validateOutput(
-            OutputEncoding.encodeVoucher(_destination, _payload),
+            OutputEncoding.encodeVoucher(_destination, _value, _payload),
             epochHash
         );
 
@@ -139,7 +134,7 @@ contract CartesiDApp is
         }
 
         // execute voucher
-        (bool succ, ) = _destination.call(_payload);
+        (bool succ, ) = _destination.call{value: _value}(_payload);
 
         // if properly executed, mark it as executed and emit event
         if (succ) {
@@ -148,6 +143,14 @@ contract CartesiDApp is
         }
 
         return succ;
+    }
+
+    function executeVoucher(
+        address _destination,
+        bytes calldata _payload,
+        Proof calldata _proof
+    ) external override returns (bool) {
+        return executeVoucher(_destination, 0, _payload, _proof);
     }
 
     function wasVoucherExecuted(
@@ -228,22 +231,4 @@ contract CartesiDApp is
     /// @dev If you wish to transfer Ether to a DApp while informing
     ///      the DApp backend of it, then please do so through the Ether portal contract.
     receive() external payable {}
-
-    /// @notice Transfer some amount of Ether to some recipient.
-    /// @param _receiver The address which will receive the amount of Ether
-    /// @param _value The amount of Ether to be transferred in Wei
-    /// @dev This function can only be called by the DApp itself through vouchers.
-    ///      If this method is not called by DApp itself, `OnlyDApp` error is raised.
-    ///      If the transfer fails, `EtherTransferFailed` error is raised.
-    function withdrawEther(address _receiver, uint256 _value) external {
-        if (msg.sender != address(this)) {
-            revert OnlyDApp();
-        }
-
-        (bool sent, ) = _receiver.call{value: _value}("");
-
-        if (!sent) {
-            revert EtherTransferFailed();
-        }
-    }
 }

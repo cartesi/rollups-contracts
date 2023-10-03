@@ -21,12 +21,9 @@ import {SimpleConsensus} from "../util/SimpleConsensus.sol";
 import {SimpleERC20} from "../util/SimpleERC20.sol";
 import {SimpleERC721} from "../util/SimpleERC721.sol";
 import {SimpleERC721Receiver} from "../util/SimpleERC721Receiver.sol";
+import {IEtherReceiver, SimpleEtherReceiver} from "../util/SimpleEtherReceiver.sol";
 
 import "forge-std/console.sol";
-
-contract EtherReceiver {
-    receive() external payable {}
-}
 
 contract CartesiDAppTest is TestBase {
     using LibServerManager for LibServerManager.RawFinishEpochResponse;
@@ -35,8 +32,10 @@ contract CartesiDAppTest is TestBase {
     enum OutputName {
         DummyNotice,
         ERC20TransferVoucher,
-        ETHWithdrawalVoucher,
-        ERC721TransferVoucher
+        ERC721TransferVoucher,
+        EtherTransferToEOA,
+        EtherTransferToContractWithoutPayload,
+        EtherTransferToContractWithPayload
     }
 
     error UnexpectedOutputEnum(
@@ -57,9 +56,11 @@ contract CartesiDAppTest is TestBase {
     IERC20 erc20Token;
     IERC721 erc721Token;
     IERC721Receiver erc721Receiver;
+    IEtherReceiver etherReceiver;
 
     struct Voucher {
         address destination;
+        uint256 value;
         bytes payload;
     }
 
@@ -78,6 +79,7 @@ contract CartesiDAppTest is TestBase {
     address constant noticeSender = address(bytes20(keccak256("noticeSender")));
     bytes32 constant salt = keccak256("salt");
     bytes32 constant templateHash = keccak256("templateHash");
+    uint256 constant randomNumber = uint256(keccak256("randomNumber"));
 
     event VoucherExecuted(uint256 voucherPosition);
     event OwnershipTransferred(
@@ -370,32 +372,61 @@ contract CartesiDAppTest is TestBase {
 
     // test ether transfer
 
-    function testEtherTransfer(
+    function testEtherTransferToEOA(
         uint256 _inputIndex,
         uint256 _numInputsAfter
     ) public {
-        Voucher memory voucher = getVoucher(OutputName.ETHWithdrawalVoucher);
+        testEtherTransferAux(
+            OutputName.EtherTransferToEOA,
+            _inputIndex,
+            _numInputsAfter
+        );
+    }
+
+    function testEtherTransferToContractWithoutPayload(
+        uint256 _inputIndex,
+        uint256 _numInputsAfter
+    ) public {
+        testEtherTransferAux(
+            OutputName.EtherTransferToContractWithoutPayload,
+            _inputIndex,
+            _numInputsAfter
+        );
+    }
+
+    function testEtherTransferToContractWithPayload(
+        uint256 _inputIndex,
+        uint256 _numInputsAfter
+    ) public {
+        testEtherTransferAux(
+            OutputName.EtherTransferToContractWithPayload,
+            _inputIndex,
+            _numInputsAfter
+        );
+    }
+
+    function testEtherTransferAux(
+        OutputName _outputName,
+        uint256 _inputIndex,
+        uint256 _numInputsAfter
+    ) internal {
+        Voucher memory voucher = getVoucher(_outputName);
         Proof memory proof = setupVoucherProof(
-            OutputName.ETHWithdrawalVoucher,
+            _outputName,
             _inputIndex,
             _numInputsAfter
         );
 
-        // not able to execute voucher because dapp has 0 balance
         assertEq(address(dapp).balance, 0);
-        assertEq(address(recipient).balance, 0);
-        bool success = executeVoucher(voucher, proof);
-        assertEq(success, false);
-        assertEq(address(dapp).balance, 0);
-        assertEq(address(recipient).balance, 0);
+        assertEq(voucher.destination.balance, 0);
 
-        // fund dapp
-        uint256 dappInitBalance = 100;
-        vm.deal(address(dapp), dappInitBalance);
-        assertEq(address(dapp).balance, dappInitBalance);
-        assertEq(address(recipient).balance, 0);
+        assertEq(executeVoucher(voucher, proof), false);
 
-        // expect event
+        vm.deal(address(dapp), voucher.value);
+
+        assertEq(address(dapp).balance, voucher.value);
+        assertEq(voucher.destination.balance, 0);
+
         vm.expectEmit(false, false, false, true, address(dapp));
         emit VoucherExecuted(
             LibOutputValidation.getBitMaskPosition(
@@ -404,90 +435,15 @@ contract CartesiDAppTest is TestBase {
             )
         );
 
-        // perform call
-        success = executeVoucher(voucher, proof);
+        vm.expectCall(voucher.destination, voucher.value, voucher.payload, 1);
 
-        // check result
-        assertEq(success, true);
-        assertEq(address(dapp).balance, dappInitBalance - transferAmount);
-        assertEq(address(recipient).balance, transferAmount);
+        assertEq(executeVoucher(voucher, proof), true);
 
-        // cannot execute the same voucher again
+        assertEq(address(dapp).balance, 0);
+        assertEq(voucher.destination.balance, voucher.value);
+
         vm.expectRevert(CartesiDApp.VoucherReexecutionNotAllowed.selector);
         executeVoucher(voucher, proof);
-    }
-
-    function testWithdrawEtherContract(
-        uint256 _value,
-        address _notDApp
-    ) public {
-        vm.assume(_value <= address(this).balance);
-        vm.assume(_notDApp != address(dapp));
-        address receiver = address(new EtherReceiver());
-
-        // fund dapp
-        vm.deal(address(dapp), _value);
-
-        // withdrawEther cannot be called by anyone
-        vm.expectRevert(CartesiDApp.OnlyDApp.selector);
-        vm.prank(_notDApp);
-        dapp.withdrawEther(receiver, _value);
-
-        // withdrawEther can only be called by dapp itself
-        uint256 preBalance = receiver.balance;
-        vm.prank(address(dapp));
-        dapp.withdrawEther(receiver, _value);
-        assertEq(receiver.balance, preBalance + _value);
-        assertEq(address(dapp).balance, 0);
-    }
-
-    function testWithdrawEtherEOA(
-        uint256 _value,
-        address _notDApp,
-        uint256 _receiverSeed
-    ) public {
-        vm.assume(_notDApp != address(dapp));
-        vm.assume(_value <= address(this).balance);
-
-        // by deriving receiver from keccak-256, we avoid
-        // collisions with precompiled contract addresses
-        // assume receiver is not a contract
-        address receiver = address(
-            bytes20(keccak256(abi.encode(_receiverSeed)))
-        );
-        uint256 codeSize;
-        assembly {
-            codeSize := extcodesize(receiver)
-        }
-        vm.assume(codeSize == 0);
-
-        // fund dapp
-        vm.deal(address(dapp), _value);
-
-        // withdrawEther cannot be called by anyone
-        vm.expectRevert(CartesiDApp.OnlyDApp.selector);
-        vm.prank(_notDApp);
-        dapp.withdrawEther(receiver, _value);
-
-        // withdrawEther can only be called by dapp itself
-        uint256 preBalance = receiver.balance;
-        vm.prank(address(dapp));
-        dapp.withdrawEther(receiver, _value);
-        assertEq(receiver.balance, preBalance + _value);
-        assertEq(address(dapp).balance, 0);
-    }
-
-    function testRevertsWithdrawEther(uint256 _value, uint256 _funds) public {
-        vm.assume(_value > _funds);
-        address receiver = address(new EtherReceiver());
-
-        // Fund DApp
-        vm.deal(address(dapp), _funds);
-
-        // DApp is not funded or does not have enough funds
-        vm.prank(address(dapp));
-        vm.expectRevert(CartesiDApp.EtherTransferFailed.selector);
-        dapp.withdrawEther(receiver, _value);
     }
 
     // test NFT transfer
@@ -586,6 +542,7 @@ contract CartesiDAppTest is TestBase {
         erc20Token = deployERC20Deterministically();
         erc721Token = deployERC721Deterministically();
         erc721Receiver = deployERC721ReceiverDeterministically();
+        etherReceiver = deployEtherReceiverDeterministically();
     }
 
     function deployDAppDeterministically() internal returns (CartesiDApp) {
@@ -616,10 +573,26 @@ contract CartesiDAppTest is TestBase {
         return new SimpleERC721Receiver{salt: salt}();
     }
 
-    function addVoucher(address destination, bytes memory payload) internal {
+    function deployEtherReceiverDeterministically()
+        internal
+        returns (IEtherReceiver)
+    {
+        vm.prank(tokenOwner);
+        return new SimpleEtherReceiver{salt: salt}();
+    }
+
+    function addVoucher(
+        address destination,
+        uint256 value,
+        bytes memory payload
+    ) internal {
         uint256 index = outputEnums.length;
         outputEnums.push(LibServerManager.OutputEnum.VOUCHER);
-        vouchers[index] = Voucher(destination, payload);
+        vouchers[index] = Voucher(destination, value, payload);
+    }
+
+    function addVoucher(address destination, bytes memory payload) internal {
+        addVoucher(destination, 0, payload);
     }
 
     function checkInputIndex(uint256 inputIndex) internal view {
@@ -684,14 +657,6 @@ contract CartesiDAppTest is TestBase {
             )
         );
         addVoucher(
-            address(dapp),
-            abi.encodeWithSelector(
-                CartesiDApp.withdrawEther.selector,
-                recipient,
-                transferAmount
-            )
-        );
-        addVoucher(
             address(erc721Token),
             abi.encodeWithSignature(
                 "safeTransferFrom(address,address,uint256)",
@@ -700,13 +665,24 @@ contract CartesiDAppTest is TestBase {
                 tokenId
             )
         );
+        addVoucher(recipient, transferAmount, abi.encode());
+        addVoucher(address(etherReceiver), transferAmount, abi.encode());
+        addVoucher(
+            address(etherReceiver),
+            transferAmount,
+            abi.encodeWithSignature("foo(uint256)", randomNumber)
+        );
     }
 
     function encodeVoucher(
         Voucher calldata voucher
     ) external pure returns (bytes memory) {
         return
-            OutputEncoding.encodeVoucher(voucher.destination, voucher.payload);
+            OutputEncoding.encodeVoucher(
+                voucher.destination,
+                voucher.value,
+                voucher.payload
+            );
     }
 
     function encodeNotice(
@@ -809,7 +785,13 @@ contract CartesiDAppTest is TestBase {
         Voucher memory voucher,
         Proof memory proof
     ) internal returns (bool) {
-        return dapp.executeVoucher(voucher.destination, voucher.payload, proof);
+        return
+            dapp.executeVoucher(
+                voucher.destination,
+                voucher.value,
+                voucher.payload,
+                proof
+            );
     }
 
     function calculateEpochHash(
