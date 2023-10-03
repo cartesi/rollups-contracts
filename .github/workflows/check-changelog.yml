@@ -5,6 +5,7 @@ on:
     types: [opened, synchronize, reopened, labeled, unlabeled]
     branches:
       - main
+      - release/*
 jobs:
   check-changelog:
     runs-on: ubuntu-22.04
