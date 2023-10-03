@@ -24,6 +24,13 @@ jobs:
         run: yarn install
 
       - name: Publish package
+        if: ${{ ! contains(env.GITHUB_REF_NAME, '-rc.') }}
         run: yarn publish --access public
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+
+      - name: Publish release candidate
+        if: ${{ contains(env.GITHUB_REF_NAME, '-rc.') }}
+        run: yarn publish --access public --tag rc
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
