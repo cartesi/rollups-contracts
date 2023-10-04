@@ -10,7 +10,6 @@ import "@nomiclabs/hardhat-ethers";
 import "@nomicfoundation/hardhat-verify";
 import "@typechain/hardhat";
 import "hardhat-deploy";
-import "hardhat-abi-exporter";
 import "hardhat-gas-reporter";
 
 import {
@@ -97,10 +96,6 @@ const config: HardhatUserConfig = {
             );
             return undefined;
         }
-    },
-    abiExporter: {
-        runOnCompile: true,
-        clear: true,
     },
     typechain: {
         outDir: "src/types",
