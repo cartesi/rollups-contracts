@@ -46,7 +46,6 @@
         "@types/chai": "^4",
         "@types/mocha": "^10",
         "@types/node": "^20",
-        "@wagmi/chains": "^1.6",
         "chai": "^4.2",
         "copyfiles": "^2",
         "ethers": "^5",
@@ -66,7 +65,8 @@
         "ts-generator": "^0.1",
         "ts-node": "^10",
         "typechain": "^8",
-        "typescript": "^5"
+        "typescript": "^5",
+        "viem": "^1.15"
     },
     "files": [
         "abi",
