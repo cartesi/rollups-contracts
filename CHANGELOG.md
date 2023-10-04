@@ -9,7 +9,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
-- `abi` directory to the `@cartesi/rollups` package, ideal for language bindings.
 - `AuthorityFactory`: Allows anyone to deploy `Authority` contracts. Supports deterministic deployment.
 - `HistoryFactory`: Allows anyone to deploy `History` contracts. Supports deterministic deployment.
 - `AuthorityHistoryPairFactory`: Allows anyone to deploy `Authority` and `History` contract pairs (such that `History` is owned by `Authority`, and `Authority` stores/retrieves claims from `History`). Supports deterministic deployment.
@@ -21,13 +20,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Removed
 
-- `docker-bake*.hcl`
-- `.dockerignore`
-- `onchain/Dockerfile`
-- `offchain` (now maintained in [`cartesi/rollups-node`](https://github.com/cartesi/rollups-node))
-- `grpc-interfaces` submodule
 - `rollups-cli` package
-- `onchain/rollups/abi`
 
 ## [1.0.0] 2023-08-22
 
