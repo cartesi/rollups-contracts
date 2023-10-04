@@ -10,7 +10,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 - `abi` directory to the `@cartesi/rollups` package, ideal for language bindings.
-- `Quorum`: Consensus reached by the majority of signers
+- `Quorum`: Consensus reached by the majority of signers.
+- `QuorumFactory`: Allows anyone to deploy `Quorum` contracts. Supports deterministic deployment.
 
 ### Removed
 
