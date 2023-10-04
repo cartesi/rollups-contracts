@@ -2,6 +2,245 @@
   "name": "arbitrum_goerli",
   "chainId": "421613",
   "contracts": {
+    "AuthorityFactory": {
+      "address": "0xf26a5b278C25D8D41A136d22Ad719EACEd9c3e63",
+      "abi": [
+        {
+          "anonymous": false,
+          "inputs": [
+            {
+              "indexed": false,
+              "internalType": "address",
+              "name": "authorityOwner",
+              "type": "address"
+            },
+            {
+              "indexed": false,
+              "internalType": "contract Authority",
+              "name": "authority",
+              "type": "address"
+            }
+          ],
+          "name": "AuthorityCreated",
+          "type": "event"
+        },
+        {
+          "inputs": [
+            {
+              "internalType": "address",
+              "name": "_authorityOwner",
+              "type": "address"
+            },
+            {
+              "internalType": "bytes32",
+              "name": "_salt",
+              "type": "bytes32"
+            }
+          ],
+          "name": "calculateAuthorityAddress",
+          "outputs": [
+            {
+              "internalType": "address",
+              "name": "",
+              "type": "address"
+            }
+          ],
+          "stateMutability": "view",
+          "type": "function"
+        },
+        {
+          "inputs": [
+            {
+              "internalType": "address",
+              "name": "_authorityOwner",
+              "type": "address"
+            },
+            {
+              "internalType": "bytes32",
+              "name": "_salt",
+              "type": "bytes32"
+            }
+          ],
+          "name": "newAuthority",
+          "outputs": [
+            {
+              "internalType": "contract Authority",
+              "name": "",
+              "type": "address"
+            }
+          ],
+          "stateMutability": "nonpayable",
+          "type": "function"
+        },
+        {
+          "inputs": [
+            {
+              "internalType": "address",
+              "name": "_authorityOwner",
+              "type": "address"
+            }
+          ],
+          "name": "newAuthority",
+          "outputs": [
+            {
+              "internalType": "contract Authority",
+              "name": "",
+              "type": "address"
+            }
+          ],
+          "stateMutability": "nonpayable",
+          "type": "function"
+        }
+      ]
+    },
+    "AuthorityHistoryPairFactory": {
+      "address": "0x3890A047Cf9Af60731E80B2105362BbDCD70142D",
+      "abi": [
+        {
+          "inputs": [
+            {
+              "internalType": "contract IAuthorityFactory",
+              "name": "_authorityFactory",
+              "type": "address"
+            },
+            {
+              "internalType": "contract IHistoryFactory",
+              "name": "_historyFactory",
+              "type": "address"
+            }
+          ],
+          "stateMutability": "nonpayable",
+          "type": "constructor"
+        },
+        {
+          "anonymous": false,
+          "inputs": [
+            {
+              "indexed": false,
+              "internalType": "contract IAuthorityFactory",
+              "name": "authorityFactory",
+              "type": "address"
+            },
+            {
+              "indexed": false,
+              "internalType": "contract IHistoryFactory",
+              "name": "historyFactory",
+              "type": "address"
+            }
+          ],
+          "name": "AuthorityHistoryPairFactoryCreated",
+          "type": "event"
+        },
+        {
+          "inputs": [
+            {
+              "internalType": "address",
+              "name": "_authorityOwner",
+              "type": "address"
+            },
+            {
+              "internalType": "bytes32",
+              "name": "_salt",
+              "type": "bytes32"
+            }
+          ],
+          "name": "calculateAuthorityHistoryAddressPair",
+          "outputs": [
+            {
+              "internalType": "address",
+              "name": "authorityAddress_",
+              "type": "address"
+            },
+            {
+              "internalType": "address",
+              "name": "historyAddress_",
+              "type": "address"
+            }
+          ],
+          "stateMutability": "view",
+          "type": "function"
+        },
+        {
+          "inputs": [],
+          "name": "getAuthorityFactory",
+          "outputs": [
+            {
+              "internalType": "contract IAuthorityFactory",
+              "name": "",
+              "type": "address"
+            }
+          ],
+          "stateMutability": "view",
+          "type": "function"
+        },
+        {
+          "inputs": [],
+          "name": "getHistoryFactory",
+          "outputs": [
+            {
+              "internalType": "contract IHistoryFactory",
+              "name": "",
+              "type": "address"
+            }
+          ],
+          "stateMutability": "view",
+          "type": "function"
+        },
+        {
+          "inputs": [
+            {
+              "internalType": "address",
+              "name": "_authorityOwner",
+              "type": "address"
+            }
+          ],
+          "name": "newAuthorityHistoryPair",
+          "outputs": [
+            {
+              "internalType": "contract Authority",
+              "name": "authority_",
+              "type": "address"
+            },
+            {
+              "internalType": "contract History",
+              "name": "history_",
+              "type": "address"
+            }
+          ],
+          "stateMutability": "nonpayable",
+          "type": "function"
+        },
+        {
+          "inputs": [
+            {
+              "internalType": "address",
+              "name": "_authorityOwner",
+              "type": "address"
+            },
+            {
+              "internalType": "bytes32",
+              "name": "_salt",
+              "type": "bytes32"
+            }
+          ],
+          "name": "newAuthorityHistoryPair",
+          "outputs": [
+            {
+              "internalType": "contract Authority",
+              "name": "authority_",
+              "type": "address"
+            },
+            {
+              "internalType": "contract History",
+              "name": "history_",
+              "type": "address"
+            }
+          ],
+          "stateMutability": "nonpayable",
+          "type": "function"
+        }
+      ]
+    },
     "CartesiDAppFactory": {
       "address": "0x7122cd1221C20892234186facfE8615e6743Ab02",
       "abi": [
@@ -478,6 +717,97 @@
             }
           ],
           "stateMutability": "view",
+          "type": "function"
+        }
+      ]
+    },
+    "HistoryFactory": {
+      "address": "0x1f158b5320BBf677FdA89F9a438df99BbE560A26",
+      "abi": [
+        {
+          "anonymous": false,
+          "inputs": [
+            {
+              "indexed": false,
+              "internalType": "address",
+              "name": "historyOwner",
+              "type": "address"
+            },
+            {
+              "indexed": false,
+              "internalType": "contract History",
+              "name": "history",
+              "type": "address"
+            }
+          ],
+          "name": "HistoryCreated",
+          "type": "event"
+        },
+        {
+          "inputs": [
+            {
+              "internalType": "address",
+              "name": "_historyOwner",
+              "type": "address"
+            },
+            {
+              "internalType": "bytes32",
+              "name": "_salt",
+              "type": "bytes32"
+            }
+          ],
+          "name": "calculateHistoryAddress",
+          "outputs": [
+            {
+              "internalType": "address",
+              "name": "",
+              "type": "address"
+            }
+          ],
+          "stateMutability": "view",
+          "type": "function"
+        },
+        {
+          "inputs": [
+            {
+              "internalType": "address",
+              "name": "_historyOwner",
+              "type": "address"
+            },
+            {
+              "internalType": "bytes32",
+              "name": "_salt",
+              "type": "bytes32"
+            }
+          ],
+          "name": "newHistory",
+          "outputs": [
+            {
+              "internalType": "contract History",
+              "name": "",
+              "type": "address"
+            }
+          ],
+          "stateMutability": "nonpayable",
+          "type": "function"
+        },
+        {
+          "inputs": [
+            {
+              "internalType": "address",
+              "name": "_historyOwner",
+              "type": "address"
+            }
+          ],
+          "name": "newHistory",
+          "outputs": [
+            {
+              "internalType": "contract History",
+              "name": "",
+              "type": "address"
+            }
+          ],
+          "stateMutability": "nonpayable",
           "type": "function"
         }
       ]
