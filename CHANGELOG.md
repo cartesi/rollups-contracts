@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.1.0] 2023-10-04
+
 ### Added
 
 - `AuthorityFactory`: Allows anyone to deploy `Authority` contracts. Supports deterministic deployment.
@@ -249,7 +251,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Specific ERC-20 Portal
 - Deprecated mock contracts
 
-[Unreleased]: https://github.com/cartesi/rollups-contracts/compare/v1.0.0...HEAD
+[Unreleased]: https://github.com/cartesi/rollups-contracts/compare/v1.1.0...HEAD
+[1.1.0]: https://github.com/cartesi/rollups-contracts/releases/tag/v1.1.0
 [1.0.0]: https://github.com/cartesi/rollups/releases/tag/v1.0.0
 [0.9.1]: https://github.com/cartesi/rollups/releases/tag/v0.9.1
 [0.9.0]: https://github.com/cartesi/rollups/releases/tag/v0.9.0
