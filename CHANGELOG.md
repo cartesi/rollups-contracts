@@ -7,7 +7,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-## [1.1.0] 2023-10-04
+## [1.1.0] - 2023-10-04
 
 ### Added
 
@@ -24,7 +24,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - `rollups-cli` package
 
-## [1.0.0] 2023-08-22
+## [1.0.0] - 2023-08-22
 
 ### Added
 
@@ -73,13 +73,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Fixed input size limit in `InputBox` contract
 - Fixed vouchers and notices proofs in `host-runner`
 
-## [0.9.1] 2023-06-14
+## [0.9.1] - 2023-06-14
 
 ### Changed
 
 - Fixed dispatcher to not finish empty epoch
 
-## [0.9.0] 2023-05-19
+## [0.9.0] - 2023-05-19
 
 ### Added
 
@@ -123,14 +123,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Removed headers from inputs added by trusted permissionless contracts like portals and relayers
 - Remove polling-based indexer
 
-## [0.8.2] 2023-01-04
+## [0.8.2] - 2023-01-04
 
 ### Changed
 
 - Fixed proxy start up after restart
 - Changed `sm_pending_inputs_max_retries` default to 600 (retries while polling server-manager for pending inputs)
 
-## [0.8.1] 2022-12-02
+## [0.8.1] - 2022-12-02
 
 ### Added
 
@@ -140,7 +140,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Fixed epoch finalization when running rollups in host mode
 
-## [0.8.0] 2022-11-29
+## [0.8.0] - 2022-11-29
 
 ### Added
 
@@ -156,21 +156,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Modified the dispatcher to produce rollups events instead of managing the server-manager.
 - Bumped grpc-interfaces to version 0.9.0
 
-## [0.7.0] 2022-11-02
+## [0.7.0] - 2022-11-02
 
 ### Changed
 
 - Increase machine deadline
 - Minor documentation updates
 
-## [0.6.1] 2022-10-04
+## [0.6.1] - 2022-10-04
 
 ### Changed
 
 - Fix dispatcher's configuration for server-manager threads
 - Improve documentation of GraphQL API
 
-## [0.6.0] 2022-09-13
+## [0.6.0] - 2022-09-13
 
 ### Added
 
@@ -181,7 +181,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Send inspect-server logs to stdout instead of stderr
 
-## [0.5.0] 2022-08-17
+## [0.5.0] - 2022-08-17
 
 ### Added
 
@@ -194,13 +194,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Remove hardhat-rollups
 - Fix indexer to store proofs only when epoch is finished
 
-## [0.4.0] 2022-07-04
+## [0.4.0] - 2022-07-04
 
 ### Changed
 
 - Update dependencies to latest emulator SDK with improved exception handling (grpc-interfaces 0.8)
 
-## [0.3.0] 2022-06-14
+## [0.3.0] - 2022-06-14
 
 ### Added
 
@@ -229,7 +229,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Security
 
-## [0.2.0] 2022-04-28
+## [0.2.0] - 2022-04-28
 
 ### Added
 
