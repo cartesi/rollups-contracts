@@ -21,7 +21,7 @@ import {
     optimism,
     optimismGoerli,
     sepolia,
-} from "@wagmi/chains";
+} from "viem/chains";
 
 // read MNEMONIC from env variable
 let mnemonic = process.env.MNEMONIC;
