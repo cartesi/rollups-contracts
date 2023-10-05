@@ -75,9 +75,9 @@ interface ICartesiDApp {
 
     /// @notice Get the DApp's template hash.
     /// @return The DApp's template hash
-    function getTemplateHash() external view returns (bytes32);
+    function templateHash() external view returns (bytes32);
 
     /// @notice Get the current consensus.
     /// @return The current consensus
-    function getConsensus() external view returns (IConsensus);
+    function consensus() external view returns (IConsensus);
 }

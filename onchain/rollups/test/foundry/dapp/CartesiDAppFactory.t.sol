@@ -39,9 +39,9 @@ contract CartesiDAppFactoryTest is TestBase {
             _templateHash
         );
 
-        assertEq(address(dapp.getConsensus()), address(consensus));
+        assertEq(address(dapp.consensus()), address(consensus));
         assertEq(dapp.owner(), _dappOwner);
-        assertEq(dapp.getTemplateHash(), _templateHash);
+        assertEq(dapp.templateHash(), _templateHash);
     }
 
     function testNewApplicationDeterministic(
@@ -68,9 +68,9 @@ contract CartesiDAppFactoryTest is TestBase {
         // Precalculated address must match actual address
         assertEq(precalculatedAddress, address(dapp));
 
-        assertEq(address(dapp.getConsensus()), address(consensus));
+        assertEq(address(dapp.consensus()), address(consensus));
         assertEq(dapp.owner(), _dappOwner);
-        assertEq(dapp.getTemplateHash(), _templateHash);
+        assertEq(dapp.templateHash(), _templateHash);
 
         precalculatedAddress = factory.calculateApplicationAddress(
             consensus,

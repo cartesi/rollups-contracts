@@ -75,8 +75,8 @@ contract CartesiDApp is
     error OnlyDApp();
 
     /// @notice The initial machine state hash.
-    /// @dev See the `getTemplateHash` function.
-    bytes32 internal immutable templateHash;
+    /// @dev See the `templateHash` function.
+    bytes32 public immutable templateHash;
 
     /// @notice The executed voucher bitmask, which keeps track of which vouchers
     ///         were executed already in order to avoid re-execution.
@@ -84,8 +84,8 @@ contract CartesiDApp is
     mapping(uint256 => uint256) internal voucherBitmask;
 
     /// @notice The current consensus contract.
-    /// @dev See the `getConsensus` and `migrateToConsensus` functions.
-    IConsensus internal consensus;
+    /// @dev See the `consensus` and `migrateToConsensus` function.
+    IConsensus public consensus;
 
     /// @notice Creates a `CartesiDApp` contract.
     /// @param _consensus The initial consensus contract
@@ -206,14 +206,6 @@ contract CartesiDApp is
         _newConsensus.join();
 
         emit NewConsensus(_newConsensus);
-    }
-
-    function getTemplateHash() external view override returns (bytes32) {
-        return templateHash;
-    }
-
-    function getConsensus() external view override returns (IConsensus) {
-        return consensus;
     }
 
     /// @notice Accept Ether transfers.

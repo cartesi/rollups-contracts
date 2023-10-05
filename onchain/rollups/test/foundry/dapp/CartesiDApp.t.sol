@@ -121,9 +121,9 @@ contract CartesiDAppTest is TestBase {
         dapp = new CartesiDApp(consensus, _owner, _templateHash);
 
         // check set values
-        assertEq(address(dapp.getConsensus()), address(consensus));
+        assertEq(address(dapp.consensus()), address(consensus));
         assertEq(dapp.owner(), _owner);
-        assertEq(dapp.getTemplateHash(), _templateHash);
+        assertEq(dapp.templateHash(), _templateHash);
     }
 
     // test notices
@@ -565,7 +565,7 @@ contract CartesiDAppTest is TestBase {
         vm.expectEmit(false, false, false, true, address(dapp));
         emit NewConsensus(newConsensus);
         dapp.migrateToConsensus(newConsensus);
-        assertEq(address(dapp.getConsensus()), address(newConsensus));
+        assertEq(address(dapp.consensus()), address(newConsensus));
 
         // if owner changes, then original owner no longer can migrate consensus
         vm.prank(_owner);
