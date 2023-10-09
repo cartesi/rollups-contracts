@@ -95,4 +95,8 @@ contract Quorum is AbstractConsensus, AccessControlEnumerable, PaymentSplitter {
     ) external view override returns (bytes32, uint256, uint256) {
         return history.getClaim(_dapp, _proofContext);
     }
+
+    /*function getShares(address _validator) public returns(uint256 shares) {
+        return _shares[_validator];
+    }*/
 }

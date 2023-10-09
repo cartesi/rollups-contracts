@@ -17,7 +17,7 @@ contract QuorumFactory is IQuorumFactory {
         uint256[] calldata _shares,
         IHistory _history
     ) external override returns (Quorum) {
-        Quorum quorum = new Quorum(_quorumValidators,_shares,_history);
+        Quorum quorum = new Quorum(_quorumValidators, _shares, _history);
 
         emit QuorumCreated(_quorumValidators, quorum);
 
@@ -30,7 +30,11 @@ contract QuorumFactory is IQuorumFactory {
         IHistory _history,
         bytes32 _salt
     ) external override returns (Quorum) {
-        Quorum quorum = new Quorum{salt: _salt}(_quorumValidators, _shares, _history);
+        Quorum quorum = new Quorum{salt: _salt}(
+            _quorumValidators,
+            _shares,
+            _history
+        );
 
         emit QuorumCreated(_quorumValidators, quorum);
 
