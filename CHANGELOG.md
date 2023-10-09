@@ -19,6 +19,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - `Authority`: Removed deployment files and script.
 - `History`: Removed deployment files and script.
+- `CartesiDApp`: Propagate erros on voucher execution.
 
 ### Removed
 

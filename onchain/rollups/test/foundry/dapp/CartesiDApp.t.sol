@@ -166,8 +166,8 @@ contract CartesiDAppTest is TestBase {
         // not able to execute voucher because dapp has 0 balance
         assertEq(erc20Token.balanceOf(address(dapp)), 0);
         assertEq(erc20Token.balanceOf(recipient), 0);
-        bool success = executeVoucher(voucher, proof);
-        assertEq(success, false);
+        vm.expectRevert();
+        executeVoucher(voucher, proof);
         assertEq(erc20Token.balanceOf(address(dapp)), 0);
         assertEq(erc20Token.balanceOf(recipient), 0);
 
@@ -188,10 +188,9 @@ contract CartesiDAppTest is TestBase {
         );
 
         // perform call
-        success = executeVoucher(voucher, proof);
+        executeVoucher(voucher, proof);
 
         // check result
-        assertEq(success, true);
         assertEq(
             erc20Token.balanceOf(address(dapp)),
             dappInitBalance - transferAmount
@@ -216,8 +215,7 @@ contract CartesiDAppTest is TestBase {
         erc20Token.transfer(address(dapp), dappInitBalance);
 
         // 1st execution attempt should succeed
-        bool success = executeVoucher(voucher, proof);
-        assertEq(success, true);
+        executeVoucher(voucher, proof);
 
         // 2nd execution attempt should fail
         vm.expectRevert(CartesiDApp.VoucherReexecutionNotAllowed.selector);
@@ -250,8 +248,8 @@ contract CartesiDAppTest is TestBase {
         assertEq(executed, false);
 
         // execute voucher - failed
-        bool success = executeVoucher(voucher, proof);
-        assertEq(success, false);
+        vm.expectRevert();
+        executeVoucher(voucher, proof);
 
         // `wasVoucherExecuted` should still return false
         executed = dapp.wasVoucherExecuted(
@@ -264,8 +262,7 @@ contract CartesiDAppTest is TestBase {
         uint256 dappInitBalance = 100;
         vm.prank(tokenOwner);
         erc20Token.transfer(address(dapp), dappInitBalance);
-        success = executeVoucher(voucher, proof);
-        assertEq(success, true);
+        executeVoucher(voucher, proof);
 
         // after executing voucher, `wasVoucherExecuted` should return true
         executed = dapp.wasVoucherExecuted(
@@ -387,8 +384,8 @@ contract CartesiDAppTest is TestBase {
         // not able to execute voucher because dapp has 0 balance
         assertEq(address(dapp).balance, 0);
         assertEq(address(recipient).balance, 0);
-        bool success = executeVoucher(voucher, proof);
-        assertEq(success, false);
+        vm.expectRevert();
+        executeVoucher(voucher, proof);
         assertEq(address(dapp).balance, 0);
         assertEq(address(recipient).balance, 0);
 
@@ -408,10 +405,9 @@ contract CartesiDAppTest is TestBase {
         );
 
         // perform call
-        success = executeVoucher(voucher, proof);
+        executeVoucher(voucher, proof);
 
         // check result
-        assertEq(success, true);
         assertEq(address(dapp).balance, dappInitBalance - transferAmount);
         assertEq(address(recipient).balance, transferAmount);
 
@@ -508,8 +504,8 @@ contract CartesiDAppTest is TestBase {
 
         // not able to execute voucher because dapp doesn't have the nft
         assertEq(erc721Token.ownerOf(tokenId), tokenOwner);
-        bool success = executeVoucher(voucher, proof);
-        assertEq(success, false);
+        vm.expectRevert();
+        executeVoucher(voucher, proof);
         assertEq(erc721Token.ownerOf(tokenId), tokenOwner);
 
         // fund dapp
@@ -527,10 +523,9 @@ contract CartesiDAppTest is TestBase {
         );
 
         // perform call
-        success = executeVoucher(voucher, proof);
+        executeVoucher(voucher, proof);
 
         // check result
-        assertEq(success, true);
         assertEq(erc721Token.ownerOf(tokenId), address(erc721Receiver));
 
         // cannot execute the same voucher again
@@ -822,8 +817,8 @@ contract CartesiDAppTest is TestBase {
     function executeVoucher(
         Voucher memory voucher,
         Proof memory proof
-    ) internal returns (bool) {
-        return dapp.executeVoucher(voucher.destination, voucher.payload, proof);
+    ) internal {
+        dapp.executeVoucher(voucher.destination, voucher.payload, proof);
     }
 
     function calculateEpochHash(

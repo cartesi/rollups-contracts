@@ -12,6 +12,7 @@ import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
 import {ERC721Holder} from "@openzeppelin/contracts/token/ERC721/utils/ERC721Holder.sol";
 import {ERC1155Holder} from "@openzeppelin/contracts/token/ERC1155/utils/ERC1155Holder.sol";
 import {ReentrancyGuard} from "@openzeppelin/contracts/security/ReentrancyGuard.sol";
+import {Address} from "@openzeppelin/contracts/utils/Address.sol";
 
 /// @title Cartesi DApp
 ///
@@ -104,7 +105,7 @@ contract CartesiDApp is
         address _destination,
         bytes calldata _payload,
         Proof calldata _proof
-    ) external override nonReentrant returns (bool) {
+    ) external override nonReentrant {
         bytes32 epochHash;
         uint256 firstInputIndex;
         uint256 lastInputIndex;
@@ -133,16 +134,14 @@ contract CartesiDApp is
             revert VoucherReexecutionNotAllowed();
         }
 
-        // execute voucher
-        (bool succ, ) = _destination.call(_payload);
+        // execute voucher, handles success and failure internally.
+        // If `_destination` reverts with a revert reason or custom
+        // error, it is bubbled up by this function.
+        Address.functionCall(_destination, _payload);
 
-        // if properly executed, mark it as executed and emit event
-        if (succ) {
-            voucherBitmask.setBit(voucherPosition, true);
-            emit VoucherExecuted(voucherPosition);
-        }
-
-        return succ;
+        // Succesfull execution is ensured previously, mark it as executed and emit event
+        voucherBitmask.setBit(voucherPosition, true);
+        emit VoucherExecuted(voucherPosition);
     }
 
     function wasVoucherExecuted(

@@ -46,14 +46,14 @@ interface ICartesiDApp {
     /// @param _payload The payload, which—in the case of Solidity contracts—encodes a function call
     /// @param _proof The proof used to validate the voucher against
     ///               a claim submitted by the current consensus contract
-    /// @return Whether the execution was successful or not
-    /// @dev On a successful execution, emits a `VoucherExecuted` event.
+    /// @dev No returned value, instead reverts on failure.
+    ///      On a successful execution, emits a `VoucherExecuted` event.
     ///      Execution of already executed voucher will raise a `VoucherReexecutionNotAllowed` error.
     function executeVoucher(
         address _destination,
         bytes calldata _payload,
         Proof calldata _proof
-    ) external returns (bool);
+    ) external;
 
     /// @notice Check whether a voucher has been executed.
     /// @param _inputIndex The index of the input in the input box
