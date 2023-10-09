@@ -12,8 +12,12 @@ import {Vm} from "forge-std/Vm.sol";
 contract AuthorityFactoryTest is Test {
     AuthorityFactory factory;
 
-    // event emitted in the factory
     event AuthorityCreated(address authorityOwner, Authority authority);
+
+    struct AuthorityCreatedEventData {
+        address authorityOwner;
+        Authority authority;
+    }
 
     function setUp() public {
         factory = new AuthorityFactory();
@@ -46,13 +50,12 @@ contract AuthorityFactoryTest is Test {
             ) {
                 ++numOfAuthorityCreated;
 
-                address a;
-                address b;
+                AuthorityCreatedEventData memory eventData;
 
-                (a, b) = abi.decode(entry.data, (address, address));
+                eventData = abi.decode(entry.data, (AuthorityCreatedEventData));
 
-                assertEq(_authorityOwner, a);
-                assertEq(address(_authority), b);
+                assertEq(_authorityOwner, eventData.authorityOwner);
+                assertEq(address(_authority), address(eventData.authority));
             }
         }
 

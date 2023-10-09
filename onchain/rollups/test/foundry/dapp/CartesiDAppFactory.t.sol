@@ -27,6 +27,12 @@ contract CartesiDAppFactoryTest is TestBase {
         CartesiDApp application
     );
 
+    struct ApplicationCreatedEventData {
+        address dappOwner;
+        bytes32 templateHash;
+        CartesiDApp application;
+    }
+
     function testNewApplication(
         address _dappOwner,
         bytes32 _templateHash
@@ -158,15 +164,16 @@ contract CartesiDAppFactoryTest is TestBase {
                     bytes32(uint256(uint160(address(consensus))))
                 );
 
-                address a;
-                bytes32 b;
-                address c;
+                ApplicationCreatedEventData memory eventData;
 
-                (a, b, c) = abi.decode(entry.data, (address, bytes32, address));
+                eventData = abi.decode(
+                    entry.data,
+                    (ApplicationCreatedEventData)
+                );
 
-                assertEq(_dappOwner, a);
-                assertEq(_templateHash, b);
-                assertEq(address(_dapp), c);
+                assertEq(_dappOwner, eventData.dappOwner);
+                assertEq(_templateHash, eventData.templateHash);
+                assertEq(address(_dapp), address(eventData.application));
             }
         }
 
