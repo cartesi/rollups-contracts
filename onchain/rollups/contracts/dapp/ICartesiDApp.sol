@@ -48,6 +48,7 @@ interface ICartesiDApp {
     ///               a claim submitted by the current consensus contract
     /// @return Whether the execution was successful or not
     /// @dev On a successful execution, emits a `VoucherExecuted` event.
+    ///      On a failed execution, propagates any error as-is.
     ///      Execution of already executed voucher will raise a `VoucherReexecutionNotAllowed` error.
     function executeVoucher(
         address _destination,

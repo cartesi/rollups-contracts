@@ -12,6 +12,7 @@ import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
 import {ERC721Holder} from "@openzeppelin/contracts/token/ERC721/utils/ERC721Holder.sol";
 import {ERC1155Holder} from "@openzeppelin/contracts/token/ERC1155/utils/ERC1155Holder.sol";
 import {ReentrancyGuard} from "@openzeppelin/contracts/security/ReentrancyGuard.sol";
+import {Address} from "@openzeppelin/contracts/utils/Address.sol";
 
 /// @title Cartesi DApp
 ///
@@ -64,6 +65,7 @@ contract CartesiDApp is
 {
     using Bitmask for mapping(uint256 => uint256);
     using LibOutputValidation for OutputValidityProof;
+    using Address for address;
 
     /// @notice Raised when executing an already executed voucher.
     error VoucherReexecutionNotAllowed();
@@ -134,15 +136,13 @@ contract CartesiDApp is
         }
 
         // execute voucher
-        (bool succ, ) = _destination.call(_payload);
+        _destination.functionCall(_payload);
 
-        // if properly executed, mark it as executed and emit event
-        if (succ) {
-            voucherBitmask.setBit(voucherPosition, true);
-            emit VoucherExecuted(voucherPosition);
-        }
+        // mark it as executed and emit event
+        voucherBitmask.setBit(voucherPosition, true);
+        emit VoucherExecuted(voucherPosition);
 
-        return succ;
+        return true;
     }
 
     function wasVoucherExecuted(

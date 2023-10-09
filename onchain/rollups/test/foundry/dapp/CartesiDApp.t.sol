@@ -166,8 +166,8 @@ contract CartesiDAppTest is TestBase {
         // not able to execute voucher because dapp has 0 balance
         assertEq(erc20Token.balanceOf(address(dapp)), 0);
         assertEq(erc20Token.balanceOf(recipient), 0);
-        bool success = executeVoucher(voucher, proof);
-        assertEq(success, false);
+        vm.expectRevert("ERC20: transfer amount exceeds balance");
+        executeVoucher(voucher, proof);
         assertEq(erc20Token.balanceOf(address(dapp)), 0);
         assertEq(erc20Token.balanceOf(recipient), 0);
 
@@ -188,7 +188,7 @@ contract CartesiDAppTest is TestBase {
         );
 
         // perform call
-        success = executeVoucher(voucher, proof);
+        bool success = executeVoucher(voucher, proof);
 
         // check result
         assertEq(success, true);
@@ -250,8 +250,8 @@ contract CartesiDAppTest is TestBase {
         assertEq(executed, false);
 
         // execute voucher - failed
-        bool success = executeVoucher(voucher, proof);
-        assertEq(success, false);
+        vm.expectRevert("ERC20: transfer amount exceeds balance");
+        executeVoucher(voucher, proof);
 
         // `wasVoucherExecuted` should still return false
         executed = dapp.wasVoucherExecuted(
@@ -264,7 +264,7 @@ contract CartesiDAppTest is TestBase {
         uint256 dappInitBalance = 100;
         vm.prank(tokenOwner);
         erc20Token.transfer(address(dapp), dappInitBalance);
-        success = executeVoucher(voucher, proof);
+        bool success = executeVoucher(voucher, proof);
         assertEq(success, true);
 
         // after executing voucher, `wasVoucherExecuted` should return true
@@ -387,8 +387,8 @@ contract CartesiDAppTest is TestBase {
         // not able to execute voucher because dapp has 0 balance
         assertEq(address(dapp).balance, 0);
         assertEq(address(recipient).balance, 0);
-        bool success = executeVoucher(voucher, proof);
-        assertEq(success, false);
+        vm.expectRevert();
+        executeVoucher(voucher, proof);
         assertEq(address(dapp).balance, 0);
         assertEq(address(recipient).balance, 0);
 
@@ -408,7 +408,7 @@ contract CartesiDAppTest is TestBase {
         );
 
         // perform call
-        success = executeVoucher(voucher, proof);
+        bool success = executeVoucher(voucher, proof);
 
         // check result
         assertEq(success, true);
@@ -508,8 +508,8 @@ contract CartesiDAppTest is TestBase {
 
         // not able to execute voucher because dapp doesn't have the nft
         assertEq(erc721Token.ownerOf(tokenId), tokenOwner);
-        bool success = executeVoucher(voucher, proof);
-        assertEq(success, false);
+        vm.expectRevert("ERC721: caller is not token owner or approved");
+        executeVoucher(voucher, proof);
         assertEq(erc721Token.ownerOf(tokenId), tokenOwner);
 
         // fund dapp
@@ -527,7 +527,7 @@ contract CartesiDAppTest is TestBase {
         );
 
         // perform call
-        success = executeVoucher(voucher, proof);
+        bool success = executeVoucher(voucher, proof);
 
         // check result
         assertEq(success, true);
