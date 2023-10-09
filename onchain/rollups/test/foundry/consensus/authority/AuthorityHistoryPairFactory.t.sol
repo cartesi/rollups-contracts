@@ -25,9 +25,24 @@ contract AuthorityFactoryTest is Test {
         IHistoryFactory historyFactory
     );
 
+    struct FactoryCreatedEventData {
+        IAuthorityFactory authorityFactory;
+        IHistoryFactory historyFactory;
+    }
+
     event AuthorityCreated(address authorityOwner, Authority authority);
 
+    struct AuthorityCreatedEventData {
+        address authorityOwner;
+        Authority authority;
+    }
+
     event HistoryCreated(address historyOwner, History history);
+
+    struct HistoryCreatedEventData {
+        address historyOwner;
+        History history;
+    }
 
     event NewHistory(IHistory history);
 
@@ -66,13 +81,18 @@ contract AuthorityFactoryTest is Test {
             ) {
                 ++numOfFactoryCreated;
 
-                address a;
-                address b;
+                FactoryCreatedEventData memory eventData;
 
-                (a, b) = abi.decode(entry.data, (address, address));
+                eventData = abi.decode(entry.data, (FactoryCreatedEventData));
 
-                assertEq(address(authorityFactory), a);
-                assertEq(address(historyFactory), b);
+                assertEq(
+                    address(authorityFactory),
+                    address(eventData.authorityFactory)
+                );
+                assertEq(
+                    address(historyFactory),
+                    address(eventData.historyFactory)
+                );
             }
         }
 
@@ -118,13 +138,12 @@ contract AuthorityFactoryTest is Test {
             ) {
                 ++numOfAuthorityCreated;
 
-                address a;
-                address b;
+                AuthorityCreatedEventData memory eventData;
 
-                (a, b) = abi.decode(entry.data, (address, address));
+                eventData = abi.decode(entry.data, (AuthorityCreatedEventData));
 
-                assertEq(address(factory), a);
-                assertEq(address(_authority), b);
+                assertEq(address(factory), eventData.authorityOwner);
+                assertEq(address(_authority), address(eventData.authority));
             }
 
             if (
@@ -133,13 +152,12 @@ contract AuthorityFactoryTest is Test {
             ) {
                 ++numOfHistoryCreated;
 
-                address a;
-                address b;
+                HistoryCreatedEventData memory eventData;
 
-                (a, b) = abi.decode(entry.data, (address, address));
+                eventData = abi.decode(entry.data, (HistoryCreatedEventData));
 
-                assertEq(address(_authority), a);
-                assertEq(address(_history), b);
+                assertEq(address(_authority), eventData.historyOwner);
+                assertEq(address(_history), address(eventData.history));
             }
 
             if (
@@ -148,11 +166,9 @@ contract AuthorityFactoryTest is Test {
             ) {
                 ++numOfNewHistory;
 
-                address a;
+                IHistory history = abi.decode(entry.data, (IHistory));
 
-                a = abi.decode(entry.data, (address));
-
-                assertEq(address(_history), a);
+                assertEq(address(_history), address(history));
             }
 
             if (

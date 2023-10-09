@@ -14,6 +14,11 @@ contract HistoryFactoryTest is Test {
 
     event HistoryCreated(address historyOwner, History history);
 
+    struct HistoryCreatedEventData {
+        address historyOwner;
+        History history;
+    }
+
     function setUp() public {
         factory = new HistoryFactory();
     }
@@ -45,13 +50,12 @@ contract HistoryFactoryTest is Test {
             ) {
                 ++numOfHistoryCreated;
 
-                address a;
-                address b;
+                HistoryCreatedEventData memory eventData;
 
-                (a, b) = abi.decode(entry.data, (address, address));
+                eventData = abi.decode(entry.data, (HistoryCreatedEventData));
 
-                assertEq(_historyOwner, a);
-                assertEq(address(_history), b);
+                assertEq(_historyOwner, eventData.historyOwner);
+                assertEq(address(_history), address(eventData.history));
             }
         }
 
