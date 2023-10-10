@@ -82,7 +82,7 @@ contract CartesiDAppTest is TestBase {
     bytes32 constant salt = keccak256("salt");
     bytes32 constant templateHash = keccak256("templateHash");
 
-    event VoucherExecuted(uint256 voucherPosition);
+    event VoucherExecuted(uint256 voucherPosition, bytes returnData);
     event OwnershipTransferred(
         address indexed previousOwner,
         address indexed newOwner
@@ -166,7 +166,7 @@ contract CartesiDAppTest is TestBase {
         // not able to execute voucher because dapp has 0 balance
         assertEq(erc20Token.balanceOf(address(dapp)), 0);
         assertEq(erc20Token.balanceOf(recipient), 0);
-        vm.expectRevert();
+        vm.expectRevert("ERC20: transfer amount exceeds balance");
         executeVoucher(voucher, proof);
         assertEq(erc20Token.balanceOf(address(dapp)), 0);
         assertEq(erc20Token.balanceOf(recipient), 0);
@@ -184,7 +184,8 @@ contract CartesiDAppTest is TestBase {
             LibOutputValidation.getBitMaskPosition(
                 proof.validity.outputIndexWithinInput,
                 _inputIndex
-            )
+            ),
+            abi.encodePacked(uint(1))
         );
 
         // perform call
@@ -248,7 +249,7 @@ contract CartesiDAppTest is TestBase {
         assertEq(executed, false);
 
         // execute voucher - failed
-        vm.expectRevert();
+        vm.expectRevert("ERC20: transfer amount exceeds balance");
         executeVoucher(voucher, proof);
 
         // `wasVoucherExecuted` should still return false
@@ -401,7 +402,8 @@ contract CartesiDAppTest is TestBase {
             LibOutputValidation.getBitMaskPosition(
                 proof.validity.outputIndexWithinInput,
                 _inputIndex
-            )
+            ),
+            abi.encodePacked()
         );
 
         // perform call
@@ -504,7 +506,7 @@ contract CartesiDAppTest is TestBase {
 
         // not able to execute voucher because dapp doesn't have the nft
         assertEq(erc721Token.ownerOf(tokenId), tokenOwner);
-        vm.expectRevert();
+        vm.expectRevert("ERC721: caller is not token owner or approved");
         executeVoucher(voucher, proof);
         assertEq(erc721Token.ownerOf(tokenId), tokenOwner);
 
@@ -519,7 +521,8 @@ contract CartesiDAppTest is TestBase {
             LibOutputValidation.getBitMaskPosition(
                 proof.validity.outputIndexWithinInput,
                 _inputIndex
-            )
+            ),
+            abi.encodePacked()
         );
 
         // perform call
