@@ -29,7 +29,7 @@ contract QuorumFactoryTest is TestBase {
     }
 
     function testNewQuorum(uint256 _numValidators) public {
-        _numValidators = bound(_numValidators,2,50);
+        _numValidators = bound(_numValidators, 2, 50);
         vm.assume(_numValidators >= 2 && _numValidators <= 50);
 
         address[] memory quorumValidators = generateValidators(_numValidators);
@@ -43,14 +43,14 @@ contract QuorumFactoryTest is TestBase {
 
         emit QuorumCreated(quorumValidators, quorum);
 
-        decodeFactoryLogs(quorumValidators, quorum);
+        checkFactoryLogs(quorumValidators, quorum);
     }
 
     function testNewQuorumDeterministic(
         uint256 _numValidators,
         bytes32 _salt
     ) public {
-        _numValidators = bound(_numValidators,2,50);
+        _numValidators = bound(_numValidators, 2, 50);
         vm.assume(_numValidators >= 2 && _numValidators <= 50);
 
         address[] memory quorumValidators = generateValidators(_numValidators);
@@ -78,7 +78,7 @@ contract QuorumFactoryTest is TestBase {
 
         // Precalculated address must match actual address
         assertEq(precalculatedAddress, address(quorum));
-        decodeFactoryLogs(quorumValidators, quorum);
+        checkFactoryLogs(quorumValidators, quorum);
     }
 
     function testAlreadyDeployedNewQuorumDeterministic(
@@ -130,7 +130,7 @@ contract QuorumFactoryTest is TestBase {
         Quorum quorum
     ) internal {
         Vm.Log[] memory entries = vm.getRecordedLogs();
-        uint256 numOfQuorumsCreated; 
+        uint256 numOfQuorumsCreated;
 
         for (uint256 i = 0; i < entries.length; i++) {
             Vm.Log memory entry = entries[i];
@@ -139,7 +139,7 @@ contract QuorumFactoryTest is TestBase {
                 entry.topics[0] == QuorumCreated.selector &&
                 entry.emitter == address(factory)
             ) {
-                ++numOfQuorumsCreated; 
+                ++numOfQuorumsCreated;
                 QuorumCreatedEvent memory quorumEvent;
                 (quorumEvent.quorumValidators, quorumEvent.quorum) = abi.decode(
                     entry.data,
@@ -162,7 +162,7 @@ contract QuorumFactoryTest is TestBase {
 
                 //Compare quorum address
                 assertEq(address(quorum), address(quorumEvent.quorum));
-                assertEq(numOfQuorumsCreated, 1); 
+                assertEq(numOfQuorumsCreated, 1);
             }
         }
     }
