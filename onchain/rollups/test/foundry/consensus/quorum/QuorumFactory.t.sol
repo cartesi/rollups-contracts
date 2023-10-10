@@ -146,19 +146,11 @@ contract QuorumFactoryTest is TestBase {
                     (address[], Quorum)
                 );
 
-                //Validators length in decoded data should match the data passed to the event
-                assertEq(
-                    _quorumValidators.length,
-                    quorumEvent.quorumValidators.length
+                //Check Validators length in decoded data and each validator address
+                checkEq0(
+                    abi.encodePacked(quorumEvent.quorumValidators),
+                    abi.encodePacked(_quorumValidators)
                 );
-
-                //Compare each validator
-                for (uint j = 0; j < quorumEvent.quorumValidators.length; j++) {
-                    assertEq(
-                        _quorumValidators[j],
-                        quorumEvent.quorumValidators[j]
-                    );
-                }
 
                 //Compare quorum address
                 assertEq(address(quorum), address(quorumEvent.quorum));
