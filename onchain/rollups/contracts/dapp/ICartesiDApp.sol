@@ -27,7 +27,8 @@ interface ICartesiDApp {
     /// @notice A voucher was executed from the DApp.
     /// @param voucherId A number that uniquely identifies the voucher
     ///                  amongst all vouchers emitted by this DApp
-    event VoucherExecuted(uint256 voucherId);
+    /// @param returnData The data returned by the execution of the voucher
+    event VoucherExecuted(uint256 voucherId, bytes returnData);
 
     // Permissioned functions
 
@@ -46,8 +47,8 @@ interface ICartesiDApp {
     /// @param _payload The payload, which—in the case of Solidity contracts—encodes a function call
     /// @param _proof The proof used to validate the voucher against
     ///               a claim submitted by the current consensus contract
-    /// @dev No returned value, instead reverts on failure.
-    ///      On a successful execution, emits a `VoucherExecuted` event.
+    /// @dev On a successful execution, emits a `VoucherExecuted` event.
+    ///      On a failed execution, propagates the error data as-is.
     ///      Execution of already executed voucher will raise a `VoucherReexecutionNotAllowed` error.
     function executeVoucher(
         address _destination,

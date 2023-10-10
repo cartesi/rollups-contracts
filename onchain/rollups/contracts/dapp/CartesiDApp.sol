@@ -65,6 +65,7 @@ contract CartesiDApp is
 {
     using Bitmask for mapping(uint256 => uint256);
     using LibOutputValidation for OutputValidityProof;
+    using Address for address;
 
     /// @notice Raised when executing an already executed voucher.
     error VoucherReexecutionNotAllowed();
@@ -134,14 +135,13 @@ contract CartesiDApp is
             revert VoucherReexecutionNotAllowed();
         }
 
-        // execute voucher, handles success and failure internally.
-        // If `_destination` reverts with a revert reason or custom
-        // error, it is bubbled up by this function.
-        Address.functionCall(_destination, _payload);
+        // execute voucher, handles success and failure internally,
+        // propagates any error in case of failure.
+        bytes memory returnData = _destination.functionCall(_payload);
 
-        // Succesfull execution is ensured previously, mark it as executed and emit event
+        // Mark it as executed and emit event
         voucherBitmask.setBit(voucherPosition, true);
-        emit VoucherExecuted(voucherPosition);
+        emit VoucherExecuted(voucherPosition, returnData);
     }
 
     function wasVoucherExecuted(
