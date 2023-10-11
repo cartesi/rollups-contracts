@@ -11,16 +11,23 @@ interface IQuorumFactory {
     // Events
 
     /// @notice A new quorum was deployed.
-    /// @param _validators The initial set of quorum validators
-    /// @param _quorum The quorum
+    /// @param validators The initial set of quorum validators
+    /// @param quorum The quorum
+    /// @param shares The initial distribution of shares amongst validators
+    /// @param history The history contract
     /// @dev MUST be triggered on a successful call to `newQuorum`.
-    event QuorumCreated(address[] _validators, Quorum _quorum);
+    event QuorumCreated(
+        address[] validators,
+        Quorum quorum,
+        uint256[] shares,
+        IHistory history
+    );
 
     // Permissionless functions
 
     /// @notice Deploy a new quorum.
     /// @param _validators The initial set of quorum validators
-    /// @param _shares The initial set of quorum shares
+    /// @param _shares The initial distribution of shares amongst validators
     /// @param _history The history contract
     /// @return The quorum
     /// @dev On success, MUST emit an `QuorumCreated` event.
@@ -32,7 +39,7 @@ interface IQuorumFactory {
 
     /// @notice Deploy a new quorum deterministically.
     /// @param _validators The initial set of quorum validators
-    /// @param _shares The initial set of quorum shares
+    /// @param _shares The initial distribution of shares amongst validators
     /// @param _history The history contract
     /// @param _salt The salt used to deterministically generate the quorum address
     /// @return The quorum
@@ -46,7 +53,7 @@ interface IQuorumFactory {
 
     /// @notice Calculate the address of an quorum to be deployed deterministically.
     /// @param _validators The initial set of quorum validators
-    /// @param _shares The initial set of quorum shares
+    /// @param _shares The initial distribution of shares amongst validators
     /// @param _history The history contract
     /// @param _salt The salt used to deterministically generate the quorum address
     /// @return The deterministic quorum address

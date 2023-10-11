@@ -19,7 +19,7 @@ contract QuorumFactory is IQuorumFactory {
     ) external override returns (Quorum) {
         Quorum quorum = new Quorum(_quorumValidators, _shares, _history);
 
-        emit QuorumCreated(_quorumValidators, quorum);
+        emit QuorumCreated(_quorumValidators, quorum, _shares, _history);
 
         return quorum;
     }
@@ -36,7 +36,7 @@ contract QuorumFactory is IQuorumFactory {
             _history
         );
 
-        emit QuorumCreated(_quorumValidators, quorum);
+        emit QuorumCreated(_quorumValidators, quorum, _shares, _history);
 
         return quorum;
     }

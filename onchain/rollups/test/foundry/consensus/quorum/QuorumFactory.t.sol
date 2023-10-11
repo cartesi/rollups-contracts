@@ -17,11 +17,18 @@ import "forge-std/console.sol";
 contract QuorumFactoryTest is TestBase {
     QuorumFactory factory;
 
-    event QuorumCreated(address[] quorumValidators, Quorum quorum);
+    event QuorumCreated(
+        address[] quorumValidators,
+        Quorum quorum,
+        uint256[] shares,
+        IHistory history
+    );
 
-    struct QuorumCreatedEvent {
+    struct QuorumCreatedEventData {
         address[] quorumValidators;
         Quorum quorum;
+        uint256[] shares;
+        IHistory history;
     }
 
     function setUp() public {
@@ -41,9 +48,9 @@ contract QuorumFactoryTest is TestBase {
 
         Quorum quorum = factory.newQuorum(quorumValidators, shares, history);
 
-        emit QuorumCreated(quorumValidators, quorum);
+        emit QuorumCreated(quorumValidators, quorum, shares, history);
 
-        checkFactoryLogs(quorumValidators, quorum);
+        checkFactoryLogs(quorumValidators, quorum, shares, history);
     }
 
     function testNewQuorumDeterministic(
@@ -74,11 +81,11 @@ contract QuorumFactoryTest is TestBase {
             _salt
         );
 
-        emit QuorumCreated(quorumValidators, quorum);
+        emit QuorumCreated(quorumValidators, quorum, shares, history);
 
         // Precalculated address must match actual address
         assertEq(precalculatedAddress, address(quorum));
-        checkFactoryLogs(quorumValidators, quorum);
+        checkFactoryLogs(quorumValidators, quorum, shares, history);
     }
 
     function testAlreadyDeployedNewQuorumDeterministic(
@@ -120,14 +127,16 @@ contract QuorumFactoryTest is TestBase {
             uint256 share = uint256(
                 keccak256(abi.encodePacked(i, validators[i]))
             ) % 100;
-            shares[i] = (share > 0) ? share : ++share;
+            shares[i] = (share > 0) ? share : share + 1;
         }
         return shares;
     }
 
     function checkFactoryLogs(
         address[] memory _quorumValidators,
-        Quorum quorum
+        Quorum quorum,
+        uint256[] memory _shares,
+        IHistory _history
     ) internal {
         Vm.Log[] memory entries = vm.getRecordedLogs();
         uint256 numOfQuorumsCreated;
@@ -140,22 +149,37 @@ contract QuorumFactoryTest is TestBase {
                 entry.emitter == address(factory)
             ) {
                 ++numOfQuorumsCreated;
-                QuorumCreatedEvent memory quorumEvent;
-                (quorumEvent.quorumValidators, quorumEvent.quorum) = abi.decode(
+
+                QuorumCreatedEventData memory quorumData;
+                (
+                    quorumData.quorumValidators,
+                    quorumData.quorum,
+                    quorumData.shares,
+                    quorumData.history
+                ) = abi.decode(
                     entry.data,
-                    (address[], Quorum)
+                    (address[], Quorum, uint256[], IHistory)
                 );
 
                 //Check Validators length in decoded data and each validator address
                 checkEq0(
-                    abi.encodePacked(quorumEvent.quorumValidators),
+                    abi.encodePacked(quorumData.quorumValidators),
                     abi.encodePacked(_quorumValidators)
                 );
 
+                //Check shares length in decoded data and each share
+                checkEq0(
+                    abi.encodePacked(quorumData.shares),
+                    abi.encodePacked(_shares)
+                );
+
+                //check history address
+                assertEq(address(quorumData.history), address(_history));
+
                 //Compare quorum address
-                assertEq(address(quorum), address(quorumEvent.quorum));
-                assertEq(numOfQuorumsCreated, 1);
+                assertEq(address(quorum), address(quorumData.quorum));
             }
         }
+        assertEq(numOfQuorumsCreated, 1);
     }
 }
