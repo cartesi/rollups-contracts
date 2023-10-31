@@ -13,33 +13,41 @@ import {IHistory} from "../../history/IHistory.sol";
 /// @title Quorum consensus
 /// @notice A consensus model controlled by a small set of addresses, the validators.
 ///         In this version, the validator set is immutable.
-/// @dev This contract uses OpenZeppelin `PaymentSplitter` and `BitMaps`.
+///         Claims are stored in an auxiliary contract called history.
+/// @dev Each validator is assigned an identifier that spans from 1 to N,
+///      where N is the total number of validators in the quorum.
+///      These identifiers are used internally instead of addresses for optimization reasons.
+///      This contract uses OpenZeppelin `PaymentSplitter` and `BitMaps`.
 ///      For more information on those, please consult OpenZeppelin's official documentation.
 contract Quorum is AbstractConsensus, PaymentSplitter {
     using BitMaps for BitMaps.BitMap;
 
+    /// @notice Get the total number of validators.
+    uint256 public immutable numOfValidators;
+
+    /// @notice Get the ID of a validator from its address.
+    /// @dev Only validators have non-zero IDs.
+    mapping(address => uint256) public validatorId;
+
+    /// @notice Get the ID of a validator from its address.
+    /// @dev Validator IDs span from 1 to the total number of validators.
+    ///      Invalid IDs are assigned to the zero address.
+    mapping(uint256 => address) public validatorById;
+
+    /// @notice Voting status of a particular claim.
+    /// @param inFavorCount the number of validators in favor of the claim
+    /// @param inFavorById the IDs of validators in favor of the claim in bitmap format
+    struct VotingStatus {
+        uint256 inFavorCount;
+        BitMaps.BitMap inFavorById;
+    }
+
+    /// @notice The voting status of each claim.
+    mapping(bytes => VotingStatus) internal votingStatuses;
+
     /// @notice The history contract.
     /// @dev See the `getHistory` function.
     IHistory internal immutable history;
-
-    // Quorum members
-    // Map an address to its index in the validator set.
-    // The first validator has index 1. Thus, index 0 means the address is not in the validator set.
-    mapping(address => uint256) public validatorIndex;
-    uint256 public immutable numOfValidators;
-
-    // Quorum votes
-    struct Votes {
-        // how many has voted
-        uint256 count;
-        // use BitMap to record who has voted
-        BitMaps.BitMap votedBitMap;
-    }
-    // Map a claim to struct Votes
-    mapping(bytes => Votes) internal votes;
-
-    /// @notice Raised if not a validator
-    error OnlyValidator();
 
     /// @notice Construct a Quorum consensus
     /// @param _validators the list of validators
@@ -51,11 +59,16 @@ contract Quorum is AbstractConsensus, PaymentSplitter {
         uint256[] memory _shares,
         IHistory _history
     ) PaymentSplitter(_validators, _shares) {
-        // Add the array of validators into the quorum
-        for (uint256 i; i < _validators.length; ++i) {
-            validatorIndex[_validators[i]] = i + 1; // index starts from 1
-        }
         numOfValidators = _validators.length;
+
+        uint256 id = 1;
+        for (uint256 i; i < _validators.length; ++i) {
+            address validator = _validators[i];
+            validatorId[validator] = id;
+            validatorById[id] = validator;
+            ++id;
+        }
+
         history = _history;
     }
 
@@ -69,23 +82,97 @@ contract Quorum is AbstractConsensus, PaymentSplitter {
     ///      and the `Quorum` contract must have ownership over
     ///      its current history contract.
     function submitClaim(bytes calldata _claimData) external {
-        // only validators can submit claims
-        uint256 index = validatorIndex[msg.sender];
-        if (index == 0) {
-            revert OnlyValidator();
-        }
+        uint256 id = validatorId[msg.sender];
+        require(id != 0, "Quorum: sender is not validator");
 
-        // If the msg.sender hasn't submitted the same claim before
-        Votes storage claimVotes = votes[_claimData];
-        if (!claimVotes.votedBitMap.get(index)) {
-            claimVotes.votedBitMap.set(index);
+        VotingStatus storage votingStatus = votingStatuses[_claimData];
+        BitMaps.BitMap storage inFavorById = votingStatus.inFavorById;
+
+        if (!inFavorById.get(id)) {
+            // If validator hasn't voted yet, cast their vote
+            inFavorById.set(id);
 
             // If this claim has now just over half of the quorum's votes,
             // then we can submit it to the history contract.
-            if (++claimVotes.count == 1 + numOfValidators / 2) {
+            if (++votingStatus.inFavorCount == 1 + numOfValidators / 2) {
                 history.submitClaim(_claimData);
             }
         }
+    }
+
+    /// @notice Get an array with the IDs of all validators.
+    /// @return Array of IDs of validators
+    function validatorIds() external view returns (uint256[] memory) {
+        uint256[] memory array = new uint256[](numOfValidators);
+
+        uint256 id = 1;
+        for (uint256 i; i < numOfValidators; ++i) {
+            array[i] = id;
+            ++id;
+        }
+
+        return array;
+    }
+
+    /// @notice Get an array with the addresses of all validators.
+    /// @return Array of addresses of validators
+    function validators() external view returns (address[] memory) {
+        address[] memory array = new address[](numOfValidators);
+
+        uint256 id = 1;
+        for (uint256 i; i < numOfValidators; ++i) {
+            array[i] = validatorById[id];
+            ++id;
+        }
+
+        return array;
+    }
+
+    /// @notice Get the number of validator in favor of a claim.
+    /// @param _claimData Data for submitting a claim
+    /// @return Number of validator in favor of claim.
+    function numOfValidatorsInFavorOf(
+        bytes calldata _claimData
+    ) external view returns (uint256) {
+        VotingStatus storage votingStatus = votingStatuses[_claimData];
+        return votingStatus.inFavorCount;
+    }
+
+    /// @notice Check whether a validator is in favor of a claim.
+    /// @param _validatorId The ID of the validator
+    /// @param _claimData Data for submitting a claim
+    /// @return Array of addresses of validators in favor of claim
+    /// @dev Assumes the provided ID is valid
+    function isValidatorInFavorOf(
+        uint256 _validatorId,
+        bytes calldata _claimData
+    ) external view returns (bool) {
+        VotingStatus storage votingStatus = votingStatuses[_claimData];
+        BitMaps.BitMap storage inFavorById = votingStatus.inFavorById;
+        return inFavorById.get(_validatorId);
+    }
+
+    /// @notice Get an array with the addresses of all validators in favor of a claim.
+    /// @param _claimData Data for submitting a claim
+    /// @return Array of addresses of validators in favor of claim
+    function validatorsInFavorOf(
+        bytes calldata _claimData
+    ) external view returns (address[] memory) {
+        VotingStatus storage votingStatus = votingStatuses[_claimData];
+        BitMaps.BitMap storage inFavorById = votingStatus.inFavorById;
+
+        uint256 validatorsLeft = votingStatus.inFavorCount;
+        address[] memory array = new address[](validatorsLeft);
+
+        uint256 id = 1;
+        while (validatorsLeft > 0) {
+            if (inFavorById.get(id)) {
+                array[--validatorsLeft] = validatorById[id];
+            }
+            ++id;
+        }
+
+        return array;
     }
 
     /// @notice Get the history contract.
