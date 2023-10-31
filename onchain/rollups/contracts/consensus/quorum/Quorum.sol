@@ -25,11 +25,11 @@ contract Quorum is AbstractConsensus, PaymentSplitter {
     /// @notice Get the total number of validators.
     uint256 public immutable numOfValidators;
 
-    /// @notice Get the ID of a validator from its address.
+    /// @notice Get the ID of a validator by its address.
     /// @dev Only validators have non-zero IDs.
     mapping(address => uint256) public validatorId;
 
-    /// @notice Get the ID of a validator from its address.
+    /// @notice Get the address of a validator by its ID.
     /// @dev Validator IDs span from 1 to the total number of validators.
     ///      Invalid IDs are assigned to the zero address.
     mapping(uint256 => address) public validatorById;
@@ -127,7 +127,7 @@ contract Quorum is AbstractConsensus, PaymentSplitter {
     /// @notice Check whether a validator is in favor of a claim.
     /// @param _validatorId The ID of the validator
     /// @param _claimData Data for submitting a claim
-    /// @return Array of addresses of validators in favor of claim
+    /// @return Whether validator is in favor of claim
     /// @dev Assumes the provided ID is valid
     function isValidatorInFavorOf(
         uint256 _validatorId,
