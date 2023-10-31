@@ -100,20 +100,6 @@ contract Quorum is AbstractConsensus, PaymentSplitter {
         }
     }
 
-    /// @notice Get an array with the IDs of all validators.
-    /// @return Array of IDs of validators
-    function validatorIds() external view returns (uint256[] memory) {
-        uint256[] memory array = new uint256[](numOfValidators);
-
-        uint256 id = 1;
-        for (uint256 i; i < numOfValidators; ++i) {
-            array[i] = id;
-            ++id;
-        }
-
-        return array;
-    }
-
     /// @notice Get an array with the addresses of all validators.
     /// @return Array of addresses of validators
     function validators() external view returns (address[] memory) {
