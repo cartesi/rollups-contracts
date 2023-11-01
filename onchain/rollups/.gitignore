@@ -12,5 +12,15 @@
 /dist
 /export/artifacts
 /forge-cache
+/node_modules
 /out
 /src/types
+
+# Follows https://yarnpkg.com/getting-started/qa#which-files-should-be-gitignored and not using Zero-Installs feature
+.pnp.*
+.yarn/*
+!.yarn/patches
+!.yarn/plugins
+!.yarn/releases
+!.yarn/sdks
+!.yarn/versions
