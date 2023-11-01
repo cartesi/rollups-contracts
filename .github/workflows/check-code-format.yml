@@ -1,5 +1,5 @@
-# yaml-language-server: $schema=https://json.schemastore.org/github-workflow.json
 name: Check code format
+
 on:
   push:
     paths:
@@ -14,9 +14,14 @@ jobs:
         working-directory: onchain/rollups
 
     steps:
-      - uses: actions/checkout@v3
-      - uses: actions/setup-node@v1
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
         with:
           node-version: 18
-      - run: yarn install
-      - run: yarn fmt:check
+
+      - name: Install dependencies
+        run: yarn install
+
+      - name: Check code format
+        run: yarn fmt:check

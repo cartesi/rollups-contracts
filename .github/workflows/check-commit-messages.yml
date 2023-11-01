@@ -1,11 +1,12 @@
-# yaml-language-server: $schema=https://json.schemastore.org/github-workflow.json
 name: Check commit messages
+
 on: [push]
+
 jobs:
   check-commit-messages:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-22.04
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
         with:
           fetch-depth: 0
 

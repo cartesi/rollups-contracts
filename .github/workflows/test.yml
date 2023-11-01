@@ -1,16 +1,16 @@
-# yaml-language-server: $schema=https://json.schemastore.org/github-workflow.json
-name: Build
+name: Test
+
 on:
   pull_request:
   push:
-    tags:
-      - v*
     branches:
       - main
       - release/*
+
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
+
 jobs:
   test:
     runs-on: ubuntu-22.04
@@ -19,17 +19,15 @@ jobs:
         working-directory: onchain/rollups
 
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
         with:
           submodules: recursive
 
-      - uses: actions/setup-node@v3
+      - uses: actions/setup-node@v4
         with:
           node-version: 18
 
       - uses: foundry-rs/foundry-toolchain@v1
-        with:
-          version: nightly # FIXME: wait for the next monthly pinned binaries
 
       - name: Install dependencies
         run: yarn install
