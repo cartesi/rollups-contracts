@@ -27,8 +27,9 @@ contract ERC20Portal is InputRelay, IERC20Portal {
     ) external override {
         bool success = _token.transferFrom(msg.sender, _dapp, _amount);
 
+        require(success, "Portal: ERC20 deposit failed");
+
         bytes memory input = InputEncoding.encodeERC20Deposit(
-            success,
             _token,
             msg.sender,
             _amount,

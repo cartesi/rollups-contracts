@@ -122,8 +122,7 @@ contract ERC20PortalTest is Test {
         token = new NormalToken(_amount);
 
         // Construct the ERC-20 deposit input
-        bytes memory input = abi.encodePacked(
-            true,
+        bytes memory input = InputEncoding.encodeERC20Deposit(
             token,
             alice,
             _amount,
@@ -166,15 +165,6 @@ contract ERC20PortalTest is Test {
         // Create untransferable token
         token = new UntransferableToken(_amount);
 
-        // Construct the ERC-20 deposit input
-        bytes memory input = abi.encodePacked(
-            false,
-            token,
-            alice,
-            _amount,
-            _data
-        );
-
         // Start impersonating Alice
         vm.startPrank(alice);
 
@@ -183,21 +173,18 @@ contract ERC20PortalTest is Test {
         uint256 dappBalanceBefore = token.balanceOf(dapp);
         uint256 portalBalanceBefore = token.balanceOf(address(portal));
 
-        // Expect InputAdded to be emitted with the right arguments
-        vm.expectEmit(true, true, false, true, address(inputBox));
-        emit InputAdded(dapp, 0, address(portal), input);
-
         // Transfer ERC-20 tokens to the DApp via the portal
+        vm.expectRevert("Portal: ERC20 deposit failed");
         portal.depositERC20Tokens(token, dapp, _amount, _data);
         vm.stopPrank();
 
-        // Check the balances after the deposit
+        // Same balances as before
         assertEq(token.balanceOf(alice), aliceBalanceBefore);
         assertEq(token.balanceOf(dapp), dappBalanceBefore);
         assertEq(token.balanceOf(address(portal)), portalBalanceBefore);
 
-        // Check the DApp's input box
-        assertEq(inputBox.getNumberOfInputs(dapp), 1);
+        // No input added
+        assertEq(inputBox.getNumberOfInputs(dapp), 0);
     }
 
     function testRevertsInsufficientAllowance(

@@ -31,14 +31,12 @@ library InputEncoding {
     }
 
     /// @notice Encode an ERC-20 token deposit.
-    /// @param ret The return value of `transferFrom`
     /// @param token The token contract
     /// @param sender The token sender
     /// @param amount The amount of tokens being sent
     /// @param execLayerData Additional data to be interpreted by the execution layer
     /// @return The encoded input
     function encodeERC20Deposit(
-        bool ret,
         IERC20 token,
         address sender,
         uint256 amount,
@@ -46,7 +44,6 @@ library InputEncoding {
     ) internal pure returns (bytes memory) {
         return
             abi.encodePacked(
-                ret, //                 1B
                 token, //               20B
                 sender, //              20B
                 amount, //              32B
