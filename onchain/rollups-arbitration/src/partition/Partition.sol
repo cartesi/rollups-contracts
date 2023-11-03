@@ -78,7 +78,7 @@ library Partition {
         WaitingHash memory waitingHash =
             advancePartition(waitingInterval, agree);
 
-        require(mustEndPartition(waitingHash), "can't end partition yet");
+        require(mustEndPartition(waitingHash), "cant end partition yet");
 
         return Divergence(
             waitingHash.agreePoint,
