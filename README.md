@@ -34,29 +34,27 @@ This repository uses [Yarn](https://yarnpkg.com/getting-started/install) to mana
 In order to install them, please, run the following commands.
 
 ```sh
-cd onchain
+cd onchain/rollups
 yarn install
 ```
 
 ## Tests
 
 If you plan to run the [Forge](https://book.getfoundry.sh/getting-started/installation) tests, there still some setup left to do.
-Assuming you are on the `onchain` directory, and that [Docker Engine](https://docs.docker.com/get-docker/) is running on the background, you may run the following commands.
+Assuming you are on the `onchain/rollups` directory, and that [Docker Engine](https://docs.docker.com/get-docker/) is running on the background, you may run the following command.
+This command will build the Cartesi Machine image necessary to build the proofs.
 
 ```sh
-cd rollups
 yarn proofs:setup
 ```
 
 Now, you may run the tests!
-Assuming you are on the `onchain/rollups` directory, please, run the following command.
 
 ```sh
 yarn test
 ```
 
-From now on, after any change in the source code, you may need to update the proofs used in the tests.
-Assuming you are on the `onchain/rollups` directory, you would do this by running the following command.
+From this point on, after any change in the source code, you can update the proofs before running the tests again with the following command.
 
 ```sh
 yarn proofs:update
