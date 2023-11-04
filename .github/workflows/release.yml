@@ -37,6 +37,7 @@ jobs:
         with:
           commit: "chore: version packages"
           publish: yarn changeset publish
+          cwd: onchain/rollups
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
