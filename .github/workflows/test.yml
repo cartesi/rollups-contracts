@@ -37,3 +37,6 @@ jobs:
 
       - name: Run tests
         run: yarn test
+
+      - name: Upload signatures
+        run: forge selectors upload --all
