@@ -304,7 +304,9 @@ contract ERC20PortalHandler is Test {
         if (
             _dapp == address(0) ||
             sender == address(0) ||
-            _dapp == address(this)
+            _dapp == address(this) ||
+            sender == address(portal) ||
+            _dapp == address(portal)
         ) return;
         _amount = bound(_amount, 0, token.balanceOf(address(this)));
 

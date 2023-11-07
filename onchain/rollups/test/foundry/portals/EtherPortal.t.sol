@@ -160,6 +160,10 @@ contract EtherPortalHandler is Test {
         _amount = bound(_amount, 0, type(uint128).max);
 
         // fund sender
+        // sender address should not overlap with portal or dapp addresses
+        if (sender == address(portal)) {
+            return;
+        }
         for (uint256 i; i < dapps.length; ++i) {
             if (sender == dapps[i]) {
                 return;
