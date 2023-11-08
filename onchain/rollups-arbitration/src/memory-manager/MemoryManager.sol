@@ -112,12 +112,15 @@ library MemoryManager {
         AccessProof.RollingHash currentRollingHash =
             AccessProof.initialRollingHash();
 
-        for (uint i = 0; i < slots.length; i++) {
+        for (uint i; i < slots.length;) {
             currentRollingHash = AccessProof.nextRollingHash(
                 currentRollingHash,
                 slots[i],
                 isReads.isOne(i)
             );
+            unchecked {
+                ++i;
+            }
         }
 
         return currentRollingHash.eq(finalRollingHash);
