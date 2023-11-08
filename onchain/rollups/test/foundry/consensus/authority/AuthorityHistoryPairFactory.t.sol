@@ -15,7 +15,7 @@ import {History} from "contracts/history/History.sol";
 import {IHistory} from "contracts/history/IHistory.sol";
 import {Vm} from "forge-std/Vm.sol";
 
-contract AuthorityFactoryTest is Test {
+contract AuthorityHistoryPairFactoryTest is Test {
     AuthorityFactory authorityFactory;
     HistoryFactory historyFactory;
     AuthorityHistoryPairFactory factory;
