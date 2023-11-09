@@ -129,7 +129,7 @@ graph TD
 
 ### Input Box
 
-This module is the one responsible for receiving inputs from users that want to interact with DApps. For each DApp, the module keeps an append-only list of hashes. Each hash is derived from the input and some metadata, such as the input sender, and the block timestamp. All the data needed to recontstruct a hash is available forever on-chain. As a result, one does not need to trust data providers in order to sync the off-chain machine with the latest input. Note that this module is completely permissionless, and we leave the off-chain machine to judge whether an input is valid or not.
+This module is the one responsible for receiving inputs from users that want to interact with DApps. For each DApp, the module keeps an append-only list of hashes. Each hash is derived from the input and some metadata, such as the input sender, and the block timestamp. All the data needed to reconstruct a hash is available forever on-chain. As a result, one does not need to trust data providers in order to sync the off-chain machine with the latest input. Note that this module is completely permissionless, and we leave the off-chain machine to judge whether an input is valid or not.
 
 ### Cartesi DApp
 
@@ -203,7 +203,7 @@ As an example, the voucher for a simple ERC-20 transfer (2nd line in the table a
 ```
 
 [^1]: If the DApp owns the tokens, prefer to use `transfer(address,uint256)`
-[^2]: If no data is being passed as argument, prefer to use `safeTransferFrom(address,address,uint256)`
+[^2]: If no data is being passed as an argument, prefer to use `safeTransferFrom(address,address,uint256)`
 [^3]: If only one token is being transferred, prefer to use `safeTransferFrom(address,address,uint256,uint256,data)`
 
 ### DApp Address Relay
@@ -218,7 +218,7 @@ Notices are informational statements that can be proved by contracts in the base
 
 ### Consensus
 
-This module is responsible for providing valid claims to DApps after reaching some form of consensus. The module's interface aims to be as generic as possible to accomodate any consensus model, since there are plenty to choose from. The way claims are encoded and stored is abstracted entirely by the interface. Implementation-wise, this is left to a History contract.
+This module is responsible for providing valid claims to DApps after reaching some form of consensus. The module's interface aims to be as generic as possible to accommodate any consensus model, since there are plenty to choose from. The way claims are encoded and stored is abstracted entirely by the interface. Implementation-wise, this is left to a History contract.
 
 The only type of consensus that is currently implemented by Cartesi is called Authority. It is owned by a single address, who has complete power over the consensus. It is arguably the simplest consensus to implement, although quite vulnerable.
 
@@ -236,9 +236,9 @@ The code for rollups dispute resolution is not being published yet, but a big pa
 
 ## Experimenting
 
-To get a taste on how to use Cartesi to develop your DApp, check the following resources:
+To get a taste of how to use Cartesi to develop your DApp, check the following resources:
 See Cartesi Rollups in action with the Simple Echo Examples in [C++](https://github.com/cartesi/rollups-examples/tree/main/echo-cpp), [JavaScript](https://github.com/cartesi/rollups-examples/tree/main/echo-js), [Lua](https://github.com/cartesi/rollups-examples/tree/main/echo-lua), [Rust](https://github.com/cartesi/rollups-examples/tree/main/echo-rust) and [Python](https://github.com/cartesi/rollups-examples/tree/main/echo-python).
-To have a glimpse on how to develop your DApp locally using your favorite IDE and tools check our Host Environment in the [Rollups Examples](https://github.com/cartesi/rollups-examples) repository.
+To have a glimpse of how to develop your DApp locally using your favorite IDE and tools check our Host Environment in the [Rollups Examples](https://github.com/cartesi/rollups-examples) repository.
 
 ## Talk with us
 
