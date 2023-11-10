@@ -2,4 +2,6 @@
 "@cartesi/rollups": major
 ---
 
-The ERC-20 portal now reverts whenever `transferFrom` returns `false`, instead of propagating this information to the DApp back-end. This change aims to prevent developers from accepting failed ERC-20 transfers. As a result, ERC-20 deposit inputs no longer contains the boolean `success` field.
+Removed the `success` field from ERC-20 deposit inputs.
+This change was made to avoid confusion, since the ERC-20 portal guarantees this field to be `true`.
+Consumers of this input (such as DApp back-ends and front-ends, high-level frameworks and explorers) should update their decoding schema accordingly.
