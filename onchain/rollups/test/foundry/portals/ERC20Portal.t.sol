@@ -146,13 +146,7 @@ contract ERC20PortalTest is Test {
         token = new NormalToken(alice, _amount);
 
         // Construct the ERC-20 deposit input
-        bytes memory input = abi.encodePacked(
-            true,
-            token,
-            alice,
-            _amount,
-            _data
-        );
+        bytes memory input = abi.encodePacked(token, alice, _amount, _data);
 
         vm.startPrank(alice);
 
