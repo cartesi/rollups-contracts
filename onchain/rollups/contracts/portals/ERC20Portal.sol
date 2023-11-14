@@ -31,7 +31,6 @@ contract ERC20Portal is InputRelay, IERC20Portal {
         _token.safeTransferFrom(msg.sender, _dapp, _amount);
 
         bytes memory input = InputEncoding.encodeERC20Deposit(
-            true,
             _token,
             msg.sender,
             _amount,
