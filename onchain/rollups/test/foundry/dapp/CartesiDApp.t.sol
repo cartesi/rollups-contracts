@@ -139,8 +139,7 @@ contract CartesiDAppTest is TestBase {
             _numInputsAfter
         );
 
-        bool ret = validateNotice(notice, proof);
-        assertEq(ret, true);
+        validateNotice(notice, proof);
 
         // reverts if notice is incorrect
         bytes memory falseNotice = abi.encodePacked(bytes4(0xdeaddead));
@@ -188,10 +187,9 @@ contract CartesiDAppTest is TestBase {
         );
 
         // perform call
-        bool success = executeVoucher(voucher, proof);
+        executeVoucher(voucher, proof);
 
         // check result
-        assertEq(success, true);
         assertEq(
             erc20Token.balanceOf(address(dapp)),
             dappInitBalance - transferAmount
@@ -216,8 +214,7 @@ contract CartesiDAppTest is TestBase {
         erc20Token.transfer(address(dapp), dappInitBalance);
 
         // 1st execution attempt should succeed
-        bool success = executeVoucher(voucher, proof);
-        assertEq(success, true);
+        executeVoucher(voucher, proof);
 
         // 2nd execution attempt should fail
         vm.expectRevert(CartesiDApp.VoucherReexecutionNotAllowed.selector);
@@ -264,8 +261,7 @@ contract CartesiDAppTest is TestBase {
         uint256 dappInitBalance = 100;
         vm.prank(tokenOwner);
         erc20Token.transfer(address(dapp), dappInitBalance);
-        bool success = executeVoucher(voucher, proof);
-        assertEq(success, true);
+        executeVoucher(voucher, proof);
 
         // after executing voucher, `wasVoucherExecuted` should return true
         executed = dapp.wasVoucherExecuted(
@@ -408,10 +404,9 @@ contract CartesiDAppTest is TestBase {
         );
 
         // perform call
-        bool success = executeVoucher(voucher, proof);
+        executeVoucher(voucher, proof);
 
         // check result
-        assertEq(success, true);
         assertEq(address(dapp).balance, dappInitBalance - transferAmount);
         assertEq(address(recipient).balance, transferAmount);
 
@@ -527,10 +522,9 @@ contract CartesiDAppTest is TestBase {
         );
 
         // perform call
-        bool success = executeVoucher(voucher, proof);
+        executeVoucher(voucher, proof);
 
         // check result
-        assertEq(success, true);
         assertEq(erc721Token.ownerOf(tokenId), address(erc721Receiver));
 
         // cannot execute the same voucher again
@@ -815,15 +809,15 @@ contract CartesiDAppTest is TestBase {
     function validateNotice(
         bytes memory notice,
         Proof memory proof
-    ) internal view returns (bool) {
-        return dapp.validateNotice(notice, proof);
+    ) internal view {
+        dapp.validateNotice(notice, proof);
     }
 
     function executeVoucher(
         Voucher memory voucher,
         Proof memory proof
-    ) internal returns (bool) {
-        return dapp.executeVoucher(voucher.destination, voucher.payload, proof);
+    ) internal {
+        dapp.executeVoucher(voucher.destination, voucher.payload, proof);
     }
 
     function calculateEpochHash(

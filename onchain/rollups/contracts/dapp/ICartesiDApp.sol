@@ -39,22 +39,19 @@ interface ICartesiDApp {
     // Permissionless functions
 
     /// @notice Try to execute a voucher.
-    ///
-    /// Reverts if voucher was already successfully executed.
-    ///
+    /// Reverts if the proof is invalid.
+    /// Reverts if the voucher was already successfully executed.
+    /// Propagates any error raised by the low-level call.
     /// @param _destination The address that will receive the payload through a message call
     /// @param _payload The payload, which—in the case of Solidity contracts—encodes a function call
     /// @param _proof The proof used to validate the voucher against
     ///               a claim submitted by the current consensus contract
-    /// @return Whether the execution was successful or not
     /// @dev On a successful execution, emits a `VoucherExecuted` event.
-    ///      On a failed execution, propagates any error as-is.
-    ///      Execution of already executed voucher will raise a `VoucherReexecutionNotAllowed` error.
     function executeVoucher(
         address _destination,
         bytes calldata _payload,
         Proof calldata _proof
-    ) external returns (bool);
+    ) external;
 
     /// @notice Check whether a voucher has been executed.
     /// @param _inputIndex The index of the input in the input box
@@ -66,13 +63,14 @@ interface ICartesiDApp {
     ) external view returns (bool);
 
     /// @notice Validate a notice.
+    /// Reverts if the proof is invalid.
     /// @param _notice The notice
-    /// @param _proof Data for validating outputs
-    /// @return Whether the notice is valid or not
+    /// @param _proof The proof used to validate the notice against
+    ///               a claim submitted by the current consensus contract
     function validateNotice(
         bytes calldata _notice,
         Proof calldata _proof
-    ) external view returns (bool);
+    ) external view;
 
     /// @notice Get the DApp's template hash.
     /// @return The DApp's template hash

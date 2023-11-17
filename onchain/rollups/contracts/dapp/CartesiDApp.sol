@@ -106,7 +106,7 @@ contract CartesiDApp is
         address _destination,
         bytes calldata _payload,
         Proof calldata _proof
-    ) external override nonReentrant returns (bool) {
+    ) external override nonReentrant {
         bytes32 epochHash;
         uint256 firstInputIndex;
         uint256 lastInputIndex;
@@ -141,8 +141,6 @@ contract CartesiDApp is
         // mark it as executed and emit event
         voucherBitmask.setBit(voucherPosition, true);
         emit VoucherExecuted(voucherPosition);
-
-        return true;
     }
 
     function wasVoucherExecuted(
@@ -165,7 +163,7 @@ contract CartesiDApp is
     function validateNotice(
         bytes calldata _notice,
         Proof calldata _proof
-    ) external view override returns (bool) {
+    ) external view override {
         bytes32 epochHash;
         uint256 firstInputIndex;
         uint256 lastInputIndex;
@@ -182,8 +180,6 @@ contract CartesiDApp is
 
         // reverts if proof isn't valid
         _proof.validity.validateNotice(_notice, epochHash);
-
-        return true;
     }
 
     /// @notice Retrieve a claim about the DApp from the current consensus.
