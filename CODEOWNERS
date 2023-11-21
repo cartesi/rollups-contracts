@@ -1,2 +1,3 @@
 CODEOWNERS @guidanoli
 /.github/workflows/ @guidanoli
+/onchain/rollups/package.json @pedroargento
