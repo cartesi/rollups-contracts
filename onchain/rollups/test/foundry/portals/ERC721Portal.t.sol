@@ -14,6 +14,8 @@ import {IInputBox} from "contracts/inputs/IInputBox.sol";
 import {InputBox} from "contracts/inputs/InputBox.sol";
 import {InputEncoding} from "contracts/common/InputEncoding.sol";
 
+import {EvmAdvanceEncoder} from "../util/EvmAdvanceEncoder.sol";
+
 contract NormalToken is ERC721 {
     constructor(
         address _tokenOwner,
@@ -89,12 +91,7 @@ contract ERC721PortalTest is Test {
     address alice;
     address dapp;
 
-    event InputAdded(
-        address indexed dapp,
-        uint256 indexed inputIndex,
-        address sender,
-        bytes input
-    );
+    event InputAdded(address indexed dapp, uint256 indexed index, bytes input);
     event Transfer(
         address indexed from,
         address indexed to,
@@ -130,11 +127,16 @@ contract ERC721PortalTest is Test {
         token = new NormalToken(alice, _tokenId);
 
         // Construct the ERC-721 deposit input
-        bytes memory input = abi.encodePacked(
+        bytes memory payload = abi.encodePacked(
             token,
             alice,
             _tokenId,
             abi.encode(_baseLayerData, _execLayerData)
+        );
+        bytes memory input = EvmAdvanceEncoder.encode(
+            address(portal),
+            0,
+            payload
         );
 
         // Start impersonating Alice
@@ -152,7 +154,7 @@ contract ERC721PortalTest is Test {
 
         // Expect InputAdded to be emitted with the right arguments
         vm.expectEmit(true, true, false, true, address(inputBox));
-        emit InputAdded(dapp, 0, address(portal), input);
+        emit InputAdded(dapp, 0, input);
 
         // Transfer ERC-721 tokens to the DApp via the portal
         portal.depositERC721Token(
@@ -184,11 +186,16 @@ contract ERC721PortalTest is Test {
         token = new NormalToken(alice, _tokenId);
 
         // Construct the ERC-721 deposit input
-        bytes memory input = abi.encodePacked(
+        bytes memory payload = abi.encodePacked(
             token,
             alice,
             _tokenId,
             abi.encode(_baseLayerData, _execLayerData)
+        );
+        bytes memory input = EvmAdvanceEncoder.encode(
+            address(portal),
+            0,
+            payload
         );
 
         // Start impersonating Alice
@@ -206,7 +213,7 @@ contract ERC721PortalTest is Test {
 
         // Expect InputAdded to be emitted with the right arguments
         vm.expectEmit(true, true, false, true, address(inputBox));
-        emit InputAdded(dapp, 0, address(portal), input);
+        emit InputAdded(dapp, 0, input);
 
         // Transfer ERC-721 tokens to the DApp via the portal
         portal.depositERC721Token(
@@ -301,11 +308,16 @@ contract ERC721PortalTest is Test {
         token = new NormalToken(alice, _tokenId);
 
         // Construct the ERC-721 deposit input
-        bytes memory input = abi.encodePacked(
+        bytes memory payload = abi.encodePacked(
             token,
             alice,
             _tokenId,
             abi.encode(_baseLayerData, _execLayerData)
+        );
+        bytes memory input = EvmAdvanceEncoder.encode(
+            address(portal),
+            0,
+            payload
         );
 
         // Start impersonating Alice
@@ -333,7 +345,7 @@ contract ERC721PortalTest is Test {
 
         // Expect InputAdded to be emitted with the right arguments
         vm.expectEmit(true, true, false, true, address(inputBox));
-        emit InputAdded(dapp, 0, address(portal), input);
+        emit InputAdded(dapp, 0, input);
 
         // Deposit token in DApp's account
         portal.depositERC721Token(

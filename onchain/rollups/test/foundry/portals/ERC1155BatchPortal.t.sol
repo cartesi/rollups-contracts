@@ -12,6 +12,9 @@ import {IERC1155} from "@openzeppelin/contracts/token/ERC1155/IERC1155.sol";
 import {IERC1155Receiver} from "@openzeppelin/contracts/token/ERC1155/IERC1155Receiver.sol";
 import {IInputBox} from "contracts/inputs/IInputBox.sol";
 import {InputBox} from "contracts/inputs/InputBox.sol";
+import {InputEncoding} from "contracts/common/InputEncoding.sol";
+
+import {EvmAdvanceEncoder} from "../util/EvmAdvanceEncoder.sol";
 
 contract BatchToken is ERC1155 {
     constructor(
@@ -71,6 +74,7 @@ contract ERC1155BatchPortalTest is Test {
         uint256[] ids,
         uint256[] values
     );
+    event InputAdded(address indexed dapp, uint256 indexed index, bytes input);
 
     function setUp() public {
         inputBox = new InputBox();
@@ -105,6 +109,23 @@ contract ERC1155BatchPortalTest is Test {
         // Expect TransferBatch to be emitted with the right arguments
         vm.expectEmit(true, true, true, true);
         emit TransferBatch(address(portal), alice, dapp, tokenIds, values);
+
+        // Expect InputAdded to be emitted with the right arguments
+        bytes memory payload = this.encodeBatchERC1155Deposit(
+            token,
+            alice,
+            tokenIds,
+            values,
+            baseLayerData,
+            execLayerData
+        );
+        bytes memory input = EvmAdvanceEncoder.encode(
+            address(portal),
+            0,
+            payload
+        );
+        vm.expectEmit(true, true, false, true, address(inputBox));
+        emit InputAdded(dapp, 0, input);
 
         portal.depositBatchERC1155Token(
             token,
@@ -180,6 +201,23 @@ contract ERC1155BatchPortalTest is Test {
         // Expect TransferBatch to be emitted with the right arguments
         vm.expectEmit(true, true, true, true);
         emit TransferBatch(address(portal), alice, dapp, tokenIds, values);
+
+        // Expect InputAdded to be emitted with the right arguments
+        bytes memory payload = this.encodeBatchERC1155Deposit(
+            token,
+            alice,
+            tokenIds,
+            values,
+            baseLayerData,
+            execLayerData
+        );
+        bytes memory input = EvmAdvanceEncoder.encode(
+            address(portal),
+            0,
+            payload
+        );
+        vm.expectEmit(true, true, false, true, address(inputBox));
+        emit InputAdded(dapp, 0, input);
 
         portal.depositBatchERC1155Token(
             token,
@@ -261,6 +299,25 @@ contract ERC1155BatchPortalTest is Test {
             values[i] = (value <= totalSupplies[i]) ? value : totalSupplies[i];
         }
         return values;
+    }
+
+    function encodeBatchERC1155Deposit(
+        IERC1155 _token,
+        address _sender,
+        uint256[] calldata _tokenIds,
+        uint256[] calldata _values,
+        bytes calldata _baseLayerData,
+        bytes calldata _execLayerData
+    ) external pure returns (bytes memory) {
+        return
+            InputEncoding.encodeBatchERC1155Deposit(
+                _token,
+                _sender,
+                _tokenIds,
+                _values,
+                _baseLayerData,
+                _execLayerData
+            );
     }
 }
 

@@ -4,16 +4,17 @@
 pragma solidity ^0.8.8;
 
 import {IInputBox} from "./IInputBox.sol";
-import {LibInput} from "../library/LibInput.sol";
+import {CanonicalMachine} from "../common/CanonicalMachine.sol";
+import {Inputs} from "../common/Inputs.sol";
 
 /// @title Input Box
 ///
-/// @notice Trustless and permissionless contract that receives arbitrary blobs
-/// (called "inputs") from anyone and adds a compound hash to an append-only list
+/// @notice Trustless and permissionless contract that receives arbitrary
+/// data from anyone and adds a compound hash to an append-only list
 /// (called "input box"). Each DApp has its own input box.
 ///
-/// The hash that is stored on-chain is composed by the hash of the input blob,
-/// the block number and timestamp, the input sender address, and the input index.
+/// The input blob is composed of the address of the input sender,
+/// the block number and timestamp, the input index and payload.
 ///
 /// Data availability is guaranteed by the emission of `InputAdded` events
 /// on every successful call to `addInput`. This ensures that inputs can be
@@ -23,30 +24,33 @@ import {LibInput} from "../library/LibInput.sol";
 /// From the perspective of this contract, inputs are encoding-agnostic byte
 /// arrays. It is up to the DApp to interpret, validate and act upon inputs.
 contract InputBox is IInputBox {
+    using CanonicalMachine for CanonicalMachine.Log2Size;
+
     /// @notice Mapping from DApp address to list of input hashes.
     /// @dev See the `getNumberOfInputs`, `getInputHash` and `addInput` functions.
     mapping(address => bytes32[]) internal inputBoxes;
 
     function addInput(
         address _dapp,
-        bytes calldata _input
+        bytes calldata _payload
     ) external override returns (bytes32) {
         bytes32[] storage inputBox = inputBoxes[_dapp];
-        uint256 inputIndex = inputBox.length;
+        uint256 index = inputBox.length;
 
-        bytes32 inputHash = LibInput.computeInputHash(
-            msg.sender,
-            block.number,
-            block.timestamp,
-            _input,
-            inputIndex
+        bytes memory input = abi.encodeCall(
+            Inputs.EvmAdvance,
+            (msg.sender, block.number, block.timestamp, index, _payload)
         );
 
-        // add input to the input box
+        if (input.length > CanonicalMachine.INPUT_MAX_SIZE) {
+            revert InputSizeExceedsLimit();
+        }
+
+        bytes32 inputHash = keccak256(input);
+
         inputBox.push(inputHash);
 
-        // block.number and timestamp can be retrieved by the event metadata itself
-        emit InputAdded(_dapp, inputIndex, msg.sender, _input);
+        emit InputAdded(_dapp, index, input);
 
         return inputHash;
     }

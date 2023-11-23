@@ -30,13 +30,13 @@ contract ERC20Portal is InputRelay, IERC20Portal {
     ) external override {
         _token.safeTransferFrom(msg.sender, _dapp, _amount);
 
-        bytes memory input = InputEncoding.encodeERC20Deposit(
+        bytes memory payload = InputEncoding.encodeERC20Deposit(
             _token,
             msg.sender,
             _amount,
             _execLayerData
         );
 
-        inputBox.addInput(_dapp, input);
+        inputBox.addInput(_dapp, payload);
     }
 }

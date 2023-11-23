@@ -11,16 +11,13 @@ import {IInputBox} from "contracts/inputs/IInputBox.sol";
 import {InputBox} from "contracts/inputs/InputBox.sol";
 import {InputEncoding} from "contracts/common/InputEncoding.sol";
 
+import {EvmAdvanceEncoder} from "../util/EvmAdvanceEncoder.sol";
+
 contract DAppAddressRelayTest is Test {
     IInputBox inputBox;
     IDAppAddressRelay relay;
 
-    event InputAdded(
-        address indexed dapp,
-        uint256 indexed inputIndex,
-        address sender,
-        bytes input
-    );
+    event InputAdded(address indexed dapp, uint256 indexed index, bytes input);
 
     function setUp() public {
         inputBox = new InputBox();
@@ -36,11 +33,16 @@ contract DAppAddressRelayTest is Test {
         assertEq(inputBox.getNumberOfInputs(_dapp), 0);
 
         // Construct the DApp address relay input
-        bytes memory input = abi.encodePacked(_dapp);
+        bytes memory payload = abi.encodePacked(_dapp);
+        bytes memory input = EvmAdvanceEncoder.encode(
+            address(relay),
+            0,
+            payload
+        );
 
         // Expect InputAdded to be emitted with the right arguments
         vm.expectEmit(true, true, false, true, address(inputBox));
-        emit InputAdded(_dapp, 0, address(relay), input);
+        emit InputAdded(_dapp, 0, input);
 
         // Relay the DApp's address
         relay.relayDAppAddress(_dapp);

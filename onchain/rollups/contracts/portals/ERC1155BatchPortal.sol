@@ -35,7 +35,7 @@ contract ERC1155BatchPortal is InputRelay, IERC1155BatchPortal {
             _baseLayerData
         );
 
-        bytes memory input = InputEncoding.encodeBatchERC1155Deposit(
+        bytes memory payload = InputEncoding.encodeBatchERC1155Deposit(
             _token,
             msg.sender,
             _tokenIds,
@@ -44,6 +44,6 @@ contract ERC1155BatchPortal is InputRelay, IERC1155BatchPortal {
             _execLayerData
         );
 
-        inputBox.addInput(_dapp, input);
+        inputBox.addInput(_dapp, payload);
     }
 }

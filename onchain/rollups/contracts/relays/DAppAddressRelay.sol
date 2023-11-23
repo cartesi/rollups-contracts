@@ -18,7 +18,7 @@ contract DAppAddressRelay is InputRelay, IDAppAddressRelay {
     constructor(IInputBox _inputBox) InputRelay(_inputBox) {}
 
     function relayDAppAddress(address _dapp) external override {
-        bytes memory input = InputEncoding.encodeDAppAddressRelay(_dapp);
-        inputBox.addInput(_dapp, input);
+        bytes memory payload = InputEncoding.encodeDAppAddressRelay(_dapp);
+        inputBox.addInput(_dapp, payload);
     }
 }

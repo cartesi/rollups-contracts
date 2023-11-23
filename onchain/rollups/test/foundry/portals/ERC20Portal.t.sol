@@ -11,6 +11,9 @@ import {ERC20} from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {IInputBox} from "contracts/inputs/IInputBox.sol";
 import {InputBox} from "contracts/inputs/InputBox.sol";
+import {InputEncoding} from "contracts/common/InputEncoding.sol";
+
+import {EvmAdvanceEncoder} from "../util/EvmAdvanceEncoder.sol";
 
 contract NormalToken is ERC20 {
     constructor(
@@ -117,12 +120,7 @@ contract ERC20PortalTest is Test {
     address alice;
     address dapp;
 
-    event InputAdded(
-        address indexed dapp,
-        uint256 indexed inputIndex,
-        address sender,
-        bytes input
-    );
+    event InputAdded(address indexed dapp, uint256 indexed index, bytes input);
     event WatchedTransfer(
         address from,
         address to,
@@ -146,7 +144,17 @@ contract ERC20PortalTest is Test {
         token = new NormalToken(alice, _amount);
 
         // Construct the ERC-20 deposit input
-        bytes memory input = abi.encodePacked(token, alice, _amount, _data);
+        bytes memory payload = InputEncoding.encodeERC20Deposit(
+            token,
+            alice,
+            _amount,
+            _data
+        );
+        bytes memory input = EvmAdvanceEncoder.encode(
+            address(portal),
+            0,
+            payload
+        );
 
         vm.startPrank(alice);
 
@@ -160,7 +168,7 @@ contract ERC20PortalTest is Test {
 
         // Expect InputAdded to be emitted with the right arguments
         vm.expectEmit(true, true, false, true, address(inputBox));
-        emit InputAdded(dapp, 0, address(portal), input);
+        emit InputAdded(dapp, 0, input);
 
         // Transfer ERC-20 tokens to the DApp via the portal
         portal.depositERC20Tokens(token, dapp, _amount, _data);

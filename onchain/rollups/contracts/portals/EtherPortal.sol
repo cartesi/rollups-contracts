@@ -32,12 +32,12 @@ contract EtherPortal is InputRelay, IEtherPortal {
             revert EtherTransferFailed();
         }
 
-        bytes memory input = InputEncoding.encodeEtherDeposit(
+        bytes memory payload = InputEncoding.encodeEtherDeposit(
             msg.sender,
             msg.value,
             _execLayerData
         );
 
-        inputBox.addInput(_dapp, input);
+        inputBox.addInput(_dapp, payload);
     }
 }

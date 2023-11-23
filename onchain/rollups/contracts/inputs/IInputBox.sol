@@ -5,28 +5,25 @@ pragma solidity ^0.8.8;
 
 /// @title Input Box interface
 interface IInputBox {
+    /// @notice Raised when input is larger than the machine limit.
+    error InputSizeExceedsLimit();
+
     /// @notice Emitted when an input is added to a DApp's input box.
     /// @param dapp The address of the DApp
-    /// @param inputIndex The index of the input in the input box
-    /// @param sender The address that sent the input
-    /// @param input The contents of the input
+    /// @param index The index of the input in the DApp's input box
+    /// @param input The input blob
     /// @dev MUST be triggered on a successful call to `addInput`.
-    event InputAdded(
-        address indexed dapp,
-        uint256 indexed inputIndex,
-        address sender,
-        bytes input
-    );
+    event InputAdded(address indexed dapp, uint256 indexed index, bytes input);
 
     /// @notice Add an input to a DApp's input box.
     /// @param _dapp The address of the DApp
-    /// @param _input The contents of the input
-    /// @return The hash of the input plus some extra metadata
+    /// @param _payload The input payload
+    /// @return The hash of the input blob
     /// @dev MUST fire an `InputAdded` event accordingly.
     ///      Input larger than machine limit will raise `InputSizeExceedsLimit` error.
     function addInput(
         address _dapp,
-        bytes calldata _input
+        bytes calldata _payload
     ) external returns (bytes32);
 
     /// @notice Get the number of inputs in a DApp's input box.

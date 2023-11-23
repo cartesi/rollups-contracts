@@ -35,7 +35,7 @@ contract ERC1155SinglePortal is InputRelay, IERC1155SinglePortal {
             _baseLayerData
         );
 
-        bytes memory input = InputEncoding.encodeSingleERC1155Deposit(
+        bytes memory payload = InputEncoding.encodeSingleERC1155Deposit(
             _token,
             msg.sender,
             _tokenId,
@@ -44,6 +44,6 @@ contract ERC1155SinglePortal is InputRelay, IERC1155SinglePortal {
             _execLayerData
         );
 
-        inputBox.addInput(_dapp, input);
+        inputBox.addInput(_dapp, payload);
     }
 }
