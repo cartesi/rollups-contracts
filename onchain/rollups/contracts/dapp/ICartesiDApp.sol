@@ -40,16 +40,15 @@ interface ICartesiDApp {
 
     /// @notice Try to execute a voucher.
     /// Reverts if the proof is invalid.
+    /// Reverts if the output is malformed.
     /// Reverts if the voucher was already successfully executed.
     /// Propagates any error raised by the low-level call.
-    /// @param _destination The address that will receive the payload through a message call
-    /// @param _payload The payload, which—in the case of Solidity contracts—encodes a function call
+    /// @param _output The output blob
     /// @param _proof The proof used to validate the voucher against
     ///               a claim submitted by the current consensus contract
     /// @dev On a successful execution, emits a `VoucherExecuted` event.
     function executeVoucher(
-        address _destination,
-        bytes calldata _payload,
+        bytes calldata _output,
         Proof calldata _proof
     ) external;
 
@@ -63,12 +62,13 @@ interface ICartesiDApp {
     ) external view returns (bool);
 
     /// @notice Validate a notice.
+    /// Reverts if output is malformed.
     /// Reverts if the proof is invalid.
-    /// @param _notice The notice
+    /// @param _output The output blob
     /// @param _proof The proof used to validate the notice against
     ///               a claim submitted by the current consensus contract
     function validateNotice(
-        bytes calldata _notice,
+        bytes calldata _output,
         Proof calldata _proof
     ) external view;
 

@@ -10,7 +10,7 @@ import {CartesiDApp} from "contracts/dapp/CartesiDApp.sol";
 import {Proof} from "contracts/dapp/ICartesiDApp.sol";
 import {IConsensus} from "contracts/consensus/IConsensus.sol";
 import {OutputValidityProof, LibOutputValidation} from "contracts/library/LibOutputValidation.sol";
-import {OutputEncoding} from "contracts/common/OutputEncoding.sol";
+import {Outputs} from "contracts/common/Outputs.sol";
 
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {IERC721} from "@openzeppelin/contracts/token/ERC721/IERC721.sol";
@@ -142,7 +142,7 @@ contract CartesiDAppTest is TestBase {
         validateNotice(notice, proof);
 
         // reverts if notice is incorrect
-        bytes memory falseNotice = abi.encodePacked(bytes4(0xdeaddead));
+        bytes memory falseNotice = bytes("foobar");
         vm.expectRevert(
             LibOutputValidation.IncorrectOutputHashesRootHash.selector
         );
@@ -282,7 +282,7 @@ contract CartesiDAppTest is TestBase {
             _numInputsAfter
         );
 
-        proof.validity.vouchersEpochRootHash = bytes32(uint256(0xdeadbeef));
+        proof.validity.outputsEpochRootHash = bytes32(uint256(0xdeadbeef));
 
         vm.expectRevert(LibOutputValidation.IncorrectEpochHash.selector);
         executeVoucher(voucher, proof);
@@ -716,15 +716,31 @@ contract CartesiDAppTest is TestBase {
         );
     }
 
+    function encodeVoucher(
+        Voucher memory voucher
+    ) internal pure returns (bytes memory) {
+        return
+            abi.encodeCall(
+                Outputs.Voucher,
+                (voucher.destination, voucher.payload)
+            );
+    }
+
+    function encodeNotice(
+        bytes memory notice
+    ) internal pure returns (bytes memory) {
+        return abi.encodeCall(Outputs.Notice, (notice));
+    }
+
     function writeInputs() internal {
         for (uint256 i; i < outputEnums.length; ++i) {
             LibServerManager.OutputEnum outputEnum = outputEnums[i];
             if (outputEnum == LibServerManager.OutputEnum.VOUCHER) {
                 Voucher memory voucher = getVoucher(i);
-                writeInput(i, voucher.destination, voucher.payload);
+                writeInput(i, noticeSender, encodeVoucher(voucher));
             } else {
                 bytes memory notice = getNotice(i);
-                writeInput(i, noticeSender, notice);
+                writeInput(i, noticeSender, encodeNotice(notice));
             }
         }
     }
@@ -810,14 +826,14 @@ contract CartesiDAppTest is TestBase {
         bytes memory notice,
         Proof memory proof
     ) internal view {
-        dapp.validateNotice(notice, proof);
+        dapp.validateNotice(encodeNotice(notice), proof);
     }
 
     function executeVoucher(
         Voucher memory voucher,
         Proof memory proof
     ) internal {
-        dapp.executeVoucher(voucher.destination, voucher.payload, proof);
+        dapp.executeVoucher(encodeVoucher(voucher), proof);
     }
 
     function calculateEpochHash(
@@ -825,9 +841,8 @@ contract CartesiDAppTest is TestBase {
     ) internal pure returns (bytes32) {
         return
             keccak256(
-                abi.encodePacked(
-                    _validity.vouchersEpochRootHash,
-                    _validity.noticesEpochRootHash,
+                abi.encode(
+                    _validity.outputsEpochRootHash,
                     _validity.machineStateHash
                 )
             );
@@ -850,7 +865,7 @@ contract CartesiDAppTest is TestBase {
         uint256 _numInputsAfter
     ) internal returns (Proof memory) {
         uint256 inputIndexWithinEpoch = uint256(_outputName);
-        Proof memory proof = getVoucherProof(inputIndexWithinEpoch);
+        Proof memory proof = getNoticeProof(inputIndexWithinEpoch);
         mockConsensus(_inputIndex, _numInputsAfter, proof);
         return proof;
     }
@@ -912,8 +927,7 @@ contract CartesiDAppTest is TestBase {
                 inputIndexWithinEpoch: uint64(v.inputIndexWithinEpoch),
                 outputIndexWithinInput: uint64(v.outputIndexWithinInput),
                 outputHashesRootHash: v.outputHashesRootHash,
-                vouchersEpochRootHash: v.vouchersEpochRootHash,
-                noticesEpochRootHash: v.noticesEpochRootHash,
+                outputsEpochRootHash: v.noticesEpochRootHash,
                 machineStateHash: v.machineStateHash,
                 outputHashInOutputHashesSiblings: v
                     .outputHashInOutputHashesSiblings,
