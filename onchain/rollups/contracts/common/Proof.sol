@@ -4,12 +4,12 @@
 pragma solidity ^0.8.8;
 
 import {OutputValidityProof} from "./OutputValidityProof.sol";
+import {InputRange} from "./InputRange.sol";
 
 /// @notice Data for validating outputs.
 /// @param validity A validity proof for the output
-/// @param context Data for querying the right claim from the current consensus contract
-/// @dev The encoding of `context` might vary depending on the implementation of the consensus contract.
+/// @param inputRange The range of inputs accepted during the epoch
 struct Proof {
     OutputValidityProof validity;
-    bytes context;
+    InputRange inputRange;
 }

@@ -5,10 +5,14 @@
 pragma solidity ^0.8.8;
 
 import {AbstractConsensus} from "contracts/consensus/AbstractConsensus.sol";
+import {InputRange} from "contracts/common/InputRange.sol";
 
 contract SimpleConsensus is AbstractConsensus {
-    function getClaim(
+    function submitClaim(
         address,
-        bytes calldata
-    ) external view returns (bytes32, uint256, uint256) {}
+        InputRange calldata,
+        bytes32
+    ) external pure override {
+        revert("SimpleConsensus: cannot submit claim");
+    }
 }

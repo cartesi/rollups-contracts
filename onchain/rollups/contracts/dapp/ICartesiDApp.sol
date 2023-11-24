@@ -11,9 +11,18 @@ import {IInputBox} from "../inputs/IInputBox.sol";
 import {IInputRelay} from "../inputs/IInputRelay.sol";
 import {OutputValidityProof} from "../common/OutputValidityProof.sol";
 import {Proof} from "../common/Proof.sol";
+import {InputRange} from "../common/InputRange.sol";
 
 /// @title Cartesi DApp interface
 interface ICartesiDApp is IERC721Receiver, IERC1155Receiver {
+    // Errors
+
+    /// @notice Could not validate an output because
+    /// the input that generated it is outside the given input range.
+    /// @param inputIndex The input index
+    /// @param inputRange The input range
+    error InputIndexOutOfRange(uint256 inputIndex, InputRange inputRange);
+
     // Events
 
     /// @notice The DApp has migrated to another consensus contract.
