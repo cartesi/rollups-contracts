@@ -4,55 +4,52 @@
 /// @title Authority Test
 pragma solidity ^0.8.8;
 
-import {TestBase} from "../../util/TestBase.sol";
-import {Authority} from "contracts/consensus/authority/Authority.sol";
-import {IHistory} from "contracts/history/IHistory.sol";
 import {Vm} from "forge-std/Vm.sol";
 import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
 
-contract HistoryReverts is IHistory {
-    function submitClaim(bytes calldata) external pure override {
-        revert();
-    }
+import {Authority} from "contracts/consensus/authority/Authority.sol";
+import {IConsensus} from "contracts/consensus/IConsensus.sol";
+import {InputRange} from "contracts/common/InputRange.sol";
+import {LibInputRange} from "contracts/library/LibInputRange.sol";
 
-    function migrateToConsensus(address) external pure override {
-        revert();
-    }
-
-    function getClaim(
-        address,
-        bytes calldata
-    ) external pure override returns (bytes32, uint256, uint256) {
-        revert();
-    }
-}
+import {TestBase} from "../../util/TestBase.sol";
 
 contract AuthorityTest is TestBase {
-    Authority authority;
+    using LibInputRange for InputRange;
 
-    // events
     event OwnershipTransferred(
         address indexed previousOwner,
         address indexed newOwner
     );
-    event NewHistory(IHistory history);
-    event ApplicationJoined(address application);
 
-    function testConstructor(address _owner) public {
-        vm.assume(_owner != address(0));
+    event ClaimSubmission(
+        address indexed submitter,
+        address indexed dapp,
+        InputRange inputRange,
+        bytes32 epochHash
+    );
+
+    event ClaimAcceptance(
+        address indexed dapp,
+        InputRange inputRange,
+        bytes32 epochHash
+    );
+
+    function testConstructor(address owner) public {
+        vm.assume(owner != address(0));
 
         vm.expectEmit(true, true, false, false);
-        emit OwnershipTransferred(address(0), _owner);
+        emit OwnershipTransferred(address(0), owner);
 
         vm.recordLogs();
 
-        authority = new Authority(_owner);
+        Authority authority = new Authority(owner);
 
         Vm.Log[] memory entries = vm.getRecordedLogs();
 
         assertEq(entries.length, 1, "number of events");
 
-        assertEq(authority.owner(), _owner, "authority owner");
+        assertEq(authority.owner(), owner, "authority owner");
     }
 
     function testRevertsOwnerAddressZero() public {
@@ -65,227 +62,96 @@ contract AuthorityTest is TestBase {
         new Authority(address(0));
     }
 
-    function testMigrateHistory(
-        address _owner,
-        IHistory _history,
-        address _newConsensus
-    ) public isMockable(address(_history)) {
-        vm.assume(_owner != address(0));
-        vm.assume(_owner != address(this));
-        vm.assume(_newConsensus != address(0));
+    function testSubmitClaimRevertsCallerNotOwner(
+        address owner,
+        address notOwner,
+        address dapp,
+        InputRange calldata inputRange,
+        bytes32 epochHash
+    ) public {
+        vm.assume(owner != address(0));
+        vm.assume(owner != notOwner);
+        vm.assume(!inputRange.isEmptySet());
 
-        authority = new Authority(_owner);
+        Authority authority = new Authority(owner);
 
-        vm.prank(_owner);
-        authority.setHistory(_history);
-
-        vm.assume(address(_history) != address(authority));
-        vm.mockCall(
-            address(_history),
-            abi.encodeWithSelector(
-                IHistory.migrateToConsensus.selector,
-                _newConsensus
-            ),
-            ""
-        );
-
-        // will fail as not called from owner
         vm.expectRevert(
             abi.encodeWithSelector(
                 Ownable.OwnableUnauthorizedAccount.selector,
-                address(this)
+                notOwner
             )
         );
-        authority.migrateHistoryToConsensus(_newConsensus);
 
-        vm.expectCall(
-            address(_history),
+        vm.prank(notOwner);
+        authority.submitClaim(dapp, inputRange, epochHash);
+    }
+
+    function testSubmitClaimRevertsInputRangeIsEmptySet(
+        address owner,
+        address dapp,
+        InputRange calldata inputRange,
+        bytes32 epochHash
+    ) public {
+        vm.assume(owner != address(0));
+        vm.assume(inputRange.isEmptySet());
+
+        Authority authority = new Authority(owner);
+
+        vm.expectRevert(
             abi.encodeWithSelector(
-                IHistory.migrateToConsensus.selector,
-                _newConsensus
+                IConsensus.InputRangeIsEmptySet.selector,
+                dapp,
+                inputRange,
+                epochHash
             )
         );
 
-        // can only be called by owner
-        vm.prank(_owner);
-        authority.migrateHistoryToConsensus(_newConsensus);
+        vm.prank(owner);
+        authority.submitClaim(dapp, inputRange, epochHash);
     }
 
     function testSubmitClaim(
-        address _owner,
-        IHistory _history,
-        bytes calldata _claim
-    ) public isMockable(address(_history)) {
-        vm.assume(_owner != address(0));
-        vm.assume(_owner != address(this));
-
-        authority = new Authority(_owner);
-
-        vm.prank(_owner);
-        authority.setHistory(_history);
-
-        vm.assume(address(_history) != address(authority));
-        vm.mockCall(
-            address(_history),
-            abi.encodeWithSelector(IHistory.submitClaim.selector, _claim),
-            ""
-        );
-
-        // will fail as not called from owner
-        vm.expectRevert(
-            abi.encodeWithSelector(
-                Ownable.OwnableUnauthorizedAccount.selector,
-                address(this)
-            )
-        );
-        authority.submitClaim(_claim);
-
-        vm.expectCall(
-            address(_history),
-            abi.encodeWithSelector(IHistory.submitClaim.selector, _claim)
-        );
-
-        // can only be called by owner
-        vm.prank(_owner);
-        authority.submitClaim(_claim);
-    }
-
-    function testSetHistory(
-        address _owner,
-        IHistory _history,
-        IHistory _newHistory
+        address owner,
+        address dapp,
+        InputRange calldata inputRange,
+        bytes32 epochHash1,
+        bytes32 epochHash2
     ) public {
-        vm.assume(_owner != address(0));
-        vm.assume(_owner != address(this));
+        vm.assume(owner != address(0));
+        vm.assume(!inputRange.isEmptySet());
 
-        authority = new Authority(_owner);
+        Authority authority = new Authority(owner);
 
-        vm.prank(_owner);
-        vm.expectEmit(false, false, false, true);
-        emit NewHistory(_history);
-        authority.setHistory(_history);
+        // First claim
 
-        // before setting new history
-        assertEq(address(authority.getHistory()), address(_history));
+        expectClaimEvents(authority, owner, dapp, inputRange, epochHash1);
 
-        // set new history
-        // will fail as not called from owner
-        vm.expectRevert(
-            abi.encodeWithSelector(
-                Ownable.OwnableUnauthorizedAccount.selector,
-                address(this)
-            )
-        );
-        authority.setHistory(_newHistory);
+        vm.prank(owner);
+        authority.submitClaim(dapp, inputRange, epochHash1);
 
-        // can only be called by owner
-        vm.prank(_owner);
-        // expect event NewHistory
-        vm.expectEmit(false, false, false, true);
-        emit NewHistory(_newHistory);
-        authority.setHistory(_newHistory);
+        assertEq(authority.getEpochHash(dapp, inputRange), epochHash1);
 
-        // after setting new history
-        assertEq(address(authority.getHistory()), address(_newHistory));
+        // Second claim
+
+        expectClaimEvents(authority, owner, dapp, inputRange, epochHash2);
+
+        vm.prank(owner);
+        authority.submitClaim(dapp, inputRange, epochHash2);
+
+        assertEq(authority.getEpochHash(dapp, inputRange), epochHash2);
     }
 
-    function testGetClaim(
-        address _owner,
-        IHistory _history,
-        address _dapp,
-        bytes calldata _proofContext,
-        bytes32 _r0,
-        uint256 _r1,
-        uint256 _r2
-    ) public isMockable(address(_history)) {
-        vm.assume(_owner != address(0));
-        vm.assume(_owner != address(this));
+    function expectClaimEvents(
+        Authority authority,
+        address owner,
+        address dapp,
+        InputRange calldata inputRange,
+        bytes32 epochHash
+    ) internal {
+        vm.expectEmit(true, true, false, true, address(authority));
+        emit ClaimSubmission(owner, dapp, inputRange, epochHash);
 
-        authority = new Authority(_owner);
-
-        vm.prank(_owner);
-        authority.setHistory(_history);
-
-        // mocking history
-        vm.assume(address(_history) != address(authority));
-        vm.mockCall(
-            address(_history),
-            abi.encodeWithSelector(
-                IHistory.getClaim.selector,
-                _dapp,
-                _proofContext
-            ),
-            abi.encode(_r0, _r1, _r2)
-        );
-
-        vm.expectCall(
-            address(_history),
-            abi.encodeWithSelector(
-                IHistory.getClaim.selector,
-                _dapp,
-                _proofContext
-            )
-        );
-
-        // perform call
-        (bytes32 r0, uint256 r1, uint256 r2) = authority.getClaim(
-            _dapp,
-            _proofContext
-        );
-
-        // check result
-        assertEq(_r0, r0);
-        assertEq(_r1, r1);
-        assertEq(_r2, r2);
-    }
-
-    // test behaviors when history reverts
-    function testHistoryReverts(
-        address _owner,
-        IHistory _newHistory,
-        address _dapp,
-        bytes calldata _claim,
-        address _consensus,
-        bytes calldata _proofContext
-    ) public {
-        vm.assume(_owner != address(0));
-
-        HistoryReverts historyR = new HistoryReverts();
-
-        authority = new Authority(_owner);
-
-        vm.prank(_owner);
-        authority.setHistory(historyR);
-        assertEq(address(authority.getHistory()), address(historyR));
-
-        vm.expectRevert();
-        vm.prank(_owner);
-        authority.submitClaim(_claim);
-
-        vm.expectRevert();
-        vm.prank(_owner);
-        authority.migrateHistoryToConsensus(_consensus);
-
-        vm.expectRevert();
-        authority.getClaim(_dapp, _proofContext);
-
-        vm.prank(_owner);
-        authority.setHistory(_newHistory);
-        assertEq(address(authority.getHistory()), address(_newHistory));
-    }
-
-    function testJoin(address _owner, IHistory _history, address _dapp) public {
-        vm.assume(_owner != address(0));
-
-        authority = new Authority(_owner);
-
-        vm.prank(_owner);
-        authority.setHistory(_history);
-
-        vm.expectEmit(false, false, false, true);
-        emit ApplicationJoined(_dapp);
-
-        vm.prank(_dapp);
-        authority.join();
+        vm.expectEmit(true, false, false, true, address(authority));
+        emit ClaimAcceptance(dapp, inputRange, epochHash);
     }
 }
