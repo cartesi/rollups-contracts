@@ -18,6 +18,7 @@ import {IERC721} from "@openzeppelin/contracts/token/ERC721/IERC721.sol";
 import {IERC721Receiver} from "@openzeppelin/contracts/token/ERC721/IERC721Receiver.sol";
 
 import {LibServerManager} from "../util/LibServerManager.sol";
+import {LibBytes} from "../util/LibBytes.sol";
 import {SimpleConsensus} from "../util/SimpleConsensus.sol";
 import {SimpleERC20} from "../util/SimpleERC20.sol";
 import {SimpleERC721} from "../util/SimpleERC721.sol";
@@ -73,17 +74,16 @@ contract CartesiDAppTest is TestBase {
 
     bytes encodedFinishEpochResponse;
 
-    uint256 constant initialSupply = 1000000;
-    uint256 constant transferAmount = 7;
-    uint256 constant tokenId = uint256(keccak256("tokenId"));
-    IInputBox constant inputBox =
-        IInputBox(address(bytes20(keccak256("inputBox"))));
-    address constant dappOwner = address(bytes20(keccak256("dappOwner")));
-    address constant tokenOwner = address(bytes20(keccak256("tokenOwner")));
-    address constant recipient = address(bytes20(keccak256("recipient")));
-    address constant noticeSender = address(bytes20(keccak256("noticeSender")));
-    bytes32 constant salt = keccak256("salt");
-    bytes32 constant templateHash = keccak256("templateHash");
+    IInputBox immutable inputBox;
+    address immutable dappOwner;
+    address immutable noticeSender;
+    address immutable recipient;
+    address immutable tokenOwner;
+    bytes32 immutable salt;
+    bytes32 immutable templateHash;
+    uint256 immutable initialSupply;
+    uint256 immutable tokenId;
+    uint256 immutable transferAmount;
 
     event VoucherExecuted(uint256 voucherPosition);
     event OwnershipTransferred(
@@ -91,6 +91,21 @@ contract CartesiDAppTest is TestBase {
         address indexed newOwner
     );
     event NewConsensus(IConsensus newConsensus);
+
+    constructor() {
+        dappOwner = LibBytes.hashToAddress("dappOwner");
+        initialSupply = LibBytes.hashToUint256("initialSupply");
+        inputBox = IInputBox(LibBytes.hashToAddress("inputBox"));
+        noticeSender = LibBytes.hashToAddress("noticeSender");
+        recipient = LibBytes.hashToAddress("recipient");
+        salt = keccak256("salt");
+        templateHash = keccak256("templateHash");
+        tokenId = LibBytes.hashToUint256("tokenId");
+        tokenOwner = LibBytes.hashToAddress("tokenOwner");
+        transferAmount =
+            LibBytes.hashToUint256("transferAmount") %
+            (initialSupply + 1);
+    }
 
     function setUp() public {
         deployContracts();
@@ -161,9 +176,12 @@ contract CartesiDAppTest is TestBase {
     // test vouchers
 
     function testExecuteVoucherAndEvent(
+        uint256 _dappInitBalance,
         uint256 _inputIndex,
         uint256 _numInputsAfter
     ) public {
+        _dappInitBalance = boundBalance(_dappInitBalance);
+
         Voucher memory voucher = getVoucher(OutputName.ERC20TransferVoucher);
         Proof memory proof = setupVoucherProof(
             OutputName.ERC20TransferVoucher,
@@ -180,10 +198,9 @@ contract CartesiDAppTest is TestBase {
         assertEq(erc20Token.balanceOf(recipient), 0);
 
         // fund dapp
-        uint256 dappInitBalance = 100;
         vm.prank(tokenOwner);
-        erc20Token.transfer(address(dapp), dappInitBalance);
-        assertEq(erc20Token.balanceOf(address(dapp)), dappInitBalance);
+        erc20Token.transfer(address(dapp), _dappInitBalance);
+        assertEq(erc20Token.balanceOf(address(dapp)), _dappInitBalance);
         assertEq(erc20Token.balanceOf(recipient), 0);
 
         // expect event
@@ -201,15 +218,18 @@ contract CartesiDAppTest is TestBase {
         // check result
         assertEq(
             erc20Token.balanceOf(address(dapp)),
-            dappInitBalance - transferAmount
+            _dappInitBalance - transferAmount
         );
         assertEq(erc20Token.balanceOf(recipient), transferAmount);
     }
 
     function testRevertsReexecution(
+        uint256 _dappInitBalance,
         uint256 _inputIndex,
         uint256 _numInputsAfter
     ) public {
+        _dappInitBalance = boundBalance(_dappInitBalance);
+
         Voucher memory voucher = getVoucher(OutputName.ERC20TransferVoucher);
         Proof memory proof = setupVoucherProof(
             OutputName.ERC20TransferVoucher,
@@ -218,9 +238,8 @@ contract CartesiDAppTest is TestBase {
         );
 
         // fund dapp
-        uint256 dappInitBalance = 100;
         vm.prank(tokenOwner);
-        erc20Token.transfer(address(dapp), dappInitBalance);
+        erc20Token.transfer(address(dapp), _dappInitBalance);
 
         // 1st execution attempt should succeed
         executeVoucher(voucher, proof);
@@ -232,15 +251,18 @@ contract CartesiDAppTest is TestBase {
         // end result should be the same as executing successfully only once
         assertEq(
             erc20Token.balanceOf(address(dapp)),
-            dappInitBalance - transferAmount
+            _dappInitBalance - transferAmount
         );
         assertEq(erc20Token.balanceOf(recipient), transferAmount);
     }
 
     function testWasVoucherExecuted(
+        uint256 _dappInitBalance,
         uint128 _inputIndex,
         uint128 _numInputsAfter
     ) public {
+        _dappInitBalance = boundBalance(_dappInitBalance);
+
         Voucher memory voucher = getVoucher(OutputName.ERC20TransferVoucher);
         Proof memory proof = setupVoucherProof(
             OutputName.ERC20TransferVoucher,
@@ -267,9 +289,8 @@ contract CartesiDAppTest is TestBase {
         assertEq(executed, false);
 
         // execute voucher - succeeded
-        uint256 dappInitBalance = 100;
         vm.prank(tokenOwner);
-        erc20Token.transfer(address(dapp), dappInitBalance);
+        erc20Token.transfer(address(dapp), _dappInitBalance);
         executeVoucher(voucher, proof);
 
         // after executing voucher, `wasVoucherExecuted` should return true
@@ -379,9 +400,12 @@ contract CartesiDAppTest is TestBase {
     // test ether transfer
 
     function testEtherTransfer(
+        uint256 _dappInitBalance,
         uint256 _inputIndex,
         uint256 _numInputsAfter
     ) public {
+        _dappInitBalance = boundBalance(_dappInitBalance);
+
         Voucher memory voucher = getVoucher(OutputName.ETHWithdrawalVoucher);
         Proof memory proof = setupVoucherProof(
             OutputName.ETHWithdrawalVoucher,
@@ -398,9 +422,8 @@ contract CartesiDAppTest is TestBase {
         assertEq(address(recipient).balance, 0);
 
         // fund dapp
-        uint256 dappInitBalance = 100;
-        vm.deal(address(dapp), dappInitBalance);
-        assertEq(address(dapp).balance, dappInitBalance);
+        vm.deal(address(dapp), _dappInitBalance);
+        assertEq(address(dapp).balance, _dappInitBalance);
         assertEq(address(recipient).balance, 0);
 
         // expect event
@@ -416,7 +439,7 @@ contract CartesiDAppTest is TestBase {
         executeVoucher(voucher, proof);
 
         // check result
-        assertEq(address(dapp).balance, dappInitBalance - transferAmount);
+        assertEq(address(dapp).balance, _dappInitBalance - transferAmount);
         assertEq(address(recipient).balance, transferAmount);
 
         // cannot execute the same voucher again
@@ -972,5 +995,9 @@ contract CartesiDAppTest is TestBase {
             ),
             abi.encode(epochHash, firstInputIndex, lastInputIndex)
         );
+    }
+
+    function boundBalance(uint256 _balance) internal view returns (uint256) {
+        return bound(_balance, transferAmount, initialSupply);
     }
 }
