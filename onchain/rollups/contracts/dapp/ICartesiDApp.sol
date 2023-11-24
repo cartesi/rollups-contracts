@@ -3,22 +3,14 @@
 
 pragma solidity ^0.8.8;
 
+import {IERC1155Receiver} from "@openzeppelin/contracts/token/ERC1155/IERC1155Receiver.sol";
+import {IERC721Receiver} from "@openzeppelin/contracts/token/ERC721/IERC721Receiver.sol";
+
 import {IConsensus} from "../consensus/IConsensus.sol";
 import {IInputBox} from "../inputs/IInputBox.sol";
 import {IInputRelay} from "../inputs/IInputRelay.sol";
 import {OutputValidityProof} from "../common/OutputValidityProof.sol";
-
-import {IERC721Receiver} from "@openzeppelin/contracts/token/ERC721/IERC721Receiver.sol";
-import {IERC1155Receiver} from "@openzeppelin/contracts/token/ERC1155/IERC1155Receiver.sol";
-
-/// @notice Data for validating outputs.
-/// @param validity A validity proof for the output
-/// @param context Data for querying the right claim from the current consensus contract
-/// @dev The encoding of `context` might vary depending on the implementation of the consensus contract.
-struct Proof {
-    OutputValidityProof validity;
-    bytes context;
-}
+import {Proof} from "../common/Proof.sol";
 
 /// @title Cartesi DApp interface
 interface ICartesiDApp is IERC721Receiver, IERC1155Receiver {
