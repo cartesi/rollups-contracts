@@ -3,12 +3,14 @@
 
 pragma solidity ^0.8.8;
 
-import {ICartesiDApp, Proof} from "./ICartesiDApp.sol";
+import {ICartesiDApp} from "./ICartesiDApp.sol";
 import {IConsensus} from "../consensus/IConsensus.sol";
 import {IInputBox} from "../inputs/IInputBox.sol";
 import {IInputRelay} from "../inputs/IInputRelay.sol";
 import {LibOutputValidation} from "../library/LibOutputValidation.sol";
 import {OutputValidityProof} from "../common/OutputValidityProof.sol";
+import {Proof} from "../common/Proof.sol";
+
 import {Bitmask} from "@cartesi/util/contracts/Bitmask.sol";
 
 import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";

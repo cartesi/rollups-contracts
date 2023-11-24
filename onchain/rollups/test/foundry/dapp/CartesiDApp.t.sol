@@ -7,7 +7,8 @@ pragma solidity ^0.8.8;
 import {TestBase} from "../util/TestBase.sol";
 
 import {CartesiDApp} from "contracts/dapp/CartesiDApp.sol";
-import {ICartesiDApp, Proof} from "contracts/dapp/ICartesiDApp.sol";
+import {ICartesiDApp} from "contracts/dapp/ICartesiDApp.sol";
+import {Proof} from "contracts/common/Proof.sol";
 import {IConsensus} from "contracts/consensus/IConsensus.sol";
 import {IInputBox} from "contracts/inputs/IInputBox.sol";
 import {IInputRelay} from "contracts/inputs/IInputRelay.sol";
