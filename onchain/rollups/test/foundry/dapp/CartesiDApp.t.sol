@@ -11,7 +11,8 @@ import {ICartesiDApp, Proof} from "contracts/dapp/ICartesiDApp.sol";
 import {IConsensus} from "contracts/consensus/IConsensus.sol";
 import {IInputBox} from "contracts/inputs/IInputBox.sol";
 import {IInputRelay} from "contracts/inputs/IInputRelay.sol";
-import {OutputValidityProof, LibOutputValidation} from "contracts/library/LibOutputValidation.sol";
+import {LibOutputValidation} from "contracts/library/LibOutputValidation.sol";
+import {OutputValidityProof} from "contracts/common/OutputValidityProof.sol";
 import {OutputEncoding} from "contracts/common/OutputEncoding.sol";
 
 import {IERC1155Receiver} from "@openzeppelin/contracts/token/ERC1155/IERC1155Receiver.sol";
