@@ -7,6 +7,7 @@ import {Create2} from "@openzeppelin/contracts/utils/Create2.sol";
 
 import {ICartesiDAppFactory} from "./ICartesiDAppFactory.sol";
 import {IConsensus} from "../consensus/IConsensus.sol";
+import {IInputBox} from "../inputs/IInputBox.sol";
 import {CartesiDApp} from "./CartesiDApp.sol";
 
 /// @title Cartesi DApp Factory
@@ -14,17 +15,20 @@ import {CartesiDApp} from "./CartesiDApp.sol";
 contract CartesiDAppFactory is ICartesiDAppFactory {
     function newApplication(
         IConsensus _consensus,
+        IInputBox _inputBox,
         address _dappOwner,
         bytes32 _templateHash
     ) external override returns (CartesiDApp) {
         CartesiDApp application = new CartesiDApp(
             _consensus,
+            _inputBox,
             _dappOwner,
             _templateHash
         );
 
         emit ApplicationCreated(
             _consensus,
+            _inputBox,
             _dappOwner,
             _templateHash,
             application
@@ -35,18 +39,21 @@ contract CartesiDAppFactory is ICartesiDAppFactory {
 
     function newApplication(
         IConsensus _consensus,
+        IInputBox _inputBox,
         address _dappOwner,
         bytes32 _templateHash,
         bytes32 _salt
     ) external override returns (CartesiDApp) {
         CartesiDApp application = new CartesiDApp{salt: _salt}(
             _consensus,
+            _inputBox,
             _dappOwner,
             _templateHash
         );
 
         emit ApplicationCreated(
             _consensus,
+            _inputBox,
             _dappOwner,
             _templateHash,
             application
@@ -57,6 +64,7 @@ contract CartesiDAppFactory is ICartesiDAppFactory {
 
     function calculateApplicationAddress(
         IConsensus _consensus,
+        IInputBox _inputBox,
         address _dappOwner,
         bytes32 _templateHash,
         bytes32 _salt
@@ -67,7 +75,12 @@ contract CartesiDAppFactory is ICartesiDAppFactory {
                 keccak256(
                     abi.encodePacked(
                         type(CartesiDApp).creationCode,
-                        abi.encode(_consensus, _dappOwner, _templateHash)
+                        abi.encode(
+                            _consensus,
+                            _inputBox,
+                            _dappOwner,
+                            _templateHash
+                        )
                     )
                 )
             );

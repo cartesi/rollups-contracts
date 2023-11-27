@@ -5,6 +5,7 @@ pragma solidity ^0.8.8;
 
 import {ICartesiDApp, Proof} from "./ICartesiDApp.sol";
 import {IConsensus} from "../consensus/IConsensus.sol";
+import {IInputBox} from "../inputs/IInputBox.sol";
 import {LibOutputValidation, OutputValidityProof} from "../library/LibOutputValidation.sol";
 import {Bitmask} from "@cartesi/util/contracts/Bitmask.sol";
 
@@ -89,15 +90,26 @@ contract CartesiDApp is
     /// @dev See the `getConsensus` and `migrateToConsensus` functions.
     IConsensus internal consensus;
 
+    /// @notice The input box contract.
+    /// @dev See the `getInputBox` function.
+    IInputBox internal immutable inputBox;
+
     /// @notice Creates a `CartesiDApp` contract.
     /// @param _consensus The initial consensus contract
+    /// @param _inputBox The input box contract
     /// @param _owner The initial DApp owner
     /// @param _templateHash The initial machine state hash
     /// @dev Calls the `join` function on `_consensus`.
-    constructor(IConsensus _consensus, address _owner, bytes32 _templateHash) {
+    constructor(
+        IConsensus _consensus,
+        IInputBox _inputBox,
+        address _owner,
+        bytes32 _templateHash
+    ) {
         transferOwnership(_owner);
         templateHash = _templateHash;
         consensus = _consensus;
+        inputBox = _inputBox;
 
         _consensus.join();
     }
@@ -210,6 +222,10 @@ contract CartesiDApp is
 
     function getConsensus() external view override returns (IConsensus) {
         return consensus;
+    }
+
+    function getInputBox() external view override returns (IInputBox) {
+        return inputBox;
     }
 
     /// @notice Accept Ether transfers.
