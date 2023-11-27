@@ -14,8 +14,6 @@ import {LibProof} from "../library/LibProof.sol";
 import {InputRange} from "../common/InputRange.sol";
 import {LibInputRange} from "../library/LibInputRange.sol";
 
-import {Bitmask} from "@cartesi/util/contracts/Bitmask.sol";
-
 import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
 import {ERC721Holder} from "@openzeppelin/contracts/token/ERC721/utils/ERC721Holder.sol";
 import {ERC1155Holder} from "@openzeppelin/contracts/token/ERC1155/utils/ERC1155Holder.sol";
@@ -23,6 +21,7 @@ import {ReentrancyGuard} from "@openzeppelin/contracts/utils/ReentrancyGuard.sol
 import {Address} from "@openzeppelin/contracts/utils/Address.sol";
 import {IERC721Receiver} from "@openzeppelin/contracts/token/ERC721/IERC721Receiver.sol";
 import {IERC165} from "@openzeppelin/contracts/utils/introspection/IERC165.sol";
+import {BitMaps} from "@openzeppelin/contracts/utils/structs/BitMaps.sol";
 
 /// @title Cartesi DApp
 ///
@@ -73,7 +72,7 @@ contract CartesiDApp is
     ERC1155Holder,
     ReentrancyGuard
 {
-    using Bitmask for mapping(uint256 => uint256);
+    using BitMaps for BitMaps.BitMap;
     using LibOutputValidation for OutputValidityProof;
     using LibProof for Proof;
     using LibInputRange for InputRange;
@@ -95,7 +94,7 @@ contract CartesiDApp is
     /// @notice The executed voucher bitmask, which keeps track of which vouchers
     ///         were executed already in order to avoid re-execution.
     /// @dev See the `wasVoucherExecuted` function.
-    mapping(uint256 => uint256) internal voucherBitmask;
+    mapping(uint256 => BitMaps.BitMap) internal voucherBitmaps;
 
     /// @notice The current consensus contract.
     /// @dev See the `getConsensus` and `migrateToConsensus` functions.
@@ -155,13 +154,11 @@ contract CartesiDApp is
         // reverts if proof isn't valid
         _proof.validity.validateVoucher(_destination, _payload, epochHash);
 
-        uint256 voucherPosition = LibOutputValidation.getBitMaskPosition(
-            _proof.validity.outputIndexWithinInput,
-            inputIndex
-        );
+        uint256 outputIndexWithinInput = _proof.validity.outputIndexWithinInput;
+        BitMaps.BitMap storage bitmap = voucherBitmaps[outputIndexWithinInput];
 
         // check if voucher has been executed
-        if (_wasVoucherExecuted(voucherPosition)) {
+        if (bitmap.get(inputIndex)) {
             revert VoucherReexecutionNotAllowed();
         }
 
@@ -169,25 +166,15 @@ contract CartesiDApp is
         _destination.functionCall(_payload);
 
         // mark it as executed and emit event
-        voucherBitmask.setBit(voucherPosition, true);
-        emit VoucherExecuted(voucherPosition);
+        bitmap.set(inputIndex);
+        emit VoucherExecuted(inputIndex, outputIndexWithinInput);
     }
 
     function wasVoucherExecuted(
         uint256 _inputIndex,
         uint256 _outputIndexWithinInput
     ) external view override returns (bool) {
-        uint256 voucherPosition = LibOutputValidation.getBitMaskPosition(
-            _outputIndexWithinInput,
-            _inputIndex
-        );
-        return _wasVoucherExecuted(voucherPosition);
-    }
-
-    function _wasVoucherExecuted(
-        uint256 _voucherPosition
-    ) internal view returns (bool) {
-        return voucherBitmask.getBit(_voucherPosition);
+        return voucherBitmaps[_outputIndexWithinInput].get(_inputIndex);
     }
 
     function validateNotice(
