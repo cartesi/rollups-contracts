@@ -3,4 +3,4 @@
 ---
 
 Removed `History`.
-This contract is no longer be necessary for the new `Authority` contract.
+This contract will no longer be necessary, given the refactor in the `Authority` contract.

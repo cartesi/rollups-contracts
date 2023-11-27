@@ -3,4 +3,4 @@
 ---
 
 Removed `HistoryFactory` and `IHistoryFactory`.
-These contracts is no longer be necessary for the new `Authority` contract.
+These contracts will no longer be necessary, given the refactor in the `Authority` contract.
