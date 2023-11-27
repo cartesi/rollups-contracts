@@ -9,6 +9,7 @@ import {SimpleConsensus} from "../util/SimpleConsensus.sol";
 import {CartesiDAppFactory} from "contracts/dapp/CartesiDAppFactory.sol";
 import {CartesiDApp} from "contracts/dapp/CartesiDApp.sol";
 import {IConsensus} from "contracts/consensus/IConsensus.sol";
+import {IInputBox} from "contracts/inputs/IInputBox.sol";
 import {Vm} from "forge-std/Vm.sol";
 
 contract CartesiDAppFactoryTest is TestBase {
@@ -22,18 +23,21 @@ contract CartesiDAppFactoryTest is TestBase {
 
     event ApplicationCreated(
         IConsensus indexed consensus,
+        IInputBox inputBox,
         address dappOwner,
         bytes32 templateHash,
         CartesiDApp application
     );
 
     struct ApplicationCreatedEventData {
+        IInputBox inputBox;
         address dappOwner;
         bytes32 templateHash;
         CartesiDApp application;
     }
 
     function testNewApplication(
+        IInputBox _inputBox,
         address _dappOwner,
         bytes32 _templateHash
     ) public {
@@ -41,16 +45,19 @@ contract CartesiDAppFactoryTest is TestBase {
 
         CartesiDApp dapp = factory.newApplication(
             consensus,
+            _inputBox,
             _dappOwner,
             _templateHash
         );
 
         assertEq(address(dapp.getConsensus()), address(consensus));
+        assertEq(address(dapp.getInputBox()), address(_inputBox));
         assertEq(dapp.owner(), _dappOwner);
         assertEq(dapp.getTemplateHash(), _templateHash);
     }
 
     function testNewApplicationDeterministic(
+        IInputBox _inputBox,
         address _dappOwner,
         bytes32 _templateHash,
         bytes32 _salt
@@ -59,6 +66,7 @@ contract CartesiDAppFactoryTest is TestBase {
 
         address precalculatedAddress = factory.calculateApplicationAddress(
             consensus,
+            _inputBox,
             _dappOwner,
             _templateHash,
             _salt
@@ -66,6 +74,7 @@ contract CartesiDAppFactoryTest is TestBase {
 
         CartesiDApp dapp = factory.newApplication(
             consensus,
+            _inputBox,
             _dappOwner,
             _templateHash,
             _salt
@@ -75,11 +84,13 @@ contract CartesiDAppFactoryTest is TestBase {
         assertEq(precalculatedAddress, address(dapp));
 
         assertEq(address(dapp.getConsensus()), address(consensus));
+        assertEq(address(dapp.getInputBox()), address(_inputBox));
         assertEq(dapp.owner(), _dappOwner);
         assertEq(dapp.getTemplateHash(), _templateHash);
 
         precalculatedAddress = factory.calculateApplicationAddress(
             consensus,
+            _inputBox,
             _dappOwner,
             _templateHash,
             _salt
@@ -90,10 +101,17 @@ contract CartesiDAppFactoryTest is TestBase {
 
         // Cannot deploy a DApp with the same salt twice
         vm.expectRevert(bytes(""));
-        factory.newApplication(consensus, _dappOwner, _templateHash, _salt);
+        factory.newApplication(
+            consensus,
+            _inputBox,
+            _dappOwner,
+            _templateHash,
+            _salt
+        );
     }
 
     function testApplicationCreatedEvent(
+        IInputBox _inputBox,
         address _dappOwner,
         bytes32 _templateHash
     ) public {
@@ -109,14 +127,21 @@ contract CartesiDAppFactoryTest is TestBase {
         // we focus on the third event
         CartesiDApp dapp = factory.newApplication(
             consensus,
+            _inputBox,
             _dappOwner,
             _templateHash
         );
 
-        testApplicationCreatedEventAux(_dappOwner, _templateHash, dapp);
+        testApplicationCreatedEventAux(
+            _inputBox,
+            _dappOwner,
+            _templateHash,
+            dapp
+        );
     }
 
     function testApplicationCreatedEventDeterministic(
+        IInputBox _inputBox,
         address _dappOwner,
         bytes32 _templateHash,
         bytes32 _salt
@@ -133,15 +158,22 @@ contract CartesiDAppFactoryTest is TestBase {
         // we focus on the third event
         CartesiDApp dapp = factory.newApplication(
             consensus,
+            _inputBox,
             _dappOwner,
             _templateHash,
             _salt
         );
 
-        testApplicationCreatedEventAux(_dappOwner, _templateHash, dapp);
+        testApplicationCreatedEventAux(
+            _inputBox,
+            _dappOwner,
+            _templateHash,
+            dapp
+        );
     }
 
     function testApplicationCreatedEventAux(
+        IInputBox _inputBox,
         address _dappOwner,
         bytes32 _templateHash,
         CartesiDApp _dapp
@@ -171,6 +203,7 @@ contract CartesiDAppFactoryTest is TestBase {
                     (ApplicationCreatedEventData)
                 );
 
+                assertEq(address(_inputBox), address(eventData.inputBox));
                 assertEq(_dappOwner, eventData.dappOwner);
                 assertEq(_templateHash, eventData.templateHash);
                 assertEq(address(_dapp), address(eventData.application));

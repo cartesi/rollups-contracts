@@ -4,6 +4,7 @@
 pragma solidity ^0.8.8;
 
 import {IConsensus} from "../consensus/IConsensus.sol";
+import {IInputBox} from "../inputs/IInputBox.sol";
 import {OutputValidityProof} from "../library/LibOutputValidation.sol";
 
 /// @notice Data for validating outputs.
@@ -79,4 +80,8 @@ interface ICartesiDApp {
     /// @notice Get the current consensus.
     /// @return The current consensus
     function getConsensus() external view returns (IConsensus);
+
+    /// @notice Get the input box that the DApp is listening to.
+    /// @return The input box
+    function getInputBox() external view returns (IInputBox);
 }

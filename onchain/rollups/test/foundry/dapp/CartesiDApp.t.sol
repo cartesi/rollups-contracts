@@ -9,6 +9,7 @@ import {TestBase} from "../util/TestBase.sol";
 import {CartesiDApp} from "contracts/dapp/CartesiDApp.sol";
 import {Proof} from "contracts/dapp/ICartesiDApp.sol";
 import {IConsensus} from "contracts/consensus/IConsensus.sol";
+import {IInputBox} from "contracts/inputs/IInputBox.sol";
 import {OutputValidityProof, LibOutputValidation} from "contracts/library/LibOutputValidation.sol";
 import {OutputEncoding} from "contracts/common/OutputEncoding.sol";
 
@@ -75,6 +76,8 @@ contract CartesiDAppTest is TestBase {
     uint256 constant initialSupply = 1000000;
     uint256 constant transferAmount = 7;
     uint256 constant tokenId = uint256(keccak256("tokenId"));
+    IInputBox constant inputBox =
+        IInputBox(address(bytes20(keccak256("inputBox"))));
     address constant dappOwner = address(bytes20(keccak256("dappOwner")));
     address constant tokenOwner = address(bytes20(keccak256("tokenOwner")));
     address constant recipient = address(bytes20(keccak256("recipient")));
@@ -98,13 +101,18 @@ contract CartesiDAppTest is TestBase {
     }
 
     function testConstructorWithOwnerAsZeroAddress(
+        IInputBox _inputBox,
         bytes32 _templateHash
     ) public {
         vm.expectRevert("Ownable: new owner is the zero address");
-        new CartesiDApp(consensus, address(0), _templateHash);
+        new CartesiDApp(consensus, _inputBox, address(0), _templateHash);
     }
 
-    function testConstructor(address _owner, bytes32 _templateHash) public {
+    function testConstructor(
+        IInputBox _inputBox,
+        address _owner,
+        bytes32 _templateHash
+    ) public {
         vm.assume(_owner != address(0));
 
         // An OwnershipTransferred event is always emitted
@@ -118,10 +126,11 @@ contract CartesiDAppTest is TestBase {
         emit OwnershipTransferred(address(this), _owner);
 
         // perform call to constructor
-        dapp = new CartesiDApp(consensus, _owner, _templateHash);
+        dapp = new CartesiDApp(consensus, _inputBox, _owner, _templateHash);
 
         // check set values
         assertEq(address(dapp.getConsensus()), address(consensus));
+        assertEq(address(dapp.getInputBox()), address(_inputBox));
         assertEq(dapp.owner(), _owner);
         assertEq(dapp.getTemplateHash(), _templateHash);
     }
@@ -535,6 +544,7 @@ contract CartesiDAppTest is TestBase {
     // test migration
 
     function testMigrateToConsensus(
+        IInputBox _inputBox,
         address _owner,
         bytes32 _templateHash,
         address _newOwner,
@@ -546,7 +556,7 @@ contract CartesiDAppTest is TestBase {
         vm.assume(address(_newOwner) != address(0));
         vm.assume(_nonZeroAddress != address(0));
 
-        dapp = new CartesiDApp(consensus, _owner, _templateHash);
+        dapp = new CartesiDApp(consensus, _inputBox, _owner, _templateHash);
 
         IConsensus newConsensus = new SimpleConsensus();
 
@@ -587,7 +597,13 @@ contract CartesiDAppTest is TestBase {
 
     function deployDAppDeterministically() internal returns (CartesiDApp) {
         vm.prank(dappOwner);
-        return new CartesiDApp{salt: salt}(consensus, dappOwner, templateHash);
+        return
+            new CartesiDApp{salt: salt}(
+                consensus,
+                inputBox,
+                dappOwner,
+                templateHash
+            );
     }
 
     function deployConsensusDeterministically() internal returns (IConsensus) {
