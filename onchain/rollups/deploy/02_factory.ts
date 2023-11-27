@@ -21,14 +21,13 @@ const func: DeployFunction = async (hre: HardhatRuntimeEnvironment) => {
         log: true,
     };
 
-    const { Bitmask, MerkleV2 } = await deployments.all();
+    const { MerkleV2 } = await deployments.all();
 
     await deployments.deploy("AuthorityFactory", opts);
 
     await deployments.deploy("CartesiDAppFactory", {
         ...opts,
         libraries: {
-            Bitmask: Bitmask.address,
             MerkleV2: MerkleV2.address,
         },
     });
