@@ -10,9 +10,11 @@ import {IERC721Portal} from "contracts/portals/IERC721Portal.sol";
 import {ERC721} from "@openzeppelin/contracts/token/ERC721/ERC721.sol";
 import {IERC721} from "@openzeppelin/contracts/token/ERC721/IERC721.sol";
 import {IERC721Receiver} from "@openzeppelin/contracts/token/ERC721/IERC721Receiver.sol";
+import {IERC165} from "@openzeppelin/contracts/utils/introspection/IERC165.sol";
 import {IInputBox} from "contracts/inputs/IInputBox.sol";
 import {InputBox} from "contracts/inputs/InputBox.sol";
 import {InputEncoding} from "contracts/common/InputEncoding.sol";
+import {IInputRelay} from "contracts/inputs/IInputRelay.sol";
 
 contract NormalToken is ERC721 {
     constructor(
@@ -112,6 +114,19 @@ contract ERC721PortalTest is Test {
         inputBox = new InputBox();
         portal = new ERC721Portal(inputBox);
         alice = vm.addr(1);
+    }
+
+    function testSupportsInterface(bytes4 _randomInterfaceId) public {
+        assertTrue(portal.supportsInterface(type(IERC721Portal).interfaceId));
+        assertTrue(portal.supportsInterface(type(IInputRelay).interfaceId));
+        assertTrue(portal.supportsInterface(type(IERC165).interfaceId));
+
+        assertFalse(portal.supportsInterface(bytes4(0xffffffff)));
+
+        vm.assume(_randomInterfaceId != type(IERC721Portal).interfaceId);
+        vm.assume(_randomInterfaceId != type(IInputRelay).interfaceId);
+        vm.assume(_randomInterfaceId != type(IERC165).interfaceId);
+        assertFalse(portal.supportsInterface(_randomInterfaceId));
     }
 
     function testGetInputBox() public {

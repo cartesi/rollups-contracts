@@ -4,6 +4,7 @@
 pragma solidity ^0.8.8;
 
 import {IERC1155} from "@openzeppelin/contracts/token/ERC1155/IERC1155.sol";
+import {IERC165} from "@openzeppelin/contracts/utils/introspection/IERC165.sol";
 
 import {IERC1155BatchPortal} from "./IERC1155BatchPortal.sol";
 import {InputRelay} from "../inputs/InputRelay.sol";
@@ -14,10 +15,18 @@ import {InputEncoding} from "../common/InputEncoding.sol";
 ///
 /// @notice This contract allows anyone to perform batch transfers of
 /// ERC-1155 tokens to a DApp while informing the off-chain machine.
-contract ERC1155BatchPortal is InputRelay, IERC1155BatchPortal {
+contract ERC1155BatchPortal is IERC1155BatchPortal, InputRelay {
     /// @notice Constructs the portal.
     /// @param _inputBox The input box used by the portal
     constructor(IInputBox _inputBox) InputRelay(_inputBox) {}
+
+    function supportsInterface(
+        bytes4 interfaceId
+    ) public view virtual override(IERC165, InputRelay) returns (bool) {
+        return
+            interfaceId == type(IERC1155BatchPortal).interfaceId ||
+            super.supportsInterface(interfaceId);
+    }
 
     function depositBatchERC1155Token(
         IERC1155 _token,

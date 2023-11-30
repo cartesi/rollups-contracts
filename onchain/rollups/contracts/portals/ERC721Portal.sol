@@ -4,6 +4,7 @@
 pragma solidity ^0.8.8;
 
 import {IERC721} from "@openzeppelin/contracts/token/ERC721/IERC721.sol";
+import {IERC165} from "@openzeppelin/contracts/utils/introspection/IERC165.sol";
 
 import {IERC721Portal} from "./IERC721Portal.sol";
 import {InputRelay} from "../inputs/InputRelay.sol";
@@ -14,10 +15,18 @@ import {InputEncoding} from "../common/InputEncoding.sol";
 ///
 /// @notice This contract allows anyone to perform transfers of
 /// ERC-721 tokens to a DApp while informing the off-chain machine.
-contract ERC721Portal is InputRelay, IERC721Portal {
+contract ERC721Portal is IERC721Portal, InputRelay {
     /// @notice Constructs the portal.
     /// @param _inputBox The input box used by the portal
     constructor(IInputBox _inputBox) InputRelay(_inputBox) {}
+
+    function supportsInterface(
+        bytes4 interfaceId
+    ) public view virtual override(IERC165, InputRelay) returns (bool) {
+        return
+            interfaceId == type(IERC721Portal).interfaceId ||
+            super.supportsInterface(interfaceId);
+    }
 
     function depositERC721Token(
         IERC721 _token,

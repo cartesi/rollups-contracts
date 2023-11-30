@@ -3,6 +3,8 @@
 
 pragma solidity ^0.8.8;
 
+import {IERC165} from "@openzeppelin/contracts/utils/introspection/IERC165.sol";
+
 import {IEtherPortal} from "./IEtherPortal.sol";
 import {InputRelay} from "../inputs/InputRelay.sol";
 import {IInputBox} from "../inputs/IInputBox.sol";
@@ -12,13 +14,21 @@ import {InputEncoding} from "../common/InputEncoding.sol";
 ///
 /// @notice This contract allows anyone to perform transfers of
 /// Ether to a DApp while informing the off-chain machine.
-contract EtherPortal is InputRelay, IEtherPortal {
+contract EtherPortal is IEtherPortal, InputRelay {
     /// @notice Raised when the Ether transfer fails.
     error EtherTransferFailed();
 
     /// @notice Constructs the portal.
     /// @param _inputBox The input box used by the portal
     constructor(IInputBox _inputBox) InputRelay(_inputBox) {}
+
+    function supportsInterface(
+        bytes4 interfaceId
+    ) public view virtual override(IERC165, InputRelay) returns (bool) {
+        return
+            interfaceId == type(IEtherPortal).interfaceId ||
+            super.supportsInterface(interfaceId);
+    }
 
     function depositEther(
         address _dapp,
