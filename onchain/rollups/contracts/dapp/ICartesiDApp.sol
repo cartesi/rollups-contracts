@@ -7,6 +7,9 @@ import {IConsensus} from "../consensus/IConsensus.sol";
 import {IInputBox} from "../inputs/IInputBox.sol";
 import {OutputValidityProof} from "../library/LibOutputValidation.sol";
 
+import {IERC721Receiver} from "@openzeppelin/contracts/token/ERC721/IERC721Receiver.sol";
+import {IERC1155Receiver} from "@openzeppelin/contracts/token/ERC1155/IERC1155Receiver.sol";
+
 /// @notice Data for validating outputs.
 /// @param validity A validity proof for the output
 /// @param context Data for querying the right claim from the current consensus contract
@@ -17,7 +20,7 @@ struct Proof {
 }
 
 /// @title Cartesi DApp interface
-interface ICartesiDApp {
+interface ICartesiDApp is IERC721Receiver, IERC1155Receiver {
     // Events
 
     /// @notice The DApp has migrated to another consensus contract.

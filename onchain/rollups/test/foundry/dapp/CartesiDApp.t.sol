@@ -7,7 +7,7 @@ pragma solidity ^0.8.8;
 import {TestBase} from "../util/TestBase.sol";
 
 import {CartesiDApp} from "contracts/dapp/CartesiDApp.sol";
-import {Proof} from "contracts/dapp/ICartesiDApp.sol";
+import {ICartesiDApp, Proof} from "contracts/dapp/ICartesiDApp.sol";
 import {IConsensus} from "contracts/consensus/IConsensus.sol";
 import {IInputBox} from "contracts/inputs/IInputBox.sol";
 import {OutputValidityProof, LibOutputValidation} from "contracts/library/LibOutputValidation.sol";
@@ -16,6 +16,8 @@ import {OutputEncoding} from "contracts/common/OutputEncoding.sol";
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {IERC721} from "@openzeppelin/contracts/token/ERC721/IERC721.sol";
 import {IERC721Receiver} from "@openzeppelin/contracts/token/ERC721/IERC721Receiver.sol";
+import {IERC1155Receiver} from "@openzeppelin/contracts/token/ERC1155/IERC1155Receiver.sol";
+import {IERC165} from "@openzeppelin/contracts/utils/introspection/IERC165.sol";
 
 import {LibServerManager} from "../util/LibServerManager.sol";
 import {LibBytes} from "../util/LibBytes.sol";
@@ -113,6 +115,21 @@ contract CartesiDAppTest is TestBase {
         writeInputs();
         removeExtraInputs();
         readFinishEpochResponse();
+    }
+
+    function testSupportsInterface(bytes4 _randomInterfaceId) public {
+        assertTrue(dapp.supportsInterface(type(ICartesiDApp).interfaceId));
+        assertTrue(dapp.supportsInterface(type(IERC721Receiver).interfaceId));
+        assertTrue(dapp.supportsInterface(type(IERC1155Receiver).interfaceId));
+        assertTrue(dapp.supportsInterface(type(IERC165).interfaceId));
+
+        assertFalse(dapp.supportsInterface(bytes4(0xffffffff)));
+
+        vm.assume(_randomInterfaceId != type(ICartesiDApp).interfaceId);
+        vm.assume(_randomInterfaceId != type(IERC721Receiver).interfaceId);
+        vm.assume(_randomInterfaceId != type(IERC1155Receiver).interfaceId);
+        vm.assume(_randomInterfaceId != type(IERC165).interfaceId);
+        assertFalse(dapp.supportsInterface(_randomInterfaceId));
     }
 
     function testConstructorWithOwnerAsZeroAddress(
