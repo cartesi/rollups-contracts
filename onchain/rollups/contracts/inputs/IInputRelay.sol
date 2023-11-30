@@ -4,9 +4,10 @@
 pragma solidity ^0.8.8;
 
 import {IInputBox} from "./IInputBox.sol";
+import {IERC165} from "@openzeppelin/contracts/utils/introspection/IERC165.sol";
 
 /// @title Input Relay interface
-interface IInputRelay {
+interface IInputRelay is IERC165 {
     // Permissionless functions
 
     /// @notice Get the input box used by this input relay.

@@ -9,8 +9,10 @@ import {ERC20Portal} from "contracts/portals/ERC20Portal.sol";
 import {IERC20Portal} from "contracts/portals/IERC20Portal.sol";
 import {ERC20} from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import {IERC165} from "@openzeppelin/contracts/utils/introspection/IERC165.sol";
 import {IInputBox} from "contracts/inputs/IInputBox.sol";
 import {InputBox} from "contracts/inputs/InputBox.sol";
+import {IInputRelay} from "contracts/inputs/IInputRelay.sol";
 
 contract NormalToken is ERC20 {
     constructor(
@@ -135,6 +137,19 @@ contract ERC20PortalTest is Test {
         portal = new ERC20Portal(inputBox);
         alice = vm.addr(1);
         dapp = vm.addr(2);
+    }
+
+    function testSupportsInterface(bytes4 _randomInterfaceId) public {
+        assertTrue(portal.supportsInterface(type(IERC20Portal).interfaceId));
+        assertTrue(portal.supportsInterface(type(IInputRelay).interfaceId));
+        assertTrue(portal.supportsInterface(type(IERC165).interfaceId));
+
+        assertFalse(portal.supportsInterface(bytes4(0xffffffff)));
+
+        vm.assume(_randomInterfaceId != type(IERC20Portal).interfaceId);
+        vm.assume(_randomInterfaceId != type(IInputRelay).interfaceId);
+        vm.assume(_randomInterfaceId != type(IERC165).interfaceId);
+        assertFalse(portal.supportsInterface(_randomInterfaceId));
     }
 
     function testGetInputBox() public {

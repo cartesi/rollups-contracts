@@ -5,11 +5,13 @@
 pragma solidity ^0.8.8;
 
 import {Test} from "forge-std/Test.sol";
+import {IERC165} from "@openzeppelin/contracts/utils/introspection/IERC165.sol";
 import {EtherPortal} from "contracts/portals/EtherPortal.sol";
 import {IEtherPortal} from "contracts/portals/IEtherPortal.sol";
 import {IInputBox} from "contracts/inputs/IInputBox.sol";
 import {InputBox} from "contracts/inputs/InputBox.sol";
 import {InputEncoding} from "contracts/common/InputEncoding.sol";
+import {IInputRelay} from "contracts/inputs/IInputRelay.sol";
 
 contract BadEtherReceiver {
     receive() external payable {
@@ -63,6 +65,23 @@ contract EtherPortalTest is Test {
         etherPortal = new EtherPortal(inputBox);
         alice = address(0xdeadbeef);
         dapp = address(0x12345678);
+    }
+
+    function testSupportsInterface(bytes4 _randomInterfaceId) public {
+        assertTrue(
+            etherPortal.supportsInterface(type(IEtherPortal).interfaceId)
+        );
+        assertTrue(
+            etherPortal.supportsInterface(type(IInputRelay).interfaceId)
+        );
+        assertTrue(etherPortal.supportsInterface(type(IERC165).interfaceId));
+
+        assertFalse(etherPortal.supportsInterface(bytes4(0xffffffff)));
+
+        vm.assume(_randomInterfaceId != type(IEtherPortal).interfaceId);
+        vm.assume(_randomInterfaceId != type(IInputRelay).interfaceId);
+        vm.assume(_randomInterfaceId != type(IERC165).interfaceId);
+        assertFalse(etherPortal.supportsInterface(_randomInterfaceId));
     }
 
     function testGetInputBox() public {

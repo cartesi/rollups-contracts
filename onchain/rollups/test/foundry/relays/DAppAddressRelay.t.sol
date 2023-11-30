@@ -5,11 +5,13 @@
 pragma solidity ^0.8.8;
 
 import {Test} from "forge-std/Test.sol";
+import {IERC165} from "@openzeppelin/contracts/utils/introspection/IERC165.sol";
 import {IDAppAddressRelay} from "contracts/relays/IDAppAddressRelay.sol";
 import {DAppAddressRelay} from "contracts/relays/DAppAddressRelay.sol";
 import {IInputBox} from "contracts/inputs/IInputBox.sol";
 import {InputBox} from "contracts/inputs/InputBox.sol";
 import {InputEncoding} from "contracts/common/InputEncoding.sol";
+import {IInputRelay} from "contracts/inputs/IInputRelay.sol";
 
 contract DAppAddressRelayTest is Test {
     IInputBox inputBox;
@@ -25,6 +27,21 @@ contract DAppAddressRelayTest is Test {
     function setUp() public {
         inputBox = new InputBox();
         relay = new DAppAddressRelay(inputBox);
+    }
+
+    function testSupportsInterface(bytes4 _randomInterfaceId) public {
+        assertTrue(
+            relay.supportsInterface(type(IDAppAddressRelay).interfaceId)
+        );
+        assertTrue(relay.supportsInterface(type(IInputRelay).interfaceId));
+        assertTrue(relay.supportsInterface(type(IERC165).interfaceId));
+
+        assertFalse(relay.supportsInterface(bytes4(0xffffffff)));
+
+        vm.assume(_randomInterfaceId != type(IDAppAddressRelay).interfaceId);
+        vm.assume(_randomInterfaceId != type(IInputRelay).interfaceId);
+        vm.assume(_randomInterfaceId != type(IERC165).interfaceId);
+        assertFalse(relay.supportsInterface(_randomInterfaceId));
     }
 
     function testGetInputBox() public {
