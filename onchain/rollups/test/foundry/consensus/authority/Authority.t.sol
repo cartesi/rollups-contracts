@@ -8,6 +8,7 @@ import {TestBase} from "../../util/TestBase.sol";
 import {Authority} from "contracts/consensus/authority/Authority.sol";
 import {IHistory} from "contracts/history/IHistory.sol";
 import {Vm} from "forge-std/Vm.sol";
+import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
 
 contract HistoryReverts is IHistory {
     function submitClaim(bytes calldata) external pure override {
@@ -39,31 +40,28 @@ contract AuthorityTest is TestBase {
 
     function testConstructor(address _owner) public {
         vm.assume(_owner != address(0));
-        uint256 numOfEvents;
 
-        // two `OwnershipTransferred` events might be emitted during the constructor call
-        // the first event is emitted by Ownable constructor
         vm.expectEmit(true, true, false, false);
-        emit OwnershipTransferred(address(0), address(this));
-        ++numOfEvents;
-
-        // a second event is emitted by Authority constructor iff msg.sender != _owner
-        if (_owner != address(this)) {
-            vm.expectEmit(true, true, false, false);
-            emit OwnershipTransferred(address(this), _owner);
-            ++numOfEvents;
-        }
+        emit OwnershipTransferred(address(0), _owner);
 
         vm.recordLogs();
+
         authority = new Authority(_owner);
+
         Vm.Log[] memory entries = vm.getRecordedLogs();
 
-        assertEq(entries.length, numOfEvents, "number of events");
+        assertEq(entries.length, 1, "number of events");
+
         assertEq(authority.owner(), _owner, "authority owner");
     }
 
     function testRevertsOwnerAddressZero() public {
-        vm.expectRevert("Ownable: new owner is the zero address");
+        vm.expectRevert(
+            abi.encodeWithSelector(
+                Ownable.OwnableInvalidOwner.selector,
+                address(0)
+            )
+        );
         new Authority(address(0));
     }
 
@@ -92,7 +90,12 @@ contract AuthorityTest is TestBase {
         );
 
         // will fail as not called from owner
-        vm.expectRevert("Ownable: caller is not the owner");
+        vm.expectRevert(
+            abi.encodeWithSelector(
+                Ownable.OwnableUnauthorizedAccount.selector,
+                address(this)
+            )
+        );
         authority.migrateHistoryToConsensus(_newConsensus);
 
         vm.expectCall(
@@ -129,7 +132,12 @@ contract AuthorityTest is TestBase {
         );
 
         // will fail as not called from owner
-        vm.expectRevert("Ownable: caller is not the owner");
+        vm.expectRevert(
+            abi.encodeWithSelector(
+                Ownable.OwnableUnauthorizedAccount.selector,
+                address(this)
+            )
+        );
         authority.submitClaim(_claim);
 
         vm.expectCall(
@@ -162,7 +170,12 @@ contract AuthorityTest is TestBase {
 
         // set new history
         // will fail as not called from owner
-        vm.expectRevert("Ownable: caller is not the owner");
+        vm.expectRevert(
+            abi.encodeWithSelector(
+                Ownable.OwnableUnauthorizedAccount.selector,
+                address(this)
+            )
+        );
         authority.setHistory(_newHistory);
 
         // can only be called by owner
