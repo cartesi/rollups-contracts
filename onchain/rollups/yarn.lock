@@ -60,7 +60,7 @@ __metadata:
     "@ethersproject/providers": "npm:^5"
     "@nomicfoundation/hardhat-verify": "npm:^1"
     "@nomiclabs/hardhat-ethers": "npm:^2"
-    "@openzeppelin/contracts": "npm:4.9.2"
+    "@openzeppelin/contracts": "npm:5.0.0"
     "@safe-global/safe-singleton-factory": "npm:^1"
     "@typechain/ethers-v5": "npm:^11"
     "@typechain/hardhat": "npm:^8"
@@ -1285,10 +1285,10 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@openzeppelin/contracts@npm:4.9.2":
-  version: 4.9.2
-  resolution: "@openzeppelin/contracts@npm:4.9.2"
-  checksum: 42ca1930248a0099c9e136351442551a181ec002efe65eb7670a14eceede9b9484b42c3c57cc5c8f89cb88931158e44a8a00ad1a0c6893308a67e3a49b0ac96b
+"@openzeppelin/contracts@npm:5.0.0":
+  version: 5.0.0
+  resolution: "@openzeppelin/contracts@npm:5.0.0"
+  checksum: 992eb44c1d0c5ddfa148cc9fb9a4c3614917b6e32bf1f107bb0c8efe1a5d0b3e542bb0bec4a43c3e543f2b8a9dff913ec65c149f956ba6574b4ae98ca3cb8a9a
   languageName: node
   linkType: hard
 
