@@ -25,14 +25,8 @@ contract Authority is AbstractConsensus, Ownable {
     event NewHistory(IHistory history);
 
     /// @notice Constructs an `Authority` contract.
-    /// @param _owner The initial contract owner
-    constructor(address _owner) {
-        // constructor in Ownable already called `transferOwnership(msg.sender)`, so
-        // we only need to call `transferOwnership(_owner)` if _owner != msg.sender
-        if (msg.sender != _owner) {
-            transferOwnership(_owner);
-        }
-    }
+    /// @param _initialOwner The initial contract owner
+    constructor(address _initialOwner) Ownable(_initialOwner) {}
 
     /// @notice Submits a claim to the current history contract.
     ///         The encoding of `_claimData` might vary depending on the

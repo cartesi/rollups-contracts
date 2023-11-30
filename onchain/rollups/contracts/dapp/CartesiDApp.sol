@@ -105,17 +105,16 @@ contract CartesiDApp is
     /// @param _consensus The initial consensus contract
     /// @param _inputBox The input box contract
     /// @param _inputRelays The input relays
-    /// @param _owner The initial DApp owner
+    /// @param _initialOwner The initial DApp owner
     /// @param _templateHash The initial machine state hash
     /// @dev Calls the `join` function on `_consensus`.
     constructor(
         IConsensus _consensus,
         IInputBox _inputBox,
         IInputRelay[] memory _inputRelays,
-        address _owner,
+        address _initialOwner,
         bytes32 _templateHash
-    ) {
-        transferOwnership(_owner);
+    ) Ownable(_initialOwner) {
         templateHash = _templateHash;
         consensus = _consensus;
         inputBox = _inputBox;
