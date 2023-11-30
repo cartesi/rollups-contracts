@@ -64,7 +64,7 @@ const config: HardhatUserConfig = {
         optimism_goerli: networkConfig(optimismGoerli),
     },
     solidity: {
-        version: "0.8.19",
+        version: "0.8.20",
         settings: {
             optimizer: {
                 enabled: true,
