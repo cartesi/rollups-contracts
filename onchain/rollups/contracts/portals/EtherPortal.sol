@@ -3,6 +3,7 @@
 
 pragma solidity ^0.8.8;
 
+import {Address} from "@openzeppelin/contracts/utils/Address.sol";
 import {IERC165} from "@openzeppelin/contracts/utils/introspection/IERC165.sol";
 
 import {IEtherPortal} from "./IEtherPortal.sol";
@@ -15,8 +16,7 @@ import {InputEncoding} from "../common/InputEncoding.sol";
 /// @notice This contract allows anyone to perform transfers of
 /// Ether to a DApp while informing the off-chain machine.
 contract EtherPortal is IEtherPortal, InputRelay {
-    /// @notice Raised when the Ether transfer fails.
-    error EtherTransferFailed();
+    using Address for address payable;
 
     /// @notice Constructs the portal.
     /// @param _inputBox The input box used by the portal
@@ -31,16 +31,10 @@ contract EtherPortal is IEtherPortal, InputRelay {
     }
 
     function depositEther(
-        address _dapp,
+        address payable _dapp,
         bytes calldata _execLayerData
     ) external payable override {
-        // We used to call `transfer()` but it's not considered safe,
-        // as it assumes gas costs are immutable (they are not).
-        (bool success, ) = _dapp.call{value: msg.value}("");
-
-        if (!success) {
-            revert EtherTransferFailed();
-        }
+        _dapp.sendValue(msg.value);
 
         bytes memory input = InputEncoding.encodeEtherDeposit(
             msg.sender,
