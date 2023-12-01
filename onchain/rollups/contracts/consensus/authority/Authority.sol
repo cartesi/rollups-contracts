@@ -4,7 +4,6 @@
 pragma solidity ^0.8.8;
 
 import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
-import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
 import {IConsensus} from "../IConsensus.sol";
 import {AbstractConsensus} from "../AbstractConsensus.sol";
@@ -24,9 +23,6 @@ contract Authority is AbstractConsensus, Ownable {
     /// @param history The new history contract
     /// @dev MUST be triggered on a successful call to `setHistory`.
     event NewHistory(IHistory history);
-
-    /// @notice Raised when a transfer of tokens from an authority to a recipient fails.
-    error AuthorityWithdrawalFailed();
 
     /// @notice Constructs an `Authority` contract.
     /// @param _owner The initial contract owner
@@ -82,22 +78,5 @@ contract Authority is AbstractConsensus, Ownable {
         bytes calldata _proofContext
     ) external view override returns (bytes32, uint256, uint256) {
         return history.getClaim(_dapp, _proofContext);
-    }
-
-    /// @notice Transfer some amount of ERC-20 tokens to a recipient.
-    /// @param _token The token contract
-    /// @param _recipient The recipient address
-    /// @param _amount The amount of tokens to be withdrawn
-    /// @dev Can only be called by the `Authority` owner.
-    function withdrawERC20Tokens(
-        IERC20 _token,
-        address _recipient,
-        uint256 _amount
-    ) external onlyOwner {
-        bool success = _token.transfer(_recipient, _amount);
-
-        if (!success) {
-            revert AuthorityWithdrawalFailed();
-        }
     }
 }
