@@ -5,6 +5,7 @@ pragma solidity ^0.8.8;
 
 import {IConsensus} from "../consensus/IConsensus.sol";
 import {IInputBox} from "../inputs/IInputBox.sol";
+import {IInputRelay} from "../inputs/IInputRelay.sol";
 import {OutputValidityProof} from "../library/LibOutputValidation.sol";
 
 /// @notice Data for validating outputs.
@@ -84,4 +85,8 @@ interface ICartesiDApp {
     /// @notice Get the input box that the DApp is listening to.
     /// @return The input box
     function getInputBox() external view returns (IInputBox);
+
+    /// @notice Get the input relays that the DApp expects inputs from.
+    /// @return The input relays.
+    function getInputRelays() external view returns (IInputRelay[] memory);
 }

@@ -8,6 +8,7 @@ import {Create2} from "@openzeppelin/contracts/utils/Create2.sol";
 import {ICartesiDAppFactory} from "./ICartesiDAppFactory.sol";
 import {IConsensus} from "../consensus/IConsensus.sol";
 import {IInputBox} from "../inputs/IInputBox.sol";
+import {IInputRelay} from "../inputs/IInputRelay.sol";
 import {CartesiDApp} from "./CartesiDApp.sol";
 
 /// @title Cartesi DApp Factory
@@ -16,12 +17,14 @@ contract CartesiDAppFactory is ICartesiDAppFactory {
     function newApplication(
         IConsensus _consensus,
         IInputBox _inputBox,
+        IInputRelay[] memory _inputRelays,
         address _dappOwner,
         bytes32 _templateHash
     ) external override returns (CartesiDApp) {
         CartesiDApp application = new CartesiDApp(
             _consensus,
             _inputBox,
+            _inputRelays,
             _dappOwner,
             _templateHash
         );
@@ -29,6 +32,7 @@ contract CartesiDAppFactory is ICartesiDAppFactory {
         emit ApplicationCreated(
             _consensus,
             _inputBox,
+            _inputRelays,
             _dappOwner,
             _templateHash,
             application
@@ -40,6 +44,7 @@ contract CartesiDAppFactory is ICartesiDAppFactory {
     function newApplication(
         IConsensus _consensus,
         IInputBox _inputBox,
+        IInputRelay[] memory _inputRelays,
         address _dappOwner,
         bytes32 _templateHash,
         bytes32 _salt
@@ -47,6 +52,7 @@ contract CartesiDAppFactory is ICartesiDAppFactory {
         CartesiDApp application = new CartesiDApp{salt: _salt}(
             _consensus,
             _inputBox,
+            _inputRelays,
             _dappOwner,
             _templateHash
         );
@@ -54,6 +60,7 @@ contract CartesiDAppFactory is ICartesiDAppFactory {
         emit ApplicationCreated(
             _consensus,
             _inputBox,
+            _inputRelays,
             _dappOwner,
             _templateHash,
             application
@@ -65,6 +72,7 @@ contract CartesiDAppFactory is ICartesiDAppFactory {
     function calculateApplicationAddress(
         IConsensus _consensus,
         IInputBox _inputBox,
+        IInputRelay[] memory _inputRelays,
         address _dappOwner,
         bytes32 _templateHash,
         bytes32 _salt
@@ -78,6 +86,7 @@ contract CartesiDAppFactory is ICartesiDAppFactory {
                         abi.encode(
                             _consensus,
                             _inputBox,
+                            _inputRelays,
                             _dappOwner,
                             _templateHash
                         )

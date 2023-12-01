@@ -6,6 +6,7 @@ pragma solidity ^0.8.8;
 import {ICartesiDApp, Proof} from "./ICartesiDApp.sol";
 import {IConsensus} from "../consensus/IConsensus.sol";
 import {IInputBox} from "../inputs/IInputBox.sol";
+import {IInputRelay} from "../inputs/IInputRelay.sol";
 import {LibOutputValidation, OutputValidityProof} from "../library/LibOutputValidation.sol";
 import {Bitmask} from "@cartesi/util/contracts/Bitmask.sol";
 
@@ -94,15 +95,21 @@ contract CartesiDApp is
     /// @dev See the `getInputBox` function.
     IInputBox internal immutable inputBox;
 
+    /// @notice The input relays.
+    /// @dev See the `getInputRelays` function.
+    IInputRelay[] internal inputRelays;
+
     /// @notice Creates a `CartesiDApp` contract.
     /// @param _consensus The initial consensus contract
     /// @param _inputBox The input box contract
+    /// @param _inputRelays The input relays
     /// @param _owner The initial DApp owner
     /// @param _templateHash The initial machine state hash
     /// @dev Calls the `join` function on `_consensus`.
     constructor(
         IConsensus _consensus,
         IInputBox _inputBox,
+        IInputRelay[] memory _inputRelays,
         address _owner,
         bytes32 _templateHash
     ) {
@@ -110,6 +117,9 @@ contract CartesiDApp is
         templateHash = _templateHash;
         consensus = _consensus;
         inputBox = _inputBox;
+        for (uint256 i; i < _inputRelays.length; ++i) {
+            inputRelays.push(_inputRelays[i]);
+        }
 
         _consensus.join();
     }
@@ -226,6 +236,15 @@ contract CartesiDApp is
 
     function getInputBox() external view override returns (IInputBox) {
         return inputBox;
+    }
+
+    function getInputRelays()
+        external
+        view
+        override
+        returns (IInputRelay[] memory)
+    {
+        return inputRelays;
     }
 
     /// @notice Accept Ether transfers.

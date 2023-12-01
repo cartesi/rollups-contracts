@@ -6,6 +6,7 @@ pragma solidity ^0.8.8;
 import {CartesiDApp} from "./CartesiDApp.sol";
 import {IConsensus} from "../consensus/IConsensus.sol";
 import {IInputBox} from "../inputs/IInputBox.sol";
+import {IInputRelay} from "../inputs/IInputRelay.sol";
 
 /// @title Cartesi DApp Factory interface
 interface ICartesiDAppFactory {
@@ -14,6 +15,7 @@ interface ICartesiDAppFactory {
     /// @notice A new application was deployed.
     /// @param consensus The initial consensus contract
     /// @param inputBox The input box contract
+    /// @param inputRelays The input relays
     /// @param dappOwner The initial DApp owner
     /// @param templateHash The initial machine state hash
     /// @param application The application
@@ -21,6 +23,7 @@ interface ICartesiDAppFactory {
     event ApplicationCreated(
         IConsensus indexed consensus,
         IInputBox inputBox,
+        IInputRelay[] inputRelays,
         address dappOwner,
         bytes32 templateHash,
         CartesiDApp application
@@ -31,6 +34,7 @@ interface ICartesiDAppFactory {
     /// @notice Deploy a new application.
     /// @param _consensus The initial consensus contract
     /// @param _inputBox The input box contract
+    /// @param _inputRelays The input relays
     /// @param _dappOwner The initial DApp owner
     /// @param _templateHash The initial machine state hash
     /// @return The application
@@ -38,6 +42,7 @@ interface ICartesiDAppFactory {
     function newApplication(
         IConsensus _consensus,
         IInputBox _inputBox,
+        IInputRelay[] calldata _inputRelays,
         address _dappOwner,
         bytes32 _templateHash
     ) external returns (CartesiDApp);
@@ -45,6 +50,7 @@ interface ICartesiDAppFactory {
     /// @notice Deploy a new application deterministically.
     /// @param _consensus The initial consensus contract
     /// @param _inputBox The input box contract
+    /// @param _inputRelays The input relays
     /// @param _dappOwner The initial DApp owner
     /// @param _templateHash The initial machine state hash
     /// @param _salt The salt used to deterministically generate the DApp address
@@ -53,6 +59,7 @@ interface ICartesiDAppFactory {
     function newApplication(
         IConsensus _consensus,
         IInputBox _inputBox,
+        IInputRelay[] calldata _inputRelays,
         address _dappOwner,
         bytes32 _templateHash,
         bytes32 _salt
@@ -61,6 +68,7 @@ interface ICartesiDAppFactory {
     /// @notice Calculate the address of an application to be deployed deterministically.
     /// @param _consensus The initial consensus contract
     /// @param _inputBox The input box contract
+    /// @param _inputRelays The input relays
     /// @param _dappOwner The initial DApp owner
     /// @param _templateHash The initial machine state hash
     /// @param _salt The salt used to deterministically generate the DApp address
@@ -70,6 +78,7 @@ interface ICartesiDAppFactory {
     function calculateApplicationAddress(
         IConsensus _consensus,
         IInputBox _inputBox,
+        IInputRelay[] calldata _inputRelays,
         address _dappOwner,
         bytes32 _templateHash,
         bytes32 _salt

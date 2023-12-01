@@ -10,6 +10,7 @@ import {CartesiDAppFactory} from "contracts/dapp/CartesiDAppFactory.sol";
 import {CartesiDApp} from "contracts/dapp/CartesiDApp.sol";
 import {IConsensus} from "contracts/consensus/IConsensus.sol";
 import {IInputBox} from "contracts/inputs/IInputBox.sol";
+import {IInputRelay} from "contracts/inputs/IInputRelay.sol";
 import {Vm} from "forge-std/Vm.sol";
 
 contract CartesiDAppFactoryTest is TestBase {
@@ -24,20 +25,15 @@ contract CartesiDAppFactoryTest is TestBase {
     event ApplicationCreated(
         IConsensus indexed consensus,
         IInputBox inputBox,
+        IInputRelay[] inputRelays,
         address dappOwner,
         bytes32 templateHash,
         CartesiDApp application
     );
 
-    struct ApplicationCreatedEventData {
-        IInputBox inputBox;
-        address dappOwner;
-        bytes32 templateHash;
-        CartesiDApp application;
-    }
-
     function testNewApplication(
         IInputBox _inputBox,
+        IInputRelay[] calldata _inputRelays,
         address _dappOwner,
         bytes32 _templateHash
     ) public {
@@ -46,18 +42,22 @@ contract CartesiDAppFactoryTest is TestBase {
         CartesiDApp dapp = factory.newApplication(
             consensus,
             _inputBox,
+            _inputRelays,
             _dappOwner,
             _templateHash
         );
 
         assertEq(address(dapp.getConsensus()), address(consensus));
         assertEq(address(dapp.getInputBox()), address(_inputBox));
+        // abi.encode is used instead of a loop
+        assertEq(abi.encode(dapp.getInputRelays()), abi.encode(_inputRelays));
         assertEq(dapp.owner(), _dappOwner);
         assertEq(dapp.getTemplateHash(), _templateHash);
     }
 
     function testNewApplicationDeterministic(
         IInputBox _inputBox,
+        IInputRelay[] calldata _inputRelays,
         address _dappOwner,
         bytes32 _templateHash,
         bytes32 _salt
@@ -67,6 +67,7 @@ contract CartesiDAppFactoryTest is TestBase {
         address precalculatedAddress = factory.calculateApplicationAddress(
             consensus,
             _inputBox,
+            _inputRelays,
             _dappOwner,
             _templateHash,
             _salt
@@ -75,6 +76,7 @@ contract CartesiDAppFactoryTest is TestBase {
         CartesiDApp dapp = factory.newApplication(
             consensus,
             _inputBox,
+            _inputRelays,
             _dappOwner,
             _templateHash,
             _salt
@@ -85,12 +87,14 @@ contract CartesiDAppFactoryTest is TestBase {
 
         assertEq(address(dapp.getConsensus()), address(consensus));
         assertEq(address(dapp.getInputBox()), address(_inputBox));
+        assertEq(abi.encode(dapp.getInputRelays()), abi.encode(_inputRelays));
         assertEq(dapp.owner(), _dappOwner);
         assertEq(dapp.getTemplateHash(), _templateHash);
 
         precalculatedAddress = factory.calculateApplicationAddress(
             consensus,
             _inputBox,
+            _inputRelays,
             _dappOwner,
             _templateHash,
             _salt
@@ -104,6 +108,7 @@ contract CartesiDAppFactoryTest is TestBase {
         factory.newApplication(
             consensus,
             _inputBox,
+            _inputRelays,
             _dappOwner,
             _templateHash,
             _salt
@@ -112,6 +117,7 @@ contract CartesiDAppFactoryTest is TestBase {
 
     function testApplicationCreatedEvent(
         IInputBox _inputBox,
+        IInputRelay[] calldata _inputRelays,
         address _dappOwner,
         bytes32 _templateHash
     ) public {
@@ -128,12 +134,14 @@ contract CartesiDAppFactoryTest is TestBase {
         CartesiDApp dapp = factory.newApplication(
             consensus,
             _inputBox,
+            _inputRelays,
             _dappOwner,
             _templateHash
         );
 
         testApplicationCreatedEventAux(
             _inputBox,
+            _inputRelays,
             _dappOwner,
             _templateHash,
             dapp
@@ -142,6 +150,7 @@ contract CartesiDAppFactoryTest is TestBase {
 
     function testApplicationCreatedEventDeterministic(
         IInputBox _inputBox,
+        IInputRelay[] calldata _inputRelays,
         address _dappOwner,
         bytes32 _templateHash,
         bytes32 _salt
@@ -159,6 +168,7 @@ contract CartesiDAppFactoryTest is TestBase {
         CartesiDApp dapp = factory.newApplication(
             consensus,
             _inputBox,
+            _inputRelays,
             _dappOwner,
             _templateHash,
             _salt
@@ -166,6 +176,7 @@ contract CartesiDAppFactoryTest is TestBase {
 
         testApplicationCreatedEventAux(
             _inputBox,
+            _inputRelays,
             _dappOwner,
             _templateHash,
             dapp
@@ -174,6 +185,7 @@ contract CartesiDAppFactoryTest is TestBase {
 
     function testApplicationCreatedEventAux(
         IInputBox _inputBox,
+        IInputRelay[] calldata _inputRelays,
         address _dappOwner,
         bytes32 _templateHash,
         CartesiDApp _dapp
@@ -196,17 +208,28 @@ contract CartesiDAppFactoryTest is TestBase {
                     bytes32(uint256(uint160(address(consensus))))
                 );
 
-                ApplicationCreatedEventData memory eventData;
+                (
+                    IInputBox inputBox,
+                    IInputRelay[] memory inputRelays,
+                    address dappOwner,
+                    bytes32 templateHash,
+                    CartesiDApp application
+                ) = abi.decode(
+                        entry.data,
+                        (
+                            IInputBox,
+                            IInputRelay[],
+                            address,
+                            bytes32,
+                            CartesiDApp
+                        )
+                    );
 
-                eventData = abi.decode(
-                    entry.data,
-                    (ApplicationCreatedEventData)
-                );
-
-                assertEq(address(_inputBox), address(eventData.inputBox));
-                assertEq(_dappOwner, eventData.dappOwner);
-                assertEq(_templateHash, eventData.templateHash);
-                assertEq(address(_dapp), address(eventData.application));
+                assertEq(address(_inputBox), address(inputBox));
+                assertEq(abi.encode(_inputRelays), abi.encode(inputRelays));
+                assertEq(_dappOwner, dappOwner);
+                assertEq(_templateHash, templateHash);
+                assertEq(address(_dapp), address(application));
             }
         }
 
