@@ -1,239 +1,107 @@
 // (c) Cartesi and individual authors (see AUTHORS)
 // SPDX-License-Identifier: Apache-2.0 (see LICENSE)
 
-/// @title Ether Portal Test
 pragma solidity ^0.8.8;
 
-import {Test} from "forge-std/Test.sol";
+import {Address} from "@openzeppelin/contracts/utils/Address.sol";
 import {IERC165} from "@openzeppelin/contracts/utils/introspection/IERC165.sol";
+
 import {EtherPortal} from "contracts/portals/EtherPortal.sol";
 import {IEtherPortal} from "contracts/portals/IEtherPortal.sol";
 import {IInputBox} from "contracts/inputs/IInputBox.sol";
-import {InputBox} from "contracts/inputs/InputBox.sol";
-import {InputEncoding} from "contracts/common/InputEncoding.sol";
 import {IInputRelay} from "contracts/inputs/IInputRelay.sol";
+import {InputEncoding} from "contracts/common/InputEncoding.sol";
 
-contract BadEtherReceiver {
-    receive() external payable {
-        revert("This contract does not accept Ether");
-    }
-}
-
-contract EtherReceiver {
-    receive() external payable {}
-}
-
-contract InputBoxWatcher {
-    IInputBox inputBox;
-
-    event WatchedFallback(
-        address sender,
-        uint256 value,
-        uint256 numberOfInputs
-    );
-
-    constructor(IInputBox _inputBox) {
-        inputBox = _inputBox;
-    }
-
-    receive() external payable {
-        uint256 numberOfInputs = inputBox.getNumberOfInputs(address(this));
-        emit WatchedFallback(msg.sender, msg.value, numberOfInputs);
-    }
-}
+import {Test} from "forge-std/Test.sol";
 
 contract EtherPortalTest is Test {
-    IInputBox inputBox;
-    IEtherPortal etherPortal;
-    address alice;
-    address dapp;
-
-    event InputAdded(
-        address indexed dapp,
-        uint256 indexed inputIndex,
-        address sender,
-        bytes input
-    );
-    event WatchedFallback(
-        address sender,
-        uint256 value,
-        uint256 numberOfInputs
-    );
+    address _alice;
+    address payable _dapp;
+    IInputBox _inputBox;
+    IEtherPortal _portal;
 
     function setUp() public {
-        inputBox = new InputBox();
-        etherPortal = new EtherPortal(inputBox);
-        alice = address(0xdeadbeef);
-        dapp = address(0x12345678);
+        _alice = vm.addr(1);
+        _dapp = payable(vm.addr(2));
+        _inputBox = IInputBox(vm.addr(3));
+        _portal = new EtherPortal(_inputBox);
     }
 
-    function testSupportsInterface(bytes4 _randomInterfaceId) public {
-        assertTrue(
-            etherPortal.supportsInterface(type(IEtherPortal).interfaceId)
-        );
-        assertTrue(
-            etherPortal.supportsInterface(type(IInputRelay).interfaceId)
-        );
-        assertTrue(etherPortal.supportsInterface(type(IERC165).interfaceId));
+    function testSupportsInterface(bytes4 interfaceId) public {
+        assertTrue(_portal.supportsInterface(type(IEtherPortal).interfaceId));
+        assertTrue(_portal.supportsInterface(type(IInputRelay).interfaceId));
+        assertTrue(_portal.supportsInterface(type(IERC165).interfaceId));
 
-        assertFalse(etherPortal.supportsInterface(bytes4(0xffffffff)));
+        assertFalse(_portal.supportsInterface(bytes4(0xffffffff)));
 
-        vm.assume(_randomInterfaceId != type(IEtherPortal).interfaceId);
-        vm.assume(_randomInterfaceId != type(IInputRelay).interfaceId);
-        vm.assume(_randomInterfaceId != type(IERC165).interfaceId);
-        assertFalse(etherPortal.supportsInterface(_randomInterfaceId));
+        vm.assume(interfaceId != type(IEtherPortal).interfaceId);
+        vm.assume(interfaceId != type(IInputRelay).interfaceId);
+        vm.assume(interfaceId != type(IERC165).interfaceId);
+        assertFalse(_portal.supportsInterface(interfaceId));
     }
 
     function testGetInputBox() public {
-        assertEq(address(etherPortal.getInputBox()), address(inputBox));
+        assertEq(address(_portal.getInputBox()), address(_inputBox));
     }
 
-    function testEtherDeposit(uint256 value, bytes calldata data) public {
-        // Construct the Ether deposit input
-        bytes memory input = abi.encodePacked(alice, value, data);
+    function testDeposit(uint256 value, bytes calldata data) public {
+        value = _boundValue(value);
 
-        // Transfer Ether to Alice and start impersonating her
-        startHoax(alice, value);
+        bytes memory input = _encodeInput(value, data);
 
-        // Save the Ether balances
-        uint256 alicesBalanceBefore = alice.balance;
-        uint256 dappsBalanceBefore = dapp.balance;
-        uint256 portalsBalanceBefore = address(etherPortal).balance;
+        bytes memory addInput = _encodeAddInput(input);
 
-        // Expect InputAdded to be emitted with the right arguments
-        vm.expectEmit(true, true, false, true, address(inputBox));
-        emit InputAdded(dapp, 0, address(etherPortal), input);
+        vm.mockCall(address(_inputBox), addInput, abi.encode(bytes32(0)));
 
-        // Deposit Ether in the DApp via the portal
-        etherPortal.depositEther{value: value}(dapp, data);
+        vm.expectCall(_dapp, value, abi.encode(), 1);
 
-        // Check the balances after the deposit
-        assertEq(alice.balance, alicesBalanceBefore - value);
-        assertEq(dapp.balance, dappsBalanceBefore + value);
-        assertEq(address(etherPortal).balance, portalsBalanceBefore);
+        vm.expectCall(address(_inputBox), addInput, 1);
 
-        // Check the DApp's input box
-        assertEq(inputBox.getNumberOfInputs(dapp), 1);
+        uint256 balance = _dapp.balance;
+
+        vm.deal(_alice, value);
+        vm.prank(_alice);
+        _portal.depositEther{value: value}(_dapp, data);
+
+        assertEq(_dapp.balance, balance + value);
     }
 
-    function testRevertsFailedTransfer(
+    function testDepositFailedInnerCall(
+        uint256 value,
+        bytes calldata data,
+        bytes calldata errorData
+    ) public {
+        value = _boundValue(value);
+
+        vm.mockCallRevert(_dapp, value, abi.encode(), errorData);
+
+        bytes memory input = _encodeInput(value, data);
+
+        bytes memory addInput = _encodeAddInput(input);
+
+        vm.mockCall(address(_inputBox), addInput, abi.encode(bytes32(0)));
+
+        vm.expectRevert(Address.FailedInnerCall.selector);
+
+        vm.deal(_alice, value);
+        vm.prank(_alice);
+        _portal.depositEther{value: value}(_dapp, data);
+    }
+
+    function _encodeInput(
         uint256 value,
         bytes calldata data
-    ) public {
-        // Create a contract that reverts when it receives Ether
-        BadEtherReceiver badEtherReceiver = new BadEtherReceiver();
-
-        startHoax(alice, value);
-
-        // Expect the deposit to revert with the following message
-        vm.expectRevert(EtherPortal.EtherTransferFailed.selector);
-        etherPortal.depositEther{value: value}(address(badEtherReceiver), data);
+    ) internal view returns (bytes memory) {
+        return InputEncoding.encodeEtherDeposit(_alice, value, data);
     }
 
-    function testNumberOfInputs(uint256 value, bytes calldata data) public {
-        // Create a contract that records the number of inputs it has received
-        InputBoxWatcher watcher = new InputBoxWatcher(inputBox);
-
-        startHoax(alice, value);
-
-        // Expect new contract to have no inputs yet
-        uint256 numberOfInputsBefore = inputBox.getNumberOfInputs(
-            address(watcher)
-        );
-
-        // Expect WatchedFallback to be emitted
-        vm.expectEmit(false, false, false, true, address(watcher));
-        emit WatchedFallback(address(etherPortal), value, numberOfInputsBefore);
-
-        // Transfer Ether to contract
-        etherPortal.depositEther{value: value}(address(watcher), data);
-
-        // Expect new input
-        assertEq(
-            inputBox.getNumberOfInputs(address(watcher)),
-            numberOfInputsBefore + 1
-        );
-    }
-}
-
-contract EtherPortalHandler is Test {
-    IEtherPortal portal;
-    IInputBox inputBox;
-    address[] dapps;
-    mapping(address => uint256) public dappBalances;
-    mapping(address => uint256) public dappNumInputs;
-
-    constructor(IEtherPortal _portal, address[] memory _dapps) {
-        portal = _portal;
-        inputBox = portal.getInputBox();
-        dapps = _dapps;
+    function _encodeAddInput(
+        bytes memory input
+    ) internal view returns (bytes memory) {
+        return abi.encodeCall(IInputBox.addInput, (_dapp, input));
     }
 
-    function depositEther(
-        uint256 _dappIndex,
-        uint256 _amount,
-        bytes calldata _execLayerData
-    ) external {
-        address sender = msg.sender;
-        address dapp = dapps[_dappIndex % dapps.length];
-        _amount = bound(_amount, 0, type(uint128).max);
-
-        // fund sender
-        // sender address should not overlap with portal or dapp addresses
-        if (sender == address(portal)) {
-            return;
-        }
-        for (uint256 i; i < dapps.length; ++i) {
-            if (sender == dapps[i]) {
-                return;
-            }
-        }
-        vm.deal(sender, _amount);
-
-        // balance before the deposit
-        uint256 senderBalanceBefore = sender.balance;
-        uint256 dappBalanceBefore = dapp.balance;
-        // balance of the portal is 0 all the time during tests
-        assertEq(address(portal).balance, 0);
-
-        vm.prank(sender);
-        portal.depositEther{value: _amount}(dapp, _execLayerData);
-
-        // Check the balances after the deposit
-        assertEq(sender.balance, senderBalanceBefore - _amount);
-        assertEq(dapp.balance, dappBalanceBefore + _amount);
-        assertEq(address(portal).balance, 0);
-
-        dappBalances[dapp] += _amount;
-        assertEq(++dappNumInputs[dapp], inputBox.getNumberOfInputs(dapp));
-    }
-}
-
-contract EtherPortalInvariantTest is Test {
-    InputBox inputBox;
-    EtherPortal portal;
-    EtherPortalHandler handler;
-    uint256 numDapps;
-    address[] dapps;
-
-    function setUp() public {
-        inputBox = new InputBox();
-        portal = new EtherPortal(inputBox);
-        numDapps = 30;
-        for (uint256 i; i < numDapps; ++i) {
-            dapps.push(address(new EtherReceiver()));
-        }
-        handler = new EtherPortalHandler(portal, dapps);
-
-        targetContract(address(handler));
-    }
-
-    function invariantTests() external {
-        for (uint256 i; i < numDapps; ++i) {
-            address dapp = dapps[i];
-            assertEq(dapp.balance, handler.dappBalances(dapp));
-            uint256 numInputs = inputBox.getNumberOfInputs(dapp);
-            assertEq(numInputs, handler.dappNumInputs(dapp));
-        }
+    function _boundValue(uint256 value) internal view returns (uint256) {
+        return bound(value, 0, address(this).balance);
     }
 }
