@@ -19,6 +19,8 @@ import {IERC165} from "@openzeppelin/contracts/utils/introspection/IERC165.sol";
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {IERC721Receiver} from "@openzeppelin/contracts/token/ERC721/IERC721Receiver.sol";
 import {IERC721} from "@openzeppelin/contracts/token/ERC721/IERC721.sol";
+import {IERC20Errors, IERC721Errors} from "@openzeppelin/contracts/interfaces/draft-IERC6093.sol";
+import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
 
 import {LibServerManager} from "../util/LibServerManager.sol";
 import {LibBytes} from "../util/LibBytes.sol";
@@ -144,7 +146,12 @@ contract CartesiDAppTest is TestBase {
         IInputRelay[] calldata _inputRelays,
         bytes32 _templateHash
     ) public {
-        vm.expectRevert("Ownable: new owner is the zero address");
+        vm.expectRevert(
+            abi.encodeWithSelector(
+                Ownable.OwnableInvalidOwner.selector,
+                address(0)
+            )
+        );
         new CartesiDApp(
             consensus,
             _inputBox,
@@ -162,17 +169,9 @@ contract CartesiDAppTest is TestBase {
     ) public {
         vm.assume(_owner != address(0));
 
-        // An OwnershipTransferred event is always emitted
-        // by the Ownership contract constructor
         vm.expectEmit(true, true, false, false);
-        emit OwnershipTransferred(address(0), address(this));
+        emit OwnershipTransferred(address(0), _owner);
 
-        // A second OwnershipTransferred event is also emitted
-        // by the CartesiDApp contract contructor
-        vm.expectEmit(true, true, false, false);
-        emit OwnershipTransferred(address(this), _owner);
-
-        // perform call to constructor
         dapp = new CartesiDApp(
             consensus,
             _inputBox,
@@ -181,7 +180,6 @@ contract CartesiDAppTest is TestBase {
             _templateHash
         );
 
-        // check set values
         assertEq(address(dapp.getConsensus()), address(consensus));
         assertEq(address(dapp.getInputBox()), address(_inputBox));
         // abi.encode is used instead of a loop
@@ -232,7 +230,14 @@ contract CartesiDAppTest is TestBase {
         // not able to execute voucher because dapp has 0 balance
         assertEq(erc20Token.balanceOf(address(dapp)), 0);
         assertEq(erc20Token.balanceOf(recipient), 0);
-        vm.expectRevert("ERC20: transfer amount exceeds balance");
+        vm.expectRevert(
+            abi.encodeWithSelector(
+                IERC20Errors.ERC20InsufficientBalance.selector,
+                address(dapp),
+                0,
+                transferAmount
+            )
+        );
         executeVoucher(voucher, proof);
         assertEq(erc20Token.balanceOf(address(dapp)), 0);
         assertEq(erc20Token.balanceOf(recipient), 0);
@@ -318,7 +323,14 @@ contract CartesiDAppTest is TestBase {
         assertEq(executed, false);
 
         // execute voucher - failed
-        vm.expectRevert("ERC20: transfer amount exceeds balance");
+        vm.expectRevert(
+            abi.encodeWithSelector(
+                IERC20Errors.ERC20InsufficientBalance.selector,
+                address(dapp),
+                0,
+                transferAmount
+            )
+        );
         executeVoucher(voucher, proof);
 
         // `wasVoucherExecuted` should still return false
@@ -575,7 +587,13 @@ contract CartesiDAppTest is TestBase {
 
         // not able to execute voucher because dapp doesn't have the nft
         assertEq(erc721Token.ownerOf(tokenId), tokenOwner);
-        vm.expectRevert("ERC721: caller is not token owner or approved");
+        vm.expectRevert(
+            abi.encodeWithSelector(
+                IERC721Errors.ERC721InsufficientApproval.selector,
+                address(dapp),
+                tokenId
+            )
+        );
         executeVoucher(voucher, proof);
         assertEq(erc721Token.ownerOf(tokenId), tokenOwner);
 
@@ -631,7 +649,12 @@ contract CartesiDAppTest is TestBase {
         IConsensus newConsensus = new SimpleConsensus();
 
         // migrate fail if not called from owner
-        vm.expectRevert("Ownable: caller is not the owner");
+        vm.expectRevert(
+            abi.encodeWithSelector(
+                Ownable.OwnableUnauthorizedAccount.selector,
+                address(this)
+            )
+        );
         dapp.migrateToConsensus(newConsensus);
 
         // now impersonate owner
@@ -644,7 +667,12 @@ contract CartesiDAppTest is TestBase {
         // if owner changes, then original owner no longer can migrate consensus
         vm.prank(_owner);
         dapp.transferOwnership(_newOwner);
-        vm.expectRevert("Ownable: caller is not the owner");
+        vm.expectRevert(
+            abi.encodeWithSelector(
+                Ownable.OwnableUnauthorizedAccount.selector,
+                _owner
+            )
+        );
         vm.prank(_owner);
         dapp.migrateToConsensus(consensus);
 
@@ -652,7 +680,12 @@ contract CartesiDAppTest is TestBase {
         // no one will be able to migrate consensus
         vm.prank(_newOwner);
         dapp.renounceOwnership();
-        vm.expectRevert("Ownable: caller is not the owner");
+        vm.expectRevert(
+            abi.encodeWithSelector(
+                Ownable.OwnableUnauthorizedAccount.selector,
+                _nonZeroAddress
+            )
+        );
         vm.prank(_nonZeroAddress);
         dapp.migrateToConsensus(consensus);
     }
