@@ -10,6 +10,7 @@
 /deployments/*/solcInputs/*.json
 /deployments/localhost
 /dist
+/docs
 /export/artifacts
 /forge-cache
 /node_modules
