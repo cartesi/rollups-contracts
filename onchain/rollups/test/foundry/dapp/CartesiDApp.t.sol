@@ -14,18 +14,17 @@ import {IInputRelay} from "contracts/inputs/IInputRelay.sol";
 import {OutputValidityProof, LibOutputValidation} from "contracts/library/LibOutputValidation.sol";
 import {OutputEncoding} from "contracts/common/OutputEncoding.sol";
 
-import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
-import {IERC721} from "@openzeppelin/contracts/token/ERC721/IERC721.sol";
-import {IERC721Receiver} from "@openzeppelin/contracts/token/ERC721/IERC721Receiver.sol";
 import {IERC1155Receiver} from "@openzeppelin/contracts/token/ERC1155/IERC1155Receiver.sol";
 import {IERC165} from "@openzeppelin/contracts/utils/introspection/IERC165.sol";
+import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import {IERC721Receiver} from "@openzeppelin/contracts/token/ERC721/IERC721Receiver.sol";
+import {IERC721} from "@openzeppelin/contracts/token/ERC721/IERC721.sol";
 
 import {LibServerManager} from "../util/LibServerManager.sol";
 import {LibBytes} from "../util/LibBytes.sol";
 import {SimpleConsensus} from "../util/SimpleConsensus.sol";
 import {SimpleERC20} from "../util/SimpleERC20.sol";
 import {SimpleERC721} from "../util/SimpleERC721.sol";
-import {SimpleERC721Receiver} from "../util/SimpleERC721Receiver.sol";
 
 import "forge-std/console.sol";
 
@@ -64,7 +63,6 @@ contract CartesiDAppTest is TestBase {
     IConsensus consensus;
     IERC20 erc20Token;
     IERC721 erc721Token;
-    IERC721Receiver erc721Receiver;
 
     struct Voucher {
         address destination;
@@ -599,7 +597,7 @@ contract CartesiDAppTest is TestBase {
         executeVoucher(voucher, proof);
 
         // check result
-        assertEq(erc721Token.ownerOf(tokenId), address(erc721Receiver));
+        assertEq(erc721Token.ownerOf(tokenId), recipient);
 
         // cannot execute the same voucher again
         vm.expectRevert(CartesiDApp.VoucherReexecutionNotAllowed.selector);
@@ -664,7 +662,6 @@ contract CartesiDAppTest is TestBase {
         dapp = deployDAppDeterministically();
         erc20Token = deployERC20Deterministically();
         erc721Token = deployERC721Deterministically();
-        erc721Receiver = deployERC721ReceiverDeterministically();
     }
 
     function deployDAppDeterministically() internal returns (CartesiDApp) {
@@ -692,14 +689,6 @@ contract CartesiDAppTest is TestBase {
     function deployERC721Deterministically() internal returns (IERC721) {
         vm.prank(tokenOwner);
         return new SimpleERC721{salt: salt}(tokenOwner, tokenId);
-    }
-
-    function deployERC721ReceiverDeterministically()
-        internal
-        returns (IERC721Receiver)
-    {
-        vm.prank(tokenOwner);
-        return new SimpleERC721Receiver{salt: salt}();
     }
 
     function addVoucher(address destination, bytes memory payload) internal {
@@ -780,18 +769,13 @@ contract CartesiDAppTest is TestBase {
         addNotice(abi.encode(bytes4(0xfafafafa)));
         addVoucher(
             address(erc20Token),
-            abi.encodeWithSelector(
-                IERC20.transfer.selector,
-                recipient,
-                transferAmount
-            )
+            abi.encodeCall(IERC20.transfer, (recipient, transferAmount))
         );
         addVoucher(
             address(dapp),
-            abi.encodeWithSelector(
-                CartesiDApp.withdrawEther.selector,
-                recipient,
-                transferAmount
+            abi.encodeCall(
+                CartesiDApp.withdrawEther,
+                (recipient, transferAmount)
             )
         );
         addVoucher(
@@ -799,7 +783,7 @@ contract CartesiDAppTest is TestBase {
             abi.encodeWithSignature(
                 "safeTransferFrom(address,address,uint256)",
                 dapp,
-                erc721Receiver,
+                recipient,
                 tokenId
             )
         );
