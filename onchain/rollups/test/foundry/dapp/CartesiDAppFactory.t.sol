@@ -123,14 +123,8 @@ contract CartesiDAppFactoryTest is TestBase {
     ) public {
         vm.assume(_dappOwner != address(0));
 
-        // Start the recorder
         vm.recordLogs();
 
-        // perform call and emit event
-        // the first event is `OwnershipTransferred` emitted by Ownable constructor
-        // the second event is `OwnershipTransferred` emitted by CartesiDApp constructor
-        // the third event is `ApplicationCreated` emitted by `newApplication` function
-        // we focus on the third event
         CartesiDApp dapp = factory.newApplication(
             consensus,
             _inputBox,
@@ -157,14 +151,8 @@ contract CartesiDAppFactoryTest is TestBase {
     ) public {
         vm.assume(_dappOwner != address(0));
 
-        // Start the recorder
         vm.recordLogs();
 
-        // perform call and emit event
-        // the first event is `OwnershipTransferred` emitted by Ownable constructor
-        // the second event is `OwnershipTransferred` emitted by CartesiDApp constructor
-        // the third event is `ApplicationCreated` emitted by `newApplication` function
-        // we focus on the third event
         CartesiDApp dapp = factory.newApplication(
             consensus,
             _inputBox,
