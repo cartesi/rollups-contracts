@@ -107,6 +107,24 @@ const config: HardhatUserConfig = {
     },
     etherscan: {
         apiKey: process.env.ETHERSCAN_API_KEY,
+        customChains: [
+            {
+                chainId: 421614,
+                network: "arbitrum_sepolia",
+                urls: {
+                    apiURL: "https://api-sepolia.arbiscan.io/api",
+                    browserURL: "https://sepolia.arbiscan.io",
+                },
+            },
+            {
+                chainId: 11155420,
+                network: "optimism_sepolia",
+                urls: {
+                    apiURL: "https://sepolia-optimistic.etherscan.io/api",
+                    browserURL: "https://sepolia-optimistic.etherscan.io",
+                },
+            },
+        ],
     },
     external: {
         contracts: [

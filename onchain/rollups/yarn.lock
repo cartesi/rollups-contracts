@@ -58,7 +58,7 @@ __metadata:
     "@ethersproject/abi": "npm:^5"
     "@ethersproject/bytes": "npm:^5"
     "@ethersproject/providers": "npm:^5"
-    "@nomicfoundation/hardhat-verify": "npm:^1"
+    "@nomicfoundation/hardhat-verify": "npm:^2"
     "@nomiclabs/hardhat-ethers": "npm:^2"
     "@openzeppelin/contracts": "npm:4.9.2"
     "@safe-global/safe-singleton-factory": "npm:^1"
@@ -1125,9 +1125,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@nomicfoundation/hardhat-verify@npm:^1":
-  version: 1.1.1
-  resolution: "@nomicfoundation/hardhat-verify@npm:1.1.1"
+"@nomicfoundation/hardhat-verify@npm:^2":
+  version: 2.0.2
+  resolution: "@nomicfoundation/hardhat-verify@npm:2.0.2"
   dependencies:
     "@ethersproject/abi": "npm:^5.1.2"
     "@ethersproject/address": "npm:^5.0.2"
@@ -1140,7 +1140,7 @@ __metadata:
     undici: "npm:^5.14.0"
   peerDependencies:
     hardhat: ^2.0.4
-  checksum: c565a9f8d59c798b133b9d188ab657862a1c77c3be9b726a3db2a87a78657ef3bdbc136eb058e7d96776b86ace3479458dec1a3ef08ff639dc1f98a00fe92878
+  checksum: ee107d3d06a177b6539c7932fbb3c10d293ab87a780fa114b2e3f90e274937510ee552518f935a4864b31cff9e06ed838b99d3f46e33890913a8b7e94a922243
   languageName: node
   linkType: hard
 
