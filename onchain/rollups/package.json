@@ -41,7 +41,7 @@
         "@ethersproject/abi": "^5",
         "@ethersproject/bytes": "^5",
         "@ethersproject/providers": "^5",
-        "@nomicfoundation/hardhat-verify": "^1",
+        "@nomicfoundation/hardhat-verify": "^2",
         "@nomiclabs/hardhat-ethers": "^2",
         "@safe-global/safe-singleton-factory": "^1",
         "@typechain/ethers-v5": "^11",
