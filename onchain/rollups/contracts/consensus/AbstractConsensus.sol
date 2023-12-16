@@ -24,7 +24,7 @@ abstract contract AbstractConsensus is IConsensus {
         address dapp,
         InputRange calldata r
     ) public view override returns (bytes32 epochHash) {
-        epochHash = _epochHashes[dapp][r.firstInputIndex][r.lastInputIndex];
+        epochHash = _epochHashes[dapp][r.firstIndex][r.lastIndex];
     }
 
     /// @notice Accept a claim.
@@ -37,7 +37,7 @@ abstract contract AbstractConsensus is IConsensus {
         InputRange calldata r,
         bytes32 epochHash
     ) internal {
-        _epochHashes[dapp][r.firstInputIndex][r.lastInputIndex] = epochHash;
+        _epochHashes[dapp][r.firstIndex][r.lastIndex] = epochHash;
         emit ClaimAcceptance(dapp, r, epochHash);
     }
 }

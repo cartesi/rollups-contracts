@@ -176,8 +176,8 @@ library LibServerManager {
     ) internal pure returns (InputRange memory) {
         return
             InputRange({
-                firstInputIndex: getFirstInputIndex(proofs),
-                lastInputIndex: getLastInputIndex(proofs)
+                firstIndex: getFirstInputIndex(proofs),
+                lastIndex: getLastInputIndex(proofs)
             });
     }
 
