@@ -376,7 +376,7 @@ contract CartesiDAppTest is TestBase {
         // Here we change the input range artificially to make it look like it ends
         // before the actual input (which is still provable!).
         // The `CartesiDApp` contract, however, will not allow such proof.
-        proof.inputRange.lastInputIndex = inputIndex - 1;
+        proof.inputRange.lastIndex = inputIndex - 1;
         mockConsensus(proof);
 
         vm.expectRevert(
