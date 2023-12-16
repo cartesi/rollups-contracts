@@ -71,7 +71,6 @@ contract AuthorityTest is TestBase {
     ) public {
         vm.assume(owner != address(0));
         vm.assume(owner != notOwner);
-        vm.assume(!inputRange.isEmptySet());
 
         Authority authority = new Authority(owner);
 
@@ -86,30 +85,6 @@ contract AuthorityTest is TestBase {
         authority.submitClaim(dapp, inputRange, epochHash);
     }
 
-    function testSubmitClaimRevertsInputRangeIsEmptySet(
-        address owner,
-        address dapp,
-        InputRange calldata inputRange,
-        bytes32 epochHash
-    ) public {
-        vm.assume(owner != address(0));
-        vm.assume(inputRange.isEmptySet());
-
-        Authority authority = new Authority(owner);
-
-        vm.expectRevert(
-            abi.encodeWithSelector(
-                IConsensus.InputRangeIsEmptySet.selector,
-                dapp,
-                inputRange,
-                epochHash
-            )
-        );
-
-        vm.prank(owner);
-        authority.submitClaim(dapp, inputRange, epochHash);
-    }
-
     function testSubmitClaim(
         address owner,
         address dapp,
@@ -118,7 +93,6 @@ contract AuthorityTest is TestBase {
         bytes32 epochHash2
     ) public {
         vm.assume(owner != address(0));
-        vm.assume(!inputRange.isEmptySet());
 
         Authority authority = new Authority(owner);
 

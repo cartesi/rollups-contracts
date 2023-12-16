@@ -20,7 +20,6 @@ contract Authority is AbstractConsensus, Ownable {
     /// @param dapp The DApp contract address
     /// @param inputRange The input range
     /// @param epochHash The epoch hash
-    /// @dev The input range MUST NOT represent the empty set.
     /// @dev On success, triggers a `ClaimSubmission` event and a `ClaimAcceptance` event.
     /// @dev Can only be called by the owner.
     function submitClaim(
