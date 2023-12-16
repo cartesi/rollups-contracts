@@ -8,13 +8,6 @@ on:
 
 concurrency: ${{ github.workflow }}-${{ github.ref }}
 
-permissions:
-    actions: write
-    contents: write
-    id-token: write
-    packages: write
-    pull-requests: write
-
 jobs:
   release:
     runs-on: ubuntu-22.04
@@ -39,5 +32,5 @@ jobs:
           publish: yarn changeset publish
           cwd: onchain/rollups
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.BOT_TOKEN }}
           NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
