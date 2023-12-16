@@ -14,7 +14,6 @@ library LibInputRange {
         InputRange calldata r,
         uint256 inputIndex
     ) internal pure returns (bool) {
-        return
-            r.firstInputIndex <= inputIndex && inputIndex <= r.lastInputIndex;
+        return r.firstIndex <= inputIndex && inputIndex <= r.lastIndex;
     }
 }
