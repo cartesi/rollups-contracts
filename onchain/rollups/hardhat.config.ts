@@ -16,9 +16,11 @@ import {
     Chain,
     arbitrum,
     arbitrumGoerli,
+    arbitrumSepolia,
     mainnet,
     optimism,
     optimismGoerli,
+    optimismSepolia,
     sepolia,
 } from "viem/chains";
 
@@ -58,10 +60,12 @@ const config: HardhatUserConfig = {
         },
         arbitrum: networkConfig(arbitrum),
         arbitrum_goerli: networkConfig(arbitrumGoerli),
+        arbitrum_sepolia: networkConfig(arbitrumSepolia),
         mainnet: networkConfig(mainnet),
         sepolia: networkConfig(sepolia),
         optimism: networkConfig(optimism),
         optimism_goerli: networkConfig(optimismGoerli),
+        optimism_sepolia: networkConfig(optimismSepolia),
     },
     solidity: {
         version: "0.8.20",
@@ -103,6 +107,24 @@ const config: HardhatUserConfig = {
     },
     etherscan: {
         apiKey: process.env.ETHERSCAN_API_KEY,
+        customChains: [
+            {
+                chainId: 421614,
+                network: "arbitrum_sepolia",
+                urls: {
+                    apiURL: "https://api-sepolia.arbiscan.io/api",
+                    browserURL: "https://sepolia.arbiscan.io",
+                },
+            },
+            {
+                chainId: 11155420,
+                network: "optimism_sepolia",
+                urls: {
+                    apiURL: "https://sepolia-optimistic.etherscan.io/api",
+                    browserURL: "https://sepolia-optimistic.etherscan.io",
+                },
+            },
+        ],
     },
     external: {
         contracts: [
@@ -117,10 +139,16 @@ const config: HardhatUserConfig = {
             arbitrum_goerli: [
                 ppath("@cartesi/util", "/deployments/arbitrum_goerli"),
             ],
+            arbitrum_sepolia: [
+                ppath("@cartesi/util", "/deployments/arbitrum_sepolia"),
+            ],
             mainnet: [ppath("@cartesi/util", "/deployments/mainnet")],
             optimism: [ppath("@cartesi/util", "/deployments/optimism")],
             optimism_goerli: [
                 ppath("@cartesi/util", "/deployments/optimism_goerli"),
+            ],
+            optimism_sepolia: [
+                ppath("@cartesi/util", "/deployments/optimism_sepolia"),
             ],
             sepolia: [ppath("@cartesi/util", "/deployments/sepolia")],
         },
