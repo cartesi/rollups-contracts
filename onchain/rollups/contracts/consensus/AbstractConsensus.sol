@@ -11,8 +11,6 @@ import {LibInputRange} from "../library/LibInputRange.sol";
 /// @dev This contract was designed to be inherited by implementations of the `IConsensus` interface
 /// that only need a simple mechanism of storage and retrieval of epoch hashes.
 abstract contract AbstractConsensus is IConsensus {
-    using LibInputRange for InputRange;
-
     /// @notice Indexes epoch hashes by DApp address, first input index and last input index.
     mapping(address => mapping(uint256 => mapping(uint256 => bytes32)))
         private _epochHashes;
@@ -34,16 +32,12 @@ abstract contract AbstractConsensus is IConsensus {
     /// @param dapp The DApp contract address
     /// @param r The input range
     /// @param epochHash The epoch hash
-    /// @dev Raises an `InputRangeIsEmptySet` error if `r` represents the empty set.
     /// @dev On successs, emits a `ClaimAcceptance` event.
     function _acceptClaim(
         address dapp,
         InputRange calldata r,
         bytes32 epochHash
     ) internal {
-        if (r.isEmptySet()) {
-            revert InputRangeIsEmptySet(dapp, r, epochHash);
-        }
         _epochHashes[dapp][r.firstInputIndex][r.lastInputIndex] = epochHash;
         emit ClaimAcceptance(dapp, r, epochHash);
     }
