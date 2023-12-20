@@ -1,13 +1,13 @@
 // (c) Cartesi and individual authors (see AUTHORS)
 // SPDX-License-Identifier: Apache-2.0 (see LICENSE)
 
-/// @title Cartesi DApp Test
+/// @title Application Test
 pragma solidity ^0.8.8;
 
 import {TestBase} from "../util/TestBase.sol";
 
-import {CartesiDApp} from "contracts/dapp/CartesiDApp.sol";
-import {ICartesiDApp} from "contracts/dapp/ICartesiDApp.sol";
+import {Application} from "contracts/dapp/Application.sol";
+import {IApplication} from "contracts/dapp/IApplication.sol";
 import {Proof} from "contracts/common/Proof.sol";
 import {IConsensus} from "contracts/consensus/IConsensus.sol";
 import {IInputBox} from "contracts/inputs/IInputBox.sol";
@@ -38,7 +38,7 @@ contract EtherReceiver {
     receive() external payable {}
 }
 
-contract CartesiDAppTest is TestBase {
+contract ApplicationTest is TestBase {
     using LibServerManager for LibServerManager.RawFinishEpochResponse;
     using LibServerManager for LibServerManager.Proof;
     using LibServerManager for LibServerManager.Proof[];
@@ -67,7 +67,7 @@ contract CartesiDAppTest is TestBase {
         uint256 inputIndexWithinEpoch
     );
 
-    CartesiDApp dapp;
+    Application app;
     IConsensus consensus;
     IERC20 erc20Token;
     IERC721 erc721Token;
@@ -84,7 +84,7 @@ contract CartesiDAppTest is TestBase {
     bytes encodedFinishEpochResponse;
 
     IInputBox immutable inputBox;
-    address immutable dappOwner;
+    address immutable appOwner;
     address immutable noticeSender;
     address immutable recipient;
     address immutable tokenOwner;
@@ -103,7 +103,7 @@ contract CartesiDAppTest is TestBase {
     event NewConsensus(IConsensus newConsensus);
 
     constructor() {
-        dappOwner = LibBytes.hashToAddress("dappOwner");
+        appOwner = LibBytes.hashToAddress("appOwner");
         initialSupply = LibBytes.hashToUint256("initialSupply");
         inputBox = IInputBox(LibBytes.hashToAddress("inputBox"));
         noticeSender = LibBytes.hashToAddress("noticeSender");
@@ -133,18 +133,18 @@ contract CartesiDAppTest is TestBase {
     }
 
     function testSupportsInterface(bytes4 _randomInterfaceId) public {
-        assertTrue(dapp.supportsInterface(type(ICartesiDApp).interfaceId));
-        assertTrue(dapp.supportsInterface(type(IERC721Receiver).interfaceId));
-        assertTrue(dapp.supportsInterface(type(IERC1155Receiver).interfaceId));
-        assertTrue(dapp.supportsInterface(type(IERC165).interfaceId));
+        assertTrue(app.supportsInterface(type(IApplication).interfaceId));
+        assertTrue(app.supportsInterface(type(IERC721Receiver).interfaceId));
+        assertTrue(app.supportsInterface(type(IERC1155Receiver).interfaceId));
+        assertTrue(app.supportsInterface(type(IERC165).interfaceId));
 
-        assertFalse(dapp.supportsInterface(bytes4(0xffffffff)));
+        assertFalse(app.supportsInterface(bytes4(0xffffffff)));
 
-        vm.assume(_randomInterfaceId != type(ICartesiDApp).interfaceId);
+        vm.assume(_randomInterfaceId != type(IApplication).interfaceId);
         vm.assume(_randomInterfaceId != type(IERC721Receiver).interfaceId);
         vm.assume(_randomInterfaceId != type(IERC1155Receiver).interfaceId);
         vm.assume(_randomInterfaceId != type(IERC165).interfaceId);
-        assertFalse(dapp.supportsInterface(_randomInterfaceId));
+        assertFalse(app.supportsInterface(_randomInterfaceId));
     }
 
     function testConstructorWithOwnerAsZeroAddress(
@@ -158,7 +158,7 @@ contract CartesiDAppTest is TestBase {
                 address(0)
             )
         );
-        new CartesiDApp(
+        new Application(
             consensus,
             _inputBox,
             _inputRelays,
@@ -178,7 +178,7 @@ contract CartesiDAppTest is TestBase {
         vm.expectEmit(true, true, false, false);
         emit OwnershipTransferred(address(0), _owner);
 
-        dapp = new CartesiDApp(
+        app = new Application(
             consensus,
             _inputBox,
             _inputRelays,
@@ -186,12 +186,12 @@ contract CartesiDAppTest is TestBase {
             _templateHash
         );
 
-        assertEq(address(dapp.getConsensus()), address(consensus));
-        assertEq(address(dapp.getInputBox()), address(_inputBox));
+        assertEq(address(app.getConsensus()), address(consensus));
+        assertEq(address(app.getInputBox()), address(_inputBox));
         // abi.encode is used instead of a loop
-        assertEq(abi.encode(dapp.getInputRelays()), abi.encode(_inputRelays));
-        assertEq(dapp.owner(), _owner);
-        assertEq(dapp.getTemplateHash(), _templateHash);
+        assertEq(abi.encode(app.getInputRelays()), abi.encode(_inputRelays));
+        assertEq(app.owner(), _owner);
+        assertEq(app.getTemplateHash(), _templateHash);
     }
 
     // test notices
@@ -212,35 +212,35 @@ contract CartesiDAppTest is TestBase {
 
     // test vouchers
 
-    function testExecuteVoucherAndEvent(uint256 _dappInitBalance) public {
-        _dappInitBalance = boundBalance(_dappInitBalance);
+    function testExecuteVoucherAndEvent(uint256 _appInitBalance) public {
+        _appInitBalance = boundBalance(_appInitBalance);
 
         Voucher memory voucher = getVoucher(OutputName.ERC20TransferVoucher);
         Proof memory proof = setupVoucherProof(OutputName.ERC20TransferVoucher);
 
-        // not able to execute voucher because dapp has 0 balance
-        assertEq(erc20Token.balanceOf(address(dapp)), 0);
+        // not able to execute voucher because application has 0 balance
+        assertEq(erc20Token.balanceOf(address(app)), 0);
         assertEq(erc20Token.balanceOf(recipient), 0);
         vm.expectRevert(
             abi.encodeWithSelector(
                 IERC20Errors.ERC20InsufficientBalance.selector,
-                address(dapp),
+                address(app),
                 0,
                 transferAmount
             )
         );
         executeVoucher(voucher, proof);
-        assertEq(erc20Token.balanceOf(address(dapp)), 0);
+        assertEq(erc20Token.balanceOf(address(app)), 0);
         assertEq(erc20Token.balanceOf(recipient), 0);
 
-        // fund dapp
+        // fund application
         vm.prank(tokenOwner);
-        erc20Token.transfer(address(dapp), _dappInitBalance);
-        assertEq(erc20Token.balanceOf(address(dapp)), _dappInitBalance);
+        erc20Token.transfer(address(app), _appInitBalance);
+        assertEq(erc20Token.balanceOf(address(app)), _appInitBalance);
         assertEq(erc20Token.balanceOf(recipient), 0);
 
         // expect event
-        vm.expectEmit(false, false, false, true, address(dapp));
+        vm.expectEmit(false, false, false, true, address(app));
         emit VoucherExecuted(
             _calculateInputIndex(proof),
             proof.validity.outputIndexWithinInput
@@ -251,39 +251,39 @@ contract CartesiDAppTest is TestBase {
 
         // check result
         assertEq(
-            erc20Token.balanceOf(address(dapp)),
-            _dappInitBalance - transferAmount
+            erc20Token.balanceOf(address(app)),
+            _appInitBalance - transferAmount
         );
         assertEq(erc20Token.balanceOf(recipient), transferAmount);
     }
 
-    function testRevertsReexecution(uint256 _dappInitBalance) public {
-        _dappInitBalance = boundBalance(_dappInitBalance);
+    function testRevertsReexecution(uint256 _appInitBalance) public {
+        _appInitBalance = boundBalance(_appInitBalance);
 
         Voucher memory voucher = getVoucher(OutputName.ERC20TransferVoucher);
         Proof memory proof = setupVoucherProof(OutputName.ERC20TransferVoucher);
 
-        // fund dapp
+        // fund application
         vm.prank(tokenOwner);
-        erc20Token.transfer(address(dapp), _dappInitBalance);
+        erc20Token.transfer(address(app), _appInitBalance);
 
         // 1st execution attempt should succeed
         executeVoucher(voucher, proof);
 
         // 2nd execution attempt should fail
-        vm.expectRevert(CartesiDApp.VoucherReexecutionNotAllowed.selector);
+        vm.expectRevert(Application.VoucherReexecutionNotAllowed.selector);
         executeVoucher(voucher, proof);
 
         // end result should be the same as executing successfully only once
         assertEq(
-            erc20Token.balanceOf(address(dapp)),
-            _dappInitBalance - transferAmount
+            erc20Token.balanceOf(address(app)),
+            _appInitBalance - transferAmount
         );
         assertEq(erc20Token.balanceOf(recipient), transferAmount);
     }
 
-    function testWasVoucherExecuted(uint256 _dappInitBalance) public {
-        _dappInitBalance = boundBalance(_dappInitBalance);
+    function testWasVoucherExecuted(uint256 _appInitBalance) public {
+        _appInitBalance = boundBalance(_appInitBalance);
 
         Voucher memory voucher = getVoucher(OutputName.ERC20TransferVoucher);
         Proof memory proof = setupVoucherProof(OutputName.ERC20TransferVoucher);
@@ -291,7 +291,7 @@ contract CartesiDAppTest is TestBase {
         uint256 inputIndex = _calculateInputIndex(proof);
 
         // before executing voucher
-        bool executed = dapp.wasVoucherExecuted(
+        bool executed = app.wasVoucherExecuted(
             inputIndex,
             proof.validity.outputIndexWithinInput
         );
@@ -301,7 +301,7 @@ contract CartesiDAppTest is TestBase {
         vm.expectRevert(
             abi.encodeWithSelector(
                 IERC20Errors.ERC20InsufficientBalance.selector,
-                address(dapp),
+                address(app),
                 0,
                 transferAmount
             )
@@ -309,7 +309,7 @@ contract CartesiDAppTest is TestBase {
         executeVoucher(voucher, proof);
 
         // `wasVoucherExecuted` should still return false
-        executed = dapp.wasVoucherExecuted(
+        executed = app.wasVoucherExecuted(
             inputIndex,
             proof.validity.outputIndexWithinInput
         );
@@ -317,11 +317,11 @@ contract CartesiDAppTest is TestBase {
 
         // execute voucher - succeeded
         vm.prank(tokenOwner);
-        erc20Token.transfer(address(dapp), _dappInitBalance);
+        erc20Token.transfer(address(app), _appInitBalance);
         executeVoucher(voucher, proof);
 
         // after executing voucher, `wasVoucherExecuted` should return true
-        executed = dapp.wasVoucherExecuted(
+        executed = app.wasVoucherExecuted(
             inputIndex,
             proof.validity.outputIndexWithinInput
         );
@@ -375,13 +375,13 @@ contract CartesiDAppTest is TestBase {
 
         // Here we change the input range artificially to make it look like it ends
         // before the actual input (which is still provable!).
-        // The `CartesiDApp` contract, however, will not allow such proof.
+        // The `Application` contract, however, will not allow such proof.
         proof.inputRange.lastIndex = inputIndex - 1;
         mockConsensus(proof);
 
         vm.expectRevert(
             abi.encodeWithSelector(
-                ICartesiDApp.InputIndexOutOfRange.selector,
+                IApplication.InputIndexOutOfRange.selector,
                 inputIndex,
                 proof.inputRange
             )
@@ -391,27 +391,27 @@ contract CartesiDAppTest is TestBase {
 
     // test ether transfer
 
-    function testEtherTransfer(uint256 _dappInitBalance) public {
-        _dappInitBalance = boundBalance(_dappInitBalance);
+    function testEtherTransfer(uint256 _appInitBalance) public {
+        _appInitBalance = boundBalance(_appInitBalance);
 
         Voucher memory voucher = getVoucher(OutputName.ETHWithdrawalVoucher);
         Proof memory proof = setupVoucherProof(OutputName.ETHWithdrawalVoucher);
 
-        // not able to execute voucher because dapp has 0 balance
-        assertEq(address(dapp).balance, 0);
+        // not able to execute voucher because application has 0 balance
+        assertEq(address(app).balance, 0);
         assertEq(address(recipient).balance, 0);
         vm.expectRevert();
         executeVoucher(voucher, proof);
-        assertEq(address(dapp).balance, 0);
+        assertEq(address(app).balance, 0);
         assertEq(address(recipient).balance, 0);
 
-        // fund dapp
-        vm.deal(address(dapp), _dappInitBalance);
-        assertEq(address(dapp).balance, _dappInitBalance);
+        // fund application
+        vm.deal(address(app), _appInitBalance);
+        assertEq(address(app).balance, _appInitBalance);
         assertEq(address(recipient).balance, 0);
 
         // expect event
-        vm.expectEmit(false, false, false, true, address(dapp));
+        vm.expectEmit(false, false, false, true, address(app));
         emit VoucherExecuted(
             _calculateInputIndex(proof),
             proof.validity.outputIndexWithinInput
@@ -421,44 +421,44 @@ contract CartesiDAppTest is TestBase {
         executeVoucher(voucher, proof);
 
         // check result
-        assertEq(address(dapp).balance, _dappInitBalance - transferAmount);
+        assertEq(address(app).balance, _appInitBalance - transferAmount);
         assertEq(address(recipient).balance, transferAmount);
 
         // cannot execute the same voucher again
-        vm.expectRevert(CartesiDApp.VoucherReexecutionNotAllowed.selector);
+        vm.expectRevert(Application.VoucherReexecutionNotAllowed.selector);
         executeVoucher(voucher, proof);
     }
 
     function testWithdrawEtherContract(
         uint256 _value,
-        address _notDApp
+        address _notApplication
     ) public {
         vm.assume(_value <= address(this).balance);
-        vm.assume(_notDApp != address(dapp));
+        vm.assume(_notApplication != address(app));
         address receiver = address(new EtherReceiver());
 
-        // fund dapp
-        vm.deal(address(dapp), _value);
+        // fund application
+        vm.deal(address(app), _value);
 
         // withdrawEther cannot be called by anyone
-        vm.expectRevert(CartesiDApp.OnlyDApp.selector);
-        vm.prank(_notDApp);
-        dapp.withdrawEther(receiver, _value);
+        vm.expectRevert(Application.OnlyApplication.selector);
+        vm.prank(_notApplication);
+        app.withdrawEther(receiver, _value);
 
-        // withdrawEther can only be called by dapp itself
+        // withdrawEther can only be called by application itself
         uint256 preBalance = receiver.balance;
-        vm.prank(address(dapp));
-        dapp.withdrawEther(receiver, _value);
+        vm.prank(address(app));
+        app.withdrawEther(receiver, _value);
         assertEq(receiver.balance, preBalance + _value);
-        assertEq(address(dapp).balance, 0);
+        assertEq(address(app).balance, 0);
     }
 
     function testWithdrawEtherEOA(
         uint256 _value,
-        address _notDApp,
+        address _notApplication,
         uint256 _receiverSeed
     ) public {
-        vm.assume(_notDApp != address(dapp));
+        vm.assume(_notApplication != address(app));
         vm.assume(_value <= address(this).balance);
 
         // by deriving receiver from keccak-256, we avoid
@@ -473,33 +473,33 @@ contract CartesiDAppTest is TestBase {
         }
         vm.assume(codeSize == 0);
 
-        // fund dapp
-        vm.deal(address(dapp), _value);
+        // fund application
+        vm.deal(address(app), _value);
 
         // withdrawEther cannot be called by anyone
-        vm.expectRevert(CartesiDApp.OnlyDApp.selector);
-        vm.prank(_notDApp);
-        dapp.withdrawEther(receiver, _value);
+        vm.expectRevert(Application.OnlyApplication.selector);
+        vm.prank(_notApplication);
+        app.withdrawEther(receiver, _value);
 
-        // withdrawEther can only be called by dapp itself
+        // withdrawEther can only be called by application itself
         uint256 preBalance = receiver.balance;
-        vm.prank(address(dapp));
-        dapp.withdrawEther(receiver, _value);
+        vm.prank(address(app));
+        app.withdrawEther(receiver, _value);
         assertEq(receiver.balance, preBalance + _value);
-        assertEq(address(dapp).balance, 0);
+        assertEq(address(app).balance, 0);
     }
 
     function testRevertsWithdrawEther(uint256 _value, uint256 _funds) public {
         vm.assume(_value > _funds);
         address receiver = address(new EtherReceiver());
 
-        // Fund DApp
-        vm.deal(address(dapp), _funds);
+        // Fund application
+        vm.deal(address(app), _funds);
 
-        // DApp is not funded or does not have enough funds
-        vm.prank(address(dapp));
-        vm.expectRevert(CartesiDApp.EtherTransferFailed.selector);
-        dapp.withdrawEther(receiver, _value);
+        // application is not funded or does not have enough funds
+        vm.prank(address(app));
+        vm.expectRevert(Application.EtherTransferFailed.selector);
+        app.withdrawEther(receiver, _value);
     }
 
     // test NFT transfer
@@ -510,25 +510,25 @@ contract CartesiDAppTest is TestBase {
             OutputName.ERC721TransferVoucher
         );
 
-        // not able to execute voucher because dapp doesn't have the nft
+        // not able to execute voucher because application doesn't have the nft
         assertEq(erc721Token.ownerOf(tokenId), tokenOwner);
         vm.expectRevert(
             abi.encodeWithSelector(
                 IERC721Errors.ERC721InsufficientApproval.selector,
-                address(dapp),
+                address(app),
                 tokenId
             )
         );
         executeVoucher(voucher, proof);
         assertEq(erc721Token.ownerOf(tokenId), tokenOwner);
 
-        // fund dapp
+        // fund application
         vm.prank(tokenOwner);
-        erc721Token.safeTransferFrom(tokenOwner, address(dapp), tokenId);
-        assertEq(erc721Token.ownerOf(tokenId), address(dapp));
+        erc721Token.safeTransferFrom(tokenOwner, address(app), tokenId);
+        assertEq(erc721Token.ownerOf(tokenId), address(app));
 
         // expect event
-        vm.expectEmit(false, false, false, true, address(dapp));
+        vm.expectEmit(false, false, false, true, address(app));
         emit VoucherExecuted(
             _calculateInputIndex(proof),
             proof.validity.outputIndexWithinInput
@@ -541,7 +541,7 @@ contract CartesiDAppTest is TestBase {
         assertEq(erc721Token.ownerOf(tokenId), recipient);
 
         // cannot execute the same voucher again
-        vm.expectRevert(CartesiDApp.VoucherReexecutionNotAllowed.selector);
+        vm.expectRevert(Application.VoucherReexecutionNotAllowed.selector);
         executeVoucher(voucher, proof);
     }
 
@@ -561,7 +561,7 @@ contract CartesiDAppTest is TestBase {
         vm.assume(address(_newOwner) != address(0));
         vm.assume(_nonZeroAddress != address(0));
 
-        dapp = new CartesiDApp(
+        app = new Application(
             consensus,
             _inputBox,
             _inputRelays,
@@ -578,18 +578,18 @@ contract CartesiDAppTest is TestBase {
                 address(this)
             )
         );
-        dapp.migrateToConsensus(newConsensus);
+        app.migrateToConsensus(newConsensus);
 
         // now impersonate owner
         vm.prank(_owner);
-        vm.expectEmit(false, false, false, true, address(dapp));
+        vm.expectEmit(false, false, false, true, address(app));
         emit NewConsensus(newConsensus);
-        dapp.migrateToConsensus(newConsensus);
-        assertEq(address(dapp.getConsensus()), address(newConsensus));
+        app.migrateToConsensus(newConsensus);
+        assertEq(address(app.getConsensus()), address(newConsensus));
 
         // if owner changes, then original owner no longer can migrate consensus
         vm.prank(_owner);
-        dapp.transferOwnership(_newOwner);
+        app.transferOwnership(_newOwner);
         vm.expectRevert(
             abi.encodeWithSelector(
                 Ownable.OwnableUnauthorizedAccount.selector,
@@ -597,12 +597,12 @@ contract CartesiDAppTest is TestBase {
             )
         );
         vm.prank(_owner);
-        dapp.migrateToConsensus(consensus);
+        app.migrateToConsensus(consensus);
 
         // if new owner renounce ownership (give ownership to address 0)
         // no one will be able to migrate consensus
         vm.prank(_newOwner);
-        dapp.renounceOwnership();
+        app.renounceOwnership();
         vm.expectRevert(
             abi.encodeWithSelector(
                 Ownable.OwnableUnauthorizedAccount.selector,
@@ -610,30 +610,33 @@ contract CartesiDAppTest is TestBase {
             )
         );
         vm.prank(_nonZeroAddress);
-        dapp.migrateToConsensus(consensus);
+        app.migrateToConsensus(consensus);
     }
 
     function deployContracts() internal {
         consensus = deployConsensusDeterministically();
-        dapp = deployDAppDeterministically();
+        app = deployApplicationDeterministically();
         erc20Token = deployERC20Deterministically();
         erc721Token = deployERC721Deterministically();
     }
 
-    function deployDAppDeterministically() internal returns (CartesiDApp) {
-        vm.prank(dappOwner);
+    function deployApplicationDeterministically()
+        internal
+        returns (Application)
+    {
+        vm.prank(appOwner);
         return
-            new CartesiDApp{salt: salt}(
+            new Application{salt: salt}(
                 consensus,
                 inputBox,
                 inputRelays,
-                dappOwner,
+                appOwner,
                 templateHash
             );
     }
 
     function deployConsensusDeterministically() internal returns (IConsensus) {
-        vm.prank(dappOwner);
+        vm.prank(appOwner);
         return new SimpleConsensus{salt: salt}();
     }
 
@@ -728,9 +731,9 @@ contract CartesiDAppTest is TestBase {
             abi.encodeCall(IERC20.transfer, (recipient, transferAmount))
         );
         addVoucher(
-            address(dapp),
+            address(app),
             abi.encodeCall(
-                CartesiDApp.withdrawEther,
+                Application.withdrawEther,
                 (recipient, transferAmount)
             )
         );
@@ -738,7 +741,7 @@ contract CartesiDAppTest is TestBase {
             address(erc721Token),
             abi.encodeWithSignature(
                 "safeTransferFrom(address,address,uint256)",
-                dapp,
+                app,
                 recipient,
                 tokenId
             )
@@ -839,14 +842,14 @@ contract CartesiDAppTest is TestBase {
         bytes memory notice,
         Proof memory proof
     ) internal view {
-        dapp.validateNotice(notice, proof);
+        app.validateNotice(notice, proof);
     }
 
     function executeVoucher(
         Voucher memory voucher,
         Proof memory proof
     ) internal {
-        dapp.executeVoucher(voucher.destination, voucher.payload, proof);
+        app.executeVoucher(voucher.destination, voucher.payload, proof);
     }
 
     function calculateEpochHash(
@@ -962,7 +965,7 @@ contract CartesiDAppTest is TestBase {
             address(consensus),
             abi.encodeCall(
                 IConsensus.getEpochHash,
-                (address(dapp), _proof.inputRange)
+                (address(app), _proof.inputRange)
             ),
             abi.encode(calculateEpochHash(_proof.validity))
         );

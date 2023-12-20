@@ -5,27 +5,27 @@ pragma solidity ^0.8.8;
 
 import {Create2} from "@openzeppelin/contracts/utils/Create2.sol";
 
-import {ICartesiDAppFactory} from "./ICartesiDAppFactory.sol";
+import {IApplicationFactory} from "./IApplicationFactory.sol";
 import {IConsensus} from "../consensus/IConsensus.sol";
 import {IInputBox} from "../inputs/IInputBox.sol";
 import {IInputRelay} from "../inputs/IInputRelay.sol";
-import {CartesiDApp} from "./CartesiDApp.sol";
+import {Application} from "./Application.sol";
 
-/// @title Cartesi DApp Factory
-/// @notice Allows anyone to reliably deploy a new `CartesiDApp` contract.
-contract CartesiDAppFactory is ICartesiDAppFactory {
+/// @title Application Factory
+/// @notice Allows anyone to reliably deploy a new `Application` contract.
+contract ApplicationFactory is IApplicationFactory {
     function newApplication(
         IConsensus _consensus,
         IInputBox _inputBox,
         IInputRelay[] memory _inputRelays,
-        address _dappOwner,
+        address _appOwner,
         bytes32 _templateHash
-    ) external override returns (CartesiDApp) {
-        CartesiDApp application = new CartesiDApp(
+    ) external override returns (Application) {
+        Application app = new Application(
             _consensus,
             _inputBox,
             _inputRelays,
-            _dappOwner,
+            _appOwner,
             _templateHash
         );
 
@@ -33,27 +33,27 @@ contract CartesiDAppFactory is ICartesiDAppFactory {
             _consensus,
             _inputBox,
             _inputRelays,
-            _dappOwner,
+            _appOwner,
             _templateHash,
-            application
+            app
         );
 
-        return application;
+        return app;
     }
 
     function newApplication(
         IConsensus _consensus,
         IInputBox _inputBox,
         IInputRelay[] memory _inputRelays,
-        address _dappOwner,
+        address _appOwner,
         bytes32 _templateHash,
         bytes32 _salt
-    ) external override returns (CartesiDApp) {
-        CartesiDApp application = new CartesiDApp{salt: _salt}(
+    ) external override returns (Application) {
+        Application app = new Application{salt: _salt}(
             _consensus,
             _inputBox,
             _inputRelays,
-            _dappOwner,
+            _appOwner,
             _templateHash
         );
 
@@ -61,19 +61,19 @@ contract CartesiDAppFactory is ICartesiDAppFactory {
             _consensus,
             _inputBox,
             _inputRelays,
-            _dappOwner,
+            _appOwner,
             _templateHash,
-            application
+            app
         );
 
-        return application;
+        return app;
     }
 
     function calculateApplicationAddress(
         IConsensus _consensus,
         IInputBox _inputBox,
         IInputRelay[] memory _inputRelays,
-        address _dappOwner,
+        address _appOwner,
         bytes32 _templateHash,
         bytes32 _salt
     ) external view override returns (address) {
@@ -82,12 +82,12 @@ contract CartesiDAppFactory is ICartesiDAppFactory {
                 _salt,
                 keccak256(
                     abi.encodePacked(
-                        type(CartesiDApp).creationCode,
+                        type(Application).creationCode,
                         abi.encode(
                             _consensus,
                             _inputBox,
                             _inputRelays,
-                            _dappOwner,
+                            _appOwner,
                             _templateHash
                         )
                     )

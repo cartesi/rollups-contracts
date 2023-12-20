@@ -13,8 +13,8 @@ import {OutputValidityProof} from "../common/OutputValidityProof.sol";
 import {Proof} from "../common/Proof.sol";
 import {InputRange} from "../common/InputRange.sol";
 
-/// @title Cartesi DApp interface
-interface ICartesiDApp is IERC721Receiver, IERC1155Receiver {
+/// @title Application interface
+interface IApplication is IERC721Receiver, IERC1155Receiver {
     // Errors
 
     /// @notice Could not validate an output because
@@ -25,21 +25,21 @@ interface ICartesiDApp is IERC721Receiver, IERC1155Receiver {
 
     // Events
 
-    /// @notice The DApp has migrated to another consensus contract.
+    /// @notice The application has migrated to another consensus contract.
     /// @param newConsensus The new consensus contract
     /// @dev MUST be triggered on a successful call to `migrateToConsensus`.
     event NewConsensus(IConsensus newConsensus);
 
-    /// @notice A voucher was executed from the DApp.
+    /// @notice A voucher was executed from the application.
     /// @param inputIndex The index of the input that emitted the voucher
     /// @param outputIndexWithinInput The index of the voucher amongst all outputs emitted by the input
     event VoucherExecuted(uint256 inputIndex, uint256 outputIndexWithinInput);
 
     // Permissioned functions
 
-    /// @notice Migrate the DApp to a new consensus.
+    /// @notice Migrate the application to a new consensus.
     /// @param _newConsensus The new consensus
-    /// @dev Can only be called by the DApp owner.
+    /// @dev Can only be called by the application owner.
     function migrateToConsensus(IConsensus _newConsensus) external;
 
     // Permissionless functions
@@ -78,19 +78,19 @@ interface ICartesiDApp is IERC721Receiver, IERC1155Receiver {
         Proof calldata _proof
     ) external view;
 
-    /// @notice Get the DApp's template hash.
-    /// @return The DApp's template hash
+    /// @notice Get the application's template hash.
+    /// @return The application's template hash
     function getTemplateHash() external view returns (bytes32);
 
     /// @notice Get the current consensus.
     /// @return The current consensus
     function getConsensus() external view returns (IConsensus);
 
-    /// @notice Get the input box that the DApp is listening to.
+    /// @notice Get the input box that the application is listening to.
     /// @return The input box
     function getInputBox() external view returns (IInputBox);
 
-    /// @notice Get the input relays that the DApp expects inputs from.
+    /// @notice Get the input relays that the application expects inputs from.
     /// @return The input relays.
     function getInputRelays() external view returns (IInputRelay[] memory);
 }

@@ -24,13 +24,13 @@ contract AuthorityTest is TestBase {
 
     event ClaimSubmission(
         address indexed submitter,
-        address indexed dapp,
+        address indexed app,
         InputRange inputRange,
         bytes32 epochHash
     );
 
     event ClaimAcceptance(
-        address indexed dapp,
+        address indexed app,
         InputRange inputRange,
         bytes32 epochHash
     );
@@ -65,7 +65,7 @@ contract AuthorityTest is TestBase {
     function testSubmitClaimRevertsCallerNotOwner(
         address owner,
         address notOwner,
-        address dapp,
+        address app,
         InputRange calldata inputRange,
         bytes32 epochHash
     ) public {
@@ -82,12 +82,12 @@ contract AuthorityTest is TestBase {
         );
 
         vm.prank(notOwner);
-        authority.submitClaim(dapp, inputRange, epochHash);
+        authority.submitClaim(app, inputRange, epochHash);
     }
 
     function testSubmitClaim(
         address owner,
-        address dapp,
+        address app,
         InputRange calldata inputRange,
         bytes32 epochHash1,
         bytes32 epochHash2
@@ -98,34 +98,34 @@ contract AuthorityTest is TestBase {
 
         // First claim
 
-        expectClaimEvents(authority, owner, dapp, inputRange, epochHash1);
+        expectClaimEvents(authority, owner, app, inputRange, epochHash1);
 
         vm.prank(owner);
-        authority.submitClaim(dapp, inputRange, epochHash1);
+        authority.submitClaim(app, inputRange, epochHash1);
 
-        assertEq(authority.getEpochHash(dapp, inputRange), epochHash1);
+        assertEq(authority.getEpochHash(app, inputRange), epochHash1);
 
         // Second claim
 
-        expectClaimEvents(authority, owner, dapp, inputRange, epochHash2);
+        expectClaimEvents(authority, owner, app, inputRange, epochHash2);
 
         vm.prank(owner);
-        authority.submitClaim(dapp, inputRange, epochHash2);
+        authority.submitClaim(app, inputRange, epochHash2);
 
-        assertEq(authority.getEpochHash(dapp, inputRange), epochHash2);
+        assertEq(authority.getEpochHash(app, inputRange), epochHash2);
     }
 
     function expectClaimEvents(
         Authority authority,
         address owner,
-        address dapp,
+        address app,
         InputRange calldata inputRange,
         bytes32 epochHash
     ) internal {
         vm.expectEmit(true, true, false, true, address(authority));
-        emit ClaimSubmission(owner, dapp, inputRange, epochHash);
+        emit ClaimSubmission(owner, app, inputRange, epochHash);
 
         vm.expectEmit(true, false, false, true, address(authority));
-        emit ClaimAcceptance(dapp, inputRange, epochHash);
+        emit ClaimAcceptance(app, inputRange, epochHash);
     }
 }

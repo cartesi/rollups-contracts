@@ -82,7 +82,7 @@ echo3 $GREEN "Generating inputs..."
 echo
 
 forge test -vv \
-    --match-contract CartesiDAppTest \
+    --match-contract ApplicationTest \
     --match-test setUp > /dev/null || true
 
 echo3 $GREEN "Running Docker image..."

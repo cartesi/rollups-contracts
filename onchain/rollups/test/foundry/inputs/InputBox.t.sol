@@ -14,17 +14,17 @@ contract InputBoxHandler is Test {
     IInputBox immutable inputBox;
 
     struct InputData {
-        address dapp;
+        address app;
         uint256 index;
         bytes32 inputHash;
     }
 
     InputData[] inputDataArray;
 
-    // array of addresses of dapps whose input boxes aren't empty
-    address[] dapps;
+    // array of addresses of applications whose input boxes aren't empty
+    address[] apps;
 
-    // mapping of dapp addresses to number of inputs
+    // mapping of application addresses to number of inputs
     mapping(address => uint256) numOfInputs;
 
     // block variables
@@ -48,34 +48,34 @@ contract InputBoxHandler is Test {
         vm.roll(blockNumber);
     }
 
-    function addInput(address _dapp, bytes calldata _input) external {
+    function addInput(address _app, bytes calldata _input) external {
         // For some reason, the invariant testing framework doesn't
         // record changes made to block properties, so we have to
         // set them in the beginning of every call
         setBlockProperties();
 
         // Get the index of the to-be-added input
-        uint256 index = inputBox.getNumberOfInputs(_dapp);
+        uint256 index = inputBox.getNumberOfInputs(_app);
 
         // Check if `getNumberOfInputs` matches internal count
-        assertEq(index, numOfInputs[_dapp], "input box size");
+        assertEq(index, numOfInputs[_app], "input box size");
 
-        // Make the sender add the input to the DApp's input box
+        // Make the sender add the input to the application's input box
         vm.prank(msg.sender);
-        bytes32 inputHash = inputBox.addInput(_dapp, _input);
+        bytes32 inputHash = inputBox.addInput(_app, _input);
 
-        // If this is the first input being added to the DApp's input box,
-        // then push the dapp to the array of dapps
+        // If this is the first input being added to the application's input box,
+        // then push the application to the array of applications
         if (index == 0) {
-            dapps.push(_dapp);
+            apps.push(_app);
         }
 
-        // Increment the dapp's input count
-        ++numOfInputs[_dapp];
+        // Increment the application's input count
+        ++numOfInputs[_app];
 
         // Create the input data struct
         InputData memory inputData = InputData({
-            dapp: _dapp,
+            app: _app,
             index: index,
             inputHash: inputHash
         });
@@ -86,14 +86,14 @@ contract InputBoxHandler is Test {
         // Check if the input box size increases by one
         assertEq(
             index + 1,
-            inputBox.getNumberOfInputs(_dapp),
+            inputBox.getNumberOfInputs(_app),
             "input box size increment"
         );
 
         // Check if the input hash matches the one returned by `getInputHash`
         assertEq(
             inputHash,
-            inputBox.getInputHash(_dapp, index),
+            inputBox.getInputHash(_app, index),
             "returned input hash"
         );
 
@@ -118,16 +118,16 @@ contract InputBoxHandler is Test {
         return inputDataArray[_i];
     }
 
-    function getNumberOfDApps() external view returns (uint256) {
-        return dapps.length;
+    function getNumberOfApplications() external view returns (uint256) {
+        return apps.length;
     }
 
-    function getDAppAt(uint256 _i) external view returns (address) {
-        return dapps[_i];
+    function getApplicationAt(uint256 _i) external view returns (address) {
+        return apps[_i];
     }
 
-    function getNumberOfInputs(address _dapp) external view returns (uint256) {
-        return numOfInputs[_dapp];
+    function getNumberOfInputs(address _app) external view returns (uint256) {
+        return numOfInputs[_app];
     }
 }
 
@@ -138,7 +138,7 @@ contract InputBoxTest is Test {
     InputBoxHandler handler;
 
     event InputAdded(
-        address indexed dapp,
+        address indexed app,
         uint256 indexed inputIndex,
         address sender,
         bytes input
@@ -154,21 +154,21 @@ contract InputBoxTest is Test {
         excludeContract(address(inputBox));
     }
 
-    function testNoInputs(address _dapp) public {
-        assertEq(inputBox.getNumberOfInputs(_dapp), 0);
+    function testNoInputs(address _app) public {
+        assertEq(inputBox.getNumberOfInputs(_app), 0);
     }
 
     function testAddLargeInput() public {
-        address dapp = vm.addr(1);
+        address app = vm.addr(1);
 
-        inputBox.addInput(dapp, new bytes(CanonicalMachine.INPUT_MAX_SIZE));
+        inputBox.addInput(app, new bytes(CanonicalMachine.INPUT_MAX_SIZE));
 
         vm.expectRevert(LibInput.InputSizeExceedsLimit.selector);
-        inputBox.addInput(dapp, new bytes(CanonicalMachine.INPUT_MAX_SIZE + 1));
+        inputBox.addInput(app, new bytes(CanonicalMachine.INPUT_MAX_SIZE + 1));
     }
 
     // fuzz testing with multiple inputs
-    function testAddInput(address _dapp, bytes[] calldata _inputs) public {
+    function testAddInput(address _app, bytes[] calldata _inputs) public {
         uint256 numInputs = _inputs.length;
         bytes32[] memory returnedValues = new bytes32[](numInputs);
         uint256 year2022 = 1641070800; // Unix Timestamp for 2022
@@ -188,12 +188,12 @@ contract InputBoxTest is Test {
             vm.expectEmit(true, true, false, true, address(inputBox));
 
             // The event we expect
-            emit InputAdded(_dapp, i, address(this), _inputs[i]);
+            emit InputAdded(_app, i, address(this), _inputs[i]);
 
-            returnedValues[i] = inputBox.addInput(_dapp, _inputs[i]);
+            returnedValues[i] = inputBox.addInput(_app, _inputs[i]);
 
             // test whether the number of inputs has increased
-            assertEq(i + 1, inputBox.getNumberOfInputs(_dapp));
+            assertEq(i + 1, inputBox.getNumberOfInputs(_app));
         }
 
         // testing added inputs
@@ -207,7 +207,7 @@ contract InputBoxTest is Test {
                 i // inputBox.length
             );
             // test if input hash is the same as in InputBox
-            assertEq(inputHash, inputBox.getInputHash(_dapp, i));
+            assertEq(inputHash, inputBox.getInputHash(_app, i));
             // test if input hash is the same as returned from calling addInput() function
             assertEq(inputHash, returnedValues[i]);
         }
@@ -224,13 +224,13 @@ contract InputBoxTest is Test {
             // Make sure the input index is less than the input box size
             assertLt(
                 inputData.index,
-                inputBox.getNumberOfInputs(inputData.dapp),
+                inputBox.getNumberOfInputs(inputData.app),
                 "index bound check"
             );
 
             // Get the input hash returned by `getInputHash`
             bytes32 inputHash = inputBox.getInputHash(
-                inputData.dapp,
+                inputData.app,
                 inputData.index
             );
 
@@ -238,17 +238,17 @@ contract InputBoxTest is Test {
             assertEq(inputHash, inputData.inputHash, "returned input hash");
         }
 
-        // Get the number of dapps in the array
-        uint256 numOfDApps = handler.getNumberOfDApps();
+        // Get the number of applications in the array
+        uint256 numOfApplications = handler.getNumberOfApplications();
 
-        // Check the input box size of all the dapps that
+        // Check the input box size of all the applications that
         // were interacted with, and sum them all up
         uint256 sum;
-        for (uint256 i; i < numOfDApps; ++i) {
-            address dapp = handler.getDAppAt(i);
-            uint256 expected = handler.getNumberOfInputs(dapp);
-            uint256 actual = inputBox.getNumberOfInputs(dapp);
-            assertEq(expected, actual, "number of inputs for dapp");
+        for (uint256 i; i < numOfApplications; ++i) {
+            address app = handler.getApplicationAt(i);
+            uint256 expected = handler.getNumberOfInputs(app);
+            uint256 actual = inputBox.getNumberOfInputs(app);
+            assertEq(expected, actual, "number of inputs for app");
             sum += actual;
         }
         assertEq(sum, totalNumOfInputs, "total number of inputs");

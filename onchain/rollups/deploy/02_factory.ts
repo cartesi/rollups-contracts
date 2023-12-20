@@ -25,7 +25,7 @@ const func: DeployFunction = async (hre: HardhatRuntimeEnvironment) => {
 
     await deployments.deploy("AuthorityFactory", opts);
 
-    await deployments.deploy("CartesiDAppFactory", {
+    await deployments.deploy("ApplicationFactory", {
         ...opts,
         libraries: {
             MerkleV2: MerkleV2.address,

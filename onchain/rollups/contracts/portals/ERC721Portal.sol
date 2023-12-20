@@ -14,7 +14,7 @@ import {InputEncoding} from "../common/InputEncoding.sol";
 /// @title ERC-721 Portal
 ///
 /// @notice This contract allows anyone to perform transfers of
-/// ERC-721 tokens to a DApp while informing the off-chain machine.
+/// ERC-721 tokens to an application while informing the off-chain machine.
 contract ERC721Portal is IERC721Portal, InputRelay {
     /// @notice Constructs the portal.
     /// @param _inputBox The input box used by the portal
@@ -30,12 +30,12 @@ contract ERC721Portal is IERC721Portal, InputRelay {
 
     function depositERC721Token(
         IERC721 _token,
-        address _dapp,
+        address _app,
         uint256 _tokenId,
         bytes calldata _baseLayerData,
         bytes calldata _execLayerData
     ) external override {
-        _token.safeTransferFrom(msg.sender, _dapp, _tokenId, _baseLayerData);
+        _token.safeTransferFrom(msg.sender, _app, _tokenId, _baseLayerData);
 
         bytes memory input = InputEncoding.encodeERC721Deposit(
             _token,
@@ -45,6 +45,6 @@ contract ERC721Portal is IERC721Portal, InputRelay {
             _execLayerData
         );
 
-        inputBox.addInput(_dapp, input);
+        inputBox.addInput(_app, input);
     }
 }

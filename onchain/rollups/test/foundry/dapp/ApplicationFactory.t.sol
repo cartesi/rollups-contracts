@@ -1,24 +1,24 @@
 // (c) Cartesi and individual authors (see AUTHORS)
 // SPDX-License-Identifier: Apache-2.0 (see LICENSE)
 
-/// @title Cartesi DApp Factory Test
+/// @title Application Factory Test
 pragma solidity ^0.8.8;
 
 import {TestBase} from "../util/TestBase.sol";
 import {SimpleConsensus} from "../util/SimpleConsensus.sol";
-import {CartesiDAppFactory} from "contracts/dapp/CartesiDAppFactory.sol";
-import {CartesiDApp} from "contracts/dapp/CartesiDApp.sol";
+import {ApplicationFactory} from "contracts/dapp/ApplicationFactory.sol";
+import {Application} from "contracts/dapp/Application.sol";
 import {IConsensus} from "contracts/consensus/IConsensus.sol";
 import {IInputBox} from "contracts/inputs/IInputBox.sol";
 import {IInputRelay} from "contracts/inputs/IInputRelay.sol";
 import {Vm} from "forge-std/Vm.sol";
 
-contract CartesiDAppFactoryTest is TestBase {
-    CartesiDAppFactory factory;
+contract ApplicationFactoryTest is TestBase {
+    ApplicationFactory factory;
     IConsensus consensus;
 
     function setUp() public {
-        factory = new CartesiDAppFactory();
+        factory = new ApplicationFactory();
         consensus = new SimpleConsensus();
     }
 
@@ -26,90 +26,90 @@ contract CartesiDAppFactoryTest is TestBase {
         IConsensus indexed consensus,
         IInputBox inputBox,
         IInputRelay[] inputRelays,
-        address dappOwner,
+        address appOwner,
         bytes32 templateHash,
-        CartesiDApp application
+        Application app
     );
 
     function testNewApplication(
         IInputBox _inputBox,
         IInputRelay[] calldata _inputRelays,
-        address _dappOwner,
+        address _appOwner,
         bytes32 _templateHash
     ) public {
-        vm.assume(_dappOwner != address(0));
+        vm.assume(_appOwner != address(0));
 
-        CartesiDApp dapp = factory.newApplication(
+        Application app = factory.newApplication(
             consensus,
             _inputBox,
             _inputRelays,
-            _dappOwner,
+            _appOwner,
             _templateHash
         );
 
-        assertEq(address(dapp.getConsensus()), address(consensus));
-        assertEq(address(dapp.getInputBox()), address(_inputBox));
+        assertEq(address(app.getConsensus()), address(consensus));
+        assertEq(address(app.getInputBox()), address(_inputBox));
         // abi.encode is used instead of a loop
-        assertEq(abi.encode(dapp.getInputRelays()), abi.encode(_inputRelays));
-        assertEq(dapp.owner(), _dappOwner);
-        assertEq(dapp.getTemplateHash(), _templateHash);
+        assertEq(abi.encode(app.getInputRelays()), abi.encode(_inputRelays));
+        assertEq(app.owner(), _appOwner);
+        assertEq(app.getTemplateHash(), _templateHash);
     }
 
     function testNewApplicationDeterministic(
         IInputBox _inputBox,
         IInputRelay[] calldata _inputRelays,
-        address _dappOwner,
+        address _appOwner,
         bytes32 _templateHash,
         bytes32 _salt
     ) public {
-        vm.assume(_dappOwner != address(0));
+        vm.assume(_appOwner != address(0));
 
         address precalculatedAddress = factory.calculateApplicationAddress(
             consensus,
             _inputBox,
             _inputRelays,
-            _dappOwner,
+            _appOwner,
             _templateHash,
             _salt
         );
 
-        CartesiDApp dapp = factory.newApplication(
+        Application app = factory.newApplication(
             consensus,
             _inputBox,
             _inputRelays,
-            _dappOwner,
+            _appOwner,
             _templateHash,
             _salt
         );
 
         // Precalculated address must match actual address
-        assertEq(precalculatedAddress, address(dapp));
+        assertEq(precalculatedAddress, address(app));
 
-        assertEq(address(dapp.getConsensus()), address(consensus));
-        assertEq(address(dapp.getInputBox()), address(_inputBox));
-        assertEq(abi.encode(dapp.getInputRelays()), abi.encode(_inputRelays));
-        assertEq(dapp.owner(), _dappOwner);
-        assertEq(dapp.getTemplateHash(), _templateHash);
+        assertEq(address(app.getConsensus()), address(consensus));
+        assertEq(address(app.getInputBox()), address(_inputBox));
+        assertEq(abi.encode(app.getInputRelays()), abi.encode(_inputRelays));
+        assertEq(app.owner(), _appOwner);
+        assertEq(app.getTemplateHash(), _templateHash);
 
         precalculatedAddress = factory.calculateApplicationAddress(
             consensus,
             _inputBox,
             _inputRelays,
-            _dappOwner,
+            _appOwner,
             _templateHash,
             _salt
         );
 
         // Precalculated address must STILL match actual address
-        assertEq(precalculatedAddress, address(dapp));
+        assertEq(precalculatedAddress, address(app));
 
-        // Cannot deploy a DApp with the same salt twice
+        // Cannot deploy an application with the same salt twice
         vm.expectRevert(bytes(""));
         factory.newApplication(
             consensus,
             _inputBox,
             _inputRelays,
-            _dappOwner,
+            _appOwner,
             _templateHash,
             _salt
         );
@@ -118,46 +118,46 @@ contract CartesiDAppFactoryTest is TestBase {
     function testApplicationCreatedEvent(
         IInputBox _inputBox,
         IInputRelay[] calldata _inputRelays,
-        address _dappOwner,
+        address _appOwner,
         bytes32 _templateHash
     ) public {
-        vm.assume(_dappOwner != address(0));
+        vm.assume(_appOwner != address(0));
 
         vm.recordLogs();
 
-        CartesiDApp dapp = factory.newApplication(
+        Application app = factory.newApplication(
             consensus,
             _inputBox,
             _inputRelays,
-            _dappOwner,
+            _appOwner,
             _templateHash
         );
 
         testApplicationCreatedEventAux(
             _inputBox,
             _inputRelays,
-            _dappOwner,
+            _appOwner,
             _templateHash,
-            dapp
+            app
         );
     }
 
     function testApplicationCreatedEventDeterministic(
         IInputBox _inputBox,
         IInputRelay[] calldata _inputRelays,
-        address _dappOwner,
+        address _appOwner,
         bytes32 _templateHash,
         bytes32 _salt
     ) public {
-        vm.assume(_dappOwner != address(0));
+        vm.assume(_appOwner != address(0));
 
         vm.recordLogs();
 
-        CartesiDApp dapp = factory.newApplication(
+        Application app = factory.newApplication(
             consensus,
             _inputBox,
             _inputRelays,
-            _dappOwner,
+            _appOwner,
             _templateHash,
             _salt
         );
@@ -165,18 +165,18 @@ contract CartesiDAppFactoryTest is TestBase {
         testApplicationCreatedEventAux(
             _inputBox,
             _inputRelays,
-            _dappOwner,
+            _appOwner,
             _templateHash,
-            dapp
+            app
         );
     }
 
     function testApplicationCreatedEventAux(
         IInputBox _inputBox,
         IInputRelay[] calldata _inputRelays,
-        address _dappOwner,
+        address _appOwner,
         bytes32 _templateHash,
-        CartesiDApp _dapp
+        Application _app
     ) internal {
         Vm.Log[] memory entries = vm.getRecordedLogs();
 
@@ -199,9 +199,9 @@ contract CartesiDAppFactoryTest is TestBase {
                 (
                     IInputBox inputBox,
                     IInputRelay[] memory inputRelays,
-                    address dappOwner,
+                    address appOwner,
                     bytes32 templateHash,
-                    CartesiDApp application
+                    Application app
                 ) = abi.decode(
                         entry.data,
                         (
@@ -209,15 +209,15 @@ contract CartesiDAppFactoryTest is TestBase {
                             IInputRelay[],
                             address,
                             bytes32,
-                            CartesiDApp
+                            Application
                         )
                     );
 
                 assertEq(address(_inputBox), address(inputBox));
                 assertEq(abi.encode(_inputRelays), abi.encode(inputRelays));
-                assertEq(_dappOwner, dappOwner);
+                assertEq(_appOwner, appOwner);
                 assertEq(_templateHash, templateHash);
-                assertEq(address(_dapp), address(application));
+                assertEq(address(_app), address(app));
             }
         }
 

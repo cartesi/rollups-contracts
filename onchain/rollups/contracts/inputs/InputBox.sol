@@ -10,7 +10,7 @@ import {LibInput} from "../library/LibInput.sol";
 ///
 /// @notice Trustless and permissionless contract that receives arbitrary blobs
 /// (called "inputs") from anyone and adds a compound hash to an append-only list
-/// (called "input box"). Each DApp has its own input box.
+/// (called "input box"). Each application has its own input box.
 ///
 /// The hash that is stored on-chain is composed by the hash of the input blob,
 /// the block number and timestamp, the input sender address, and the input index.
@@ -21,17 +21,17 @@ import {LibInput} from "../library/LibInput.sol";
 /// providers.
 ///
 /// From the perspective of this contract, inputs are encoding-agnostic byte
-/// arrays. It is up to the DApp to interpret, validate and act upon inputs.
+/// arrays. It is up to the application to interpret, validate and act upon inputs.
 contract InputBox is IInputBox {
-    /// @notice Mapping from DApp address to list of input hashes.
+    /// @notice Mapping from application address to list of input hashes.
     /// @dev See the `getNumberOfInputs`, `getInputHash` and `addInput` functions.
     mapping(address => bytes32[]) internal inputBoxes;
 
     function addInput(
-        address _dapp,
+        address _app,
         bytes calldata _input
     ) external override returns (bytes32) {
-        bytes32[] storage inputBox = inputBoxes[_dapp];
+        bytes32[] storage inputBox = inputBoxes[_app];
         uint256 inputIndex = inputBox.length;
 
         bytes32 inputHash = LibInput.computeInputHash(
@@ -46,21 +46,21 @@ contract InputBox is IInputBox {
         inputBox.push(inputHash);
 
         // block.number and timestamp can be retrieved by the event metadata itself
-        emit InputAdded(_dapp, inputIndex, msg.sender, _input);
+        emit InputAdded(_app, inputIndex, msg.sender, _input);
 
         return inputHash;
     }
 
     function getNumberOfInputs(
-        address _dapp
+        address _app
     ) external view override returns (uint256) {
-        return inputBoxes[_dapp].length;
+        return inputBoxes[_app].length;
     }
 
     function getInputHash(
-        address _dapp,
+        address _app,
         uint256 _index
     ) external view override returns (bytes32) {
-        return inputBoxes[_dapp][_index];
+        return inputBoxes[_app][_index];
     }
 }

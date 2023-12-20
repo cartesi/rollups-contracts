@@ -43,7 +43,7 @@ const func: DeployFunction = async (hre: HardhatRuntimeEnvironment) => {
         ...opts,
         args: [InputBox.address],
     });
-    await deployments.deploy("DAppAddressRelay", {
+    await deployments.deploy("ApplicationAddressRelay", {
         ...opts,
         args: [InputBox.address],
     });

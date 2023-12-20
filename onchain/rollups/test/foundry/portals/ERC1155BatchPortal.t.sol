@@ -16,14 +16,14 @@ import {Test} from "forge-std/Test.sol";
 
 contract ERC1155BatchPortalTest is Test {
     address _alice;
-    address _dapp;
+    address _app;
     IERC1155 _token;
     IInputBox _inputBox;
     IERC1155BatchPortal _portal;
 
     function setUp() public {
         _alice = vm.addr(1);
-        _dapp = vm.addr(2);
+        _app = vm.addr(2);
         _token = IERC1155(vm.addr(3));
         _inputBox = IInputBox(vm.addr(4));
         _portal = new ERC1155BatchPortal(_inputBox);
@@ -78,7 +78,7 @@ contract ERC1155BatchPortalTest is Test {
         vm.prank(_alice);
         _portal.depositBatchERC1155Token(
             _token,
-            _dapp,
+            _app,
             tokenIds,
             values,
             baseLayerData,
@@ -118,7 +118,7 @@ contract ERC1155BatchPortalTest is Test {
         vm.prank(_alice);
         _portal.depositBatchERC1155Token(
             _token,
-            _dapp,
+            _app,
             tokenIds,
             values,
             baseLayerData,
@@ -146,7 +146,7 @@ contract ERC1155BatchPortalTest is Test {
     function _encodeAddInput(
         bytes memory input
     ) internal view returns (bytes memory) {
-        return abi.encodeCall(IInputBox.addInput, (_dapp, input));
+        return abi.encodeCall(IInputBox.addInput, (_app, input));
     }
 
     function _encodeSafeBatchTransferFrom(
@@ -157,7 +157,7 @@ contract ERC1155BatchPortalTest is Test {
         return
             abi.encodeCall(
                 IERC1155.safeBatchTransferFrom,
-                (_alice, _dapp, tokenIds, values, baseLayerData)
+                (_alice, _app, tokenIds, values, baseLayerData)
             );
     }
 }

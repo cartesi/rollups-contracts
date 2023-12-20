@@ -16,14 +16,14 @@ import {Test} from "forge-std/Test.sol";
 
 contract ERC1155SinglePortalTest is Test {
     address _alice;
-    address _dapp;
+    address _app;
     IERC1155 _token;
     IInputBox _inputBox;
     IERC1155SinglePortal _portal;
 
     function setUp() public {
         _alice = vm.addr(1);
-        _dapp = vm.addr(2);
+        _app = vm.addr(2);
         _token = IERC1155(vm.addr(3));
         _inputBox = IInputBox(vm.addr(4));
         _portal = new ERC1155SinglePortal(_inputBox);
@@ -78,7 +78,7 @@ contract ERC1155SinglePortalTest is Test {
         vm.prank(_alice);
         _portal.depositSingleERC1155Token(
             _token,
-            _dapp,
+            _app,
             tokenId,
             value,
             baseLayerData,
@@ -118,7 +118,7 @@ contract ERC1155SinglePortalTest is Test {
         vm.prank(_alice);
         _portal.depositSingleERC1155Token(
             _token,
-            _dapp,
+            _app,
             tokenId,
             value,
             baseLayerData,
@@ -146,7 +146,7 @@ contract ERC1155SinglePortalTest is Test {
     function _encodeAddInput(
         bytes memory input
     ) internal view returns (bytes memory) {
-        return abi.encodeCall(IInputBox.addInput, (_dapp, input));
+        return abi.encodeCall(IInputBox.addInput, (_app, input));
     }
 
     function _encodeSafeTransferFrom(
@@ -157,7 +157,7 @@ contract ERC1155SinglePortalTest is Test {
         return
             abi.encodeCall(
                 IERC1155.safeTransferFrom,
-                (_alice, _dapp, tokenId, value, baseLayerData)
+                (_alice, _app, tokenId, value, baseLayerData)
             );
     }
 }

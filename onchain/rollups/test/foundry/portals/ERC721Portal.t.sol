@@ -16,14 +16,14 @@ import {Test} from "forge-std/Test.sol";
 
 contract ERC721PortalTest is Test {
     address _alice;
-    address _dapp;
+    address _app;
     IERC721 _token;
     IInputBox _inputBox;
     IERC721Portal _portal;
 
     function setUp() public {
         _alice = vm.addr(1);
-        _dapp = vm.addr(2);
+        _app = vm.addr(2);
         _token = IERC721(vm.addr(3));
         _inputBox = IInputBox(vm.addr(4));
         _portal = new ERC721Portal(_inputBox);
@@ -73,7 +73,7 @@ contract ERC721PortalTest is Test {
         vm.prank(_alice);
         _portal.depositERC721Token(
             _token,
-            _dapp,
+            _app,
             tokenId,
             baseLayerData,
             execLayerData
@@ -109,7 +109,7 @@ contract ERC721PortalTest is Test {
         vm.prank(_alice);
         _portal.depositERC721Token(
             _token,
-            _dapp,
+            _app,
             tokenId,
             baseLayerData,
             execLayerData
@@ -134,7 +134,7 @@ contract ERC721PortalTest is Test {
     function _encodeAddInput(
         bytes memory input
     ) internal view returns (bytes memory) {
-        return abi.encodeCall(IInputBox.addInput, (_dapp, input));
+        return abi.encodeCall(IInputBox.addInput, (_app, input));
     }
 
     function _encodeSafeTransferFrom(
@@ -145,7 +145,7 @@ contract ERC721PortalTest is Test {
             abi.encodeWithSignature(
                 "safeTransferFrom(address,address,uint256,bytes)",
                 _alice,
-                _dapp,
+                _app,
                 tokenId,
                 baseLayerData
             );
