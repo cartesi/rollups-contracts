@@ -3,30 +3,30 @@
 
 pragma solidity ^0.8.8;
 
-import {CartesiDApp} from "./CartesiDApp.sol";
+import {Application} from "./Application.sol";
 import {IConsensus} from "../consensus/IConsensus.sol";
 import {IInputBox} from "../inputs/IInputBox.sol";
 import {IInputRelay} from "../inputs/IInputRelay.sol";
 
-/// @title Cartesi DApp Factory interface
-interface ICartesiDAppFactory {
+/// @title Application Factory interface
+interface IApplicationFactory {
     // Events
 
     /// @notice A new application was deployed.
     /// @param consensus The initial consensus contract
     /// @param inputBox The input box contract
     /// @param inputRelays The input relays
-    /// @param dappOwner The initial DApp owner
+    /// @param appOwner The initial application owner
     /// @param templateHash The initial machine state hash
-    /// @param application The application
+    /// @param app The application
     /// @dev MUST be triggered on a successful call to `newApplication`.
     event ApplicationCreated(
         IConsensus indexed consensus,
         IInputBox inputBox,
         IInputRelay[] inputRelays,
-        address dappOwner,
+        address appOwner,
         bytes32 templateHash,
-        CartesiDApp application
+        Application app
     );
 
     // Permissionless functions
@@ -35,7 +35,7 @@ interface ICartesiDAppFactory {
     /// @param _consensus The initial consensus contract
     /// @param _inputBox The input box contract
     /// @param _inputRelays The input relays
-    /// @param _dappOwner The initial DApp owner
+    /// @param _appOwner The initial application owner
     /// @param _templateHash The initial machine state hash
     /// @return The application
     /// @dev On success, MUST emit an `ApplicationCreated` event.
@@ -43,35 +43,35 @@ interface ICartesiDAppFactory {
         IConsensus _consensus,
         IInputBox _inputBox,
         IInputRelay[] calldata _inputRelays,
-        address _dappOwner,
+        address _appOwner,
         bytes32 _templateHash
-    ) external returns (CartesiDApp);
+    ) external returns (Application);
 
     /// @notice Deploy a new application deterministically.
     /// @param _consensus The initial consensus contract
     /// @param _inputBox The input box contract
     /// @param _inputRelays The input relays
-    /// @param _dappOwner The initial DApp owner
+    /// @param _appOwner The initial application owner
     /// @param _templateHash The initial machine state hash
-    /// @param _salt The salt used to deterministically generate the DApp address
+    /// @param _salt The salt used to deterministically generate the application address
     /// @return The application
     /// @dev On success, MUST emit an `ApplicationCreated` event.
     function newApplication(
         IConsensus _consensus,
         IInputBox _inputBox,
         IInputRelay[] calldata _inputRelays,
-        address _dappOwner,
+        address _appOwner,
         bytes32 _templateHash,
         bytes32 _salt
-    ) external returns (CartesiDApp);
+    ) external returns (Application);
 
     /// @notice Calculate the address of an application to be deployed deterministically.
     /// @param _consensus The initial consensus contract
     /// @param _inputBox The input box contract
     /// @param _inputRelays The input relays
-    /// @param _dappOwner The initial DApp owner
+    /// @param _appOwner The initial application owner
     /// @param _templateHash The initial machine state hash
-    /// @param _salt The salt used to deterministically generate the DApp address
+    /// @param _salt The salt used to deterministically generate the application address
     /// @return The deterministic application address
     /// @dev Beware that only the `newApplication` function with the `_salt` parameter
     ///      is able to deterministically deploy an application.
@@ -79,7 +79,7 @@ interface ICartesiDAppFactory {
         IConsensus _consensus,
         IInputBox _inputBox,
         IInputRelay[] calldata _inputRelays,
-        address _dappOwner,
+        address _appOwner,
         bytes32 _templateHash,
         bytes32 _salt
     ) external view returns (address);

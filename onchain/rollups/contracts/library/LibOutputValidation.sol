@@ -164,7 +164,7 @@ library LibOutputValidation {
     /// @param v The output validity proof
     /// @param firstInputIndex The index of the first input of the epoch in the input box
     /// @param lastInputIndex The index of the last input of the epoch in the input box
-    /// @return The index of the input in the DApp's input box
+    /// @return The index of the input in the application's input box
     /// @dev Reverts if epoch input index is not compatible with the provided input index range.
     function validateInputIndexRange(
         OutputValidityProof calldata v,

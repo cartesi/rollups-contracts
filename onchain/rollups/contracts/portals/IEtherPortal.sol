@@ -9,17 +9,17 @@ import {IInputRelay} from "../inputs/IInputRelay.sol";
 interface IEtherPortal is IInputRelay {
     // Permissionless functions
 
-    /// @notice Transfer Ether to a DApp and add an input to
-    /// the DApp's input box to signal such operation.
+    /// @notice Transfer Ether to an application and add an input to
+    /// the application's input box to signal such operation.
     ///
-    /// All the value sent through this function is forwarded to the DApp.
+    /// All the value sent through this function is forwarded to the application.
     ///
-    /// @param _dapp The address of the DApp
+    /// @param _app The address of the application
     /// @param _execLayerData Additional data to be interpreted by the execution layer
-    /// @dev All the value sent through this function is forwarded to the DApp.
+    /// @dev All the value sent through this function is forwarded to the application.
     ///      If the transfer fails, `EtherTransferFailed` error is raised.
     function depositEther(
-        address payable _dapp,
+        address payable _app,
         bytes calldata _execLayerData
     ) external payable;
 }

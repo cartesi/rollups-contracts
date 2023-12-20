@@ -135,15 +135,15 @@ library InputEncoding {
             );
     }
 
-    /// @notice Encode a DApp address relay.
-    /// @param dapp The DApp address
+    /// @notice Encode an application address relay.
+    /// @param app The application address
     /// @return The encoded input
-    function encodeDAppAddressRelay(
-        address dapp
+    function encodeApplicationAddressRelay(
+        address app
     ) internal pure returns (bytes memory) {
         return
             abi.encodePacked(
-                dapp //                     20B
+                app //                     20B
             );
     }
 }

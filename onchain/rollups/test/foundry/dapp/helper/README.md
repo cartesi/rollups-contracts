@@ -1,7 +1,7 @@
 # Proof Update Helper
 
 When someone tries to execute a voucher or to validate a notice, they need to provide a proof.
-This proof is checked on-chain by the DApp contract.
+This proof is checked on-chain by the Application contract.
 In order to test the proof verification scheme, we need to generate proofs and check them with Forge.
 The scripts in this folder help automate the process of updating the proofs.
 If you're curious to know how the `update-proofs.sh` script works, here's a diagram of the pipeline.

@@ -15,7 +15,7 @@ import {InputEncoding} from "../common/InputEncoding.sol";
 /// @title ERC-20 Portal
 ///
 /// @notice This contract allows anyone to perform transfers of
-/// ERC-20 tokens to a DApp while informing the off-chain machine.
+/// ERC-20 tokens to an application while informing the off-chain machine.
 contract ERC20Portal is IERC20Portal, InputRelay {
     using SafeERC20 for IERC20;
 
@@ -33,11 +33,11 @@ contract ERC20Portal is IERC20Portal, InputRelay {
 
     function depositERC20Tokens(
         IERC20 _token,
-        address _dapp,
+        address _app,
         uint256 _amount,
         bytes calldata _execLayerData
     ) external override {
-        _token.safeTransferFrom(msg.sender, _dapp, _amount);
+        _token.safeTransferFrom(msg.sender, _app, _amount);
 
         bytes memory input = InputEncoding.encodeERC20Deposit(
             _token,
@@ -46,6 +46,6 @@ contract ERC20Portal is IERC20Portal, InputRelay {
             _execLayerData
         );
 
-        inputBox.addInput(_dapp, input);
+        inputBox.addInput(_app, input);
     }
 }

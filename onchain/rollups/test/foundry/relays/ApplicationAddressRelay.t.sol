@@ -1,24 +1,24 @@
 // (c) Cartesi and individual authors (see AUTHORS)
 // SPDX-License-Identifier: Apache-2.0 (see LICENSE)
 
-/// @title DApp Address Relay Test
+/// @title Application Address Relay Test
 pragma solidity ^0.8.8;
 
 import {Test} from "forge-std/Test.sol";
 import {IERC165} from "@openzeppelin/contracts/utils/introspection/IERC165.sol";
-import {IDAppAddressRelay} from "contracts/relays/IDAppAddressRelay.sol";
-import {DAppAddressRelay} from "contracts/relays/DAppAddressRelay.sol";
+import {IApplicationAddressRelay} from "contracts/relays/IApplicationAddressRelay.sol";
+import {ApplicationAddressRelay} from "contracts/relays/ApplicationAddressRelay.sol";
 import {IInputBox} from "contracts/inputs/IInputBox.sol";
 import {InputBox} from "contracts/inputs/InputBox.sol";
 import {InputEncoding} from "contracts/common/InputEncoding.sol";
 import {IInputRelay} from "contracts/inputs/IInputRelay.sol";
 
-contract DAppAddressRelayTest is Test {
+contract ApplicationAddressRelayTest is Test {
     IInputBox inputBox;
-    IDAppAddressRelay relay;
+    IApplicationAddressRelay relay;
 
     event InputAdded(
-        address indexed dapp,
+        address indexed app,
         uint256 indexed inputIndex,
         address sender,
         bytes input
@@ -26,19 +26,21 @@ contract DAppAddressRelayTest is Test {
 
     function setUp() public {
         inputBox = new InputBox();
-        relay = new DAppAddressRelay(inputBox);
+        relay = new ApplicationAddressRelay(inputBox);
     }
 
     function testSupportsInterface(bytes4 _randomInterfaceId) public {
         assertTrue(
-            relay.supportsInterface(type(IDAppAddressRelay).interfaceId)
+            relay.supportsInterface(type(IApplicationAddressRelay).interfaceId)
         );
         assertTrue(relay.supportsInterface(type(IInputRelay).interfaceId));
         assertTrue(relay.supportsInterface(type(IERC165).interfaceId));
 
         assertFalse(relay.supportsInterface(bytes4(0xffffffff)));
 
-        vm.assume(_randomInterfaceId != type(IDAppAddressRelay).interfaceId);
+        vm.assume(
+            _randomInterfaceId != type(IApplicationAddressRelay).interfaceId
+        );
         vm.assume(_randomInterfaceId != type(IInputRelay).interfaceId);
         vm.assume(_randomInterfaceId != type(IERC165).interfaceId);
         assertFalse(relay.supportsInterface(_randomInterfaceId));
@@ -48,21 +50,21 @@ contract DAppAddressRelayTest is Test {
         assertEq(address(relay.getInputBox()), address(inputBox));
     }
 
-    function testRelayDAppAddress(address _dapp) public {
-        // Check the DApp's input box before
-        assertEq(inputBox.getNumberOfInputs(_dapp), 0);
+    function testRelayApplicationAddress(address _app) public {
+        // Check the application's input box before
+        assertEq(inputBox.getNumberOfInputs(_app), 0);
 
-        // Construct the DApp address relay input
-        bytes memory input = abi.encodePacked(_dapp);
+        // Construct the application address relay input
+        bytes memory input = abi.encodePacked(_app);
 
         // Expect InputAdded to be emitted with the right arguments
         vm.expectEmit(true, true, false, true, address(inputBox));
-        emit InputAdded(_dapp, 0, address(relay), input);
+        emit InputAdded(_app, 0, address(relay), input);
 
-        // Relay the DApp's address
-        relay.relayDAppAddress(_dapp);
+        // Relay the application's address
+        relay.relayApplicationAddress(_app);
 
-        // Check the DApp's input box after
-        assertEq(inputBox.getNumberOfInputs(_dapp), 1);
+        // Check the application's input box after
+        assertEq(inputBox.getNumberOfInputs(_app), 1);
     }
 }

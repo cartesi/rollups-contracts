@@ -14,7 +14,7 @@ import {InputEncoding} from "../common/InputEncoding.sol";
 /// @title Ether Portal
 ///
 /// @notice This contract allows anyone to perform transfers of
-/// Ether to a DApp while informing the off-chain machine.
+/// Ether to an application while informing the off-chain machine.
 contract EtherPortal is IEtherPortal, InputRelay {
     using Address for address payable;
 
@@ -31,10 +31,10 @@ contract EtherPortal is IEtherPortal, InputRelay {
     }
 
     function depositEther(
-        address payable _dapp,
+        address payable _app,
         bytes calldata _execLayerData
     ) external payable override {
-        _dapp.sendValue(msg.value);
+        _app.sendValue(msg.value);
 
         bytes memory input = InputEncoding.encodeEtherDeposit(
             msg.sender,
@@ -42,6 +42,6 @@ contract EtherPortal is IEtherPortal, InputRelay {
             _execLayerData
         );
 
-        inputBox.addInput(_dapp, input);
+        inputBox.addInput(_app, input);
     }
 }

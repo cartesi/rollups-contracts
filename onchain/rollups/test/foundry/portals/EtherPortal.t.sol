@@ -16,13 +16,13 @@ import {Test} from "forge-std/Test.sol";
 
 contract EtherPortalTest is Test {
     address _alice;
-    address payable _dapp;
+    address payable _app;
     IInputBox _inputBox;
     IEtherPortal _portal;
 
     function setUp() public {
         _alice = vm.addr(1);
-        _dapp = payable(vm.addr(2));
+        _app = payable(vm.addr(2));
         _inputBox = IInputBox(vm.addr(3));
         _portal = new EtherPortal(_inputBox);
     }
@@ -53,17 +53,17 @@ contract EtherPortalTest is Test {
 
         vm.mockCall(address(_inputBox), addInput, abi.encode(bytes32(0)));
 
-        vm.expectCall(_dapp, value, abi.encode(), 1);
+        vm.expectCall(_app, value, abi.encode(), 1);
 
         vm.expectCall(address(_inputBox), addInput, 1);
 
-        uint256 balance = _dapp.balance;
+        uint256 balance = _app.balance;
 
         vm.deal(_alice, value);
         vm.prank(_alice);
-        _portal.depositEther{value: value}(_dapp, data);
+        _portal.depositEther{value: value}(_app, data);
 
-        assertEq(_dapp.balance, balance + value);
+        assertEq(_app.balance, balance + value);
     }
 
     function testDepositFailedInnerCall(
@@ -73,7 +73,7 @@ contract EtherPortalTest is Test {
     ) public {
         value = _boundValue(value);
 
-        vm.mockCallRevert(_dapp, value, abi.encode(), errorData);
+        vm.mockCallRevert(_app, value, abi.encode(), errorData);
 
         bytes memory input = _encodeInput(value, data);
 
@@ -85,7 +85,7 @@ contract EtherPortalTest is Test {
 
         vm.deal(_alice, value);
         vm.prank(_alice);
-        _portal.depositEther{value: value}(_dapp, data);
+        _portal.depositEther{value: value}(_app, data);
     }
 
     function _encodeInput(
@@ -98,7 +98,7 @@ contract EtherPortalTest is Test {
     function _encodeAddInput(
         bytes memory input
     ) internal view returns (bytes memory) {
-        return abi.encodeCall(IInputBox.addInput, (_dapp, input));
+        return abi.encodeCall(IInputBox.addInput, (_app, input));
     }
 
     function _boundValue(uint256 value) internal view returns (uint256) {

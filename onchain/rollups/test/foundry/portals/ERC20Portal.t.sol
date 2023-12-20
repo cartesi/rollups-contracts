@@ -18,14 +18,14 @@ import {Test} from "forge-std/Test.sol";
 
 contract ERC20PortalTest is Test {
     address _alice;
-    address _dapp;
+    address _app;
     IInputBox _inputBox;
     IERC20 _token;
     IERC20Portal _portal;
 
     function setUp() public {
         _alice = vm.addr(1);
-        _dapp = vm.addr(2);
+        _app = vm.addr(2);
         _inputBox = IInputBox(vm.addr(3));
         _token = IERC20(vm.addr(4));
         _portal = new ERC20Portal(_inputBox);
@@ -63,7 +63,7 @@ contract ERC20PortalTest is Test {
         );
 
         vm.prank(_alice);
-        _portal.depositERC20Tokens(_token, _dapp, amount, data);
+        _portal.depositERC20Tokens(_token, _app, amount, data);
     }
 
     function testTokenReturnsTrue(uint256 amount, bytes calldata data) public {
@@ -96,7 +96,7 @@ contract ERC20PortalTest is Test {
         );
 
         vm.prank(_alice);
-        _portal.depositERC20Tokens(_token, _dapp, amount, data);
+        _portal.depositERC20Tokens(_token, _app, amount, data);
     }
 
     function testTokenReverts(
@@ -121,7 +121,7 @@ contract ERC20PortalTest is Test {
         }
 
         vm.prank(_alice);
-        _portal.depositERC20Tokens(_token, _dapp, amount, data);
+        _portal.depositERC20Tokens(_token, _app, amount, data);
     }
 
     function _encodeInput(
@@ -134,13 +134,13 @@ contract ERC20PortalTest is Test {
     function _encodeTransferFrom(
         uint256 amount
     ) internal view returns (bytes memory) {
-        return abi.encodeCall(IERC20.transferFrom, (_alice, _dapp, amount));
+        return abi.encodeCall(IERC20.transferFrom, (_alice, _app, amount));
     }
 
     function _encodeAddInput(
         bytes memory _input
     ) internal view returns (bytes memory) {
-        return abi.encodeCall(IInputBox.addInput, (_dapp, _input));
+        return abi.encodeCall(IInputBox.addInput, (_app, _input));
     }
 
     function _testTokenReturns(
@@ -163,6 +163,6 @@ contract ERC20PortalTest is Test {
         vm.expectCall(address(_inputBox), addInput, 1);
 
         vm.prank(_alice);
-        _portal.depositERC20Tokens(_token, _dapp, amount, data);
+        _portal.depositERC20Tokens(_token, _app, amount, data);
     }
 }
