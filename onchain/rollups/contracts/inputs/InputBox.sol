@@ -5,58 +5,52 @@ pragma solidity ^0.8.8;
 
 import {IInputBox} from "./IInputBox.sol";
 import {LibInput} from "../library/LibInput.sol";
+import {CanonicalMachine} from "../common/CanonicalMachine.sol";
 
-/// @title Input Box
-///
-/// @notice Trustless and permissionless contract that receives arbitrary blobs
-/// (called "inputs") from anyone and adds a compound hash to an append-only list
-/// (called "input box"). Each application has its own input box.
-///
-/// The hash that is stored on-chain is composed by the hash of the input blob,
-/// the block number and timestamp, the input sender address, and the input index.
-///
-/// Data availability is guaranteed by the emission of `InputAdded` events
-/// on every successful call to `addInput`. This ensures that inputs can be
-/// retrieved by anyone at any time, without having to rely on centralized data
-/// providers.
-///
-/// From the perspective of this contract, inputs are encoding-agnostic byte
-/// arrays. It is up to the application to interpret, validate and act upon inputs.
 contract InputBox is IInputBox {
-    /// @notice Mapping from application address to list of input hashes.
-    /// @dev See the `getNumberOfInputs`, `getInputHash` and `addInput` functions.
-    mapping(address => bytes32[]) internal _inputBoxes;
+    /// @notice Mapping of application addresses to arrays of input hashes.
+    mapping(address => bytes32[]) private _inputBoxes;
 
+    /// @inheritdoc IInputBox
     function addInput(
         address app,
-        bytes calldata input
+        bytes calldata payload
     ) external override returns (bytes32) {
+        if (payload.length > CanonicalMachine.INPUT_PAYLOAD_MAX_SIZE) {
+            revert PayloadTooLarge(
+                app,
+                payload.length,
+                CanonicalMachine.INPUT_PAYLOAD_MAX_SIZE
+            );
+        }
+
         bytes32[] storage inputBox = _inputBoxes[app];
-        uint256 inputIndex = inputBox.length;
+
+        uint256 index = inputBox.length;
 
         bytes32 inputHash = LibInput.computeInputHash(
             msg.sender,
             block.number,
             block.timestamp,
-            input,
-            inputIndex
+            index,
+            payload
         );
 
-        // add input to the input box
         inputBox.push(inputHash);
 
-        // block.number and timestamp can be retrieved by the event metadata itself
-        emit InputAdded(app, inputIndex, msg.sender, input);
+        emit InputAdded(app, index, msg.sender, payload);
 
         return inputHash;
     }
 
+    /// @inheritdoc IInputBox
     function getNumberOfInputs(
         address app
     ) external view override returns (uint256) {
         return _inputBoxes[app].length;
     }
 
+    /// @inheritdoc IInputBox
     function getInputHash(
         address app,
         uint256 index
