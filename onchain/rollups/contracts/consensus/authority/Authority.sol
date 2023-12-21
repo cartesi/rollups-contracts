@@ -20,7 +20,7 @@ contract Authority is AbstractConsensus, Ownable {
     /// @param app The application contract address
     /// @param inputRange The input range
     /// @param epochHash The epoch hash
-    /// @dev On success, triggers a `ClaimSubmission` event and a `ClaimAcceptance` event.
+    /// @dev Fires a `ClaimSubmission` event and a `ClaimAcceptance` event.
     /// @dev Can only be called by the owner.
     function submitClaim(
         address app,
