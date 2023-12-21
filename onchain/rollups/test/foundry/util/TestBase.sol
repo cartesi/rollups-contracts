@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0 (see LICENSE)
 
 /// @title Test base contract
-pragma solidity ^0.8.8;
+pragma solidity ^0.8.22;
 
 import {Test} from "forge-std/Test.sol";
 

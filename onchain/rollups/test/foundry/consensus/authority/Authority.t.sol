@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0 (see LICENSE)
 
 /// @title Authority Test
-pragma solidity ^0.8.8;
+pragma solidity ^0.8.22;
 
 import {Vm} from "forge-std/Vm.sol";
 import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
@@ -17,29 +17,11 @@ import {TestBase} from "../../util/TestBase.sol";
 contract AuthorityTest is TestBase {
     using LibInputRange for InputRange;
 
-    event OwnershipTransferred(
-        address indexed previousOwner,
-        address indexed newOwner
-    );
-
-    event ClaimSubmission(
-        address indexed submitter,
-        address indexed app,
-        InputRange inputRange,
-        bytes32 epochHash
-    );
-
-    event ClaimAcceptance(
-        address indexed app,
-        InputRange inputRange,
-        bytes32 epochHash
-    );
-
     function testConstructor(address owner) public {
         vm.assume(owner != address(0));
 
         vm.expectEmit(true, true, false, false);
-        emit OwnershipTransferred(address(0), owner);
+        emit Ownable.OwnershipTransferred(address(0), owner);
 
         vm.recordLogs();
 
@@ -123,9 +105,9 @@ contract AuthorityTest is TestBase {
         bytes32 epochHash
     ) internal {
         vm.expectEmit(true, true, false, true, address(authority));
-        emit ClaimSubmission(owner, app, inputRange, epochHash);
+        emit IConsensus.ClaimSubmission(owner, app, inputRange, epochHash);
 
         vm.expectEmit(true, false, false, true, address(authority));
-        emit ClaimAcceptance(app, inputRange, epochHash);
+        emit IConsensus.ClaimAcceptance(app, inputRange, epochHash);
     }
 }

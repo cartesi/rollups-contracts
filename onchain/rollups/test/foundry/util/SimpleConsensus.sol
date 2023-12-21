@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0 (see LICENSE)
 
 /// @title A Simple Consensus Contract
-pragma solidity ^0.8.8;
+pragma solidity ^0.8.22;
 
 import {AbstractConsensus} from "contracts/consensus/AbstractConsensus.sol";
 import {InputRange} from "contracts/common/InputRange.sol";

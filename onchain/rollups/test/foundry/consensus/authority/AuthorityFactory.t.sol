@@ -2,17 +2,15 @@
 // SPDX-License-Identifier: Apache-2.0 (see LICENSE)
 
 /// @title Authority Factory Test
-pragma solidity ^0.8.8;
+pragma solidity ^0.8.22;
 
 import {Test} from "forge-std/Test.sol";
-import {AuthorityFactory} from "contracts/consensus/authority/AuthorityFactory.sol";
+import {AuthorityFactory, IAuthorityFactory} from "contracts/consensus/authority/AuthorityFactory.sol";
 import {Authority} from "contracts/consensus/authority/Authority.sol";
 import {Vm} from "forge-std/Vm.sol";
 
 contract AuthorityFactoryTest is Test {
     AuthorityFactory factory;
-
-    event AuthorityCreated(address authorityOwner, Authority authority);
 
     struct AuthorityCreatedEventData {
         address authorityOwner;
@@ -46,7 +44,7 @@ contract AuthorityFactoryTest is Test {
 
             if (
                 entry.emitter == address(factory) &&
-                entry.topics[0] == AuthorityCreated.selector
+                entry.topics[0] == IAuthorityFactory.AuthorityCreated.selector
             ) {
                 ++numOfAuthorityCreated;
 

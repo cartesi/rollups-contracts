@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0 (see LICENSE)
 
 /// @title Input Box Test
-pragma solidity ^0.8.8;
+pragma solidity ^0.8.22;
 
 import {Test} from "forge-std/Test.sol";
 import {InputBox} from "contracts/inputs/InputBox.sol";
@@ -137,13 +137,6 @@ contract InputBoxTest is Test {
     InputBox inputBox;
     InputBoxHandler handler;
 
-    event InputAdded(
-        address indexed app,
-        uint256 indexed inputIndex,
-        address sender,
-        bytes input
-    );
-
     function setUp() public {
         inputBox = new InputBox();
         handler = new InputBoxHandler(inputBox);
@@ -188,7 +181,7 @@ contract InputBoxTest is Test {
             vm.expectEmit(true, true, false, true, address(inputBox));
 
             // The event we expect
-            emit InputAdded(_app, i, address(this), _inputs[i]);
+            emit IInputBox.InputAdded(_app, i, address(this), _inputs[i]);
 
             returnedValues[i] = inputBox.addInput(_app, _inputs[i]);
 

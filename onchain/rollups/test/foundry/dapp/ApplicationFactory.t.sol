@@ -2,11 +2,11 @@
 // SPDX-License-Identifier: Apache-2.0 (see LICENSE)
 
 /// @title Application Factory Test
-pragma solidity ^0.8.8;
+pragma solidity ^0.8.22;
 
 import {TestBase} from "../util/TestBase.sol";
 import {SimpleConsensus} from "../util/SimpleConsensus.sol";
-import {ApplicationFactory} from "contracts/dapp/ApplicationFactory.sol";
+import {ApplicationFactory, IApplicationFactory} from "contracts/dapp/ApplicationFactory.sol";
 import {Application} from "contracts/dapp/Application.sol";
 import {IConsensus} from "contracts/consensus/IConsensus.sol";
 import {IInputBox} from "contracts/inputs/IInputBox.sol";
@@ -21,15 +21,6 @@ contract ApplicationFactoryTest is TestBase {
         factory = new ApplicationFactory();
         consensus = new SimpleConsensus();
     }
-
-    event ApplicationCreated(
-        IConsensus indexed consensus,
-        IInputBox inputBox,
-        IInputRelay[] inputRelays,
-        address appOwner,
-        bytes32 templateHash,
-        Application app
-    );
 
     function testNewApplication(
         IInputBox _inputBox,
@@ -187,7 +178,8 @@ contract ApplicationFactoryTest is TestBase {
 
             if (
                 entry.emitter == address(factory) &&
-                entry.topics[0] == ApplicationCreated.selector
+                entry.topics[0] ==
+                IApplicationFactory.ApplicationCreated.selector
             ) {
                 ++numOfApplicationsCreated;
 
