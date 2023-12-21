@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0 (see LICENSE)
 
 /// @title Application Address Relay Test
-pragma solidity ^0.8.8;
+pragma solidity ^0.8.22;
 
 import {Test} from "forge-std/Test.sol";
 import {IERC165} from "@openzeppelin/contracts/utils/introspection/IERC165.sol";
@@ -16,13 +16,6 @@ import {IInputRelay} from "contracts/inputs/IInputRelay.sol";
 contract ApplicationAddressRelayTest is Test {
     IInputBox inputBox;
     IApplicationAddressRelay relay;
-
-    event InputAdded(
-        address indexed app,
-        uint256 indexed inputIndex,
-        address sender,
-        bytes input
-    );
 
     function setUp() public {
         inputBox = new InputBox();
@@ -59,7 +52,7 @@ contract ApplicationAddressRelayTest is Test {
 
         // Expect InputAdded to be emitted with the right arguments
         vm.expectEmit(true, true, false, true, address(inputBox));
-        emit InputAdded(_app, 0, address(relay), input);
+        emit IInputBox.InputAdded(_app, 0, address(relay), input);
 
         // Relay the application's address
         relay.relayApplicationAddress(_app);

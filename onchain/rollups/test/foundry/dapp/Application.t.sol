@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0 (see LICENSE)
 
 /// @title Application Test
-pragma solidity ^0.8.8;
+pragma solidity ^0.8.22;
 
 import {TestBase} from "../util/TestBase.sol";
 
@@ -95,13 +95,6 @@ contract ApplicationTest is TestBase {
     uint256 immutable transferAmount;
     IInputRelay[] inputRelays;
 
-    event VoucherExecuted(uint256 inputIndex, uint256 outputIndexWithinInput);
-    event OwnershipTransferred(
-        address indexed previousOwner,
-        address indexed newOwner
-    );
-    event NewConsensus(IConsensus newConsensus);
-
     constructor() {
         appOwner = LibBytes.hashToAddress("appOwner");
         initialSupply = LibBytes.hashToUint256("initialSupply");
@@ -176,7 +169,7 @@ contract ApplicationTest is TestBase {
         vm.assume(_owner != address(0));
 
         vm.expectEmit(true, true, false, false);
-        emit OwnershipTransferred(address(0), _owner);
+        emit Ownable.OwnershipTransferred(address(0), _owner);
 
         app = new Application(
             consensus,
@@ -241,7 +234,7 @@ contract ApplicationTest is TestBase {
 
         // expect event
         vm.expectEmit(false, false, false, true, address(app));
-        emit VoucherExecuted(
+        emit IApplication.VoucherExecuted(
             _calculateInputIndex(proof),
             proof.validity.outputIndexWithinInput
         );
@@ -412,7 +405,7 @@ contract ApplicationTest is TestBase {
 
         // expect event
         vm.expectEmit(false, false, false, true, address(app));
-        emit VoucherExecuted(
+        emit IApplication.VoucherExecuted(
             _calculateInputIndex(proof),
             proof.validity.outputIndexWithinInput
         );
@@ -529,7 +522,7 @@ contract ApplicationTest is TestBase {
 
         // expect event
         vm.expectEmit(false, false, false, true, address(app));
-        emit VoucherExecuted(
+        emit IApplication.VoucherExecuted(
             _calculateInputIndex(proof),
             proof.validity.outputIndexWithinInput
         );
@@ -583,7 +576,7 @@ contract ApplicationTest is TestBase {
         // now impersonate owner
         vm.prank(_owner);
         vm.expectEmit(false, false, false, true, address(app));
-        emit NewConsensus(newConsensus);
+        emit IApplication.NewConsensus(newConsensus);
         app.migrateToConsensus(newConsensus);
         assertEq(address(app.getConsensus()), address(newConsensus));
 
