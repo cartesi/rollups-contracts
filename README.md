@@ -186,7 +186,7 @@ Because of their generality, vouchers can be used in a wide range of application
 
 | Asset | Destination | Function signature |
 | :- | :- |  :- |
-| Ether | DApp contract | `withdrawEther(address,uint256)` [:page_facing_up:](./onchain/rollups/contracts/dapp/CartesiDApp.sol) |
+| Ether | DApp contract | `withdrawEther(address,uint256)` [:page_facing_up:](./onchain/rollups/contracts/dapp/Application.sol) |
 | ERC-20 | Token contract | `transfer(address,uint256)` [:page_facing_up:](https://eips.ethereum.org/EIPS/eip-20#methods) |
 | ERC-20 | Token contract | `transferFrom(address,address,uint256)` [:page_facing_up:](https://eips.ethereum.org/EIPS/eip-20#methods) [^1] |
 | ERC-721 | Token contract | `safeTransferFrom(address,address,uint256)` [:page_facing_up:](https://eips.ethereum.org/EIPS/eip-721#specification) |
@@ -210,7 +210,7 @@ As an example, the voucher for a simple ERC-20 transfer (2nd line in the table a
 
 In the previous section, we showed how vouchers can be used to withdraw different types of assets. Most of those vouchers contain the address of the DApp contract, either as the destination address or as a function argument. So, the off-chain machine needs to "know" the DApp contract address at some point. If the off-chain machine knew the DApp contract address from the beginning, it would create a cyclical dependency between the initial machine state hash (also called "template hash") and the DApp contract address. This is due to the fact that the address of a DApp contract depends on its construction arguments, which include the template hash; and that the template hash is the Merkle root of the machine address space, which includes the DApp contract address.
 
-This "chicken-and-egg" problem is circumvented by a very small permissionless contract in the base layer, the DApp Address Relay ([source](./onchain/rollups/contracts/relays/DAppAddressRelay.sol)). Its only job is to add an input to a DApp's input box with the DApp contract address. The off-chain machine then decodes this input and stores the address somewhere for future use. Just like in the case of portals, the machine must also know the address of the relay in order to validate the origin of the input.
+This "chicken-and-egg" problem is circumvented by a very small permissionless contract in the base layer, the DApp Address Relay ([source](./onchain/rollups/contracts/relays/ApplicationAddressRelay.sol)). Its only job is to add an input to a DApp's input box with the DApp contract address. The off-chain machine then decodes this input and stores the address somewhere for future use. Just like in the case of portals, the machine must also know the address of the relay in order to validate the origin of the input.
 
 ### Notices
 
@@ -218,15 +218,9 @@ Notices are informational statements that can be proved by contracts in the base
 
 ### Consensus
 
-This module is responsible for providing valid claims to DApps after reaching some form of consensus. The module's interface aims to be as generic as possible to accommodate any consensus model, since there are plenty to choose from. The way claims are encoded and stored is abstracted entirely by the interface. Implementation-wise, this is left to a History contract.
+This module is responsible for providing valid claims to DApps after reaching some form of consensus. Each DApp has its own mapping of claims, each of which is mapped by the range of input indices of an epoch.
 
-The only type of consensus that is currently implemented by Cartesi is called Authority. It is owned by a single address, who has complete power over the consensus. It is arguably the simplest consensus to implement, although quite vulnerable.
-
-### History
-
-The sole purpose of this module is to store claims and to allow them to be retrieved later. Just as with the consensus interface, we leave much of the details open for the implementation to define.
-
-Our only implementation of history stores claims in a very simple manner: each claim is composed of an epoch hash and a range of input indices. Each DApp has its own append-only list of claims, where ranges don't overlap, and come one after the other. As a result, one cannot overwrite past claims, or skip inputs, or claim in a non-linear order.
+The module's interface aims to be as generic as possible to accommodate any consensus model, since there are plenty to choose from. One type of consensus implemented by Cartesi is called Authority. It is owned by a single address, who has complete power over the consensus. It is arguably the simplest consensus to implement, although quite vulnerable.
 
 ### Dispute Resolution
 
