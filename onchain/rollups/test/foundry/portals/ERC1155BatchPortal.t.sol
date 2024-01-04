@@ -3,7 +3,8 @@
 
 pragma solidity ^0.8.22;
 
-import {IERC1155} from "@openzeppelin/contracts/token/ERC1155/IERC1155.sol";
+import {IERC1155, ERC1155} from "@openzeppelin/contracts/token/ERC1155/ERC1155.sol";
+import {ERC1155Holder} from "@openzeppelin/contracts/token/ERC1155/utils/ERC1155Holder.sol";
 import {IERC165} from "@openzeppelin/contracts/utils/introspection/IERC165.sol";
 
 import {ERC1155BatchPortal} from "contracts/portals/ERC1155BatchPortal.sol";
@@ -13,6 +14,18 @@ import {IInputRelay} from "contracts/inputs/IInputRelay.sol";
 import {InputEncoding} from "contracts/common/InputEncoding.sol";
 
 import {Test} from "forge-std/Test.sol";
+
+contract NormalToken is ERC1155 {
+    constructor(
+        address tokenOwner,
+        uint256[] memory tokenIds,
+        uint256[] memory supplies
+    ) ERC1155("BatchToken") {
+        _mintBatch(tokenOwner, tokenIds, supplies, "");
+    }
+}
+
+contract TokenHolder is ERC1155Holder {}
 
 contract ERC1155BatchPortalTest is Test {
     address _alice;
@@ -124,6 +137,72 @@ contract ERC1155BatchPortalTest is Test {
             baseLayerData,
             execLayerData
         );
+    }
+
+    function testNormalToken(
+        uint256[] calldata supplies,
+        bytes calldata baseLayerData,
+        bytes calldata execLayerData
+    ) public {
+        // construct arrays of tokenIds and values
+        uint256 numOfTokenIds = supplies.length;
+        vm.assume(numOfTokenIds > 1);
+        uint256[] memory tokenIds = new uint256[](numOfTokenIds);
+        uint256[] memory values = new uint256[](numOfTokenIds);
+        for (uint256 i; i < numOfTokenIds; ++i) {
+            tokenIds[i] = i;
+            values[i] = bound(i, 0, supplies[i]);
+        }
+
+        _token = new NormalToken(_alice, tokenIds, supplies);
+        _app = address(new TokenHolder());
+
+        vm.startPrank(_alice);
+
+        // Allow the portal to withdraw tokens from Alice
+        _token.setApprovalForAll(address(_portal), true);
+
+        vm.mockCall(
+            address(_inputBox),
+            abi.encodeWithSelector(IInputBox.addInput.selector),
+            abi.encode(bytes32(0))
+        );
+
+        // balances before
+        for (uint256 i; i < numOfTokenIds; ++i) {
+            assertEq(_token.balanceOf(_alice, tokenIds[i]), supplies[i]);
+            assertEq(_token.balanceOf(_app, tokenIds[i]), 0);
+            assertEq(_token.balanceOf(address(_portal), tokenIds[i]), 0);
+        }
+
+        vm.expectEmit(true, true, true, true);
+        emit IERC1155.TransferBatch(
+            address(_portal),
+            _alice,
+            _app,
+            tokenIds,
+            values
+        );
+
+        _portal.depositBatchERC1155Token(
+            _token,
+            _app,
+            tokenIds,
+            values,
+            baseLayerData,
+            execLayerData
+        );
+        vm.stopPrank();
+
+        // balances after
+        for (uint256 i; i < numOfTokenIds; ++i) {
+            assertEq(
+                _token.balanceOf(_alice, tokenIds[i]),
+                supplies[i] - values[i]
+            );
+            assertEq(_token.balanceOf(_app, tokenIds[i]), values[i]);
+            assertEq(_token.balanceOf(address(_portal), tokenIds[i]), 0);
+        }
     }
 
     function _encodeInput(
