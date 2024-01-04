@@ -5,7 +5,7 @@ pragma solidity ^0.8.22;
 
 import {Address} from "@openzeppelin/contracts/utils/Address.sol";
 import {IERC165} from "@openzeppelin/contracts/utils/introspection/IERC165.sol";
-import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import {IERC20, ERC20} from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 
 import {ERC20Portal} from "contracts/portals/ERC20Portal.sol";
@@ -15,6 +15,15 @@ import {IInputRelay} from "contracts/inputs/IInputRelay.sol";
 import {InputEncoding} from "contracts/common/InputEncoding.sol";
 
 import {Test} from "forge-std/Test.sol";
+
+contract NormalToken is ERC20 {
+    constructor(
+        address tokenOwner,
+        uint256 initialSupply
+    ) ERC20("NormalToken", "NORMAL") {
+        _mint(tokenOwner, initialSupply);
+    }
+}
 
 contract ERC20PortalTest is Test {
     address _alice;
@@ -122,6 +131,44 @@ contract ERC20PortalTest is Test {
 
         vm.prank(_alice);
         _portal.depositERC20Tokens(_token, _app, amount, data);
+    }
+
+    function testNormalToken(
+        uint256 supply,
+        uint256 amount,
+        bytes calldata data
+    ) public {
+        amount = bound(amount, 0, supply);
+
+        NormalToken token = new NormalToken(_alice, supply);
+
+        vm.startPrank(_alice);
+
+        token.approve(address(_portal), amount);
+
+        vm.mockCall(
+            address(_inputBox),
+            abi.encodeWithSelector(IInputBox.addInput.selector),
+            abi.encode(bytes32(0))
+        );
+
+        // balances before
+        assertEq(token.balanceOf(_alice), supply);
+        assertEq(token.balanceOf(_app), 0);
+        assertEq(token.balanceOf(address(_portal)), 0);
+
+        vm.expectEmit(true, true, false, false, address(token));
+        emit IERC20.Transfer(_alice, _app, amount);
+
+        // deposit tokens
+        _portal.depositERC20Tokens(token, _app, amount, data);
+
+        vm.stopPrank();
+
+        // balances after
+        assertEq(token.balanceOf(_alice), supply - amount);
+        assertEq(token.balanceOf(_app), amount);
+        assertEq(token.balanceOf(address(_portal)), 0);
     }
 
     function _encodeInput(

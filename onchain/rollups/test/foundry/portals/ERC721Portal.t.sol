@@ -4,7 +4,8 @@
 pragma solidity ^0.8.22;
 
 import {IERC165} from "@openzeppelin/contracts/utils/introspection/IERC165.sol";
-import {IERC721} from "@openzeppelin/contracts/token/ERC721/IERC721.sol";
+import {IERC721, ERC721} from "@openzeppelin/contracts/token/ERC721/ERC721.sol";
+import {ERC721Holder} from "@openzeppelin/contracts/token/ERC721/utils/ERC721Holder.sol";
 
 import {ERC721Portal} from "contracts/portals/ERC721Portal.sol";
 import {IERC721Portal} from "contracts/portals/IERC721Portal.sol";
@@ -13,6 +14,17 @@ import {IInputRelay} from "contracts/inputs/IInputRelay.sol";
 import {InputEncoding} from "contracts/common/InputEncoding.sol";
 
 import {Test} from "forge-std/Test.sol";
+
+contract NormalToken is ERC721 {
+    constructor(
+        address tokenOwner,
+        uint256 tokenId
+    ) ERC721("NormalToken", "NORMAL") {
+        _safeMint(tokenOwner, tokenId);
+    }
+}
+
+contract TokenHolder is ERC721Holder {}
 
 contract ERC721PortalTest is Test {
     address _alice;
@@ -114,6 +126,44 @@ contract ERC721PortalTest is Test {
             baseLayerData,
             execLayerData
         );
+    }
+
+    function testNormalToken(
+        uint256 tokenId,
+        bytes calldata baseLayerData,
+        bytes calldata execLayerData
+    ) public {
+        NormalToken token = new NormalToken(_alice, tokenId);
+        _app = address(new TokenHolder());
+
+        vm.startPrank(_alice);
+
+        token.approve(address(_portal), tokenId);
+
+        vm.mockCall(
+            address(_inputBox),
+            abi.encodeWithSelector(IInputBox.addInput.selector),
+            abi.encode(bytes32(0))
+        );
+
+        // token owner before
+        assertEq(token.ownerOf(tokenId), _alice);
+
+        vm.expectEmit(true, true, true, false, address(token));
+        emit IERC721.Transfer(_alice, _app, tokenId);
+
+        _portal.depositERC721Token(
+            token,
+            _app,
+            tokenId,
+            baseLayerData,
+            execLayerData
+        );
+
+        vm.stopPrank();
+
+        // token owner after
+        assertEq(token.ownerOf(tokenId), _app);
     }
 
     function _encodeInput(
