@@ -17,16 +17,16 @@ interface IERC721Portal is IInputRelay {
     /// to the portal address beforehand, by calling the `approve` function in the
     /// token contract.
     ///
-    /// @param _token The ERC-721 token contract
-    /// @param _app The address of the application
-    /// @param _tokenId The identifier of the token being transferred
-    /// @param _baseLayerData Additional data to be interpreted by the base layer
-    /// @param _execLayerData Additional data to be interpreted by the execution layer
+    /// @param token The ERC-721 token contract
+    /// @param app The address of the application
+    /// @param tokenId The identifier of the token being transferred
+    /// @param baseLayerData Additional data to be interpreted by the base layer
+    /// @param execLayerData Additional data to be interpreted by the execution layer
     function depositERC721Token(
-        IERC721 _token,
-        address _app,
-        uint256 _tokenId,
-        bytes calldata _baseLayerData,
-        bytes calldata _execLayerData
+        IERC721 token,
+        address app,
+        uint256 tokenId,
+        bytes calldata baseLayerData,
+        bytes calldata execLayerData
     ) external;
 }

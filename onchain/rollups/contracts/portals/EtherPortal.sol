@@ -19,8 +19,23 @@ contract EtherPortal is IEtherPortal, InputRelay {
     using Address for address payable;
 
     /// @notice Constructs the portal.
-    /// @param _inputBox The input box used by the portal
-    constructor(IInputBox _inputBox) InputRelay(_inputBox) {}
+    /// @param inputBox The input box used by the portal
+    constructor(IInputBox inputBox) InputRelay(inputBox) {}
+
+    function depositEther(
+        address payable app,
+        bytes calldata execLayerData
+    ) external payable override {
+        app.sendValue(msg.value);
+
+        bytes memory input = InputEncoding.encodeEtherDeposit(
+            msg.sender,
+            msg.value,
+            execLayerData
+        );
+
+        _inputBox.addInput(app, input);
+    }
 
     function supportsInterface(
         bytes4 interfaceId
@@ -28,20 +43,5 @@ contract EtherPortal is IEtherPortal, InputRelay {
         return
             interfaceId == type(IEtherPortal).interfaceId ||
             super.supportsInterface(interfaceId);
-    }
-
-    function depositEther(
-        address payable _app,
-        bytes calldata _execLayerData
-    ) external payable override {
-        _app.sendValue(msg.value);
-
-        bytes memory input = InputEncoding.encodeEtherDeposit(
-            msg.sender,
-            msg.value,
-            _execLayerData
-        );
-
-        inputBox.addInput(_app, input);
     }
 }

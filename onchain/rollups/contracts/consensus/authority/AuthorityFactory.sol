@@ -12,37 +12,37 @@ import {Authority} from "./Authority.sol";
 /// @notice Allows anyone to reliably deploy a new `Authority` contract.
 contract AuthorityFactory is IAuthorityFactory {
     function newAuthority(
-        address _authorityOwner
+        address authorityOwner
     ) external override returns (Authority) {
-        Authority authority = new Authority(_authorityOwner);
+        Authority authority = new Authority(authorityOwner);
 
-        emit AuthorityCreated(_authorityOwner, authority);
+        emit AuthorityCreated(authorityOwner, authority);
 
         return authority;
     }
 
     function newAuthority(
-        address _authorityOwner,
-        bytes32 _salt
+        address authorityOwner,
+        bytes32 salt
     ) external override returns (Authority) {
-        Authority authority = new Authority{salt: _salt}(_authorityOwner);
+        Authority authority = new Authority{salt: salt}(authorityOwner);
 
-        emit AuthorityCreated(_authorityOwner, authority);
+        emit AuthorityCreated(authorityOwner, authority);
 
         return authority;
     }
 
     function calculateAuthorityAddress(
-        address _authorityOwner,
-        bytes32 _salt
+        address authorityOwner,
+        bytes32 salt
     ) external view override returns (address) {
         return
             Create2.computeAddress(
-                _salt,
+                salt,
                 keccak256(
                     abi.encodePacked(
                         type(Authority).creationCode,
-                        abi.encode(_authorityOwner)
+                        abi.encode(authorityOwner)
                     )
                 )
             );

@@ -15,8 +15,6 @@ library LibServerManager {
     using LibServerManager for RawProof;
     using LibServerManager for RawProof[];
 
-    error InvalidOutputEnum(string);
-
     struct RawHash {
         bytes32 data;
     }
@@ -46,6 +44,39 @@ library LibServerManager {
         RawProof[] proofs;
         RawHash vouchersEpochRootHash;
     }
+
+    struct OutputValidityProof {
+        uint256 inputIndexWithinEpoch;
+        uint256 outputIndexWithinInput;
+        bytes32 outputHashesRootHash;
+        bytes32 vouchersEpochRootHash;
+        bytes32 noticesEpochRootHash;
+        bytes32 machineStateHash;
+        bytes32[] outputHashInOutputHashesSiblings;
+        bytes32[] outputHashesInEpochSiblings;
+    }
+
+    enum OutputEnum {
+        VOUCHER,
+        NOTICE
+    }
+
+    struct Proof {
+        uint256 inputIndex;
+        uint256 outputIndex;
+        OutputEnum outputEnum;
+        OutputValidityProof validity;
+        bytes context;
+    }
+
+    struct FinishEpochResponse {
+        bytes32 machineHash;
+        bytes32 vouchersEpochRootHash;
+        bytes32 noticesEpochRootHash;
+        Proof[] proofs;
+    }
+
+    error InvalidOutputEnum(string);
 
     function toUint(string memory s, Vm vm) internal pure returns (uint256) {
         return vm.parseUint(s);
@@ -138,37 +169,6 @@ library LibServerManager {
                 noticesEpochRootHash: r.noticesEpochRootHash.fmt(),
                 proofs: r.proofs.fmt(vm)
             });
-    }
-
-    struct OutputValidityProof {
-        uint256 inputIndexWithinEpoch;
-        uint256 outputIndexWithinInput;
-        bytes32 outputHashesRootHash;
-        bytes32 vouchersEpochRootHash;
-        bytes32 noticesEpochRootHash;
-        bytes32 machineStateHash;
-        bytes32[] outputHashInOutputHashesSiblings;
-        bytes32[] outputHashesInEpochSiblings;
-    }
-
-    enum OutputEnum {
-        VOUCHER,
-        NOTICE
-    }
-
-    struct Proof {
-        uint256 inputIndex;
-        uint256 outputIndex;
-        OutputEnum outputEnum;
-        OutputValidityProof validity;
-        bytes context;
-    }
-
-    struct FinishEpochResponse {
-        bytes32 machineHash;
-        bytes32 vouchersEpochRootHash;
-        bytes32 noticesEpochRootHash;
-        Proof[] proofs;
     }
 
     function getInputRange(
