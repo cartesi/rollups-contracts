@@ -171,25 +171,6 @@ contract ERC20PortalTest is Test {
         assertEq(token.balanceOf(address(_portal)), 0);
     }
 
-    function _encodeInput(
-        uint256 amount,
-        bytes calldata data
-    ) internal view returns (bytes memory) {
-        return InputEncoding.encodeERC20Deposit(_token, _alice, amount, data);
-    }
-
-    function _encodeTransferFrom(
-        uint256 amount
-    ) internal view returns (bytes memory) {
-        return abi.encodeCall(IERC20.transferFrom, (_alice, _app, amount));
-    }
-
-    function _encodeAddInput(
-        bytes memory _input
-    ) internal view returns (bytes memory) {
-        return abi.encodeCall(IInputBox.addInput, (_app, _input));
-    }
-
     function _testTokenReturns(
         uint256 amount,
         bytes calldata data,
@@ -211,5 +192,24 @@ contract ERC20PortalTest is Test {
 
         vm.prank(_alice);
         _portal.depositERC20Tokens(_token, _app, amount, data);
+    }
+
+    function _encodeInput(
+        uint256 amount,
+        bytes calldata data
+    ) internal view returns (bytes memory) {
+        return InputEncoding.encodeERC20Deposit(_token, _alice, amount, data);
+    }
+
+    function _encodeTransferFrom(
+        uint256 amount
+    ) internal view returns (bytes memory) {
+        return abi.encodeCall(IERC20.transferFrom, (_alice, _app, amount));
+    }
+
+    function _encodeAddInput(
+        bytes memory _input
+    ) internal view returns (bytes memory) {
+        return abi.encodeCall(IInputBox.addInput, (_app, _input));
     }
 }

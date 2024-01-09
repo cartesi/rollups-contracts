@@ -19,29 +19,29 @@ interface IInputBox {
     );
 
     /// @notice Add an input to an application's input box.
-    /// @param _app The address of the application
-    /// @param _input The contents of the input
+    /// @param app The address of the application
+    /// @param input The contents of the input
     /// @return The hash of the input plus some extra metadata
     /// @dev MUST fire an `InputAdded` event accordingly.
     ///      Input larger than machine limit will raise `InputSizeExceedsLimit` error.
     function addInput(
-        address _app,
-        bytes calldata _input
+        address app,
+        bytes calldata input
     ) external returns (bytes32);
 
     /// @notice Get the number of inputs in an application's input box.
-    /// @param _app The address of the application
+    /// @param app The address of the application
     /// @return Number of inputs in the application's input box
-    function getNumberOfInputs(address _app) external view returns (uint256);
+    function getNumberOfInputs(address app) external view returns (uint256);
 
     /// @notice Get the hash of an input in an application's input box.
-    /// @param _app The address of the application
-    /// @param _index The index of the input in the application's input box
+    /// @param app The address of the application
+    /// @param index The index of the input in the application's input box
     /// @return The hash of the input at the provided index in the application's input box
-    /// @dev `_index` MUST be in the interval `[0,n)` where `n` is the number of
+    /// @dev `index` MUST be in the interval `[0,n)` where `n` is the number of
     ///      inputs in the application's input box. See the `getNumberOfInputs` function.
     function getInputHash(
-        address _app,
-        uint256 _index
+        address app,
+        uint256 index
     ) external view returns (bytes32);
 }

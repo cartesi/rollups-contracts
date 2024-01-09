@@ -11,12 +11,16 @@ import {ERC165, IERC165} from "@openzeppelin/contracts/utils/introspection/ERC16
 /// @notice This contract serves as a base for all the other input relays.
 contract InputRelay is IInputRelay, ERC165 {
     /// @notice The input box used by the input relay.
-    IInputBox internal immutable inputBox;
+    IInputBox internal immutable _inputBox;
 
     /// @notice Constructs the input relay.
-    /// @param _inputBox The input box used by the input relay
-    constructor(IInputBox _inputBox) {
-        inputBox = _inputBox;
+    /// @param inputBox The input box used by the input relay
+    constructor(IInputBox inputBox) {
+        _inputBox = inputBox;
+    }
+
+    function getInputBox() external view override returns (IInputBox) {
+        return _inputBox;
     }
 
     function supportsInterface(
@@ -25,9 +29,5 @@ contract InputRelay is IInputRelay, ERC165 {
         return
             interfaceId == type(IInputRelay).interfaceId ||
             super.supportsInterface(interfaceId);
-    }
-
-    function getInputBox() external view override returns (IInputBox) {
-        return inputBox;
     }
 }

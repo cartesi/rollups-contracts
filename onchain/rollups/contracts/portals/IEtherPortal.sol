@@ -14,12 +14,12 @@ interface IEtherPortal is IInputRelay {
     ///
     /// All the value sent through this function is forwarded to the application.
     ///
-    /// @param _app The address of the application
-    /// @param _execLayerData Additional data to be interpreted by the execution layer
+    /// @param app The address of the application
+    /// @param execLayerData Additional data to be interpreted by the execution layer
     /// @dev All the value sent through this function is forwarded to the application.
     ///      If the transfer fails, `EtherTransferFailed` error is raised.
     function depositEther(
-        address payable _app,
-        bytes calldata _execLayerData
+        address payable app,
+        bytes calldata execLayerData
     ) external payable;
 }

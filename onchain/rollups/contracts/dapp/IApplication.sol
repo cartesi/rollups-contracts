@@ -15,14 +15,6 @@ import {InputRange} from "../common/InputRange.sol";
 
 /// @title Application interface
 interface IApplication is IERC721Receiver, IERC1155Receiver {
-    // Errors
-
-    /// @notice Could not validate an output because
-    /// the input that generated it is outside the given input range.
-    /// @param inputIndex The input index
-    /// @param inputRange The input range
-    error InputIndexOutOfRange(uint256 inputIndex, InputRange inputRange);
-
     // Events
 
     /// @notice The application has migrated to another consensus contract.
@@ -35,12 +27,20 @@ interface IApplication is IERC721Receiver, IERC1155Receiver {
     /// @param outputIndexWithinInput The index of the voucher amongst all outputs emitted by the input
     event VoucherExecuted(uint256 inputIndex, uint256 outputIndexWithinInput);
 
+    // Errors
+
+    /// @notice Could not validate an output because
+    /// the input that generated it is outside the given input range.
+    /// @param inputIndex The input index
+    /// @param inputRange The input range
+    error InputIndexOutOfRange(uint256 inputIndex, InputRange inputRange);
+
     // Permissioned functions
 
     /// @notice Migrate the application to a new consensus.
-    /// @param _newConsensus The new consensus
+    /// @param newConsensus The new consensus
     /// @dev Can only be called by the application owner.
-    function migrateToConsensus(IConsensus _newConsensus) external;
+    function migrateToConsensus(IConsensus newConsensus) external;
 
     // Permissionless functions
 
@@ -48,34 +48,34 @@ interface IApplication is IERC721Receiver, IERC1155Receiver {
     /// Reverts if the proof is invalid.
     /// Reverts if the voucher was already successfully executed.
     /// Propagates any error raised by the low-level call.
-    /// @param _destination The address that will receive the payload through a message call
-    /// @param _payload The payload, which—in the case of Solidity contracts—encodes a function call
-    /// @param _proof The proof used to validate the voucher against
+    /// @param destination The address that will receive the payload through a message call
+    /// @param payload The payload, which—in the case of Solidity contracts—encodes a function call
+    /// @param proof The proof used to validate the voucher against
     ///               a claim submitted by the current consensus contract
     /// @dev On a successful execution, emits a `VoucherExecuted` event.
     function executeVoucher(
-        address _destination,
-        bytes calldata _payload,
-        Proof calldata _proof
+        address destination,
+        bytes calldata payload,
+        Proof calldata proof
     ) external;
 
     /// @notice Check whether a voucher has been executed.
-    /// @param _inputIndex The index of the input in the input box
-    /// @param _outputIndexWithinInput The index of output emitted by the input
+    /// @param inputIndex The index of the input in the input box
+    /// @param outputIndexWithinInput The index of output emitted by the input
     /// @return Whether the voucher has been executed before
     function wasVoucherExecuted(
-        uint256 _inputIndex,
-        uint256 _outputIndexWithinInput
+        uint256 inputIndex,
+        uint256 outputIndexWithinInput
     ) external view returns (bool);
 
     /// @notice Validate a notice.
     /// Reverts if the proof is invalid.
-    /// @param _notice The notice
-    /// @param _proof The proof used to validate the notice against
+    /// @param notice The notice
+    /// @param proof The proof used to validate the notice against
     ///               a claim submitted by the current consensus contract
     function validateNotice(
-        bytes calldata _notice,
-        Proof calldata _proof
+        bytes calldata notice,
+        Proof calldata proof
     ) external view;
 
     /// @notice Get the application's template hash.

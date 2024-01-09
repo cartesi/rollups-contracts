@@ -25,20 +25,20 @@ import {LibInput} from "../library/LibInput.sol";
 contract InputBox is IInputBox {
     /// @notice Mapping from application address to list of input hashes.
     /// @dev See the `getNumberOfInputs`, `getInputHash` and `addInput` functions.
-    mapping(address => bytes32[]) internal inputBoxes;
+    mapping(address => bytes32[]) internal _inputBoxes;
 
     function addInput(
-        address _app,
-        bytes calldata _input
+        address app,
+        bytes calldata input
     ) external override returns (bytes32) {
-        bytes32[] storage inputBox = inputBoxes[_app];
+        bytes32[] storage inputBox = _inputBoxes[app];
         uint256 inputIndex = inputBox.length;
 
         bytes32 inputHash = LibInput.computeInputHash(
             msg.sender,
             block.number,
             block.timestamp,
-            _input,
+            input,
             inputIndex
         );
 
@@ -46,21 +46,21 @@ contract InputBox is IInputBox {
         inputBox.push(inputHash);
 
         // block.number and timestamp can be retrieved by the event metadata itself
-        emit InputAdded(_app, inputIndex, msg.sender, _input);
+        emit InputAdded(app, inputIndex, msg.sender, input);
 
         return inputHash;
     }
 
     function getNumberOfInputs(
-        address _app
+        address app
     ) external view override returns (uint256) {
-        return inputBoxes[_app].length;
+        return _inputBoxes[app].length;
     }
 
     function getInputHash(
-        address _app,
-        uint256 _index
+        address app,
+        uint256 index
     ) external view override returns (bytes32) {
-        return inputBoxes[_app][_index];
+        return _inputBoxes[app][index];
     }
 }

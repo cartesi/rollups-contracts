@@ -13,18 +13,18 @@ interface IERC20Portal is IInputRelay {
     /// @notice Transfer ERC-20 tokens to an application and add an input to
     /// the application's input box to signal such operation.
     ///
-    /// The caller must allow the portal to withdraw at least `_amount` tokens
+    /// The caller must allow the portal to withdraw at least `amount` tokens
     /// from their account beforehand, by calling the `approve` function in the
     /// token contract.
     ///
-    /// @param _token The ERC-20 token contract
-    /// @param _app The address of the application
-    /// @param _amount The amount of tokens to be transferred
-    /// @param _execLayerData Additional data to be interpreted by the execution layer
+    /// @param token The ERC-20 token contract
+    /// @param app The address of the application
+    /// @param amount The amount of tokens to be transferred
+    /// @param execLayerData Additional data to be interpreted by the execution layer
     function depositERC20Tokens(
-        IERC20 _token,
-        address _app,
-        uint256 _amount,
-        bytes calldata _execLayerData
+        IERC20 token,
+        address app,
+        uint256 amount,
+        bytes calldata execLayerData
     ) external;
 }

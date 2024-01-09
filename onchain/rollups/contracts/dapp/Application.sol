@@ -76,6 +76,27 @@ contract Application is
     using LibInputRange for InputRange;
     using Address for address;
 
+    /// @notice The initial machine state hash.
+    /// @dev See the `getTemplateHash` function.
+    bytes32 internal immutable _templateHash;
+
+    /// @notice The executed voucher bitmask, which keeps track of which vouchers
+    ///         were executed already in order to avoid re-execution.
+    /// @dev See the `wasVoucherExecuted` function.
+    mapping(uint256 => BitMaps.BitMap) internal _voucherBitmaps;
+
+    /// @notice The current consensus contract.
+    /// @dev See the `getConsensus` and `migrateToConsensus` functions.
+    IConsensus internal _consensus;
+
+    /// @notice The input box contract.
+    /// @dev See the `getInputBox` function.
+    IInputBox internal immutable _inputBox;
+
+    /// @notice The input relays.
+    /// @dev See the `getInputRelays` function.
+    IInputRelay[] internal _inputRelays;
+
     /// @notice Raised when executing an already executed voucher.
     error VoucherReexecutionNotAllowed();
 
@@ -85,46 +106,131 @@ contract Application is
     /// @notice Raised when a mehtod is not called by application itself.
     error OnlyApplication();
 
-    /// @notice The initial machine state hash.
-    /// @dev See the `getTemplateHash` function.
-    bytes32 internal immutable templateHash;
-
-    /// @notice The executed voucher bitmask, which keeps track of which vouchers
-    ///         were executed already in order to avoid re-execution.
-    /// @dev See the `wasVoucherExecuted` function.
-    mapping(uint256 => BitMaps.BitMap) internal voucherBitmaps;
-
-    /// @notice The current consensus contract.
-    /// @dev See the `getConsensus` and `migrateToConsensus` functions.
-    IConsensus internal consensus;
-
-    /// @notice The input box contract.
-    /// @dev See the `getInputBox` function.
-    IInputBox internal immutable inputBox;
-
-    /// @notice The input relays.
-    /// @dev See the `getInputRelays` function.
-    IInputRelay[] internal inputRelays;
-
     /// @notice Creates an `Application` contract.
-    /// @param _consensus The initial consensus contract
-    /// @param _inputBox The input box contract
-    /// @param _inputRelays The input relays
-    /// @param _initialOwner The initial application owner
-    /// @param _templateHash The initial machine state hash
+    /// @param consensus The initial consensus contract
+    /// @param inputBox The input box contract
+    /// @param inputRelays The input relays
+    /// @param initialOwner The initial application owner
+    /// @param templateHash The initial machine state hash
     constructor(
-        IConsensus _consensus,
-        IInputBox _inputBox,
-        IInputRelay[] memory _inputRelays,
-        address _initialOwner,
-        bytes32 _templateHash
-    ) Ownable(_initialOwner) {
-        templateHash = _templateHash;
-        consensus = _consensus;
-        inputBox = _inputBox;
-        for (uint256 i; i < _inputRelays.length; ++i) {
-            inputRelays.push(_inputRelays[i]);
+        IConsensus consensus,
+        IInputBox inputBox,
+        IInputRelay[] memory inputRelays,
+        address initialOwner,
+        bytes32 templateHash
+    ) Ownable(initialOwner) {
+        _templateHash = templateHash;
+        _consensus = consensus;
+        _inputBox = inputBox;
+        for (uint256 i; i < inputRelays.length; ++i) {
+            _inputRelays.push(inputRelays[i]);
         }
+    }
+
+    /// @notice Accept Ether transfers.
+    /// @dev If you wish to transfer Ether to an application while informing
+    ///      the backend of it, then please do so through the Ether portal contract.
+    receive() external payable {}
+
+    /// @notice Transfer some amount of Ether to some recipient.
+    /// @param receiver The address which will receive the amount of Ether
+    /// @param value The amount of Ether to be transferred in Wei
+    /// @dev This function can only be called by the application itself through vouchers.
+    ///      If this method is not called by application itself, `OnlyApplication` error is raised.
+    ///      If the transfer fails, `EtherTransferFailed` error is raised.
+    function withdrawEther(address receiver, uint256 value) external {
+        if (msg.sender != address(this)) {
+            revert OnlyApplication();
+        }
+
+        (bool sent, ) = receiver.call{value: value}("");
+
+        if (!sent) {
+            revert EtherTransferFailed();
+        }
+    }
+
+    function executeVoucher(
+        address destination,
+        bytes calldata payload,
+        Proof calldata proof
+    ) external override nonReentrant {
+        uint256 inputIndex = proof.calculateInputIndex();
+
+        if (!proof.inputRange.contains(inputIndex)) {
+            revert InputIndexOutOfRange(inputIndex, proof.inputRange);
+        }
+
+        bytes32 epochHash = _getEpochHash(proof.inputRange);
+
+        // reverts if proof isn't valid
+        proof.validity.validateVoucher(destination, payload, epochHash);
+
+        uint256 outputIndexWithinInput = proof.validity.outputIndexWithinInput;
+        BitMaps.BitMap storage bitmap = _voucherBitmaps[outputIndexWithinInput];
+
+        // check if voucher has been executed
+        if (bitmap.get(inputIndex)) {
+            revert VoucherReexecutionNotAllowed();
+        }
+
+        // execute voucher
+        destination.functionCall(payload);
+
+        // mark it as executed and emit event
+        bitmap.set(inputIndex);
+        emit VoucherExecuted(inputIndex, outputIndexWithinInput);
+    }
+
+    function migrateToConsensus(
+        IConsensus newConsensus
+    ) external override onlyOwner {
+        _consensus = newConsensus;
+        emit NewConsensus(newConsensus);
+    }
+
+    function wasVoucherExecuted(
+        uint256 inputIndex,
+        uint256 outputIndexWithinInput
+    ) external view override returns (bool) {
+        return _voucherBitmaps[outputIndexWithinInput].get(inputIndex);
+    }
+
+    function validateNotice(
+        bytes calldata notice,
+        Proof calldata proof
+    ) external view override {
+        uint256 inputIndex = proof.calculateInputIndex();
+
+        if (!proof.inputRange.contains(inputIndex)) {
+            revert InputIndexOutOfRange(inputIndex, proof.inputRange);
+        }
+
+        bytes32 epochHash = _getEpochHash(proof.inputRange);
+
+        // reverts if proof isn't valid
+        proof.validity.validateNotice(notice, epochHash);
+    }
+
+    function getTemplateHash() external view override returns (bytes32) {
+        return _templateHash;
+    }
+
+    function getConsensus() external view override returns (IConsensus) {
+        return _consensus;
+    }
+
+    function getInputBox() external view override returns (IInputBox) {
+        return _inputBox;
+    }
+
+    function getInputRelays()
+        external
+        view
+        override
+        returns (IInputRelay[] memory)
+    {
+        return _inputRelays;
     }
 
     function supportsInterface(
@@ -136,119 +242,13 @@ contract Application is
             super.supportsInterface(interfaceId);
     }
 
-    function executeVoucher(
-        address _destination,
-        bytes calldata _payload,
-        Proof calldata _proof
-    ) external override nonReentrant {
-        uint256 inputIndex = _proof.calculateInputIndex();
-
-        if (!_proof.inputRange.contains(inputIndex)) {
-            revert InputIndexOutOfRange(inputIndex, _proof.inputRange);
-        }
-
-        bytes32 epochHash = getEpochHash(_proof.inputRange);
-
-        // reverts if proof isn't valid
-        _proof.validity.validateVoucher(_destination, _payload, epochHash);
-
-        uint256 outputIndexWithinInput = _proof.validity.outputIndexWithinInput;
-        BitMaps.BitMap storage bitmap = voucherBitmaps[outputIndexWithinInput];
-
-        // check if voucher has been executed
-        if (bitmap.get(inputIndex)) {
-            revert VoucherReexecutionNotAllowed();
-        }
-
-        // execute voucher
-        _destination.functionCall(_payload);
-
-        // mark it as executed and emit event
-        bitmap.set(inputIndex);
-        emit VoucherExecuted(inputIndex, outputIndexWithinInput);
-    }
-
-    function wasVoucherExecuted(
-        uint256 _inputIndex,
-        uint256 _outputIndexWithinInput
-    ) external view override returns (bool) {
-        return voucherBitmaps[_outputIndexWithinInput].get(_inputIndex);
-    }
-
-    function validateNotice(
-        bytes calldata _notice,
-        Proof calldata _proof
-    ) external view override {
-        uint256 inputIndex = _proof.calculateInputIndex();
-
-        if (!_proof.inputRange.contains(inputIndex)) {
-            revert InputIndexOutOfRange(inputIndex, _proof.inputRange);
-        }
-
-        bytes32 epochHash = getEpochHash(_proof.inputRange);
-
-        // reverts if proof isn't valid
-        _proof.validity.validateNotice(_notice, epochHash);
-    }
-
-    function migrateToConsensus(
-        IConsensus _newConsensus
-    ) external override onlyOwner {
-        consensus = _newConsensus;
-        emit NewConsensus(_newConsensus);
-    }
-
-    function getTemplateHash() external view override returns (bytes32) {
-        return templateHash;
-    }
-
-    function getConsensus() external view override returns (IConsensus) {
-        return consensus;
-    }
-
-    function getInputBox() external view override returns (IInputBox) {
-        return inputBox;
-    }
-
-    function getInputRelays()
-        external
-        view
-        override
-        returns (IInputRelay[] memory)
-    {
-        return inputRelays;
-    }
-
-    /// @notice Accept Ether transfers.
-    /// @dev If you wish to transfer Ether to an application while informing
-    ///      the backend of it, then please do so through the Ether portal contract.
-    receive() external payable {}
-
-    /// @notice Transfer some amount of Ether to some recipient.
-    /// @param _receiver The address which will receive the amount of Ether
-    /// @param _value The amount of Ether to be transferred in Wei
-    /// @dev This function can only be called by the application itself through vouchers.
-    ///      If this method is not called by application itself, `OnlyApplication` error is raised.
-    ///      If the transfer fails, `EtherTransferFailed` error is raised.
-    function withdrawEther(address _receiver, uint256 _value) external {
-        if (msg.sender != address(this)) {
-            revert OnlyApplication();
-        }
-
-        (bool sent, ) = _receiver.call{value: _value}("");
-
-        if (!sent) {
-            revert EtherTransferFailed();
-        }
-    }
-
     /// @notice Get the epoch hash regarding the given input range
     /// and the application from the current consensus.
     /// @param inputRange The input range
     /// @return The epoch hash
-    function getEpochHash(
+    function _getEpochHash(
         InputRange calldata inputRange
     ) internal view returns (bytes32) {
-        return consensus.getEpochHash(address(this), inputRange);
+        return _consensus.getEpochHash(address(this), inputRange);
     }
 }
