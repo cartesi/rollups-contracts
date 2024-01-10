@@ -18,6 +18,7 @@
         "deploy:optimism": "hardhat deploy --network optimism --export export/abi/optimism.json",
         "deploy:optimism_sepolia": "hardhat deploy --network optimism_sepolia --export export/abi/optimism_sepolia.json",
         "deploy:sepolia": "hardhat deploy --network sepolia --export export/abi/sepolia.json",
+        "deploy:rollux_testnet": "hardhat deploy --network rollux_testnet --export export/abi/rollux_testnet.json",
         "export": "hardhat export-artifacts export/artifacts --hide-sources --including-empty-bytecode --including-no-public-functions",
         "fmt:check": "prettier --check '**/*.sol' '**/*.ts'",
         "fmt:write": "prettier --check --write '**/*.sol' '**/*.ts'",
@@ -66,7 +67,7 @@
         "ts-node": "^10",
         "typechain": "^8",
         "typescript": "^5",
-        "viem": "^1.15"
+        "viem": "^1.21.4"
     },
     "files": [
         "contracts",
