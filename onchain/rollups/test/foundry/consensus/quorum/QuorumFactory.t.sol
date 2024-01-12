@@ -2,36 +2,65 @@
 // SPDX-License-Identifier: Apache-2.0 (see LICENSE)
 
 /// @title Quorum Factory Test
-pragma solidity ^0.8.8;
+pragma solidity ^0.8.22;
 
-import {QuorumFactory} from "contracts/consensus/quorum/QuorumFactory.sol";
+import {QuorumFactory, IQuorumFactory} from "contracts/consensus/quorum/QuorumFactory.sol";
 import {Quorum} from "contracts/consensus/quorum/Quorum.sol";
 import {Vm} from "forge-std/Vm.sol";
 
 import {TestBase} from "../../util/TestBase.sol";
 
 contract QuorumFactoryTest is TestBase {
-    QuorumFactory factory;
-    uint256 internal constant QUORUM_MAX_SIZE = 50;
-
-    event QuorumCreated(Quorum quorum);
+    uint256 constant _QUORUM_MAX_SIZE = 50;
+    QuorumFactory _factory;
 
     function setUp() public {
-        factory = new QuorumFactory();
+        _factory = new QuorumFactory();
     }
 
     function testNewQuorum(uint256 seed) public {
-        uint256 numOfValidators = bound(seed, 1, QUORUM_MAX_SIZE);
-        address[] memory validators = generateAddresses(numOfValidators);
+        uint256 numOfValidators = bound(seed, 1, _QUORUM_MAX_SIZE);
+        address[] memory validators = _generateAddresses(numOfValidators);
 
         vm.recordLogs();
 
-        Quorum quorum = factory.newQuorum(validators);
+        Quorum quorum = _factory.newQuorum(validators);
 
-        testNewQuorumAux(validators, quorum);
+        _testNewQuorumAux(validators, quorum);
     }
 
-    function testNewQuorumAux(
+    function testNewQuorumDeterministic(uint256 seed, bytes32 salt) public {
+        uint256 numOfValidators = bound(seed, 1, _QUORUM_MAX_SIZE);
+        address[] memory validators = _generateAddresses(numOfValidators);
+
+        address precalculatedAddress = _factory.calculateQuorumAddress(
+            validators,
+            salt
+        );
+
+        vm.recordLogs();
+
+        Quorum quorum = _factory.newQuorum(validators, salt);
+
+        _testNewQuorumAux(validators, quorum);
+
+        // Precalculated address must match actual address
+        assertEq(precalculatedAddress, address(quorum));
+
+        precalculatedAddress = _factory.calculateQuorumAddress(
+            validators,
+            salt
+        );
+
+        // Precalculated address must STILL match actual address
+        assertEq(precalculatedAddress, address(quorum));
+
+        // Cannot deploy a quorum with the same salt twice
+        vm.expectRevert();
+        _factory.newQuorum(validators, salt);
+    }
+
+    function _testNewQuorumAux(
         address[] memory validators,
         Quorum quorum
     ) internal {
@@ -42,8 +71,8 @@ contract QuorumFactoryTest is TestBase {
             Vm.Log memory entry = entries[i];
 
             if (
-                entry.emitter == address(factory) &&
-                entry.topics[0] == QuorumCreated.selector
+                entry.emitter == address(_factory) &&
+                entry.topics[0] == IQuorumFactory.QuorumCreated.selector
             ) {
                 ++numQuorumCreated;
                 Quorum eventQuorum = abi.decode(entry.data, (Quorum));
@@ -57,33 +86,5 @@ contract QuorumFactoryTest is TestBase {
         for (uint256 i; i < numOfValidators; ++i) {
             assertEq(validators[i], quorum.validatorById(i + 1));
         }
-    }
-
-    function testNewQuorumDeterministic(uint256 seed, bytes32 salt) public {
-        uint256 numOfValidators = bound(seed, 1, QUORUM_MAX_SIZE);
-        address[] memory validators = generateAddresses(numOfValidators);
-
-        address precalculatedAddress = factory.calculateQuorumAddress(
-            validators,
-            salt
-        );
-
-        vm.recordLogs();
-
-        Quorum quorum = factory.newQuorum(validators, salt);
-
-        testNewQuorumAux(validators, quorum);
-
-        // Precalculated address must match actual address
-        assertEq(precalculatedAddress, address(quorum));
-
-        precalculatedAddress = factory.calculateQuorumAddress(validators, salt);
-
-        // Precalculated address must STILL match actual address
-        assertEq(precalculatedAddress, address(quorum));
-
-        // Cannot deploy a quorum with the same salt twice
-        vm.expectRevert();
-        factory.newQuorum(validators, salt);
     }
 }

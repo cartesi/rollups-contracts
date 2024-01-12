@@ -18,7 +18,7 @@ contract TestBase is Test {
         _;
     }
 
-    function contains(
+    function _contains(
         address[] memory array,
         address elem
     ) internal pure returns (bool) {
@@ -30,7 +30,7 @@ contract TestBase is Test {
         return false;
     }
 
-    function generateAddresses(
+    function _generateAddresses(
         uint256 n
     ) internal pure returns (address[] memory) {
         address[] memory array = new address[](n);

@@ -1,10 +1,11 @@
 // (c) Cartesi and individual authors (see AUTHORS)
 // SPDX-License-Identifier: Apache-2.0 (see LICENSE)
 
-pragma solidity ^0.8.8;
+pragma solidity ^0.8.22;
 
 import {InputRange} from "contracts/common/InputRange.sol";
 import {Quorum} from "contracts/consensus/quorum/Quorum.sol";
+import {IConsensus} from "contracts/consensus/IConsensus.sol";
 
 import {TestBase} from "../../util/TestBase.sol";
 
@@ -51,21 +52,8 @@ library LibClaim {
 contract QuorumTest is TestBase {
     using LibClaim for Quorum;
 
-    event ClaimSubmission(
-        address indexed submitter,
-        address indexed dapp,
-        InputRange inputRange,
-        bytes32 epochHash
-    );
-
-    event ClaimAcceptance(
-        address indexed dapp,
-        InputRange inputRange,
-        bytes32 epochHash
-    );
-
     function testConstructor(uint8 numOfValidators) external {
-        address[] memory validators = generateAddresses(numOfValidators);
+        address[] memory validators = _generateAddresses(numOfValidators);
 
         Quorum quorum = new Quorum(validators);
 
@@ -101,13 +89,13 @@ contract QuorumTest is TestBase {
     }
 
     function testValidatorId(uint8 numOfValidators, address addr) external {
-        address[] memory validators = generateAddresses(numOfValidators);
+        address[] memory validators = _generateAddresses(numOfValidators);
 
         Quorum quorum = new Quorum(validators);
 
         uint256 id = quorum.validatorId(addr);
 
-        if (contains(validators, addr)) {
+        if (_contains(validators, addr)) {
             assertLe(1, id);
             assertLe(id, numOfValidators);
         } else {
@@ -194,7 +182,7 @@ contract QuorumTest is TestBase {
     // ------------------
 
     function _deployQuorum(uint256 numOfValidators) internal returns (Quorum) {
-        return new Quorum(generateAddresses(numOfValidators));
+        return new Quorum(_generateAddresses(numOfValidators));
     }
 
     function _checkSubmitted(
@@ -235,7 +223,7 @@ contract QuorumTest is TestBase {
 
             if (
                 entry.emitter == address(quorum) &&
-                entry.topics[0] == ClaimSubmission.selector
+                entry.topics[0] == IConsensus.ClaimSubmission.selector
             ) {
                 address submitter = address(uint160(uint256(entry.topics[1])));
                 address dapp = address(uint160(uint256(entry.topics[2])));
@@ -256,7 +244,7 @@ contract QuorumTest is TestBase {
 
             if (
                 entry.emitter == address(quorum) &&
-                entry.topics[0] == ClaimAcceptance.selector
+                entry.topics[0] == IConsensus.ClaimAcceptance.selector
             ) {
                 address dapp = address(uint160(uint256(entry.topics[1])));
 
