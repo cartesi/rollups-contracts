@@ -220,7 +220,9 @@ Notices are informational statements that can be proved by contracts in the base
 
 This module is responsible for providing valid claims to DApps after reaching some form of consensus. Each DApp has its own mapping of claims, each of which is mapped by the range of input indices of an epoch.
 
-The module's interface aims to be as generic as possible to accommodate any consensus model, since there are plenty to choose from. One type of consensus implemented by Cartesi is called Authority. It is owned by a single address, who has complete power over the consensus. It is arguably the simplest consensus to implement, although quite vulnerable.
+The module's interface aims to be as generic as possible to accommodate any consensus model, since there are plenty to choose from. The types of consensus currently implemented include:
+- Authority: managed by a single address, who has complete power over the consensus. It is trivial to implement, yet quite vulnerable.
+- Quorum: managed by a generally small, finite set of validators. Consensus is reached when the majority of the quorum agrees on any given claim.
 
 ### Dispute Resolution
 
