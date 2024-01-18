@@ -8,6 +8,7 @@ If you are interested in taking a look at the off-chain part, please, head over 
 
 - [Dependencies](#dependencies)
 - [Basic setup](#basic-setup)
+- [Deployment](#deployment)
 - [Tests](#tests)
 - [Documentation](#documentation)
 - [Experimenting](#experimenting)
@@ -37,6 +38,22 @@ In order to install them, please, run the following commands.
 cd onchain/rollups
 yarn install
 ```
+
+## Deployment
+
+If you want to run a Hardhat node and deploy the contracts, please run the following command.
+
+```sh
+yarn start
+```
+
+If, instead, you wish to deploy the contracts to an already running node (e.g. Anvil), you can do so by running the following command.
+
+```sh
+yarn deploy:development
+```
+
+If the node is not listening to `http://localhost:8545/`, please set the `RPC_URL` environment variable accordingly.
 
 ## Tests
 
