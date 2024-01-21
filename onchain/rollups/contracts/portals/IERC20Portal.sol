@@ -8,6 +8,11 @@ import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
 /// @title ERC-20 Portal interface
 interface IERC20Portal is IInputRelay {
+    // Errors
+
+    /// @notice Failed to transfer ERC-20 tokens to application
+    error ERC20TransferFailed();
+
     // Permissionless functions
 
     /// @notice Transfer ERC-20 tokens to an application and add an input to
