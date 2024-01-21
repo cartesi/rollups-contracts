@@ -2,4 +2,4 @@
 "@cartesi/rollups": minor
 ---
 
-Added `QuorumFactory` contract and `IQuorumFactory` interface
+Added `QuorumFactory` contract and `IQuorumFactory` interface.
