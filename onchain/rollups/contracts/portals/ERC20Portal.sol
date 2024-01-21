@@ -4,7 +4,6 @@
 pragma solidity ^0.8.8;
 
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
-import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import {IERC165} from "@openzeppelin/contracts/utils/introspection/IERC165.sol";
 
 import {IERC20Portal} from "./IERC20Portal.sol";
@@ -17,8 +16,6 @@ import {InputEncoding} from "../common/InputEncoding.sol";
 /// @notice This contract allows anyone to perform transfers of
 /// ERC-20 tokens to an application while informing the off-chain machine.
 contract ERC20Portal is IERC20Portal, InputRelay {
-    using SafeERC20 for IERC20;
-
     /// @notice Constructs the portal.
     /// @param inputBox The input box used by the portal
     constructor(IInputBox inputBox) InputRelay(inputBox) {}
@@ -29,7 +26,11 @@ contract ERC20Portal is IERC20Portal, InputRelay {
         uint256 amount,
         bytes calldata execLayerData
     ) external override {
-        token.safeTransferFrom(msg.sender, app, amount);
+        bool success = token.transferFrom(msg.sender, app, amount);
+
+        if (!success) {
+            revert ERC20TransferFailed();
+        }
 
         bytes memory input = InputEncoding.encodeERC20Deposit(
             token,
