@@ -7,6 +7,11 @@ import {IInputRelay} from "../inputs/IInputRelay.sol";
 
 /// @title Ether Portal interface
 interface IEtherPortal is IInputRelay {
+    // Errors
+
+    /// @notice Failed to transfer Ether to application
+    error EtherTransferFailed();
+
     // Permissionless functions
 
     /// @notice Transfer Ether to an application and add an input to
@@ -17,7 +22,7 @@ interface IEtherPortal is IInputRelay {
     /// @param app The address of the application
     /// @param execLayerData Additional data to be interpreted by the execution layer
     /// @dev All the value sent through this function is forwarded to the application.
-    ///      If the transfer fails, `EtherTransferFailed` error is raised.
+    ///      If the transfer fails, an `EtherTransferFailed` error is raised.
     function depositEther(
         address payable app,
         bytes calldata execLayerData

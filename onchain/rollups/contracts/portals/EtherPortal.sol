@@ -3,7 +3,6 @@
 
 pragma solidity ^0.8.8;
 
-import {Address} from "@openzeppelin/contracts/utils/Address.sol";
 import {IERC165} from "@openzeppelin/contracts/utils/introspection/IERC165.sol";
 
 import {IEtherPortal} from "./IEtherPortal.sol";
@@ -16,8 +15,6 @@ import {InputEncoding} from "../common/InputEncoding.sol";
 /// @notice This contract allows anyone to perform transfers of
 /// Ether to an application while informing the off-chain machine.
 contract EtherPortal is IEtherPortal, InputRelay {
-    using Address for address payable;
-
     /// @notice Constructs the portal.
     /// @param inputBox The input box used by the portal
     constructor(IInputBox inputBox) InputRelay(inputBox) {}
@@ -26,7 +23,11 @@ contract EtherPortal is IEtherPortal, InputRelay {
         address payable app,
         bytes calldata execLayerData
     ) external payable override {
-        app.sendValue(msg.value);
+        (bool success, ) = app.call{value: msg.value}("");
+
+        if (!success) {
+            revert EtherTransferFailed();
+        }
 
         bytes memory input = InputEncoding.encodeEtherDeposit(
             msg.sender,
