@@ -194,9 +194,7 @@ contract ApplicationTest is TestBase {
 
         // reverts if notice is incorrect
         bytes memory falseNotice = abi.encodePacked(bytes4(0xdeaddead));
-        vm.expectRevert(
-            LibOutputValidation.IncorrectOutputHashesRootHash.selector
-        );
+        vm.expectRevert(IApplication.IncorrectOutputHashesRootHash.selector);
         _validateNotice(falseNotice, proof);
     }
 
@@ -265,7 +263,7 @@ contract ApplicationTest is TestBase {
         _executeVoucher(voucher, proof);
 
         // 2nd execution attempt should fail
-        vm.expectRevert(Application.VoucherReexecutionNotAllowed.selector);
+        vm.expectRevert(IApplication.VoucherReexecutionNotAllowed.selector);
         _executeVoucher(voucher, proof);
 
         // end result should be the same as executing successfully only once
@@ -332,7 +330,7 @@ contract ApplicationTest is TestBase {
 
         proof.validity.vouchersEpochRootHash = bytes32(uint256(0xdeadbeef));
 
-        vm.expectRevert(LibOutputValidation.IncorrectEpochHash.selector);
+        vm.expectRevert(IApplication.IncorrectEpochHash.selector);
         _executeVoucher(voucher, proof);
     }
 
@@ -344,9 +342,7 @@ contract ApplicationTest is TestBase {
 
         proof.validity.outputHashesRootHash = bytes32(uint256(0xdeadbeef));
 
-        vm.expectRevert(
-            LibOutputValidation.IncorrectOutputsEpochRootHash.selector
-        );
+        vm.expectRevert(IApplication.IncorrectOutputsEpochRootHash.selector);
         _executeVoucher(voucher, proof);
     }
 
@@ -358,9 +354,7 @@ contract ApplicationTest is TestBase {
 
         proof.validity.outputIndexWithinInput = 0xdeadbeef;
 
-        vm.expectRevert(
-            LibOutputValidation.IncorrectOutputHashesRootHash.selector
-        );
+        vm.expectRevert(IApplication.IncorrectOutputHashesRootHash.selector);
         _executeVoucher(voucher, proof);
     }
 
@@ -429,7 +423,7 @@ contract ApplicationTest is TestBase {
         assertEq(address(_recipient).balance, _transferAmount);
 
         // cannot execute the same voucher again
-        vm.expectRevert(Application.VoucherReexecutionNotAllowed.selector);
+        vm.expectRevert(IApplication.VoucherReexecutionNotAllowed.selector);
         _executeVoucher(voucher, proof);
     }
 
@@ -545,7 +539,7 @@ contract ApplicationTest is TestBase {
         assertEq(_erc721Token.ownerOf(_tokenId), _recipient);
 
         // cannot execute the same voucher again
-        vm.expectRevert(Application.VoucherReexecutionNotAllowed.selector);
+        vm.expectRevert(IApplication.VoucherReexecutionNotAllowed.selector);
         _executeVoucher(voucher, proof);
     }
 
