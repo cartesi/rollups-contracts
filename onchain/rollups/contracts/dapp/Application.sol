@@ -57,9 +57,6 @@ contract Application is
     /// @dev See the `getInputRelays` function.
     IInputRelay[] internal _inputRelays;
 
-    /// @notice Raised when executing an already executed voucher.
-    error VoucherReexecutionNotAllowed();
-
     /// @notice Raised when the transfer fails.
     error EtherTransferFailed();
 

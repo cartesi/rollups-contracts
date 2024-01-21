@@ -59,6 +59,21 @@ interface IApplication is IERC721Receiver, IERC1155Receiver {
     /// @param inputRange The input range
     error InputIndexOutOfRange(uint256 inputIndex, InputRange inputRange);
 
+    /// @notice Raised when executing an already executed voucher.
+    error VoucherReexecutionNotAllowed();
+
+    /// @notice Raised when some `OutputValidityProof` variables does not match
+    ///         the presented finalized epoch.
+    error IncorrectEpochHash();
+
+    /// @notice Raised when `OutputValidityProof` metadata memory range is NOT
+    ///         contained in epoch's output memory range.
+    error IncorrectOutputsEpochRootHash();
+
+    /// @notice Raised when Merkle root of output hash is NOT contained
+    ///         in the output metadata array memory range.
+    error IncorrectOutputHashesRootHash();
+
     // Permissioned functions
 
     /// @notice Migrate the application to a new consensus.
