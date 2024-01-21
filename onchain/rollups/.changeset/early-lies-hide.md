@@ -1,6 +1,5 @@
 ---
-"@cartesi/rollups": major
+"@cartesi/rollups": patch
 ---
 
-Bumped Solidity to `0.8.20`.
-This change was made to work with `@openzeppelin/contracts@5.0.0`.
+Bumped the Solidity compiler from `0.8.19` to `0.8.23`.
