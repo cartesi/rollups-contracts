@@ -19,10 +19,8 @@ library LibOutputValidation {
     /// @param epochHash The hash of the epoch in which the output was generated
     /// @param outputsEpochRootHash Either `v.vouchersEpochRootHash` (for vouchers)
     ///                             or `v.noticesEpochRootHash` (for notices)
-    /// @param outputEpochLog2Size Either `EPOCH_VOUCHER_LOG2_SIZE` (for vouchers)
-    ///                            or `EPOCH_NOTICE_LOG2_SIZE` (for notices)
-    /// @param outputHashesLog2Size Either `VOUCHER_METADATA_LOG2_SIZE` (for vouchers)
-    ///                             or `NOTICE_METADATA_LOG2_SIZE` (for notices)
+    /// @param outputEpochLog2Size `EPOCH_OUTPUT_LOG2_SIZE`
+    /// @param outputHashesLog2Size `OUTPUT_METADATA_LOG2_SIZE`
     function validateEncodedOutput(
         OutputValidityProof calldata v,
         bytes memory encodedOutput,
@@ -120,8 +118,8 @@ library LibOutputValidation {
             encodedVoucher,
             epochHash,
             v.vouchersEpochRootHash,
-            CanonicalMachine.EPOCH_VOUCHER_LOG2_SIZE.uint64OfSize(),
-            CanonicalMachine.VOUCHER_METADATA_LOG2_SIZE.uint64OfSize()
+            CanonicalMachine.EPOCH_OUTPUT_LOG2_SIZE.uint64OfSize(),
+            CanonicalMachine.OUTPUT_METADATA_LOG2_SIZE.uint64OfSize()
         );
     }
 
@@ -140,8 +138,8 @@ library LibOutputValidation {
             encodedNotice,
             epochHash,
             v.noticesEpochRootHash,
-            CanonicalMachine.EPOCH_NOTICE_LOG2_SIZE.uint64OfSize(),
-            CanonicalMachine.NOTICE_METADATA_LOG2_SIZE.uint64OfSize()
+            CanonicalMachine.EPOCH_OUTPUT_LOG2_SIZE.uint64OfSize(),
+            CanonicalMachine.OUTPUT_METADATA_LOG2_SIZE.uint64OfSize()
         );
     }
 }
