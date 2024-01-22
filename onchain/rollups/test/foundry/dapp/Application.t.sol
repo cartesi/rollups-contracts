@@ -25,6 +25,7 @@ import {IERC721Receiver} from "@openzeppelin/contracts/token/ERC721/IERC721Recei
 import {IERC721} from "@openzeppelin/contracts/token/ERC721/IERC721.sol";
 import {IERC20Errors, IERC721Errors} from "@openzeppelin/contracts/interfaces/draft-IERC6093.sol";
 import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
+import {SafeCast} from "@openzeppelin/contracts/utils/math/SafeCast.sol";
 
 import {LibServerManager} from "../util/LibServerManager.sol";
 import {LibBytes} from "../util/LibBytes.sol";
@@ -43,6 +44,7 @@ contract ApplicationTest is TestBase {
     using LibServerManager for LibServerManager.Proof;
     using LibServerManager for LibServerManager.Proof[];
     using LibProof for Proof;
+    using SafeCast for uint256;
 
     enum OutputName {
         DummyNotice,
@@ -232,7 +234,7 @@ contract ApplicationTest is TestBase {
         // expect event
         vm.expectEmit(false, false, false, true, address(_app));
         emit IApplication.VoucherExecuted(
-            _calculateInputIndex(proof),
+            _calculateInputIndex(proof).toUint64(),
             proof.validity.outputIndexWithinInput
         );
 
@@ -372,7 +374,7 @@ contract ApplicationTest is TestBase {
         // Here we change the input range artificially to make it look like it ends
         // before the actual input (which is still provable!).
         // The `Application` contract, however, will not allow such proof.
-        proof.inputRange.lastIndex = inputIndex - 1;
+        proof.inputRange.lastIndex = inputIndex.toUint64() - 1;
         _mockConsensus(proof);
 
         vm.expectRevert(
@@ -411,7 +413,7 @@ contract ApplicationTest is TestBase {
         // expect event
         vm.expectEmit(false, false, false, true, address(_app));
         emit IApplication.VoucherExecuted(
-            _calculateInputIndex(proof),
+            _calculateInputIndex(proof).toUint64(),
             proof.validity.outputIndexWithinInput
         );
 
@@ -528,7 +530,7 @@ contract ApplicationTest is TestBase {
         // expect event
         vm.expectEmit(false, false, false, true, address(_app));
         emit IApplication.VoucherExecuted(
-            _calculateInputIndex(proof),
+            _calculateInputIndex(proof).toUint64(),
             proof.validity.outputIndexWithinInput
         );
 
@@ -973,8 +975,8 @@ contract ApplicationTest is TestBase {
     ) internal pure returns (OutputValidityProof memory) {
         return
             OutputValidityProof({
-                inputIndexWithinEpoch: uint64(v.inputIndexWithinEpoch),
-                outputIndexWithinInput: uint64(v.outputIndexWithinInput),
+                inputIndexWithinEpoch: v.inputIndexWithinEpoch.toUint64(),
+                outputIndexWithinInput: v.outputIndexWithinInput.toUint64(),
                 outputHashesRootHash: v.outputHashesRootHash,
                 vouchersEpochRootHash: v.vouchersEpochRootHash,
                 noticesEpochRootHash: v.noticesEpochRootHash,
