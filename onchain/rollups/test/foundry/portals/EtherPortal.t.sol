@@ -16,13 +16,13 @@ import {Test} from "forge-std/Test.sol";
 
 contract EtherPortalTest is Test {
     address _alice;
-    address payable _app;
+    address _app;
     IInputBox _inputBox;
     IEtherPortal _portal;
 
     function setUp() public {
         _alice = vm.addr(1);
-        _app = payable(vm.addr(2));
+        _app = vm.addr(2);
         _inputBox = IInputBox(vm.addr(3));
         _portal = new EtherPortal(_inputBox);
     }

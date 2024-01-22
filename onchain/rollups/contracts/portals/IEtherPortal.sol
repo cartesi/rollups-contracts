@@ -24,7 +24,7 @@ interface IEtherPortal is IInputRelay {
     /// @dev All the value sent through this function is forwarded to the application.
     ///      If the transfer fails, an `EtherTransferFailed` error is raised.
     function depositEther(
-        address payable app,
+        address app,
         bytes calldata execLayerData
     ) external payable;
 }
