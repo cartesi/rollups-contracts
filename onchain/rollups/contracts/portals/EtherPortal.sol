@@ -20,7 +20,7 @@ contract EtherPortal is IEtherPortal, InputRelay {
     constructor(IInputBox inputBox) InputRelay(inputBox) {}
 
     function depositEther(
-        address payable app,
+        address app,
         bytes calldata execLayerData
     ) external payable override {
         (bool success, ) = app.call{value: msg.value}("");
