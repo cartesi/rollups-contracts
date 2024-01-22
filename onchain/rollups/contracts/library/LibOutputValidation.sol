@@ -24,9 +24,8 @@ library LibOutputValidation {
     ) internal pure {
         // prove that outputs hash is represented in a finalized epoch
         if (
-            keccak256(
-                abi.encodePacked(v.outputsEpochRootHash, v.machineStateHash)
-            ) != epochHash
+            keccak256(abi.encode(v.outputsEpochRootHash, v.machineStateHash)) !=
+            epochHash
         ) {
             revert IApplication.IncorrectEpochHash();
         }
@@ -65,7 +64,7 @@ library LibOutputValidation {
         // is contained in it. We can't simply use hashOfOutput because the
         // log2size of the leaf is three (8 bytes) not  five (32 bytes)
         bytes32 merkleRootOfHashOfOutput = MerkleV2.getMerkleRootFromBytes(
-            abi.encodePacked(keccak256(abi.encode(encodedOutput))),
+            abi.encode(keccak256(abi.encode(encodedOutput))),
             CanonicalMachine.KECCAK_LOG2_SIZE.uint64OfSize()
         );
 

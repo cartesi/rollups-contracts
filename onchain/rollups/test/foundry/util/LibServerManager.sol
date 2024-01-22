@@ -10,7 +10,6 @@ import {SafeCast} from "@openzeppelin/contracts/utils/math/SafeCast.sol";
 
 library LibServerManager {
     using LibServerManager for string;
-    using LibServerManager for bytes32;
     using LibServerManager for RawHash;
     using LibServerManager for RawHash[];
     using LibServerManager for RawOutputValidityProof;
@@ -69,7 +68,6 @@ library LibServerManager {
         uint256 outputIndex;
         OutputEnum outputEnum;
         OutputValidityProof validity;
-        bytes context;
     }
 
     struct FinishEpochResponse {
@@ -131,10 +129,6 @@ library LibServerManager {
         }
     }
 
-    function toBytes(bytes32 b) internal pure returns (bytes memory) {
-        return abi.encodePacked(b);
-    }
-
     function fmt(
         RawProof memory p,
         Vm vm
@@ -144,8 +138,7 @@ library LibServerManager {
                 inputIndex: p.inputIndex.toUint(vm),
                 outputIndex: p.outputIndex.toUint(vm),
                 outputEnum: p.outputEnum.toOutputEnum(),
-                validity: p.validity.fmt(vm),
-                context: p.context.toBytes()
+                validity: p.validity.fmt(vm)
             });
     }
 
