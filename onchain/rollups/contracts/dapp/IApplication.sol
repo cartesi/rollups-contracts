@@ -49,7 +49,7 @@ interface IApplication is IERC721Receiver, IERC1155Receiver {
     /// @notice MUST trigger when a voucher is executed.
     /// @param inputIndex The index of the input that emitted the voucher
     /// @param outputIndexWithinInput The index of the voucher amongst all outputs emitted by the input
-    event VoucherExecuted(uint256 inputIndex, uint256 outputIndexWithinInput);
+    event VoucherExecuted(uint64 inputIndex, uint64 outputIndexWithinInput);
 
     // Errors
 

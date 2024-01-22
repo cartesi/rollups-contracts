@@ -6,6 +6,8 @@ pragma solidity ^0.8.22;
 import {Vm} from "forge-std/Vm.sol";
 import {InputRange} from "contracts/common/InputRange.sol";
 
+import {SafeCast} from "@openzeppelin/contracts/utils/math/SafeCast.sol";
+
 library LibServerManager {
     using LibServerManager for string;
     using LibServerManager for bytes32;
@@ -14,6 +16,7 @@ library LibServerManager {
     using LibServerManager for RawOutputValidityProof;
     using LibServerManager for RawProof;
     using LibServerManager for RawProof[];
+    using SafeCast for uint256;
 
     struct RawHash {
         bytes32 data;
@@ -176,8 +179,8 @@ library LibServerManager {
     ) internal pure returns (InputRange memory) {
         return
             InputRange({
-                firstIndex: getFirstInputIndex(proofs),
-                lastIndex: getLastInputIndex(proofs)
+                firstIndex: getFirstInputIndex(proofs).toUint64(),
+                lastIndex: getLastInputIndex(proofs).toUint64()
             });
     }
 

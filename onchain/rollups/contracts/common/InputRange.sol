@@ -7,6 +7,6 @@ pragma solidity ^0.8.8;
 /// @param firstIndex The index of the first input
 /// @param lastIndex The index of the last input
 struct InputRange {
-    uint256 firstIndex;
-    uint256 lastIndex;
+    uint64 firstIndex;
+    uint64 lastIndex;
 }

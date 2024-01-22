@@ -22,6 +22,7 @@ import {Address} from "@openzeppelin/contracts/utils/Address.sol";
 import {IERC721Receiver} from "@openzeppelin/contracts/token/ERC721/IERC721Receiver.sol";
 import {IERC165} from "@openzeppelin/contracts/utils/introspection/IERC165.sol";
 import {BitMaps} from "@openzeppelin/contracts/utils/structs/BitMaps.sol";
+import {SafeCast} from "@openzeppelin/contracts/utils/math/SafeCast.sol";
 
 contract Application is
     IApplication,
@@ -35,6 +36,7 @@ contract Application is
     using LibProof for Proof;
     using LibInputRange for InputRange;
     using Address for address;
+    using SafeCast for uint256;
 
     /// @notice The initial machine state hash.
     /// @dev See the `getTemplateHash` function.
@@ -123,7 +125,7 @@ contract Application is
         // reverts if proof isn't valid
         proof.validity.validateVoucher(destination, payload, epochHash);
 
-        uint256 outputIndexWithinInput = proof.validity.outputIndexWithinInput;
+        uint64 outputIndexWithinInput = proof.validity.outputIndexWithinInput;
         BitMaps.BitMap storage bitmap = _voucherBitmaps[outputIndexWithinInput];
 
         // check if voucher has been executed
@@ -136,7 +138,7 @@ contract Application is
 
         // mark it as executed and emit event
         bitmap.set(inputIndex);
-        emit VoucherExecuted(inputIndex, outputIndexWithinInput);
+        emit VoucherExecuted(inputIndex.toUint64(), outputIndexWithinInput);
     }
 
     function migrateToConsensus(

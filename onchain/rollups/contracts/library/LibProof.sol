@@ -10,7 +10,7 @@ library LibProof {
         Proof calldata proof
     ) internal pure returns (uint256 inputIndex) {
         inputIndex =
-            proof.inputRange.firstIndex +
+            uint256(proof.inputRange.firstIndex) +
             proof.validity.inputIndexWithinEpoch;
     }
 }
