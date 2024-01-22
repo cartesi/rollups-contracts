@@ -977,7 +977,7 @@ contract ApplicationTest is TestBase {
     ) internal pure returns (bytes32) {
         return
             keccak256(
-                abi.encodePacked(
+                abi.encode(
                     validity.outputsEpochRootHash,
                     validity.machineStateHash
                 )
