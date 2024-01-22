@@ -15,7 +15,7 @@ import {IInputRelay} from "contracts/inputs/IInputRelay.sol";
 import {LibOutputValidation} from "contracts/library/LibOutputValidation.sol";
 import {LibProof} from "contracts/library/LibProof.sol";
 import {OutputValidityProof} from "contracts/common/OutputValidityProof.sol";
-import {OutputEncoding} from "contracts/common/OutputEncoding.sol";
+import {Outputs} from "contracts/common/Outputs.sol";
 import {InputRange} from "contracts/common/InputRange.sol";
 
 import {IERC1155Receiver} from "@openzeppelin/contracts/token/ERC1155/IERC1155Receiver.sol";
@@ -69,7 +69,7 @@ contract ApplicationTest is TestBase {
     bytes _encodedFinishEpochResponse;
     IInputBox immutable _inputBox;
     address immutable _appOwner;
-    address immutable _noticeSender;
+    address immutable _inputSender;
     address immutable _recipient;
     address immutable _tokenOwner;
     bytes32 immutable _salt;
@@ -98,7 +98,7 @@ contract ApplicationTest is TestBase {
         _appOwner = LibBytes.hashToAddress("appOwner");
         _initialSupply = LibBytes.hashToUint256("initialSupply");
         _inputBox = IInputBox(LibBytes.hashToAddress("inputBox"));
-        _noticeSender = LibBytes.hashToAddress("noticeSender");
+        _inputSender = LibBytes.hashToAddress("inputSender");
         _recipient = LibBytes.hashToAddress("recipient");
         _salt = keccak256("salt");
         _templateHash = keccak256("templateHash");
@@ -330,7 +330,7 @@ contract ApplicationTest is TestBase {
             OutputName.ERC20TransferVoucher
         );
 
-        proof.validity.vouchersEpochRootHash = bytes32(uint256(0xdeadbeef));
+        proof.validity.outputsEpochRootHash = bytes32(uint256(0xdeadbeef));
 
         vm.expectRevert(IApplication.IncorrectEpochHash.selector);
         _executeVoucher(voucher, proof);
@@ -686,22 +686,37 @@ contract ApplicationTest is TestBase {
         );
     }
 
+    function _encodeVoucher(
+        Voucher memory voucher
+    ) internal pure returns (bytes memory) {
+        return
+            abi.encodeCall(
+                Outputs.Voucher,
+                (voucher.destination, voucher.payload)
+            );
+    }
+
+    function _encodeNotice(
+        bytes memory notice
+    ) internal pure returns (bytes memory) {
+        return abi.encodeCall(Outputs.Notice, (notice));
+    }
+
     function _writeInputs() internal {
         for (uint256 i; i < _outputEnums.length; ++i) {
             LibServerManager.OutputEnum outputEnum = _outputEnums[i];
             if (outputEnum == LibServerManager.OutputEnum.VOUCHER) {
                 Voucher memory voucher = _getVoucher(i);
-                _writeInput(i, voucher.destination, voucher.payload);
+                _writeInput(i, _encodeVoucher(voucher));
             } else {
                 bytes memory notice = _getNotice(i);
-                _writeInput(i, _noticeSender, notice);
+                _writeInput(i, _encodeNotice(notice));
             }
         }
     }
 
     function _writeInput(
         uint256 inputIndexWithinEpoch,
-        address sender,
         bytes memory payload
     ) internal {
         string memory inputIndexWithinEpochStr = vm.toString(
@@ -711,7 +726,7 @@ contract ApplicationTest is TestBase {
             "input",
             inputIndexWithinEpochStr
         );
-        vm.serializeAddress(objectKey, "sender", sender);
+        vm.serializeAddress(objectKey, "sender", _inputSender);
         string memory json = vm.serializeBytes(objectKey, "payload", payload);
         string memory path = _getInputPath(inputIndexWithinEpochStr);
         vm.writeJson(json, path);
@@ -762,7 +777,7 @@ contract ApplicationTest is TestBase {
         OutputName outputName
     ) internal returns (Proof memory) {
         uint256 inputIndexWithinEpoch = uint256(outputName);
-        Proof memory proof = _getVoucherProof(inputIndexWithinEpoch);
+        Proof memory proof = _getNoticeProof(inputIndexWithinEpoch);
         _mockConsensus(proof);
         return proof;
     }
@@ -963,8 +978,7 @@ contract ApplicationTest is TestBase {
         return
             keccak256(
                 abi.encodePacked(
-                    validity.vouchersEpochRootHash,
-                    validity.noticesEpochRootHash,
+                    validity.outputsEpochRootHash,
                     validity.machineStateHash
                 )
             );
@@ -978,8 +992,7 @@ contract ApplicationTest is TestBase {
                 inputIndexWithinEpoch: v.inputIndexWithinEpoch.toUint64(),
                 outputIndexWithinInput: v.outputIndexWithinInput.toUint64(),
                 outputHashesRootHash: v.outputHashesRootHash,
-                vouchersEpochRootHash: v.vouchersEpochRootHash,
-                noticesEpochRootHash: v.noticesEpochRootHash,
+                outputsEpochRootHash: v.noticesEpochRootHash,
                 machineStateHash: v.machineStateHash,
                 outputHashInOutputHashesSiblings: v
                     .outputHashInOutputHashesSiblings,

@@ -6,7 +6,7 @@ pragma solidity ^0.8.8;
 import {CanonicalMachine} from "../common/CanonicalMachine.sol";
 import {IApplication} from "../dapp/IApplication.sol";
 import {MerkleV2} from "@cartesi/util/contracts/MerkleV2.sol";
-import {OutputEncoding} from "../common/OutputEncoding.sol";
+import {Outputs} from "../common/Outputs.sol";
 import {OutputValidityProof} from "../common/OutputValidityProof.sol";
 
 /// @title Output Validation Library
@@ -17,22 +17,15 @@ library LibOutputValidation {
     /// @param v The output validity proof
     /// @param encodedOutput The encoded output
     /// @param epochHash The hash of the epoch in which the output was generated
-    /// @param outputsEpochRootHash Either `v.vouchersEpochRootHash` (for vouchers)
-    ///                             or `v.noticesEpochRootHash` (for notices)
     function validateEncodedOutput(
         OutputValidityProof calldata v,
         bytes memory encodedOutput,
-        bytes32 epochHash,
-        bytes32 outputsEpochRootHash
+        bytes32 epochHash
     ) internal pure {
         // prove that outputs hash is represented in a finalized epoch
         if (
             keccak256(
-                abi.encodePacked(
-                    v.vouchersEpochRootHash,
-                    v.noticesEpochRootHash,
-                    v.machineStateHash
-                )
+                abi.encodePacked(v.outputsEpochRootHash, v.machineStateHash)
             ) != epochHash
         ) {
             revert IApplication.IncorrectEpochHash();
@@ -49,7 +42,7 @@ library LibOutputValidation {
                 CanonicalMachine.EPOCH_OUTPUT_LOG2_SIZE.uint64OfSize(),
                 v.outputHashesRootHash,
                 v.outputHashesInEpochSiblings
-            ) != outputsEpochRootHash
+            ) != v.outputsEpochRootHash
         ) {
             revert IApplication.IncorrectOutputsEpochRootHash();
         }
@@ -72,7 +65,7 @@ library LibOutputValidation {
         // is contained in it. We can't simply use hashOfOutput because the
         // log2size of the leaf is three (8 bytes) not  five (32 bytes)
         bytes32 merkleRootOfHashOfOutput = MerkleV2.getMerkleRootFromBytes(
-            abi.encodePacked(keccak256(encodedOutput)),
+            abi.encodePacked(keccak256(abi.encode(encodedOutput))),
             CanonicalMachine.KECCAK_LOG2_SIZE.uint64OfSize()
         );
 
@@ -105,15 +98,10 @@ library LibOutputValidation {
         bytes calldata payload,
         bytes32 epochHash
     ) internal pure {
-        bytes memory encodedVoucher = OutputEncoding.encodeVoucher(
-            destination,
-            payload
-        );
         validateEncodedOutput(
             v,
-            encodedVoucher,
-            epochHash,
-            v.vouchersEpochRootHash
+            abi.encodeCall(Outputs.Voucher, (destination, payload)),
+            epochHash
         );
     }
 
@@ -126,12 +114,10 @@ library LibOutputValidation {
         bytes calldata notice,
         bytes32 epochHash
     ) internal pure {
-        bytes memory encodedNotice = OutputEncoding.encodeNotice(notice);
         validateEncodedOutput(
             v,
-            encodedNotice,
-            epochHash,
-            v.noticesEpochRootHash
+            abi.encodeCall(Outputs.Notice, (notice)),
+            epochHash
         );
     }
 }
