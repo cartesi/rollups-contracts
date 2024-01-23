@@ -32,8 +32,8 @@ graph TD
     Anyone2[Anyone]:::external
     Anyone3[Anyone]:::external
 
-    Anyone1 -- executeVoucher --> Application
-    Anyone1 -. validateNotice .-> Application
+    Anyone1 -- executeOutput --> Application
+    Anyone1 -. validateOutput .-> Application
     Anyone1 -- newApplication --> ApplicationFactory
     ApplicationOwner -- migrateToConsensus ---> Application
     Validator -- submitClaim --> Consensus

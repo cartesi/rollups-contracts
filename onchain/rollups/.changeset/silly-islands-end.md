@@ -13,18 +13,25 @@ Modified the `ICartesiDApp` interface:
 
 -   Modified the `executeVoucher` function:
 
+    -   Renamed it as `executeOutput`.
     -   Errors raised by low-level calls are bubbled up.
     -   Changed the type of the `proof` parameter to `OutputValidityProof`.
     -   Removed the boolean return value.
 
 -   Modified the `validateNotice` function:
 
+    -   Renamed it as `validateOutput`.
     -   Changed type of the `proof` parameter to `OutputValidityProof`.
     -   Removed the boolean return value.
 
 -   Modified the `VoucherExecuted` event:
 
+    -   Renamed it as `OutputExecuted`.
     -   Split the `voucherId` parameter into `inputIndex` and `outputIndexWithinInput` parameters.
+
+-   Modified the `wasVoucherExecuted` function:
+
+    -   Renamed it as `wasOutputExecuted`.
 
 -   Added a `getInputBox` function.
 
@@ -32,7 +39,9 @@ Modified the `ICartesiDApp` interface:
 
 -   Added an `InputIndexOutOfRange` error.
 
--   Added a `VoucherReexecutionNotAllowed` error.
+-   Added an `OutputNotExecutable` error.
+
+-   Added an `OutputNotReexecutable` error.
 
 -   Added an `IncorrectEpochHash` error.
 
