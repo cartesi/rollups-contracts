@@ -2,7 +2,7 @@
 "@cartesi/rollups": major
 ---
 
-Completely redesigned the `IConsensus` interface:
+Completely modified the `IConsensus` interface:
 
 -   Removed the `join` function
 -   Removed the `getClaim` function
