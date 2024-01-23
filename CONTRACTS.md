@@ -13,31 +13,33 @@ graph TD
     classDef hasLink text-decoration: underline
 
     InputBox[Input Box]:::core
-    CartesiDApp[Cartesi DApp]:::core
-    CartesiDAppFactory[Cartesi DApp Factory]:::core
+    Application:::core
+    ApplicationFactory[Application Factory]:::core
+    Validator:::external
     EtherPortal[Ether Portal]:::core
     ERC20Portal[ERC-20 Portal]:::core
     ERC721Portal[ERC-721 Portal]:::core
     ERC1155SinglePortal[ERC-1155 Single Transfer Portal]:::core
     ERC1155BatchPortal[ERC-1155 Batch Transfer Portal]:::core
-    DAppAddressRelay[DApp Address Relay]:::core
+    ApplicationAddressRelay[Application Address Relay]:::core
     Consensus:::external
 
     ERC20[Any ERC-20 token]:::external
     ERC721[Any ERC-721 token]:::external
     ERC1155[Any ERC-1155 token]:::external
-    DAppOwner[Cartesi DApp Owner]:::external
+    ApplicationOwner[Application Owner]:::external
     Anyone1[Anyone]:::external
     Anyone2[Anyone]:::external
     Anyone3[Anyone]:::external
 
-    Anyone1 -- executeVoucher --> CartesiDApp
-    Anyone1 -. validateNotice .-> CartesiDApp
-    Anyone1 -- newApplication --> CartesiDAppFactory
-    DAppOwner -- migrateToConsensus ---> CartesiDApp
-    CartesiDApp -. getClaim .-> Consensus
-    CartesiDApp -- withdrawEther --> CartesiDApp
-    CartesiDAppFactory == creates ==> CartesiDApp
+    Anyone1 -- executeVoucher --> Application
+    Anyone1 -. validateNotice .-> Application
+    Anyone1 -- newApplication --> ApplicationFactory
+    ApplicationOwner -- migrateToConsensus ---> Application
+    Validator -- submitClaim --> Consensus
+    Application -. getEpochHash .-> Consensus
+    Application -- withdrawEther --> Application
+    ApplicationFactory == creates ==> Application
     Anyone2 -- addInput -------> InputBox
     Anyone2 -- depositEther ---> EtherPortal
     EtherPortal -- "Ether transfer" ----> Anyone3
@@ -54,8 +56,8 @@ graph TD
     Anyone2 -- depositBatchERC1155Token ---> ERC1155BatchPortal
     ERC1155BatchPortal -- safeBatchTransferFrom ----> ERC1155
     ERC1155BatchPortal -- addInput -----> InputBox
-    Anyone2 -- relayDAppAddress ---> DAppAddressRelay
-    DAppAddressRelay -- addInput -----> InputBox
+    Anyone2 -- relayApplicationAddress ---> ApplicationAddressRelay
+    ApplicationAddressRelay -- addInput -----> InputBox
 
     class ERC20,ERC721,ERC1155 hasLink
     click ERC20 href "https://eips.ethereum.org/EIPS/eip-20"
