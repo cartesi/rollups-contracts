@@ -8,8 +8,8 @@ and the blue boxes correspond to externally-owned accounts (EOAs) and other cont
 
 ```mermaid
 graph TD
-    classDef core fill:#ffe95a,color:#000
-    classDef external fill:#85b4ff,color:#000
+    classDef core fill:#00F6FF,color:#000
+    classDef external fill:#008DA5,color:#fff
     classDef hasLink text-decoration: underline
 
     InputBox[Input Box]:::core
