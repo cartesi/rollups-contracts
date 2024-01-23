@@ -9,18 +9,18 @@ import {IInputBox} from "../inputs/IInputBox.sol";
 import {IInputRelay} from "../inputs/IInputRelay.sol";
 import {LibOutputValidation} from "../library/LibOutputValidation.sol";
 import {OutputValidityProof} from "../common/OutputValidityProof.sol";
+import {Outputs} from "../common/Outputs.sol";
 import {InputRange} from "../common/InputRange.sol";
+import {LibError} from "../library/LibError.sol";
 import {LibInputRange} from "../library/LibInputRange.sol";
 
 import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
 import {ERC721Holder} from "@openzeppelin/contracts/token/ERC721/utils/ERC721Holder.sol";
 import {ERC1155Holder} from "@openzeppelin/contracts/token/ERC1155/utils/ERC1155Holder.sol";
 import {ReentrancyGuard} from "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
-import {Address} from "@openzeppelin/contracts/utils/Address.sol";
 import {IERC721Receiver} from "@openzeppelin/contracts/token/ERC721/IERC721Receiver.sol";
 import {IERC165} from "@openzeppelin/contracts/utils/introspection/IERC165.sol";
 import {BitMaps} from "@openzeppelin/contracts/utils/structs/BitMaps.sol";
-import {SafeCast} from "@openzeppelin/contracts/utils/math/SafeCast.sol";
 
 contract Application is
     IApplication,
@@ -30,19 +30,17 @@ contract Application is
     ReentrancyGuard
 {
     using BitMaps for BitMaps.BitMap;
+    using LibError for bytes;
     using LibOutputValidation for OutputValidityProof;
     using LibInputRange for InputRange;
-    using Address for address;
-    using SafeCast for uint256;
 
     /// @notice The initial machine state hash.
     /// @dev See the `getTemplateHash` function.
     bytes32 internal immutable _templateHash;
 
-    /// @notice The executed voucher bitmask, which keeps track of which vouchers
-    ///         were executed already in order to avoid re-execution.
-    /// @dev See the `wasVoucherExecuted` function.
-    mapping(uint256 => BitMaps.BitMap) internal _voucherBitmaps;
+    /// @notice Keeps track of which outputs have been executed.
+    /// @dev See the `wasOutputExecuted` function.
+    mapping(uint256 => BitMaps.BitMap) internal _executed;
 
     /// @notice The current consensus contract.
     /// @dev See the `getConsensus` and `migrateToConsensus` functions.
@@ -106,36 +104,35 @@ contract Application is
         }
     }
 
-    function executeVoucher(
-        address destination,
-        bytes calldata payload,
+    function executeOutput(
+        bytes calldata output,
         OutputValidityProof calldata proof
     ) external override nonReentrant {
+        validateOutput(output, proof);
+
         uint256 inputIndex = proof.calculateInputIndex();
-
-        if (!proof.inputRange.contains(inputIndex)) {
-            revert InputIndexOutOfRange(inputIndex, proof.inputRange);
-        }
-
-        bytes32 epochHash = _getEpochHash(proof.inputRange);
-
-        // reverts if proof isn't valid
-        proof.validateVoucher(destination, payload, epochHash);
-
         uint64 outputIndexWithinInput = proof.outputIndexWithinInput;
-        BitMaps.BitMap storage bitmap = _voucherBitmaps[outputIndexWithinInput];
 
-        // check if voucher has been executed
-        if (bitmap.get(inputIndex)) {
-            revert VoucherReexecutionNotAllowed();
+        BitMaps.BitMap storage bitmap = _executed[outputIndexWithinInput];
+
+        if (output.length < 4) {
+            revert OutputNotExecutable(output);
         }
 
-        // execute voucher
-        destination.functionCall(payload);
+        bytes4 selector = bytes4(output[:4]);
+        bytes calldata arguments = output[4:];
 
-        // mark it as executed and emit event
+        if (selector == Outputs.Voucher.selector) {
+            if (bitmap.get(inputIndex)) {
+                revert OutputNotReexecutable(output);
+            }
+            _executeVoucher(arguments);
+        } else {
+            revert OutputNotExecutable(output);
+        }
+
         bitmap.set(inputIndex);
-        emit VoucherExecuted(inputIndex.toUint64(), outputIndexWithinInput);
+        emit OutputExecuted(uint64(inputIndex), outputIndexWithinInput);
     }
 
     function migrateToConsensus(
@@ -145,17 +142,17 @@ contract Application is
         emit NewConsensus(newConsensus);
     }
 
-    function wasVoucherExecuted(
+    function wasOutputExecuted(
         uint256 inputIndex,
         uint256 outputIndexWithinInput
     ) external view override returns (bool) {
-        return _voucherBitmaps[outputIndexWithinInput].get(inputIndex);
+        return _executed[outputIndexWithinInput].get(inputIndex);
     }
 
-    function validateNotice(
-        bytes calldata notice,
+    function validateOutput(
+        bytes calldata output,
         OutputValidityProof calldata proof
-    ) external view override {
+    ) public view override {
         uint256 inputIndex = proof.calculateInputIndex();
 
         if (!proof.inputRange.contains(inputIndex)) {
@@ -164,8 +161,17 @@ contract Application is
 
         bytes32 epochHash = _getEpochHash(proof.inputRange);
 
-        // reverts if proof isn't valid
-        proof.validateNotice(notice, epochHash);
+        if (!proof.isEpochHashValid(epochHash)) {
+            revert IncorrectEpochHash();
+        }
+
+        if (!proof.isOutputsEpochRootHashValid()) {
+            revert IncorrectOutputsEpochRootHash();
+        }
+
+        if (!proof.isOutputHashesRootHashValid(output)) {
+            revert IncorrectOutputHashesRootHash();
+        }
     }
 
     function getTemplateHash() external view override returns (bytes32) {
@@ -206,5 +212,23 @@ contract Application is
         InputRange calldata inputRange
     ) internal view returns (bytes32) {
         return _consensus.getEpochHash(address(this), inputRange);
+    }
+
+    /// @notice Executes a voucher
+    /// @param arguments ABI-encoded arguments
+    function _executeVoucher(bytes calldata arguments) internal {
+        address destination;
+        bytes memory payload;
+
+        (destination, payload) = abi.decode(arguments, (address, bytes));
+
+        bool success;
+        bytes memory returndata;
+
+        (success, returndata) = destination.call(payload);
+
+        if (!success) {
+            returndata.raise();
+        }
     }
 }

@@ -233,7 +233,7 @@ contract ApplicationTest is TestBase {
 
         // expect event
         vm.expectEmit(false, false, false, true, address(_app));
-        emit IApplication.VoucherExecuted(
+        emit IApplication.OutputExecuted(
             _calculateInputIndex(proof).toUint64(),
             proof.outputIndexWithinInput
         );
@@ -265,7 +265,12 @@ contract ApplicationTest is TestBase {
         _executeVoucher(voucher, proof);
 
         // 2nd execution attempt should fail
-        vm.expectRevert(IApplication.VoucherReexecutionNotAllowed.selector);
+        vm.expectRevert(
+            abi.encodeWithSelector(
+                IApplication.OutputNotReexecutable.selector,
+                _encodeVoucher(voucher)
+            )
+        );
         _executeVoucher(voucher, proof);
 
         // end result should be the same as executing successfully only once
@@ -287,7 +292,7 @@ contract ApplicationTest is TestBase {
         uint256 inputIndex = _calculateInputIndex(proof);
 
         // before executing voucher
-        bool executed = _app.wasVoucherExecuted(
+        bool executed = _app.wasOutputExecuted(
             inputIndex,
             proof.outputIndexWithinInput
         );
@@ -304,8 +309,8 @@ contract ApplicationTest is TestBase {
         );
         _executeVoucher(voucher, proof);
 
-        // `wasVoucherExecuted` should still return false
-        executed = _app.wasVoucherExecuted(
+        // `wasOutputExecuted` should still return false
+        executed = _app.wasOutputExecuted(
             inputIndex,
             proof.outputIndexWithinInput
         );
@@ -316,8 +321,8 @@ contract ApplicationTest is TestBase {
         _erc20Token.transfer(address(_app), appInitBalance);
         _executeVoucher(voucher, proof);
 
-        // after executing voucher, `wasVoucherExecuted` should return true
-        executed = _app.wasVoucherExecuted(
+        // after executing voucher, `wasOutputExecuted` should return true
+        executed = _app.wasOutputExecuted(
             inputIndex,
             proof.outputIndexWithinInput
         );
@@ -414,7 +419,7 @@ contract ApplicationTest is TestBase {
 
         // expect event
         vm.expectEmit(false, false, false, true, address(_app));
-        emit IApplication.VoucherExecuted(
+        emit IApplication.OutputExecuted(
             _calculateInputIndex(proof).toUint64(),
             proof.outputIndexWithinInput
         );
@@ -427,7 +432,12 @@ contract ApplicationTest is TestBase {
         assertEq(address(_recipient).balance, _transferAmount);
 
         // cannot execute the same voucher again
-        vm.expectRevert(IApplication.VoucherReexecutionNotAllowed.selector);
+        vm.expectRevert(
+            abi.encodeWithSelector(
+                IApplication.OutputNotReexecutable.selector,
+                _encodeVoucher(voucher)
+            )
+        );
         _executeVoucher(voucher, proof);
     }
 
@@ -531,7 +541,7 @@ contract ApplicationTest is TestBase {
 
         // expect event
         vm.expectEmit(false, false, false, true, address(_app));
-        emit IApplication.VoucherExecuted(
+        emit IApplication.OutputExecuted(
             _calculateInputIndex(proof).toUint64(),
             proof.outputIndexWithinInput
         );
@@ -543,7 +553,12 @@ contract ApplicationTest is TestBase {
         assertEq(_erc721Token.ownerOf(_tokenId), _recipient);
 
         // cannot execute the same voucher again
-        vm.expectRevert(IApplication.VoucherReexecutionNotAllowed.selector);
+        vm.expectRevert(
+            abi.encodeWithSelector(
+                IApplication.OutputNotReexecutable.selector,
+                _encodeVoucher(voucher)
+            )
+        );
         _executeVoucher(voucher, proof);
     }
 
@@ -792,7 +807,7 @@ contract ApplicationTest is TestBase {
         Voucher memory voucher,
         OutputValidityProof memory proof
     ) internal {
-        _app.executeVoucher(voucher.destination, voucher.payload, proof);
+        _app.executeOutput(_encodeVoucher(voucher), proof);
     }
 
     // Mock the consensus contract so that calls to `getEpochHash` return
@@ -901,7 +916,7 @@ contract ApplicationTest is TestBase {
         bytes memory notice,
         OutputValidityProof memory proof
     ) internal view {
-        _app.validateNotice(notice, proof);
+        _app.validateOutput(_encodeNotice(notice), proof);
     }
 
     function _getNoticeProof(
