@@ -9,8 +9,6 @@ import {IInputBox} from "../inputs/IInputBox.sol";
 import {IInputRelay} from "../inputs/IInputRelay.sol";
 import {LibOutputValidation} from "../library/LibOutputValidation.sol";
 import {OutputValidityProof} from "../common/OutputValidityProof.sol";
-import {Proof} from "../common/Proof.sol";
-import {LibProof} from "../library/LibProof.sol";
 import {InputRange} from "../common/InputRange.sol";
 import {LibInputRange} from "../library/LibInputRange.sol";
 
@@ -33,7 +31,6 @@ contract Application is
 {
     using BitMaps for BitMaps.BitMap;
     using LibOutputValidation for OutputValidityProof;
-    using LibProof for Proof;
     using LibInputRange for InputRange;
     using Address for address;
     using SafeCast for uint256;
@@ -112,7 +109,7 @@ contract Application is
     function executeVoucher(
         address destination,
         bytes calldata payload,
-        Proof calldata proof
+        OutputValidityProof calldata proof
     ) external override nonReentrant {
         uint256 inputIndex = proof.calculateInputIndex();
 
@@ -123,9 +120,9 @@ contract Application is
         bytes32 epochHash = _getEpochHash(proof.inputRange);
 
         // reverts if proof isn't valid
-        proof.validity.validateVoucher(destination, payload, epochHash);
+        proof.validateVoucher(destination, payload, epochHash);
 
-        uint64 outputIndexWithinInput = proof.validity.outputIndexWithinInput;
+        uint64 outputIndexWithinInput = proof.outputIndexWithinInput;
         BitMaps.BitMap storage bitmap = _voucherBitmaps[outputIndexWithinInput];
 
         // check if voucher has been executed
@@ -157,7 +154,7 @@ contract Application is
 
     function validateNotice(
         bytes calldata notice,
-        Proof calldata proof
+        OutputValidityProof calldata proof
     ) external view override {
         uint256 inputIndex = proof.calculateInputIndex();
 
@@ -168,7 +165,7 @@ contract Application is
         bytes32 epochHash = _getEpochHash(proof.inputRange);
 
         // reverts if proof isn't valid
-        proof.validity.validateNotice(notice, epochHash);
+        proof.validateNotice(notice, epochHash);
     }
 
     function getTemplateHash() external view override returns (bytes32) {

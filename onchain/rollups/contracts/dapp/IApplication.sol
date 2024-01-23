@@ -10,7 +10,6 @@ import {IConsensus} from "../consensus/IConsensus.sol";
 import {IInputBox} from "../inputs/IInputBox.sol";
 import {IInputRelay} from "../inputs/IInputRelay.sol";
 import {OutputValidityProof} from "../common/OutputValidityProof.sol";
-import {Proof} from "../common/Proof.sol";
 import {InputRange} from "../common/InputRange.sol";
 
 /// @notice The base layer incarnation of an application running on the execution layer.
@@ -95,7 +94,7 @@ interface IApplication is IERC721Receiver, IERC1155Receiver {
     function executeVoucher(
         address destination,
         bytes calldata payload,
-        Proof calldata proof
+        OutputValidityProof calldata proof
     ) external;
 
     /// @notice Check whether a voucher has been executed.
@@ -114,7 +113,7 @@ interface IApplication is IERC721Receiver, IERC1155Receiver {
     ///               a claim submitted by the current consensus contract
     function validateNotice(
         bytes calldata notice,
-        Proof calldata proof
+        OutputValidityProof calldata proof
     ) external view;
 
     /// @notice Get the application's template hash.
