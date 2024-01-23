@@ -8,12 +8,10 @@ import {TestBase} from "../util/TestBase.sol";
 
 import {Application} from "contracts/dapp/Application.sol";
 import {IApplication} from "contracts/dapp/IApplication.sol";
-import {Proof} from "contracts/common/Proof.sol";
 import {IConsensus} from "contracts/consensus/IConsensus.sol";
 import {IInputBox} from "contracts/inputs/IInputBox.sol";
 import {IInputRelay} from "contracts/inputs/IInputRelay.sol";
 import {LibOutputValidation} from "contracts/library/LibOutputValidation.sol";
-import {LibProof} from "contracts/library/LibProof.sol";
 import {OutputValidityProof} from "contracts/common/OutputValidityProof.sol";
 import {Outputs} from "contracts/common/Outputs.sol";
 import {InputRange} from "contracts/common/InputRange.sol";
@@ -43,7 +41,7 @@ contract ApplicationTest is TestBase {
     using LibServerManager for LibServerManager.RawFinishEpochResponse;
     using LibServerManager for LibServerManager.Proof;
     using LibServerManager for LibServerManager.Proof[];
-    using LibProof for Proof;
+    using LibOutputValidation for OutputValidityProof;
     using SafeCast for uint256;
 
     enum OutputName {
@@ -190,7 +188,9 @@ contract ApplicationTest is TestBase {
 
     function testNoticeValidation() public {
         bytes memory notice = _getNotice(OutputName.DummyNotice);
-        Proof memory proof = _setupNoticeProof(OutputName.DummyNotice);
+        OutputValidityProof memory proof = _setupNoticeProof(
+            OutputName.DummyNotice
+        );
 
         _validateNotice(notice, proof);
 
@@ -206,7 +206,7 @@ contract ApplicationTest is TestBase {
         appInitBalance = _boundBalance(appInitBalance);
 
         Voucher memory voucher = _getVoucher(OutputName.ERC20TransferVoucher);
-        Proof memory proof = _setupVoucherProof(
+        OutputValidityProof memory proof = _setupVoucherProof(
             OutputName.ERC20TransferVoucher
         );
 
@@ -235,7 +235,7 @@ contract ApplicationTest is TestBase {
         vm.expectEmit(false, false, false, true, address(_app));
         emit IApplication.VoucherExecuted(
             _calculateInputIndex(proof).toUint64(),
-            proof.validity.outputIndexWithinInput
+            proof.outputIndexWithinInput
         );
 
         // perform call
@@ -253,7 +253,7 @@ contract ApplicationTest is TestBase {
         appInitBalance = _boundBalance(appInitBalance);
 
         Voucher memory voucher = _getVoucher(OutputName.ERC20TransferVoucher);
-        Proof memory proof = _setupVoucherProof(
+        OutputValidityProof memory proof = _setupVoucherProof(
             OutputName.ERC20TransferVoucher
         );
 
@@ -280,7 +280,7 @@ contract ApplicationTest is TestBase {
         appInitBalance = _boundBalance(appInitBalance);
 
         Voucher memory voucher = _getVoucher(OutputName.ERC20TransferVoucher);
-        Proof memory proof = _setupVoucherProof(
+        OutputValidityProof memory proof = _setupVoucherProof(
             OutputName.ERC20TransferVoucher
         );
 
@@ -289,7 +289,7 @@ contract ApplicationTest is TestBase {
         // before executing voucher
         bool executed = _app.wasVoucherExecuted(
             inputIndex,
-            proof.validity.outputIndexWithinInput
+            proof.outputIndexWithinInput
         );
         assertEq(executed, false);
 
@@ -307,7 +307,7 @@ contract ApplicationTest is TestBase {
         // `wasVoucherExecuted` should still return false
         executed = _app.wasVoucherExecuted(
             inputIndex,
-            proof.validity.outputIndexWithinInput
+            proof.outputIndexWithinInput
         );
         assertEq(executed, false);
 
@@ -319,18 +319,18 @@ contract ApplicationTest is TestBase {
         // after executing voucher, `wasVoucherExecuted` should return true
         executed = _app.wasVoucherExecuted(
             inputIndex,
-            proof.validity.outputIndexWithinInput
+            proof.outputIndexWithinInput
         );
         assertEq(executed, true);
     }
 
     function testRevertsEpochHash() public {
         Voucher memory voucher = _getVoucher(OutputName.ERC20TransferVoucher);
-        Proof memory proof = _setupVoucherProof(
+        OutputValidityProof memory proof = _setupVoucherProof(
             OutputName.ERC20TransferVoucher
         );
 
-        proof.validity.outputsEpochRootHash = bytes32(uint256(0xdeadbeef));
+        proof.outputsEpochRootHash = bytes32(uint256(0xdeadbeef));
 
         vm.expectRevert(IApplication.IncorrectEpochHash.selector);
         _executeVoucher(voucher, proof);
@@ -338,11 +338,11 @@ contract ApplicationTest is TestBase {
 
     function testRevertsOutputsEpochRootHash() public {
         Voucher memory voucher = _getVoucher(OutputName.ERC20TransferVoucher);
-        Proof memory proof = _setupVoucherProof(
+        OutputValidityProof memory proof = _setupVoucherProof(
             OutputName.ERC20TransferVoucher
         );
 
-        proof.validity.outputHashesRootHash = bytes32(uint256(0xdeadbeef));
+        proof.outputHashesRootHash = bytes32(uint256(0xdeadbeef));
 
         vm.expectRevert(IApplication.IncorrectOutputsEpochRootHash.selector);
         _executeVoucher(voucher, proof);
@@ -350,11 +350,11 @@ contract ApplicationTest is TestBase {
 
     function testRevertsOutputHashesRootHash() public {
         Voucher memory voucher = _getVoucher(OutputName.ERC20TransferVoucher);
-        Proof memory proof = _setupVoucherProof(
+        OutputValidityProof memory proof = _setupVoucherProof(
             OutputName.ERC20TransferVoucher
         );
 
-        proof.validity.outputIndexWithinInput = 0xdeadbeef;
+        proof.outputIndexWithinInput = 0xdeadbeef;
 
         vm.expectRevert(IApplication.IncorrectOutputHashesRootHash.selector);
         _executeVoucher(voucher, proof);
@@ -363,7 +363,9 @@ contract ApplicationTest is TestBase {
     function testRevertsInputIndexOutOfRange() public {
         OutputName outputName = OutputName.ERC20TransferVoucher;
         Voucher memory voucher = _getVoucher(outputName);
-        Proof memory proof = _getVoucherProof(uint256(outputName));
+        OutputValidityProof memory proof = _getVoucherProof(
+            uint256(outputName)
+        );
         uint256 inputIndex = _calculateInputIndex(proof);
 
         // If the input index were 0, then there would be no way for the input index
@@ -393,7 +395,7 @@ contract ApplicationTest is TestBase {
         appInitBalance = _boundBalance(appInitBalance);
 
         Voucher memory voucher = _getVoucher(OutputName.ETHWithdrawalVoucher);
-        Proof memory proof = _setupVoucherProof(
+        OutputValidityProof memory proof = _setupVoucherProof(
             OutputName.ETHWithdrawalVoucher
         );
 
@@ -414,7 +416,7 @@ contract ApplicationTest is TestBase {
         vm.expectEmit(false, false, false, true, address(_app));
         emit IApplication.VoucherExecuted(
             _calculateInputIndex(proof).toUint64(),
-            proof.validity.outputIndexWithinInput
+            proof.outputIndexWithinInput
         );
 
         // perform call
@@ -506,7 +508,7 @@ contract ApplicationTest is TestBase {
 
     function testWithdrawNFT() public {
         Voucher memory voucher = _getVoucher(OutputName.ERC721TransferVoucher);
-        Proof memory proof = _setupVoucherProof(
+        OutputValidityProof memory proof = _setupVoucherProof(
             OutputName.ERC721TransferVoucher
         );
 
@@ -531,7 +533,7 @@ contract ApplicationTest is TestBase {
         vm.expectEmit(false, false, false, true, address(_app));
         emit IApplication.VoucherExecuted(
             _calculateInputIndex(proof).toUint64(),
-            proof.validity.outputIndexWithinInput
+            proof.outputIndexWithinInput
         );
 
         // perform call
@@ -766,39 +768,43 @@ contract ApplicationTest is TestBase {
 
     function _setupNoticeProof(
         OutputName outputName
-    ) internal returns (Proof memory) {
+    ) internal returns (OutputValidityProof memory) {
         uint256 inputIndexWithinEpoch = uint256(outputName);
-        Proof memory proof = _getNoticeProof(inputIndexWithinEpoch);
+        OutputValidityProof memory proof = _getNoticeProof(
+            inputIndexWithinEpoch
+        );
         _mockConsensus(proof);
         return proof;
     }
 
     function _setupVoucherProof(
         OutputName outputName
-    ) internal returns (Proof memory) {
+    ) internal returns (OutputValidityProof memory) {
         uint256 inputIndexWithinEpoch = uint256(outputName);
-        Proof memory proof = _getNoticeProof(inputIndexWithinEpoch);
+        OutputValidityProof memory proof = _getNoticeProof(
+            inputIndexWithinEpoch
+        );
         _mockConsensus(proof);
         return proof;
     }
 
     function _executeVoucher(
         Voucher memory voucher,
-        Proof memory proof
+        OutputValidityProof memory proof
     ) internal {
         _app.executeVoucher(voucher.destination, voucher.payload, proof);
     }
 
     // Mock the consensus contract so that calls to `getEpochHash` return
     // the epoch hash to be used to validate the proof.
-    function _mockConsensus(Proof memory proof) internal {
+    function _mockConsensus(OutputValidityProof memory proof) internal {
         vm.mockCall(
             address(_consensus),
             abi.encodeCall(
                 IConsensus.getEpochHash,
                 (address(_app), proof.inputRange)
             ),
-            abi.encode(_calculateEpochHash(proof.validity))
+            abi.encode(_calculateEpochHash(proof))
         );
     }
 
@@ -893,14 +899,14 @@ contract ApplicationTest is TestBase {
 
     function _validateNotice(
         bytes memory notice,
-        Proof memory proof
+        OutputValidityProof memory proof
     ) internal view {
         _app.validateNotice(notice, proof);
     }
 
     function _getNoticeProof(
         uint256 inputIndexWithinEpoch
-    ) internal view returns (Proof memory) {
+    ) internal view returns (OutputValidityProof memory) {
         return
             _getProof(
                 LibServerManager.OutputEnum.NOTICE,
@@ -911,7 +917,7 @@ contract ApplicationTest is TestBase {
 
     function _getVoucherProof(
         uint256 inputIndexWithinEpoch
-    ) internal view returns (Proof memory) {
+    ) internal view returns (OutputValidityProof memory) {
         return
             _getProof(
                 LibServerManager.OutputEnum.VOUCHER,
@@ -924,7 +930,7 @@ contract ApplicationTest is TestBase {
         LibServerManager.OutputEnum outputEnum,
         uint256 inputIndexWithinEpoch,
         uint256 outputIndex
-    ) internal view returns (Proof memory) {
+    ) internal view returns (OutputValidityProof memory) {
         // Decode ABI-encoded data into raw struct
         LibServerManager.RawFinishEpochResponse memory raw = abi.decode(
             _encodedFinishEpochResponse,
@@ -944,11 +950,7 @@ contract ApplicationTest is TestBase {
         for (uint256 i; i < proofs.length; ++i) {
             LibServerManager.Proof memory proof = proofs[i];
             if (proof.proves(outputEnum, inputIndexWithinEpoch, outputIndex)) {
-                return
-                    Proof({
-                        validity: _convert(proof.validity),
-                        inputRange: inputRange
-                    });
+                return _convert(proof.validity, inputRange);
             }
         }
 
@@ -961,13 +963,13 @@ contract ApplicationTest is TestBase {
     }
 
     function calculateInputIndex(
-        Proof calldata proof
+        OutputValidityProof calldata proof
     ) external pure returns (uint256) {
         return proof.calculateInputIndex();
     }
 
     function _calculateInputIndex(
-        Proof memory proof
+        OutputValidityProof memory proof
     ) internal view returns (uint256) {
         return this.calculateInputIndex(proof);
     }
@@ -985,10 +987,12 @@ contract ApplicationTest is TestBase {
     }
 
     function _convert(
-        LibServerManager.OutputValidityProof memory v
+        LibServerManager.OutputValidityProof memory v,
+        InputRange memory inputRange
     ) internal pure returns (OutputValidityProof memory) {
         return
             OutputValidityProof({
+                inputRange: inputRange,
                 inputIndexWithinEpoch: v.inputIndexWithinEpoch.toUint64(),
                 outputIndexWithinInput: v.outputIndexWithinInput.toUint64(),
                 outputHashesRootHash: v.outputHashesRootHash,

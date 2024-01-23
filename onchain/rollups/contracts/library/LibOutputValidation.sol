@@ -119,4 +119,13 @@ library LibOutputValidation {
             epochHash
         );
     }
+
+    /// @notice Calculate the input index
+    /// @param v The output validity proof
+    /// @return The input index
+    function calculateInputIndex(
+        OutputValidityProof calldata v
+    ) internal pure returns (uint256) {
+        return uint256(v.inputRange.firstIndex) + v.inputIndexWithinEpoch;
+    }
 }
