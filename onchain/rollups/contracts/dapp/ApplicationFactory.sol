@@ -15,26 +15,26 @@ import {Application} from "./Application.sol";
 /// @notice Allows anyone to reliably deploy a new `Application` contract.
 contract ApplicationFactory is IApplicationFactory {
     function newApplication(
-        IConsensus _consensus,
-        IInputBox _inputBox,
-        IInputRelay[] memory _inputRelays,
-        address _appOwner,
-        bytes32 _templateHash
+        IConsensus consensus,
+        IInputBox inputBox,
+        IInputRelay[] memory inputRelays,
+        address appOwner,
+        bytes32 templateHash
     ) external override returns (Application) {
         Application app = new Application(
-            _consensus,
-            _inputBox,
-            _inputRelays,
-            _appOwner,
-            _templateHash
+            consensus,
+            inputBox,
+            inputRelays,
+            appOwner,
+            templateHash
         );
 
         emit ApplicationCreated(
-            _consensus,
-            _inputBox,
-            _inputRelays,
-            _appOwner,
-            _templateHash,
+            consensus,
+            inputBox,
+            inputRelays,
+            appOwner,
+            templateHash,
             app
         );
 
@@ -42,27 +42,27 @@ contract ApplicationFactory is IApplicationFactory {
     }
 
     function newApplication(
-        IConsensus _consensus,
-        IInputBox _inputBox,
-        IInputRelay[] memory _inputRelays,
-        address _appOwner,
-        bytes32 _templateHash,
-        bytes32 _salt
+        IConsensus consensus,
+        IInputBox inputBox,
+        IInputRelay[] memory inputRelays,
+        address appOwner,
+        bytes32 templateHash,
+        bytes32 salt
     ) external override returns (Application) {
-        Application app = new Application{salt: _salt}(
-            _consensus,
-            _inputBox,
-            _inputRelays,
-            _appOwner,
-            _templateHash
+        Application app = new Application{salt: salt}(
+            consensus,
+            inputBox,
+            inputRelays,
+            appOwner,
+            templateHash
         );
 
         emit ApplicationCreated(
-            _consensus,
-            _inputBox,
-            _inputRelays,
-            _appOwner,
-            _templateHash,
+            consensus,
+            inputBox,
+            inputRelays,
+            appOwner,
+            templateHash,
             app
         );
 
@@ -70,25 +70,25 @@ contract ApplicationFactory is IApplicationFactory {
     }
 
     function calculateApplicationAddress(
-        IConsensus _consensus,
-        IInputBox _inputBox,
-        IInputRelay[] memory _inputRelays,
-        address _appOwner,
-        bytes32 _templateHash,
-        bytes32 _salt
+        IConsensus consensus,
+        IInputBox inputBox,
+        IInputRelay[] memory inputRelays,
+        address appOwner,
+        bytes32 templateHash,
+        bytes32 salt
     ) external view override returns (address) {
         return
             Create2.computeAddress(
-                _salt,
+                salt,
                 keccak256(
                     abi.encodePacked(
                         type(Application).creationCode,
                         abi.encode(
-                            _consensus,
-                            _inputBox,
-                            _inputRelays,
-                            _appOwner,
-                            _templateHash
+                            consensus,
+                            inputBox,
+                            inputRelays,
+                            appOwner,
+                            templateHash
                         )
                     )
                 )

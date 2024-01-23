@@ -80,7 +80,7 @@ contract AuthorityTest is TestBase {
 
         // First claim
 
-        expectClaimEvents(authority, owner, app, inputRange, epochHash1);
+        _expectClaimEvents(authority, owner, app, inputRange, epochHash1);
 
         vm.prank(owner);
         authority.submitClaim(app, inputRange, epochHash1);
@@ -89,7 +89,7 @@ contract AuthorityTest is TestBase {
 
         // Second claim
 
-        expectClaimEvents(authority, owner, app, inputRange, epochHash2);
+        _expectClaimEvents(authority, owner, app, inputRange, epochHash2);
 
         vm.prank(owner);
         authority.submitClaim(app, inputRange, epochHash2);
@@ -97,7 +97,7 @@ contract AuthorityTest is TestBase {
         assertEq(authority.getEpochHash(app, inputRange), epochHash2);
     }
 
-    function expectClaimEvents(
+    function _expectClaimEvents(
         Authority authority,
         address owner,
         address app,

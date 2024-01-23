@@ -4,7 +4,6 @@
 pragma solidity ^0.8.8;
 
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
-import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import {IERC165} from "@openzeppelin/contracts/utils/introspection/IERC165.sol";
 
 import {IERC20Portal} from "./IERC20Portal.sol";
@@ -17,11 +16,31 @@ import {InputEncoding} from "../common/InputEncoding.sol";
 /// @notice This contract allows anyone to perform transfers of
 /// ERC-20 tokens to an application while informing the off-chain machine.
 contract ERC20Portal is IERC20Portal, InputRelay {
-    using SafeERC20 for IERC20;
-
     /// @notice Constructs the portal.
-    /// @param _inputBox The input box used by the portal
-    constructor(IInputBox _inputBox) InputRelay(_inputBox) {}
+    /// @param inputBox The input box used by the portal
+    constructor(IInputBox inputBox) InputRelay(inputBox) {}
+
+    function depositERC20Tokens(
+        IERC20 token,
+        address app,
+        uint256 amount,
+        bytes calldata execLayerData
+    ) external override {
+        bool success = token.transferFrom(msg.sender, app, amount);
+
+        if (!success) {
+            revert ERC20TransferFailed();
+        }
+
+        bytes memory input = InputEncoding.encodeERC20Deposit(
+            token,
+            msg.sender,
+            amount,
+            execLayerData
+        );
+
+        _inputBox.addInput(app, input);
+    }
 
     function supportsInterface(
         bytes4 interfaceId
@@ -29,23 +48,5 @@ contract ERC20Portal is IERC20Portal, InputRelay {
         return
             interfaceId == type(IERC20Portal).interfaceId ||
             super.supportsInterface(interfaceId);
-    }
-
-    function depositERC20Tokens(
-        IERC20 _token,
-        address _app,
-        uint256 _amount,
-        bytes calldata _execLayerData
-    ) external override {
-        _token.safeTransferFrom(msg.sender, _app, _amount);
-
-        bytes memory input = InputEncoding.encodeERC20Deposit(
-            _token,
-            msg.sender,
-            _amount,
-            _execLayerData
-        );
-
-        inputBox.addInput(_app, input);
     }
 }

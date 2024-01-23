@@ -16,13 +16,13 @@ import {Test} from "forge-std/Test.sol";
 
 contract EtherPortalTest is Test {
     address _alice;
-    address payable _app;
+    address _app;
     IInputBox _inputBox;
     IEtherPortal _portal;
 
     function setUp() public {
         _alice = vm.addr(1);
-        _app = payable(vm.addr(2));
+        _app = vm.addr(2);
         _inputBox = IInputBox(vm.addr(3));
         _portal = new EtherPortal(_inputBox);
     }
@@ -66,7 +66,7 @@ contract EtherPortalTest is Test {
         assertEq(_app.balance, balance + value);
     }
 
-    function testDepositFailedInnerCall(
+    function testDepositReverts(
         uint256 value,
         bytes calldata data,
         bytes calldata errorData
@@ -81,7 +81,7 @@ contract EtherPortalTest is Test {
 
         vm.mockCall(address(_inputBox), addInput, abi.encode(bytes32(0)));
 
-        vm.expectRevert(Address.FailedInnerCall.selector);
+        vm.expectRevert(IEtherPortal.EtherTransferFailed.selector);
 
         vm.deal(_alice, value);
         vm.prank(_alice);

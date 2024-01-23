@@ -6,6 +6,8 @@ pragma solidity ^0.8.22;
 import {Vm} from "forge-std/Vm.sol";
 import {InputRange} from "contracts/common/InputRange.sol";
 
+import {SafeCast} from "@openzeppelin/contracts/utils/math/SafeCast.sol";
+
 library LibServerManager {
     using LibServerManager for string;
     using LibServerManager for bytes32;
@@ -14,8 +16,7 @@ library LibServerManager {
     using LibServerManager for RawOutputValidityProof;
     using LibServerManager for RawProof;
     using LibServerManager for RawProof[];
-
-    error InvalidOutputEnum(string);
+    using SafeCast for uint256;
 
     struct RawHash {
         bytes32 data;
@@ -46,6 +47,39 @@ library LibServerManager {
         RawProof[] proofs;
         RawHash vouchersEpochRootHash;
     }
+
+    struct OutputValidityProof {
+        uint256 inputIndexWithinEpoch;
+        uint256 outputIndexWithinInput;
+        bytes32 outputHashesRootHash;
+        bytes32 vouchersEpochRootHash;
+        bytes32 noticesEpochRootHash;
+        bytes32 machineStateHash;
+        bytes32[] outputHashInOutputHashesSiblings;
+        bytes32[] outputHashesInEpochSiblings;
+    }
+
+    enum OutputEnum {
+        VOUCHER,
+        NOTICE
+    }
+
+    struct Proof {
+        uint256 inputIndex;
+        uint256 outputIndex;
+        OutputEnum outputEnum;
+        OutputValidityProof validity;
+        bytes context;
+    }
+
+    struct FinishEpochResponse {
+        bytes32 machineHash;
+        bytes32 vouchersEpochRootHash;
+        bytes32 noticesEpochRootHash;
+        Proof[] proofs;
+    }
+
+    error InvalidOutputEnum(string);
 
     function toUint(string memory s, Vm vm) internal pure returns (uint256) {
         return vm.parseUint(s);
@@ -140,44 +174,13 @@ library LibServerManager {
             });
     }
 
-    struct OutputValidityProof {
-        uint256 inputIndexWithinEpoch;
-        uint256 outputIndexWithinInput;
-        bytes32 outputHashesRootHash;
-        bytes32 vouchersEpochRootHash;
-        bytes32 noticesEpochRootHash;
-        bytes32 machineStateHash;
-        bytes32[] outputHashInOutputHashesSiblings;
-        bytes32[] outputHashesInEpochSiblings;
-    }
-
-    enum OutputEnum {
-        VOUCHER,
-        NOTICE
-    }
-
-    struct Proof {
-        uint256 inputIndex;
-        uint256 outputIndex;
-        OutputEnum outputEnum;
-        OutputValidityProof validity;
-        bytes context;
-    }
-
-    struct FinishEpochResponse {
-        bytes32 machineHash;
-        bytes32 vouchersEpochRootHash;
-        bytes32 noticesEpochRootHash;
-        Proof[] proofs;
-    }
-
     function getInputRange(
         Proof[] memory proofs
     ) internal pure returns (InputRange memory) {
         return
             InputRange({
-                firstIndex: getFirstInputIndex(proofs),
-                lastIndex: getLastInputIndex(proofs)
+                firstIndex: getFirstInputIndex(proofs).toUint64(),
+                lastIndex: getLastInputIndex(proofs).toUint64()
             });
     }
 

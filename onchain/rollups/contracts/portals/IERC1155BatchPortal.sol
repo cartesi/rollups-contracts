@@ -16,20 +16,20 @@ interface IERC1155BatchPortal is IInputRelay {
     /// The caller must enable approval for the portal to manage all of their tokens
     /// beforehand, by calling the `setApprovalForAll` function in the token contract.
     ///
-    /// @param _token The ERC-1155 token contract
-    /// @param _app The address of the application
-    /// @param _tokenIds The identifiers of the tokens being transferred
-    /// @param _values Transfer amounts per token type
-    /// @param _baseLayerData Additional data to be interpreted by the base layer
-    /// @param _execLayerData Additional data to be interpreted by the execution layer
+    /// @param token The ERC-1155 token contract
+    /// @param app The address of the application
+    /// @param tokenIds The identifiers of the tokens being transferred
+    /// @param values Transfer amounts per token type
+    /// @param baseLayerData Additional data to be interpreted by the base layer
+    /// @param execLayerData Additional data to be interpreted by the execution layer
     ///
-    /// @dev Please make sure `_tokenIds` and `_values` have the same length.
+    /// @dev Please make sure `tokenIds` and `values` have the same length.
     function depositBatchERC1155Token(
-        IERC1155 _token,
-        address _app,
-        uint256[] calldata _tokenIds,
-        uint256[] calldata _values,
-        bytes calldata _baseLayerData,
-        bytes calldata _execLayerData
+        IERC1155 token,
+        address app,
+        uint256[] calldata tokenIds,
+        uint256[] calldata values,
+        bytes calldata baseLayerData,
+        bytes calldata execLayerData
     ) external;
 }

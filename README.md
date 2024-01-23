@@ -8,6 +8,7 @@ If you are interested in taking a look at the off-chain part, please, head over 
 
 - [Dependencies](#dependencies)
 - [Basic setup](#basic-setup)
+- [Deployment](#deployment)
 - [Tests](#tests)
 - [Documentation](#documentation)
 - [Experimenting](#experimenting)
@@ -37,6 +38,22 @@ In order to install them, please, run the following commands.
 cd onchain/rollups
 yarn install
 ```
+
+## Deployment
+
+If you want to run a Hardhat node and deploy the contracts, please run the following command.
+
+```sh
+yarn start
+```
+
+If, instead, you wish to deploy the contracts to an already running node (e.g. Anvil), you can do so by running the following command.
+
+```sh
+yarn deploy:development
+```
+
+If the node is not listening to `http://localhost:8545/`, please set the `RPC_URL` environment variable accordingly.
 
 ## Tests
 
@@ -220,7 +237,9 @@ Notices are informational statements that can be proved by contracts in the base
 
 This module is responsible for providing valid claims to DApps after reaching some form of consensus. Each DApp has its own mapping of claims, each of which is mapped by the range of input indices of an epoch.
 
-The module's interface aims to be as generic as possible to accommodate any consensus model, since there are plenty to choose from. One type of consensus implemented by Cartesi is called Authority. It is owned by a single address, who has complete power over the consensus. It is arguably the simplest consensus to implement, although quite vulnerable.
+The module's interface aims to be as generic as possible to accommodate any consensus model, since there are plenty to choose from. The types of consensus currently implemented include:
+- Authority: managed by a single address, who has complete power over the consensus. It is trivial to implement, yet quite vulnerable.
+- Quorum: managed by a generally small, finite set of validators. Consensus is reached when the majority of the quorum agrees on any given claim.
 
 ### Dispute Resolution
 

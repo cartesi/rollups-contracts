@@ -17,8 +17,36 @@ import {InputEncoding} from "../common/InputEncoding.sol";
 /// ERC-1155 tokens to an application while informing the off-chain machine.
 contract ERC1155BatchPortal is IERC1155BatchPortal, InputRelay {
     /// @notice Constructs the portal.
-    /// @param _inputBox The input box used by the portal
-    constructor(IInputBox _inputBox) InputRelay(_inputBox) {}
+    /// @param inputBox The input box used by the portal
+    constructor(IInputBox inputBox) InputRelay(inputBox) {}
+
+    function depositBatchERC1155Token(
+        IERC1155 token,
+        address app,
+        uint256[] calldata tokenIds,
+        uint256[] calldata values,
+        bytes calldata baseLayerData,
+        bytes calldata execLayerData
+    ) external override {
+        token.safeBatchTransferFrom(
+            msg.sender,
+            app,
+            tokenIds,
+            values,
+            baseLayerData
+        );
+
+        bytes memory input = InputEncoding.encodeBatchERC1155Deposit(
+            token,
+            msg.sender,
+            tokenIds,
+            values,
+            baseLayerData,
+            execLayerData
+        );
+
+        _inputBox.addInput(app, input);
+    }
 
     function supportsInterface(
         bytes4 interfaceId
@@ -26,33 +54,5 @@ contract ERC1155BatchPortal is IERC1155BatchPortal, InputRelay {
         return
             interfaceId == type(IERC1155BatchPortal).interfaceId ||
             super.supportsInterface(interfaceId);
-    }
-
-    function depositBatchERC1155Token(
-        IERC1155 _token,
-        address _app,
-        uint256[] calldata _tokenIds,
-        uint256[] calldata _values,
-        bytes calldata _baseLayerData,
-        bytes calldata _execLayerData
-    ) external override {
-        _token.safeBatchTransferFrom(
-            msg.sender,
-            _app,
-            _tokenIds,
-            _values,
-            _baseLayerData
-        );
-
-        bytes memory input = InputEncoding.encodeBatchERC1155Deposit(
-            _token,
-            msg.sender,
-            _tokenIds,
-            _values,
-            _baseLayerData,
-            _execLayerData
-        );
-
-        inputBox.addInput(_app, input);
     }
 }

@@ -16,18 +16,18 @@ interface IERC1155SinglePortal is IInputRelay {
     /// The caller must enable approval for the portal to manage all of their tokens
     /// beforehand, by calling the `setApprovalForAll` function in the token contract.
     ///
-    /// @param _token The ERC-1155 token contract
-    /// @param _app The address of the application
-    /// @param _tokenId The identifier of the token being transferred
-    /// @param _value Transfer amount
-    /// @param _baseLayerData Additional data to be interpreted by the base layer
-    /// @param _execLayerData Additional data to be interpreted by the execution layer
+    /// @param token The ERC-1155 token contract
+    /// @param app The address of the application
+    /// @param tokenId The identifier of the token being transferred
+    /// @param value Transfer amount
+    /// @param baseLayerData Additional data to be interpreted by the base layer
+    /// @param execLayerData Additional data to be interpreted by the execution layer
     function depositSingleERC1155Token(
-        IERC1155 _token,
-        address _app,
-        uint256 _tokenId,
-        uint256 _value,
-        bytes calldata _baseLayerData,
-        bytes calldata _execLayerData
+        IERC1155 token,
+        address app,
+        uint256 tokenId,
+        uint256 value,
+        bytes calldata baseLayerData,
+        bytes calldata execLayerData
     ) external;
 }

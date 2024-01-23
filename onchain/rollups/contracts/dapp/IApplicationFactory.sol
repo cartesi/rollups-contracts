@@ -32,55 +32,55 @@ interface IApplicationFactory {
     // Permissionless functions
 
     /// @notice Deploy a new application.
-    /// @param _consensus The initial consensus contract
-    /// @param _inputBox The input box contract
-    /// @param _inputRelays The input relays
-    /// @param _appOwner The initial application owner
-    /// @param _templateHash The initial machine state hash
+    /// @param consensus The initial consensus contract
+    /// @param inputBox The input box contract
+    /// @param inputRelays The input relays
+    /// @param appOwner The initial application owner
+    /// @param templateHash The initial machine state hash
     /// @return The application
     /// @dev On success, MUST emit an `ApplicationCreated` event.
     function newApplication(
-        IConsensus _consensus,
-        IInputBox _inputBox,
-        IInputRelay[] calldata _inputRelays,
-        address _appOwner,
-        bytes32 _templateHash
+        IConsensus consensus,
+        IInputBox inputBox,
+        IInputRelay[] calldata inputRelays,
+        address appOwner,
+        bytes32 templateHash
     ) external returns (Application);
 
     /// @notice Deploy a new application deterministically.
-    /// @param _consensus The initial consensus contract
-    /// @param _inputBox The input box contract
-    /// @param _inputRelays The input relays
-    /// @param _appOwner The initial application owner
-    /// @param _templateHash The initial machine state hash
-    /// @param _salt The salt used to deterministically generate the application address
+    /// @param consensus The initial consensus contract
+    /// @param inputBox The input box contract
+    /// @param inputRelays The input relays
+    /// @param appOwner The initial application owner
+    /// @param templateHash The initial machine state hash
+    /// @param salt The salt used to deterministically generate the application address
     /// @return The application
     /// @dev On success, MUST emit an `ApplicationCreated` event.
     function newApplication(
-        IConsensus _consensus,
-        IInputBox _inputBox,
-        IInputRelay[] calldata _inputRelays,
-        address _appOwner,
-        bytes32 _templateHash,
-        bytes32 _salt
+        IConsensus consensus,
+        IInputBox inputBox,
+        IInputRelay[] calldata inputRelays,
+        address appOwner,
+        bytes32 templateHash,
+        bytes32 salt
     ) external returns (Application);
 
     /// @notice Calculate the address of an application to be deployed deterministically.
-    /// @param _consensus The initial consensus contract
-    /// @param _inputBox The input box contract
-    /// @param _inputRelays The input relays
-    /// @param _appOwner The initial application owner
-    /// @param _templateHash The initial machine state hash
-    /// @param _salt The salt used to deterministically generate the application address
+    /// @param consensus The initial consensus contract
+    /// @param inputBox The input box contract
+    /// @param inputRelays The input relays
+    /// @param appOwner The initial application owner
+    /// @param templateHash The initial machine state hash
+    /// @param salt The salt used to deterministically generate the application address
     /// @return The deterministic application address
-    /// @dev Beware that only the `newApplication` function with the `_salt` parameter
+    /// @dev Beware that only the `newApplication` function with the `salt` parameter
     ///      is able to deterministically deploy an application.
     function calculateApplicationAddress(
-        IConsensus _consensus,
-        IInputBox _inputBox,
-        IInputRelay[] calldata _inputRelays,
-        address _appOwner,
-        bytes32 _templateHash,
-        bytes32 _salt
+        IConsensus consensus,
+        IInputBox inputBox,
+        IInputRelay[] calldata inputRelays,
+        address appOwner,
+        bytes32 templateHash,
+        bytes32 salt
     ) external view returns (address);
 }

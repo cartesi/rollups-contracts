@@ -17,8 +17,28 @@ import {InputEncoding} from "../common/InputEncoding.sol";
 /// ERC-721 tokens to an application while informing the off-chain machine.
 contract ERC721Portal is IERC721Portal, InputRelay {
     /// @notice Constructs the portal.
-    /// @param _inputBox The input box used by the portal
-    constructor(IInputBox _inputBox) InputRelay(_inputBox) {}
+    /// @param inputBox The input box used by the portal
+    constructor(IInputBox inputBox) InputRelay(inputBox) {}
+
+    function depositERC721Token(
+        IERC721 token,
+        address app,
+        uint256 tokenId,
+        bytes calldata baseLayerData,
+        bytes calldata execLayerData
+    ) external override {
+        token.safeTransferFrom(msg.sender, app, tokenId, baseLayerData);
+
+        bytes memory input = InputEncoding.encodeERC721Deposit(
+            token,
+            msg.sender,
+            tokenId,
+            baseLayerData,
+            execLayerData
+        );
+
+        _inputBox.addInput(app, input);
+    }
 
     function supportsInterface(
         bytes4 interfaceId
@@ -26,25 +46,5 @@ contract ERC721Portal is IERC721Portal, InputRelay {
         return
             interfaceId == type(IERC721Portal).interfaceId ||
             super.supportsInterface(interfaceId);
-    }
-
-    function depositERC721Token(
-        IERC721 _token,
-        address _app,
-        uint256 _tokenId,
-        bytes calldata _baseLayerData,
-        bytes calldata _execLayerData
-    ) external override {
-        _token.safeTransferFrom(msg.sender, _app, _tokenId, _baseLayerData);
-
-        bytes memory input = InputEncoding.encodeERC721Deposit(
-            _token,
-            msg.sender,
-            _tokenId,
-            _baseLayerData,
-            _execLayerData
-        );
-
-        inputBox.addInput(_app, input);
     }
 }

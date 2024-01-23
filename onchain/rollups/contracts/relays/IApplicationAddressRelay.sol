@@ -10,6 +10,6 @@ interface IApplicationAddressRelay is IInputRelay {
     // Permissionless functions
 
     /// @notice Add an input to an application's input box with its address.
-    /// @param _app The address of the application
-    function relayApplicationAddress(address _app) external;
+    /// @param app The address of the application
+    function relayApplicationAddress(address app) external;
 }

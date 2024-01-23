@@ -16,8 +16,13 @@ import {InputEncoding} from "../common/InputEncoding.sol";
 /// of the address of the application contract in a trustless and permissionless way.
 contract ApplicationAddressRelay is IApplicationAddressRelay, InputRelay {
     /// @notice Constructs the relay.
-    /// @param _inputBox The input box used by the relay
-    constructor(IInputBox _inputBox) InputRelay(_inputBox) {}
+    /// @param inputBox The input box used by the relay
+    constructor(IInputBox inputBox) InputRelay(inputBox) {}
+
+    function relayApplicationAddress(address app) external override {
+        bytes memory input = InputEncoding.encodeApplicationAddressRelay(app);
+        _inputBox.addInput(app, input);
+    }
 
     function supportsInterface(
         bytes4 interfaceId
@@ -25,10 +30,5 @@ contract ApplicationAddressRelay is IApplicationAddressRelay, InputRelay {
         return
             interfaceId == type(IApplicationAddressRelay).interfaceId ||
             super.supportsInterface(interfaceId);
-    }
-
-    function relayApplicationAddress(address _app) external override {
-        bytes memory input = InputEncoding.encodeApplicationAddressRelay(_app);
-        inputBox.addInput(_app, input);
     }
 }

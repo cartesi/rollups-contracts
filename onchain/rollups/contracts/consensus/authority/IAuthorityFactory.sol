@@ -18,29 +18,29 @@ interface IAuthorityFactory {
     // Permissionless functions
 
     /// @notice Deploy a new authority.
-    /// @param _authorityOwner The initial authority owner
+    /// @param authorityOwner The initial authority owner
     /// @return The authority
     /// @dev On success, MUST emit an `AuthorityCreated` event.
-    function newAuthority(address _authorityOwner) external returns (Authority);
+    function newAuthority(address authorityOwner) external returns (Authority);
 
     /// @notice Deploy a new authority deterministically.
-    /// @param _authorityOwner The initial authority owner
-    /// @param _salt The salt used to deterministically generate the authority address
+    /// @param authorityOwner The initial authority owner
+    /// @param salt The salt used to deterministically generate the authority address
     /// @return The authority
     /// @dev On success, MUST emit an `AuthorityCreated` event.
     function newAuthority(
-        address _authorityOwner,
-        bytes32 _salt
+        address authorityOwner,
+        bytes32 salt
     ) external returns (Authority);
 
     /// @notice Calculate the address of an authority to be deployed deterministically.
-    /// @param _authorityOwner The initial authority owner
-    /// @param _salt The salt used to deterministically generate the authority address
+    /// @param authorityOwner The initial authority owner
+    /// @param salt The salt used to deterministically generate the authority address
     /// @return The deterministic authority address
-    /// @dev Beware that only the `newAuthority` function with the `_salt` parameter
+    /// @dev Beware that only the `newAuthority` function with the `salt` parameter
     ///      is able to deterministically deploy an authority.
     function calculateAuthorityAddress(
-        address _authorityOwner,
-        bytes32 _salt
+        address authorityOwner,
+        bytes32 salt
     ) external view returns (address);
 }

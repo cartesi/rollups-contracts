@@ -10,7 +10,7 @@ import {Authority} from "contracts/consensus/authority/Authority.sol";
 import {Vm} from "forge-std/Vm.sol";
 
 contract AuthorityFactoryTest is Test {
-    AuthorityFactory factory;
+    AuthorityFactory _factory;
 
     struct AuthorityCreatedEventData {
         address authorityOwner;
@@ -18,22 +18,55 @@ contract AuthorityFactoryTest is Test {
     }
 
     function setUp() public {
-        factory = new AuthorityFactory();
+        _factory = new AuthorityFactory();
     }
 
-    function testNewAuthority(address _authorityOwner) public {
-        vm.assume(_authorityOwner != address(0));
+    function testNewAuthority(address authorityOwner) public {
+        vm.assume(authorityOwner != address(0));
 
         vm.recordLogs();
 
-        Authority authority = factory.newAuthority(_authorityOwner);
+        Authority authority = _factory.newAuthority(authorityOwner);
 
-        testNewAuthorityAux(_authorityOwner, authority);
+        _testNewAuthorityAux(authorityOwner, authority);
     }
 
-    function testNewAuthorityAux(
-        address _authorityOwner,
-        Authority _authority
+    function testNewAuthorityDeterministic(
+        address authorityOwner,
+        bytes32 salt
+    ) public {
+        vm.assume(authorityOwner != address(0));
+
+        address precalculatedAddress = _factory.calculateAuthorityAddress(
+            authorityOwner,
+            salt
+        );
+
+        vm.recordLogs();
+
+        Authority authority = _factory.newAuthority(authorityOwner, salt);
+
+        _testNewAuthorityAux(authorityOwner, authority);
+
+        // Precalculated address must match actual address
+        assertEq(precalculatedAddress, address(authority));
+
+        precalculatedAddress = _factory.calculateAuthorityAddress(
+            authorityOwner,
+            salt
+        );
+
+        // Precalculated address must STILL match actual address
+        assertEq(precalculatedAddress, address(authority));
+
+        // Cannot deploy an authority with the same salt twice
+        vm.expectRevert();
+        _factory.newAuthority(authorityOwner, salt);
+    }
+
+    function _testNewAuthorityAux(
+        address authorityOwner,
+        Authority authority
     ) internal {
         Vm.Log[] memory entries = vm.getRecordedLogs();
 
@@ -43,7 +76,7 @@ contract AuthorityFactoryTest is Test {
             Vm.Log memory entry = entries[i];
 
             if (
-                entry.emitter == address(factory) &&
+                entry.emitter == address(_factory) &&
                 entry.topics[0] == IAuthorityFactory.AuthorityCreated.selector
             ) {
                 ++numOfAuthorityCreated;
@@ -52,47 +85,14 @@ contract AuthorityFactoryTest is Test {
 
                 eventData = abi.decode(entry.data, (AuthorityCreatedEventData));
 
-                assertEq(_authorityOwner, eventData.authorityOwner);
-                assertEq(address(_authority), address(eventData.authority));
+                assertEq(authorityOwner, eventData.authorityOwner);
+                assertEq(address(authority), address(eventData.authority));
             }
         }
 
         assertEq(numOfAuthorityCreated, 1);
 
         // call to check authority's owner
-        assertEq(_authority.owner(), _authorityOwner);
-    }
-
-    function testNewAuthorityDeterministic(
-        address _authorityOwner,
-        bytes32 _salt
-    ) public {
-        vm.assume(_authorityOwner != address(0));
-
-        address precalculatedAddress = factory.calculateAuthorityAddress(
-            _authorityOwner,
-            _salt
-        );
-
-        vm.recordLogs();
-
-        Authority authority = factory.newAuthority(_authorityOwner, _salt);
-
-        testNewAuthorityAux(_authorityOwner, authority);
-
-        // Precalculated address must match actual address
-        assertEq(precalculatedAddress, address(authority));
-
-        precalculatedAddress = factory.calculateAuthorityAddress(
-            _authorityOwner,
-            _salt
-        );
-
-        // Precalculated address must STILL match actual address
-        assertEq(precalculatedAddress, address(authority));
-
-        // Cannot deploy an authority with the same salt twice
-        vm.expectRevert();
-        factory.newAuthority(_authorityOwner, _salt);
+        assertEq(authority.owner(), authorityOwner);
     }
 }

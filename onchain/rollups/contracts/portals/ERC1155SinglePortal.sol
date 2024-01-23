@@ -17,8 +17,30 @@ import {InputEncoding} from "../common/InputEncoding.sol";
 /// ERC-1155 tokens to an application while informing the off-chain machine.
 contract ERC1155SinglePortal is IERC1155SinglePortal, InputRelay {
     /// @notice Constructs the portal.
-    /// @param _inputBox The input box used by the portal
-    constructor(IInputBox _inputBox) InputRelay(_inputBox) {}
+    /// @param inputBox The input box used by the portal
+    constructor(IInputBox inputBox) InputRelay(inputBox) {}
+
+    function depositSingleERC1155Token(
+        IERC1155 token,
+        address app,
+        uint256 tokenId,
+        uint256 value,
+        bytes calldata baseLayerData,
+        bytes calldata execLayerData
+    ) external override {
+        token.safeTransferFrom(msg.sender, app, tokenId, value, baseLayerData);
+
+        bytes memory input = InputEncoding.encodeSingleERC1155Deposit(
+            token,
+            msg.sender,
+            tokenId,
+            value,
+            baseLayerData,
+            execLayerData
+        );
+
+        _inputBox.addInput(app, input);
+    }
 
     function supportsInterface(
         bytes4 interfaceId
@@ -26,33 +48,5 @@ contract ERC1155SinglePortal is IERC1155SinglePortal, InputRelay {
         return
             interfaceId == type(IERC1155SinglePortal).interfaceId ||
             super.supportsInterface(interfaceId);
-    }
-
-    function depositSingleERC1155Token(
-        IERC1155 _token,
-        address _app,
-        uint256 _tokenId,
-        uint256 _value,
-        bytes calldata _baseLayerData,
-        bytes calldata _execLayerData
-    ) external override {
-        _token.safeTransferFrom(
-            msg.sender,
-            _app,
-            _tokenId,
-            _value,
-            _baseLayerData
-        );
-
-        bytes memory input = InputEncoding.encodeSingleERC1155Deposit(
-            _token,
-            msg.sender,
-            _tokenId,
-            _value,
-            _baseLayerData,
-            _execLayerData
-        );
-
-        inputBox.addInput(_app, input);
     }
 }

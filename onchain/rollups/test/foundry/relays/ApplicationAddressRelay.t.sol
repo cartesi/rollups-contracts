@@ -14,50 +14,50 @@ import {InputEncoding} from "contracts/common/InputEncoding.sol";
 import {IInputRelay} from "contracts/inputs/IInputRelay.sol";
 
 contract ApplicationAddressRelayTest is Test {
-    IInputBox inputBox;
-    IApplicationAddressRelay relay;
+    IInputBox _inputBox;
+    IApplicationAddressRelay _relay;
 
     function setUp() public {
-        inputBox = new InputBox();
-        relay = new ApplicationAddressRelay(inputBox);
+        _inputBox = new InputBox();
+        _relay = new ApplicationAddressRelay(_inputBox);
     }
 
-    function testSupportsInterface(bytes4 _randomInterfaceId) public {
+    function testSupportsInterface(bytes4 randomInterfaceId) public {
         assertTrue(
-            relay.supportsInterface(type(IApplicationAddressRelay).interfaceId)
+            _relay.supportsInterface(type(IApplicationAddressRelay).interfaceId)
         );
-        assertTrue(relay.supportsInterface(type(IInputRelay).interfaceId));
-        assertTrue(relay.supportsInterface(type(IERC165).interfaceId));
+        assertTrue(_relay.supportsInterface(type(IInputRelay).interfaceId));
+        assertTrue(_relay.supportsInterface(type(IERC165).interfaceId));
 
-        assertFalse(relay.supportsInterface(bytes4(0xffffffff)));
+        assertFalse(_relay.supportsInterface(bytes4(0xffffffff)));
 
         vm.assume(
-            _randomInterfaceId != type(IApplicationAddressRelay).interfaceId
+            randomInterfaceId != type(IApplicationAddressRelay).interfaceId
         );
-        vm.assume(_randomInterfaceId != type(IInputRelay).interfaceId);
-        vm.assume(_randomInterfaceId != type(IERC165).interfaceId);
-        assertFalse(relay.supportsInterface(_randomInterfaceId));
+        vm.assume(randomInterfaceId != type(IInputRelay).interfaceId);
+        vm.assume(randomInterfaceId != type(IERC165).interfaceId);
+        assertFalse(_relay.supportsInterface(randomInterfaceId));
     }
 
     function testGetInputBox() public {
-        assertEq(address(relay.getInputBox()), address(inputBox));
+        assertEq(address(_relay.getInputBox()), address(_inputBox));
     }
 
-    function testRelayApplicationAddress(address _app) public {
+    function testRelayApplicationAddress(address app) public {
         // Check the application's input box before
-        assertEq(inputBox.getNumberOfInputs(_app), 0);
+        assertEq(_inputBox.getNumberOfInputs(app), 0);
 
         // Construct the application address relay input
-        bytes memory input = abi.encodePacked(_app);
+        bytes memory input = abi.encodePacked(app);
 
         // Expect InputAdded to be emitted with the right arguments
-        vm.expectEmit(true, true, false, true, address(inputBox));
-        emit IInputBox.InputAdded(_app, 0, address(relay), input);
+        vm.expectEmit(true, true, false, true, address(_inputBox));
+        emit IInputBox.InputAdded(app, 0, address(_relay), input);
 
         // Relay the application's address
-        relay.relayApplicationAddress(_app);
+        _relay.relayApplicationAddress(app);
 
         // Check the application's input box after
-        assertEq(inputBox.getNumberOfInputs(_app), 1);
+        assertEq(_inputBox.getNumberOfInputs(app), 1);
     }
 }
