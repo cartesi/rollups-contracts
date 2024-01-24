@@ -76,14 +76,14 @@ contract ERC1155SinglePortalTest is Test {
         vm.mockCall(address(_token), safeTransferFrom, abi.encode());
         vm.expectCall(address(_token), safeTransferFrom, 1);
 
-        bytes memory input = _encodeInput(
+        bytes memory payload = _encodePayload(
             tokenId,
             value,
             baseLayerData,
             execLayerData
         );
 
-        bytes memory addInputCall = _encodeAddInput(input);
+        bytes memory addInputCall = _encodeAddInput(payload);
 
         vm.mockCall(address(_inputBox), addInputCall, abi.encode(bytes32(0)));
         vm.expectCall(address(_inputBox), addInputCall, 1);
@@ -115,14 +115,14 @@ contract ERC1155SinglePortalTest is Test {
         vm.mockCall(address(_token), safeTransferFrom, abi.encode());
         vm.mockCallRevert(address(_token), safeTransferFrom, errorData);
 
-        bytes memory input = _encodeInput(
+        bytes memory payload = _encodePayload(
             tokenId,
             value,
             baseLayerData,
             execLayerData
         );
 
-        bytes memory addInputCall = _encodeAddInput(input);
+        bytes memory addInputCall = _encodeAddInput(payload);
 
         vm.mockCall(address(_inputBox), addInputCall, abi.encode(bytes32(0)));
 
@@ -191,7 +191,7 @@ contract ERC1155SinglePortalTest is Test {
         assertEq(_token.balanceOf(address(_portal), tokenId), 0);
     }
 
-    function _encodeInput(
+    function _encodePayload(
         uint256 tokenId,
         uint256 value,
         bytes calldata baseLayerData,
@@ -209,9 +209,9 @@ contract ERC1155SinglePortalTest is Test {
     }
 
     function _encodeAddInput(
-        bytes memory input
+        bytes memory payload
     ) internal view returns (bytes memory) {
-        return abi.encodeCall(IInputBox.addInput, (_app, input));
+        return abi.encodeCall(IInputBox.addInput, (_app, payload));
     }
 
     function _encodeSafeTransferFrom(

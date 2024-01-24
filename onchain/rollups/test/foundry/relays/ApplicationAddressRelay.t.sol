@@ -10,8 +10,9 @@ import {IApplicationAddressRelay} from "contracts/relays/IApplicationAddressRela
 import {ApplicationAddressRelay} from "contracts/relays/ApplicationAddressRelay.sol";
 import {IInputBox} from "contracts/inputs/IInputBox.sol";
 import {InputBox} from "contracts/inputs/InputBox.sol";
-import {InputEncoding} from "contracts/common/InputEncoding.sol";
 import {IInputRelay} from "contracts/inputs/IInputRelay.sol";
+
+import {EvmAdvanceEncoder} from "../util/EvmAdvanceEncoder.sol";
 
 contract ApplicationAddressRelayTest is Test {
     IInputBox _inputBox;
@@ -48,11 +49,16 @@ contract ApplicationAddressRelayTest is Test {
         assertEq(_inputBox.getNumberOfInputs(app), 0);
 
         // Construct the application address relay input
-        bytes memory input = abi.encodePacked(app);
+        bytes memory payload = abi.encodePacked(app);
+        bytes memory input = EvmAdvanceEncoder.encode(
+            address(_relay),
+            0,
+            payload
+        );
 
         // Expect InputAdded to be emitted with the right arguments
         vm.expectEmit(true, true, false, true, address(_inputBox));
-        emit IInputBox.InputAdded(app, 0, address(_relay), input);
+        emit IInputBox.InputAdded(app, 0, input);
 
         // Relay the application's address
         _relay.relayApplicationAddress(app);

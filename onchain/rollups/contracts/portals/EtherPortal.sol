@@ -29,13 +29,13 @@ contract EtherPortal is IEtherPortal, InputRelay {
             revert EtherTransferFailed();
         }
 
-        bytes memory input = InputEncoding.encodeEtherDeposit(
+        bytes memory payload = InputEncoding.encodeEtherDeposit(
             msg.sender,
             msg.value,
             execLayerData
         );
 
-        _inputBox.addInput(app, input);
+        _inputBox.addInput(app, payload);
     }
 
     function supportsInterface(

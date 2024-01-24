@@ -29,7 +29,7 @@ contract ERC721Portal is IERC721Portal, InputRelay {
     ) external override {
         token.safeTransferFrom(msg.sender, app, tokenId, baseLayerData);
 
-        bytes memory input = InputEncoding.encodeERC721Deposit(
+        bytes memory payload = InputEncoding.encodeERC721Deposit(
             token,
             msg.sender,
             tokenId,
@@ -37,7 +37,7 @@ contract ERC721Portal is IERC721Portal, InputRelay {
             execLayerData
         );
 
-        _inputBox.addInput(app, input);
+        _inputBox.addInput(app, payload);
     }
 
     function supportsInterface(

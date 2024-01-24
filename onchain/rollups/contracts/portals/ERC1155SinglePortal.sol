@@ -30,7 +30,7 @@ contract ERC1155SinglePortal is IERC1155SinglePortal, InputRelay {
     ) external override {
         token.safeTransferFrom(msg.sender, app, tokenId, value, baseLayerData);
 
-        bytes memory input = InputEncoding.encodeSingleERC1155Deposit(
+        bytes memory payload = InputEncoding.encodeSingleERC1155Deposit(
             token,
             msg.sender,
             tokenId,
@@ -39,7 +39,7 @@ contract ERC1155SinglePortal is IERC1155SinglePortal, InputRelay {
             execLayerData
         );
 
-        _inputBox.addInput(app, input);
+        _inputBox.addInput(app, payload);
     }
 
     function supportsInterface(

@@ -16,7 +16,7 @@ library InputEncoding {
     /// @param sender The Ether sender
     /// @param value The amount of Ether being sent in Wei
     /// @param execLayerData Additional data to be interpreted by the execution layer
-    /// @return The encoded input
+    /// @return The encoded input payload
     function encodeEtherDeposit(
         address sender,
         uint256 value,
@@ -35,7 +35,7 @@ library InputEncoding {
     /// @param sender The token sender
     /// @param amount The amount of tokens being sent
     /// @param execLayerData Additional data to be interpreted by the execution layer
-    /// @return The encoded input
+    /// @return The encoded input payload
     function encodeERC20Deposit(
         IERC20 token,
         address sender,
@@ -57,7 +57,7 @@ library InputEncoding {
     /// @param tokenId The token identifier
     /// @param baseLayerData Additional data to be interpreted by the base layer
     /// @param execLayerData Additional data to be interpreted by the execution layer
-    /// @return The encoded input
+    /// @return The encoded input payload
     /// @dev `baseLayerData` should be forwarded to `token`.
     function encodeERC721Deposit(
         IERC721 token,
@@ -83,7 +83,7 @@ library InputEncoding {
     /// @param value Transfer amount
     /// @param baseLayerData Additional data to be interpreted by the base layer
     /// @param execLayerData Additional data to be interpreted by the execution layer
-    /// @return The encoded input
+    /// @return The encoded input payload
     /// @dev `baseLayerData` should be forwarded to `token`.
     function encodeSingleERC1155Deposit(
         IERC1155 token,
@@ -111,7 +111,7 @@ library InputEncoding {
     /// @param values Transfer amounts per token type
     /// @param baseLayerData Additional data to be interpreted by the base layer
     /// @param execLayerData Additional data to be interpreted by the execution layer
-    /// @return The encoded input
+    /// @return The encoded input payload
     /// @dev `baseLayerData` should be forwarded to `token`.
     function encodeBatchERC1155Deposit(
         IERC1155 token,
@@ -137,7 +137,7 @@ library InputEncoding {
 
     /// @notice Encode an application address relay.
     /// @param app The application address
-    /// @return The encoded input
+    /// @return The encoded input payload
     function encodeApplicationAddressRelay(
         address app
     ) internal pure returns (bytes memory) {
