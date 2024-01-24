@@ -15,3 +15,9 @@ Modified the `CartesiDApp` contract:
 
     -   `IApplication`
     -   `IERC721Receiver`
+
+-   Removed the `withdrawEther` function.
+
+-   Removed the `OnlyApplication` error.
+
+-   Removed the `EtherTransferFailed` error.

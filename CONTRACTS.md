@@ -37,7 +37,6 @@ graph TD
     ApplicationOwner -- migrateToConsensus ---> Application
     Validator -- submitClaim --> Consensus
     Application -. getEpochHash .-> Consensus
-    Application -- withdrawEther --> Application
     ApplicationFactory == creates ==> Application
     Anyone2 -- addInput -------> InputBox
     Anyone2 -- depositEther ---> EtherPortal

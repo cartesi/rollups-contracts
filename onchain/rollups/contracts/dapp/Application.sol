@@ -54,12 +54,6 @@ contract Application is
     /// @dev See the `getInputRelays` function.
     IInputRelay[] internal _inputRelays;
 
-    /// @notice Raised when the transfer fails.
-    error EtherTransferFailed();
-
-    /// @notice Raised when a mehtod is not called by application itself.
-    error OnlyApplication();
-
     /// @notice Creates an `Application` contract.
     /// @param consensus The initial consensus contract
     /// @param inputBox The input box contract
@@ -85,24 +79,6 @@ contract Application is
     /// @dev If you wish to transfer Ether to an application while informing
     ///      the backend of it, then please do so through the Ether portal contract.
     receive() external payable {}
-
-    /// @notice Transfer some amount of Ether to some recipient.
-    /// @param receiver The address which will receive the amount of Ether
-    /// @param value The amount of Ether to be transferred in Wei
-    /// @dev This function can only be called by the application itself through vouchers.
-    ///      If this method is not called by application itself, `OnlyApplication` error is raised.
-    ///      If the transfer fails, `EtherTransferFailed` error is raised.
-    function withdrawEther(address receiver, uint256 value) external {
-        if (msg.sender != address(this)) {
-            revert OnlyApplication();
-        }
-
-        (bool sent, ) = receiver.call{value: value}("");
-
-        if (!sent) {
-            revert EtherTransferFailed();
-        }
-    }
 
     function executeOutput(
         bytes calldata output,
