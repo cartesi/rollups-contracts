@@ -11,3 +11,4 @@ Removed:
 -   the `AuthorityHistoryPairFactory` contract.
 -   the `IAuthorityHistoryPairFactory` interface.
 -   the `OutputEncoding` library.
+-   the `LibInput` library.

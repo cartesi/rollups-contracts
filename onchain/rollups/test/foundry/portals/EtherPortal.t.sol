@@ -3,7 +3,6 @@
 
 pragma solidity ^0.8.22;
 
-import {Address} from "@openzeppelin/contracts/utils/Address.sol";
 import {IERC165} from "@openzeppelin/contracts/utils/introspection/IERC165.sol";
 
 import {EtherPortal} from "contracts/portals/EtherPortal.sol";
@@ -47,9 +46,9 @@ contract EtherPortalTest is Test {
     function testDeposit(uint256 value, bytes calldata data) public {
         value = _boundValue(value);
 
-        bytes memory input = _encodeInput(value, data);
+        bytes memory payload = _encodePayload(value, data);
 
-        bytes memory addInput = _encodeAddInput(input);
+        bytes memory addInput = _encodeAddInput(payload);
 
         vm.mockCall(address(_inputBox), addInput, abi.encode(bytes32(0)));
 
@@ -75,9 +74,9 @@ contract EtherPortalTest is Test {
 
         vm.mockCallRevert(_app, value, abi.encode(), errorData);
 
-        bytes memory input = _encodeInput(value, data);
+        bytes memory payload = _encodePayload(value, data);
 
-        bytes memory addInput = _encodeAddInput(input);
+        bytes memory addInput = _encodeAddInput(payload);
 
         vm.mockCall(address(_inputBox), addInput, abi.encode(bytes32(0)));
 
@@ -88,7 +87,7 @@ contract EtherPortalTest is Test {
         _portal.depositEther{value: value}(_app, data);
     }
 
-    function _encodeInput(
+    function _encodePayload(
         uint256 value,
         bytes calldata data
     ) internal view returns (bytes memory) {
@@ -96,9 +95,9 @@ contract EtherPortalTest is Test {
     }
 
     function _encodeAddInput(
-        bytes memory input
+        bytes memory payload
     ) internal view returns (bytes memory) {
-        return abi.encodeCall(IInputBox.addInput, (_app, input));
+        return abi.encodeCall(IInputBox.addInput, (_app, payload));
     }
 
     function _boundValue(uint256 value) internal view returns (uint256) {

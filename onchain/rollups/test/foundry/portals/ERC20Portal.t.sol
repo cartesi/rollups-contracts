@@ -60,9 +60,9 @@ contract ERC20PortalTest is Test {
 
         vm.mockCall(address(_token), transferFrom, abi.encode(true));
 
-        bytes memory input = _encodeInput(amount, data);
+        bytes memory payload = _encodePayload(amount, data);
 
-        bytes memory addInput = _encodeAddInput(input);
+        bytes memory addInput = _encodeAddInput(payload);
 
         vm.mockCall(address(_inputBox), addInput, abi.encode(bytes32(0)));
 
@@ -79,9 +79,9 @@ contract ERC20PortalTest is Test {
 
         vm.mockCall(address(_token), transferFrom, abi.encode(false));
 
-        bytes memory input = _encodeInput(amount, data);
+        bytes memory payload = _encodePayload(amount, data);
 
-        bytes memory addInput = _encodeAddInput(input);
+        bytes memory addInput = _encodeAddInput(payload);
 
         vm.mockCall(address(_inputBox), addInput, abi.encode(bytes32(0)));
 
@@ -100,9 +100,9 @@ contract ERC20PortalTest is Test {
 
         vm.mockCallRevert(address(_token), transferFrom, errorData);
 
-        bytes memory input = _encodeInput(amount, data);
+        bytes memory payload = _encodePayload(amount, data);
 
-        bytes memory addInput = _encodeAddInput(input);
+        bytes memory addInput = _encodeAddInput(payload);
 
         vm.mockCall(address(_inputBox), addInput, abi.encode(bytes32(0)));
 
@@ -150,7 +150,7 @@ contract ERC20PortalTest is Test {
         assertEq(token.balanceOf(address(_portal)), 0);
     }
 
-    function _encodeInput(
+    function _encodePayload(
         uint256 amount,
         bytes calldata data
     ) internal view returns (bytes memory) {
@@ -164,8 +164,8 @@ contract ERC20PortalTest is Test {
     }
 
     function _encodeAddInput(
-        bytes memory _input
+        bytes memory payload
     ) internal view returns (bytes memory) {
-        return abi.encodeCall(IInputBox.addInput, (_app, _input));
+        return abi.encodeCall(IInputBox.addInput, (_app, payload));
     }
 }

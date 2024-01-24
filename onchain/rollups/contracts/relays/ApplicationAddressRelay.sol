@@ -20,8 +20,8 @@ contract ApplicationAddressRelay is IApplicationAddressRelay, InputRelay {
     constructor(IInputBox inputBox) InputRelay(inputBox) {}
 
     function relayApplicationAddress(address app) external override {
-        bytes memory input = InputEncoding.encodeApplicationAddressRelay(app);
-        _inputBox.addInput(app, input);
+        bytes memory payload = InputEncoding.encodeApplicationAddressRelay(app);
+        _inputBox.addInput(app, payload);
     }
 
     function supportsInterface(

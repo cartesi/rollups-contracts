@@ -4,8 +4,8 @@
 pragma solidity ^0.8.8;
 
 import {IInputBox} from "./IInputBox.sol";
-import {LibInput} from "../library/LibInput.sol";
 import {CanonicalMachine} from "../common/CanonicalMachine.sol";
+import {Inputs} from "../common/Inputs.sol";
 
 contract InputBox is IInputBox {
     /// @notice Mapping of application addresses to arrays of input hashes.
@@ -16,29 +16,28 @@ contract InputBox is IInputBox {
         address app,
         bytes calldata payload
     ) external override returns (bytes32) {
-        if (payload.length > CanonicalMachine.INPUT_PAYLOAD_MAX_SIZE) {
-            revert PayloadTooLarge(
-                app,
-                payload.length,
-                CanonicalMachine.INPUT_PAYLOAD_MAX_SIZE
-            );
-        }
-
         bytes32[] storage inputBox = _inputBoxes[app];
 
         uint256 index = inputBox.length;
 
-        bytes32 inputHash = LibInput.computeInputHash(
-            msg.sender,
-            block.number,
-            block.timestamp,
-            index,
-            payload
+        bytes memory input = abi.encodeCall(
+            Inputs.EvmAdvance,
+            (msg.sender, block.number, block.timestamp, index, payload)
         );
+
+        if (input.length > CanonicalMachine.INPUT_MAX_SIZE) {
+            revert InputTooLarge(
+                app,
+                input.length,
+                CanonicalMachine.INPUT_MAX_SIZE
+            );
+        }
+
+        bytes32 inputHash = keccak256(input);
 
         inputBox.push(inputHash);
 
-        emit InputAdded(app, index, msg.sender, payload);
+        emit InputAdded(app, index, input);
 
         return inputHash;
     }

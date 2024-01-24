@@ -32,14 +32,14 @@ contract ERC20Portal is IERC20Portal, InputRelay {
             revert ERC20TransferFailed();
         }
 
-        bytes memory input = InputEncoding.encodeERC20Deposit(
+        bytes memory payload = InputEncoding.encodeERC20Deposit(
             token,
             msg.sender,
             amount,
             execLayerData
         );
 
-        _inputBox.addInput(app, input);
+        _inputBox.addInput(app, payload);
     }
 
     function supportsInterface(

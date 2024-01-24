@@ -7,7 +7,9 @@ import {Test} from "forge-std/Test.sol";
 import {InputBox} from "contracts/inputs/InputBox.sol";
 import {IInputBox} from "contracts/inputs/IInputBox.sol";
 import {CanonicalMachine} from "contracts/common/CanonicalMachine.sol";
-import {LibInput} from "contracts/library/LibInput.sol";
+import {Inputs} from "contracts/common/Inputs.sol";
+
+import {EvmAdvanceEncoder} from "../util/EvmAdvanceEncoder.sol";
 
 contract InputBoxTest is Test {
     InputBox _inputBox;
@@ -22,60 +24,83 @@ contract InputBoxTest is Test {
 
     function testAddLargeInput() public {
         address app = vm.addr(1);
-        uint256 max = CanonicalMachine.INPUT_PAYLOAD_MAX_SIZE;
+        uint256 max = _getMaxInputPayloadLength();
 
         _inputBox.addInput(app, new bytes(max));
 
+        bytes memory largePayload = new bytes(max + 1);
+        uint256 largeLength = EvmAdvanceEncoder
+            .encode(address(this), 1, largePayload)
+            .length;
         vm.expectRevert(
             abi.encodeWithSelector(
-                IInputBox.PayloadTooLarge.selector,
+                IInputBox.InputTooLarge.selector,
                 app,
-                max + 1,
-                max
+                largeLength,
+                CanonicalMachine.INPUT_MAX_SIZE
             )
         );
-        _inputBox.addInput(app, new bytes(max + 1));
+        _inputBox.addInput(app, largePayload);
     }
 
-    function testAddInput(address app, bytes[] calldata inputs) public {
-        uint256 numInputs = inputs.length;
-        bytes32[] memory returnedValues = new bytes32[](numInputs);
+    function testAddInput(address app, bytes[] calldata payloads) public {
+        uint256 numPayloads = payloads.length;
+        bytes32[] memory returnedValues = new bytes32[](numPayloads);
         uint256 year2022 = 1641070800; // Unix Timestamp for 2022
 
-        // assume #bytes for each input is within bounds
-        for (uint256 i; i < numInputs; ++i) {
-            vm.assume(
-                inputs[i].length <= CanonicalMachine.INPUT_PAYLOAD_MAX_SIZE
-            );
+        // assume #bytes for each payload is within bounds
+        for (uint256 i; i < numPayloads; ++i) {
+            vm.assume(payloads[i].length <= _getMaxInputPayloadLength());
         }
 
         // adding inputs
-        for (uint256 i; i < numInputs; ++i) {
+        for (uint256 i; i < numPayloads; ++i) {
             // test for different block number and timestamp
             vm.roll(i);
             vm.warp(i + year2022);
 
             vm.expectEmit(true, true, false, true, address(_inputBox));
-            emit IInputBox.InputAdded(app, i, address(this), inputs[i]);
+            bytes memory input = EvmAdvanceEncoder.encode(
+                address(this),
+                i,
+                payloads[i]
+            );
+            emit IInputBox.InputAdded(app, i, input);
 
-            returnedValues[i] = _inputBox.addInput(app, inputs[i]);
+            returnedValues[i] = _inputBox.addInput(app, payloads[i]);
 
             assertEq(i + 1, _inputBox.getNumberOfInputs(app));
         }
 
         // testing added inputs
-        for (uint256 i; i < numInputs; ++i) {
-            bytes32 inputHash = LibInput.computeInputHash(
-                address(this),
-                i, // block.number
-                i + year2022, // block.timestamp
-                i, // index
-                inputs[i]
+        for (uint256 i; i < numPayloads; ++i) {
+            bytes32 inputHash = keccak256(
+                abi.encodeCall(
+                    Inputs.EvmAdvance,
+                    (
+                        address(this),
+                        i, // block.number
+                        i + year2022, // block.timestamp
+                        i, // inputBox.length
+                        payloads[i]
+                    )
+                )
             );
             // test if input hash is the same as in InputBox
             assertEq(inputHash, _inputBox.getInputHash(app, i));
             // test if input hash is the same as returned from calling addInput() function
             assertEq(inputHash, returnedValues[i]);
         }
+    }
+
+    function _getMaxInputPayloadLength() internal pure returns (uint256) {
+        bytes memory blob = abi.encodeCall(
+            Inputs.EvmAdvance,
+            (address(0), 0, 0, 0, new bytes(32))
+        );
+        // number of bytes in input blob excluding input payload
+        uint256 extraBytes = blob.length - 32;
+        // because it's abi encoded, input payloads are stored as multiples of 32 bytes
+        return ((CanonicalMachine.INPUT_MAX_SIZE - extraBytes) / 32) * 32;
     }
 }
