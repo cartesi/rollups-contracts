@@ -22,7 +22,7 @@ contract InputBoxTest is Test {
         assertEq(_inputBox.getNumberOfInputs(app), 0);
     }
 
-    function testAddLargeInput() public {
+    function testAddLargeInput(uint64 chainId) public {
         address app = vm.addr(1);
         uint256 max = _getMaxInputPayloadLength();
 
@@ -30,7 +30,7 @@ contract InputBoxTest is Test {
 
         bytes memory largePayload = new bytes(max + 1);
         uint256 largeLength = EvmAdvanceEncoder
-            .encode(app, address(this), 1, largePayload)
+            .encode(chainId, app, address(this), 1, largePayload)
             .length;
         vm.expectRevert(
             abi.encodeWithSelector(
@@ -43,7 +43,13 @@ contract InputBoxTest is Test {
         _inputBox.addInput(app, largePayload);
     }
 
-    function testAddInput(address app, bytes[] calldata payloads) public {
+    function testAddInput(
+        uint64 chainId,
+        address app,
+        bytes[] calldata payloads
+    ) public {
+        vm.chainId(chainId); // foundry limits chain id to be less than 2^64 - 1
+
         uint256 numPayloads = payloads.length;
         bytes32[] memory returnedValues = new bytes32[](numPayloads);
         uint256 year2022 = 1641070800; // Unix Timestamp for 2022
@@ -61,6 +67,7 @@ contract InputBoxTest is Test {
 
             vm.expectEmit(true, true, false, true, address(_inputBox));
             bytes memory input = EvmAdvanceEncoder.encode(
+                chainId,
                 app,
                 address(this),
                 i,
@@ -79,6 +86,7 @@ contract InputBoxTest is Test {
                 abi.encodeCall(
                     Inputs.EvmAdvance,
                     (
+                        chainId,
                         app,
                         address(this),
                         i, // block.number
@@ -98,7 +106,7 @@ contract InputBoxTest is Test {
     function _getMaxInputPayloadLength() internal pure returns (uint256) {
         bytes memory blob = abi.encodeCall(
             Inputs.EvmAdvance,
-            (address(0), address(0), 0, 0, 0, new bytes(32))
+            (0, address(0), address(0), 0, 0, 0, new bytes(32))
         );
         // number of bytes in input blob excluding input payload
         uint256 extraBytes = blob.length - 32;

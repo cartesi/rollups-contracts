@@ -22,7 +22,15 @@ contract InputBox is IInputBox {
 
         bytes memory input = abi.encodeCall(
             Inputs.EvmAdvance,
-            (app, msg.sender, block.number, block.timestamp, index, payload)
+            (
+                block.chainid,
+                app,
+                msg.sender,
+                block.number,
+                block.timestamp,
+                index,
+                payload
+            )
         );
 
         if (input.length > CanonicalMachine.INPUT_MAX_SIZE) {
