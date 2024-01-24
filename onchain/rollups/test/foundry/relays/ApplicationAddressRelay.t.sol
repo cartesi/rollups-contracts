@@ -44,13 +44,16 @@ contract ApplicationAddressRelayTest is Test {
         assertEq(address(_relay.getInputBox()), address(_inputBox));
     }
 
-    function testRelayApplicationAddress(address app) public {
+    function testRelayApplicationAddress(uint64 chainId, address app) public {
+        vm.chainId(chainId); // foundry limits chain id to be less than 2^64 - 1
+
         // Check the application's input box before
         assertEq(_inputBox.getNumberOfInputs(app), 0);
 
         // Construct the application address relay input
         bytes memory payload = abi.encodePacked(app);
         bytes memory input = EvmAdvanceEncoder.encode(
+            chainId,
             app,
             address(_relay),
             0,
