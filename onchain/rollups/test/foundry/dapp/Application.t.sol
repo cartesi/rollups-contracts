@@ -33,10 +33,6 @@ import {SimpleERC721} from "../util/SimpleERC721.sol";
 
 import "forge-std/console.sol";
 
-contract EtherReceiver {
-    receive() external payable {}
-}
-
 contract ApplicationTest is TestBase {
     using LibServerManager for LibServerManager.RawFinishEpochResponse;
     using LibServerManager for LibServerManager.Proof;
@@ -444,79 +440,6 @@ contract ApplicationTest is TestBase {
         _executeVoucher(voucher, proof);
     }
 
-    function testWithdrawEtherContract(
-        uint256 value,
-        address notApplication
-    ) public {
-        vm.assume(value <= address(this).balance);
-        vm.assume(notApplication != address(_app));
-        address receiver = address(new EtherReceiver());
-
-        // fund application
-        vm.deal(address(_app), value);
-
-        // withdrawEther cannot be called by anyone
-        vm.expectRevert(Application.OnlyApplication.selector);
-        vm.prank(notApplication);
-        _app.withdrawEther(receiver, value);
-
-        // withdrawEther can only be called by application itself
-        uint256 preBalance = receiver.balance;
-        vm.prank(address(_app));
-        _app.withdrawEther(receiver, value);
-        assertEq(receiver.balance, preBalance + value);
-        assertEq(address(_app).balance, 0);
-    }
-
-    function testWithdrawEtherEOA(
-        uint256 value,
-        address notApplication,
-        uint256 receiverSeed
-    ) public {
-        vm.assume(notApplication != address(_app));
-        vm.assume(value <= address(this).balance);
-
-        // by deriving receiver from keccak-256, we avoid
-        // collisions with precompiled contract addresses
-        // assume receiver is not a contract
-        address receiver = address(
-            bytes20(keccak256(abi.encode(receiverSeed)))
-        );
-        uint256 codeSize;
-        assembly {
-            codeSize := extcodesize(receiver)
-        }
-        vm.assume(codeSize == 0);
-
-        // fund application
-        vm.deal(address(_app), value);
-
-        // withdrawEther cannot be called by anyone
-        vm.expectRevert(Application.OnlyApplication.selector);
-        vm.prank(notApplication);
-        _app.withdrawEther(receiver, value);
-
-        // withdrawEther can only be called by application itself
-        uint256 preBalance = receiver.balance;
-        vm.prank(address(_app));
-        _app.withdrawEther(receiver, value);
-        assertEq(receiver.balance, preBalance + value);
-        assertEq(address(_app).balance, 0);
-    }
-
-    function testRevertsWithdrawEther(uint256 value, uint256 funds) public {
-        vm.assume(value > funds);
-        address receiver = address(new EtherReceiver());
-
-        // Fund application
-        vm.deal(address(_app), funds);
-
-        // application is not funded or does not have enough funds
-        vm.prank(address(_app));
-        vm.expectRevert(Application.EtherTransferFailed.selector);
-        _app.withdrawEther(receiver, value);
-    }
-
     // test NFT transfer
 
     function testWithdrawNFT() public {
@@ -697,13 +620,7 @@ contract ApplicationTest is TestBase {
             address(_erc20Token),
             abi.encodeCall(IERC20.transfer, (_recipient, _transferAmount))
         );
-        _addVoucher(
-            address(_app),
-            abi.encodeCall(
-                Application.withdrawEther,
-                (_recipient, _transferAmount)
-            )
-        );
+        _addVoucher(_recipient, _transferAmount, abi.encode());
         _addVoucher(
             address(_erc721Token),
             abi.encodeWithSignature(
