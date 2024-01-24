@@ -53,6 +53,7 @@ contract ApplicationTest is TestBase {
 
     struct Voucher {
         address destination;
+        uint256 value;
         bytes payload;
     }
 
@@ -671,9 +672,17 @@ contract ApplicationTest is TestBase {
     }
 
     function _addVoucher(address destination, bytes memory payload) internal {
+        _addVoucher(destination, 0, payload);
+    }
+
+    function _addVoucher(
+        address destination,
+        uint256 value,
+        bytes memory payload
+    ) internal {
         uint256 index = _outputEnums.length;
         _outputEnums.push(LibServerManager.OutputEnum.VOUCHER);
-        _vouchers[index] = Voucher(destination, payload);
+        _vouchers[index] = Voucher(destination, value, payload);
     }
 
     function _addNotice(bytes memory notice) internal {
@@ -712,7 +721,7 @@ contract ApplicationTest is TestBase {
         return
             abi.encodeCall(
                 Outputs.Voucher,
-                (voucher.destination, voucher.payload)
+                (voucher.destination, voucher.value, voucher.payload)
             );
     }
 

@@ -113,15 +113,18 @@ As an example, the deposit of 100 Wei (of Ether) sent by address `0xf39fd6e51aad
 
 ### Vouchers
 
-Vouchers allow applications in the execution layer to interact with contracts in the base layer through message calls. They are emitted by the off-chain machine, and executed by anyone in the base layer. Each voucher is composed of a destination address and a payload. In the case of vouchers destined to Solidity contracts, the payload generally encodes a function call.
+Vouchers allow applications in the execution layer to interact with contracts in the base layer through message calls. They are emitted by the off-chain machine, and can be executed by anyone in the base layer. Each voucher is composed of a destination address, a value, and a payload. In the case of vouchers destined to Solidity contracts, the payload generally encodes a function call. Moreover, the value field denotes the amount of Wei to be passed along the message call to the destination, which can be used for Ether withdrawals and for payable function calls.
 
 A voucher can only be executed once the application's consensus accepts a claim containing it. They can be executed in any order. Although the application contract is indifferent to the content of the voucher being executed, it enforces some sanity checks before allowing its execution. First, it checks whether the voucher has been successfully executed already. Second, it ensures that the voucher has been emitted by the off-chain machine, by requiring a validity proof.
 
-Because of their generality, vouchers can be used in a wide range of applications: from withdrawing funds to providing liquidity in a DeFi protocol. Typically, applications use vouchers to withdraw assets. Below, we show how vouchers can be used to withdraw several types of assets. You can find more information about a particular function by clicking on the :page_facing_up: emoji near it.
+Because of their generality, vouchers can be used in a wide range of applications: from withdrawing funds to providing liquidity in DeFi protocols. Typically, applications use vouchers to withdraw assets. Below, we show how vouchers can be used to withdraw several types of assets. You can find more information about a particular function by clicking on the :page_facing_up: emoji near it.
+
+| Asset | Destination | Value | Payload |
+| :- | :- | :- | :- |
+| Ether | Recipient | Transfer amount (in Wei) | (empty) |
 
 | Asset | Destination | Function signature |
-| :- | :- |  :- |
-| Ether | Application contract | `withdrawEther(address,uint256)` [:page_facing_up:](./onchain/rollups/contracts/dapp/Application.sol) |
+| :- | :- | :- |
 | ERC-20 | Token contract | `transfer(address,uint256)` [:page_facing_up:](https://eips.ethereum.org/EIPS/eip-20#methods) |
 | ERC-20 | Token contract | `transferFrom(address,address,uint256)` [:page_facing_up:](https://eips.ethereum.org/EIPS/eip-20#methods) [^1] |
 | ERC-721 | Token contract | `safeTransferFrom(address,address,uint256)` [:page_facing_up:](https://eips.ethereum.org/EIPS/eip-721#specification) |
@@ -129,9 +132,9 @@ Because of their generality, vouchers can be used in a wide range of application
 | ERC-1155 | Token contract | `safeTransferFrom(address,address,uint256,uint256,data)` [:page_facing_up:](https://eips.ethereum.org/EIPS/eip-1155#specification) |
 | ERC-1155 | Token contract | `safeBatchTransferFrom(address,address,uint256[],uint256[],data)` [:page_facing_up:](https://eips.ethereum.org/EIPS/eip-1155#specification) [^3] |
 
-Please note that the voucher payload should be encoded according to the [Ethereum ABI specification for calling contract functions](https://docs.soliditylang.org/en/v0.8.19/abi-spec.html). As such, it should start with the first four bytes of the Keccak-256 hash of the function signature string (as given in the table above), followed by the ABI-encoded parameter values.
+Please note that, for Solidity function calls, the voucher payload should be encoded according to the [Solidity ABI specification for calling contract functions](https://docs.soliditylang.org/en/v0.8.23/abi-spec.html). As such, it should start with the first four bytes of the Keccak-256 hash of the function signature string (as given in the table above), followed by the ABI-encoded arguments.
 
-As an example, the voucher for a simple ERC-20 transfer (2nd line in the table above) to address `0xf39fd6e51aad88f6f4ce6ab8827279cfffb92266` with amount 100 should specify the following payload:
+As an example, the voucher for a simple direct ERC-20 transfer to address `0xf39fd6e51aad88f6f4ce6ab8827279cfffb92266` with amount 100 should specify the following payload:
 
 ```
 0xa9059cbb000000000000000000000000f39fd6e51aad88f6f4ce6ab8827279cfffb922660000000000000000000000000000000000000000000000000000000000000064

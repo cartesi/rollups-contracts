@@ -14,7 +14,12 @@ interface Outputs {
     /// @notice A single-use permission to execute a specific message call
     /// from the context of the application contract.
     /// @param destination The address that will be called
+    /// @param value The amount of Wei to be transferred through the call
     /// @param payload The payload, which—in the case of Solidity
     /// contracts—encodes a function call
-    function Voucher(address destination, bytes calldata payload) external;
+    function Voucher(
+        address destination,
+        uint256 value,
+        bytes calldata payload
+    ) external;
 }
