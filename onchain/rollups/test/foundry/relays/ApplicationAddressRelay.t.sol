@@ -51,6 +51,7 @@ contract ApplicationAddressRelayTest is Test {
         // Construct the application address relay input
         bytes memory payload = abi.encodePacked(app);
         bytes memory input = EvmAdvanceEncoder.encode(
+            app,
             address(_relay),
             0,
             payload

@@ -8,6 +8,7 @@ import {Inputs} from "contracts/common/Inputs.sol";
 
 library EvmAdvanceEncoder {
     function encode(
+        address app,
         address sender,
         uint256 index,
         bytes memory payload
@@ -15,7 +16,7 @@ library EvmAdvanceEncoder {
         return
             abi.encodeCall(
                 Inputs.EvmAdvance,
-                (sender, block.number, block.timestamp, index, payload)
+                (app, sender, block.number, block.timestamp, index, payload)
             );
     }
 }
