@@ -30,7 +30,7 @@ contract InputBoxTest is Test {
 
         bytes memory largePayload = new bytes(max + 1);
         uint256 largeLength = EvmAdvanceEncoder
-            .encode(address(this), 1, largePayload)
+            .encode(app, address(this), 1, largePayload)
             .length;
         vm.expectRevert(
             abi.encodeWithSelector(
@@ -61,6 +61,7 @@ contract InputBoxTest is Test {
 
             vm.expectEmit(true, true, false, true, address(_inputBox));
             bytes memory input = EvmAdvanceEncoder.encode(
+                app,
                 address(this),
                 i,
                 payloads[i]
@@ -78,6 +79,7 @@ contract InputBoxTest is Test {
                 abi.encodeCall(
                     Inputs.EvmAdvance,
                     (
+                        app,
                         address(this),
                         i, // block.number
                         i + year2022, // block.timestamp
@@ -96,7 +98,7 @@ contract InputBoxTest is Test {
     function _getMaxInputPayloadLength() internal pure returns (uint256) {
         bytes memory blob = abi.encodeCall(
             Inputs.EvmAdvance,
-            (address(0), 0, 0, 0, new bytes(32))
+            (address(0), address(0), 0, 0, 0, new bytes(32))
         );
         // number of bytes in input blob excluding input payload
         uint256 extraBytes = blob.length - 32;
