@@ -218,14 +218,18 @@ contract Application is
     /// @param arguments ABI-encoded arguments
     function _executeVoucher(bytes calldata arguments) internal {
         address destination;
+        uint256 value;
         bytes memory payload;
 
-        (destination, payload) = abi.decode(arguments, (address, bytes));
+        (destination, value, payload) = abi.decode(
+            arguments,
+            (address, uint256, bytes)
+        );
 
         bool success;
         bytes memory returndata;
 
-        (success, returndata) = destination.call(payload);
+        (success, returndata) = destination.call{value: value}(payload);
 
         if (!success) {
             returndata.raise();
