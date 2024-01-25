@@ -93,48 +93,6 @@
         }
       ]
     },
-    "DAppAddressRelay": {
-      "address": "0xF5DE34d6BbC0446E2a45719E718efEbaaE179daE",
-      "abi": [
-        {
-          "inputs": [
-            {
-              "internalType": "contract IInputBox",
-              "name": "_inputBox",
-              "type": "address"
-            }
-          ],
-          "stateMutability": "nonpayable",
-          "type": "constructor"
-        },
-        {
-          "inputs": [],
-          "name": "getInputBox",
-          "outputs": [
-            {
-              "internalType": "contract IInputBox",
-              "name": "",
-              "type": "address"
-            }
-          ],
-          "stateMutability": "view",
-          "type": "function"
-        },
-        {
-          "inputs": [
-            {
-              "internalType": "address",
-              "name": "_dapp",
-              "type": "address"
-            }
-          ],
-          "name": "relayDAppAddress",
-          "outputs": [],
-          "stateMutability": "nonpayable",
-          "type": "function"
-        }
-      ]
-    },
     "ERC1155BatchPortal": {
       "address": "0xedB53860A6B52bbb7561Ad596416ee9965B055Aa",
       "abi": [

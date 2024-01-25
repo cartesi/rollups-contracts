@@ -21,7 +21,6 @@ graph TD
     ERC721Portal[ERC-721 Portal]:::core
     ERC1155SinglePortal[ERC-1155 Single Transfer Portal]:::core
     ERC1155BatchPortal[ERC-1155 Batch Transfer Portal]:::core
-    ApplicationAddressRelay[Application Address Relay]:::core
     Consensus:::external
 
     ERC20[Any ERC-20 token]:::external
@@ -56,8 +55,6 @@ graph TD
     Anyone2 -- depositBatchERC1155Token ---> ERC1155BatchPortal
     ERC1155BatchPortal -- safeBatchTransferFrom ----> ERC1155
     ERC1155BatchPortal -- addInput -----> InputBox
-    Anyone2 -- relayApplicationAddress ---> ApplicationAddressRelay
-    ApplicationAddressRelay -- addInput -----> InputBox
 
     class ERC20,ERC721,ERC1155 hasLink
     click ERC20 href "https://eips.ethereum.org/EIPS/eip-20"
@@ -143,12 +140,6 @@ As an example, the voucher for a simple ERC-20 transfer (2nd line in the table a
 [^1]: If the application owns the tokens, prefer to use `transfer(address,uint256)`
 [^2]: If no data is being passed as an argument, prefer to use `safeTransferFrom(address,address,uint256)`
 [^3]: If only one token is being transferred, prefer to use `safeTransferFrom(address,address,uint256,uint256,data)`
-
-### Application Address Relay
-
-In the previous section, we showed how vouchers can be used to withdraw different types of assets. Most of those vouchers contain the address of the application contract, either as the destination address or as a function argument. So, the off-chain machine needs to "know" the application contract address at some point. If the off-chain machine knew the application contract address from the beginning, it would create a cyclical dependency between the initial machine state hash (also called "template hash") and the application contract address. This is due to the fact that the address of an application contract depends on its construction arguments, which include the template hash; and that the template hash is the Merkle root of the machine address space, which includes the application contract address.
-
-This "chicken-and-egg" problem is circumvented by a very small permissionless contract in the base layer, the Application Address Relay ([source](./onchain/rollups/contracts/relays/ApplicationAddressRelay.sol)). Its only job is to add an input to an application's input box with the application contract address. The off-chain machine then decodes this input and stores the address somewhere for future use. Just like in the case of portals, the machine must also know the address of the relay in order to validate the origin of the input.
 
 ### Notices
 
