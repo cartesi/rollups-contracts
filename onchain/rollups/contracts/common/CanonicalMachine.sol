@@ -20,9 +20,8 @@ library CanonicalMachine {
     /// @notice Keccak-256 output size (32 bytes).
     Log2Size constant KECCAK_LOG2_SIZE = Log2Size.wrap(5);
 
-    /// @notice Maximum input size (~2 megabytes).
-    /// @dev The offset and size fields use up the extra 64 bytes.
-    uint256 constant INPUT_MAX_SIZE = (1 << 21) - 64;
+    /// @notice Maximum input size (2 megabytes).
+    uint256 constant INPUT_MAX_SIZE = 1 << 21;
 
     /// @notice Maximum output metadata memory range (2 megabytes).
     Log2Size constant OUTPUT_METADATA_LOG2_SIZE = Log2Size.wrap(21);
