@@ -64,26 +64,26 @@ contract Quorum is AbstractConsensus {
 
     /// @notice Submit a claim.
     /// @notice If the majority of the quorum submit a claim, it is accepted.
-    /// @param application The application address
+    /// @param app The application address
     /// @param r The input range
     /// @param epochHash The epoch hash
     /// @dev Can only be called by a validator.
     function submitClaim(
-        address application,
+        address app,
         InputRange calldata r,
         bytes32 epochHash
     ) external {
         uint256 id = _validatorId[msg.sender];
         require(id > 0, "Quorum: caller is not validator");
 
-        emit ClaimSubmission(msg.sender, application, r, epochHash);
+        emit ClaimSubmission(msg.sender, app, r, epochHash);
 
-        Votes storage votes = _getVotes(application, r, epochHash);
+        Votes storage votes = _getVotes(app, r, epochHash);
 
         if (!votes.inFavorById.get(id)) {
             votes.inFavorById.set(id);
             if (++votes.inFavorCount == 1 + _numOfValidators / 2) {
-                _acceptClaim(application, r, epochHash);
+                _acceptClaim(app, r, epochHash);
             }
         }
     }
@@ -110,44 +110,44 @@ contract Quorum is AbstractConsensus {
     }
 
     /// @notice Get the number of validators in favor of a claim.
-    /// @param application The application address
+    /// @param app The application address
     /// @param r The input range
     /// @param epochHash The epoch hash
     /// @return Number of validators in favor of claim
     function numOfValidatorsInFavorOf(
-        address application,
+        address app,
         InputRange calldata r,
         bytes32 epochHash
     ) external view returns (uint256) {
-        return _getVotes(application, r, epochHash).inFavorCount;
+        return _getVotes(app, r, epochHash).inFavorCount;
     }
 
     /// @notice Check whether a validator is in favor of a claim.
-    /// @param application The application address
+    /// @param app The application address
     /// @param r The input range
     /// @param epochHash The epoch hash
     /// @param id The ID of the validator
     /// @return Whether validator is in favor of claim
     /// @dev Assumes the provided ID is valid.
     function isValidatorInFavorOf(
-        address application,
+        address app,
         InputRange calldata r,
         bytes32 epochHash,
         uint256 id
     ) external view returns (bool) {
-        return _getVotes(application, r, epochHash).inFavorById.get(id);
+        return _getVotes(app, r, epochHash).inFavorById.get(id);
     }
 
     /// @notice Get a `Votes` structure from storage from a given claim.
-    /// @param application The application address
+    /// @param app The application address
     /// @param r The input range
     /// @param epochHash The epoch hash
     /// @return The `Votes` structure related to given claim
     function _getVotes(
-        address application,
+        address app,
         InputRange calldata r,
         bytes32 epochHash
     ) internal view returns (Votes storage) {
-        return _votes[application][r.firstIndex][r.lastIndex][epochHash];
+        return _votes[app][r.firstIndex][r.lastIndex][epochHash];
     }
 }
