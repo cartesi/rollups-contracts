@@ -235,7 +235,8 @@ contract ApplicationTest is TestBase {
         vm.expectEmit(false, false, false, true, address(_app));
         emit IApplication.OutputExecuted(
             _calculateInputIndex(proof).toUint64(),
-            proof.outputIndexWithinInput
+            proof.outputIndexWithinInput,
+            _encodeVoucher(voucher)
         );
 
         // perform call
@@ -421,7 +422,8 @@ contract ApplicationTest is TestBase {
         vm.expectEmit(false, false, false, true, address(_app));
         emit IApplication.OutputExecuted(
             _calculateInputIndex(proof).toUint64(),
-            proof.outputIndexWithinInput
+            proof.outputIndexWithinInput,
+            _encodeVoucher(voucher)
         );
 
         // perform call
@@ -543,7 +545,8 @@ contract ApplicationTest is TestBase {
         vm.expectEmit(false, false, false, true, address(_app));
         emit IApplication.OutputExecuted(
             _calculateInputIndex(proof).toUint64(),
-            proof.outputIndexWithinInput
+            proof.outputIndexWithinInput,
+            _encodeVoucher(voucher)
         );
 
         // perform call

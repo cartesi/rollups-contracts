@@ -28,6 +28,7 @@ Modified the `ICartesiDApp` interface:
 
     -   Renamed it as `OutputExecuted`.
     -   Split the `voucherId` parameter into `inputIndex` and `outputIndexWithinInput` parameters.
+    -   Added an `output` parameter.
 
 -   Modified the `wasVoucherExecuted` function:
 

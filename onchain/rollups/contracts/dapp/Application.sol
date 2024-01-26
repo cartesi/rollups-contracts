@@ -132,7 +132,7 @@ contract Application is
         }
 
         bitmap.set(inputIndex);
-        emit OutputExecuted(uint64(inputIndex), outputIndexWithinInput);
+        emit OutputExecuted(uint64(inputIndex), outputIndexWithinInput, output);
     }
 
     function migrateToConsensus(
