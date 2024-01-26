@@ -22,7 +22,7 @@ contract InputBoxTest is Test {
         assertEq(_inputBox.getNumberOfInputs(app), 0);
     }
 
-    function testAddLargeInput(uint64 chainId) public {
+    function testAddLargeInput() public {
         address app = vm.addr(1);
         uint256 max = _getMaxInputPayloadLength();
 
@@ -30,7 +30,7 @@ contract InputBoxTest is Test {
 
         bytes memory largePayload = new bytes(max + 1);
         uint256 largeLength = EvmAdvanceEncoder
-            .encode(chainId, app, address(this), 1, largePayload)
+            .encode(1, app, address(this), 1, largePayload)
             .length;
         vm.expectRevert(
             abi.encodeWithSelector(
