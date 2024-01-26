@@ -8,8 +8,7 @@ import {MerkleV2} from "@cartesi/util/contracts/MerkleV2.sol";
 import {Outputs} from "../common/Outputs.sol";
 import {OutputValidityProof} from "../common/OutputValidityProof.sol";
 
-/// @title Output Validation Library
-library LibOutputValidation {
+library LibOutputValidityProof {
     using CanonicalMachine for CanonicalMachine.Log2Size;
 
     /// @notice Check if epoch hash is valid

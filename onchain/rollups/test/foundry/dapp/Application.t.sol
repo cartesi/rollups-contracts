@@ -11,7 +11,7 @@ import {IApplication} from "contracts/dapp/IApplication.sol";
 import {IConsensus} from "contracts/consensus/IConsensus.sol";
 import {IInputBox} from "contracts/inputs/IInputBox.sol";
 import {IInputRelay} from "contracts/inputs/IInputRelay.sol";
-import {LibOutputValidation} from "contracts/library/LibOutputValidation.sol";
+import {LibOutputValidityProof} from "contracts/library/LibOutputValidityProof.sol";
 import {OutputValidityProof} from "contracts/common/OutputValidityProof.sol";
 import {Outputs} from "contracts/common/Outputs.sol";
 import {InputRange} from "contracts/common/InputRange.sol";
@@ -37,7 +37,7 @@ contract ApplicationTest is TestBase {
     using LibServerManager for LibServerManager.RawFinishEpochResponse;
     using LibServerManager for LibServerManager.Proof;
     using LibServerManager for LibServerManager.Proof[];
-    using LibOutputValidation for OutputValidityProof;
+    using LibOutputValidityProof for OutputValidityProof;
     using SafeCast for uint256;
 
     enum OutputName {
