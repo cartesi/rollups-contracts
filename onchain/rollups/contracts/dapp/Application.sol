@@ -7,7 +7,7 @@ import {IApplication} from "./IApplication.sol";
 import {IConsensus} from "../consensus/IConsensus.sol";
 import {IInputBox} from "../inputs/IInputBox.sol";
 import {IInputRelay} from "../inputs/IInputRelay.sol";
-import {LibOutputValidation} from "../library/LibOutputValidation.sol";
+import {LibOutputValidityProof} from "../library/LibOutputValidityProof.sol";
 import {OutputValidityProof} from "../common/OutputValidityProof.sol";
 import {Outputs} from "../common/Outputs.sol";
 import {InputRange} from "../common/InputRange.sol";
@@ -31,7 +31,7 @@ contract Application is
 {
     using BitMaps for BitMaps.BitMap;
     using LibError for bytes;
-    using LibOutputValidation for OutputValidityProof;
+    using LibOutputValidityProof for OutputValidityProof;
     using LibInputRange for InputRange;
 
     /// @notice The initial machine state hash.
