@@ -6,6 +6,7 @@ on:
     branches:
       - main
       - release/*
+      - prerelease/*
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
