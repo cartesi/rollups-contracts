@@ -18,6 +18,13 @@ jobs:
 
     steps:
       - uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.BOT_TOKEN }}
+
+      - name: Register Git user
+        run: |
+          git config user.name rollups-contracts-bot
+          git config user.email 153998668+rollups-contracts-bot@users.noreply.github.com
 
       - uses: actions/setup-node@v4
         with:
