@@ -11,8 +11,11 @@ concurrency: ${{ github.workflow }}-${{ github.ref }}
 
 jobs:
   version_or_publish:
-    name: Version packages or publish them to npm.js
+    name: Version packages or publish them to npmjs.com
     runs-on: ubuntu-latest
+    outputs:
+      published: ${{ steps.changeset.outputs.published }}
+      version: ${{ steps.get_version.outputs.version }}
     defaults:
       run:
         working-directory: onchain/rollups
@@ -34,8 +37,9 @@ jobs:
       - name: Install Node dependencies
         run: yarn install
 
-      - name: Create release PR or publish packages to npm.js
+      - name: Create release PR or publish packages to npmjs.com
         uses: changesets/action@f13b1baaa620fde937751f5d2c3572b9da32af23
+        id: changeset
         with:
           commit: "chore: version packages"
           publish: yarn changeset publish
@@ -43,3 +47,49 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.BOT_TOKEN }}
           NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
+
+      - name: Get version
+        id: get_version
+        run: jq -r '"version=\(.version)"' package.json >> "$GITHUB_OUTPUT"
+
+  rust_bindings:
+    name: Generate and publish Rust bindings
+    needs: version_or_publish
+    if: ${{ needs.version_or_publish.outputs.published == 'true' }}
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: onchain/rollups
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 18
+
+      - name: Install Python dependencies
+        run: pip install yq
+
+      - name: Install Node dependencies
+        run: yarn install
+
+      - name: Generate Rust bindings
+        run: |
+          forge bind \
+            --crate-name cartesi-rollups-contracts \
+            --crate-version "$VERSION"
+        env:
+          VERSION: ${{ needs.version_or_publish.outputs.version }}
+
+      - name: Edit Rust package manifest
+        working-directory: onchain/rollups/out/bindings
+        run: |
+          tomlq -ti '.package.license = "Apache-2.0"' Cargo.toml
+          tomlq -ti '.package.description = "Rust bindings for Cartesi Rollups smart contracts"' Cargo.toml
+
+      - name: Publish Rust package to crates.io
+        working-directory: onchain/rollups/out/bindings
+        run: cargo publish
+        env:
+          CARGO_REGISTRY_TOKEN: ${{ secrets.CARGO_REGISTRY_TOKEN }}
