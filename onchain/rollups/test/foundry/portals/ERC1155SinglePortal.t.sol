@@ -13,7 +13,7 @@ import {IInputBox} from "contracts/inputs/IInputBox.sol";
 import {IInputRelay} from "contracts/inputs/IInputRelay.sol";
 import {InputEncoding} from "contracts/common/InputEncoding.sol";
 
-import {Test} from "forge-std/Test.sol";
+import {ERC165Test} from "../util/ERC165Test.sol";
 
 contract NormalToken is ERC1155 {
     constructor(
@@ -27,7 +27,7 @@ contract NormalToken is ERC1155 {
 
 contract TokenHolder is ERC1155Holder {}
 
-contract ERC1155SinglePortalTest is Test {
+contract ERC1155SinglePortalTest is ERC165Test {
     address _alice;
     address _app;
     IERC1155 _token;
@@ -42,19 +42,20 @@ contract ERC1155SinglePortalTest is Test {
         _portal = new ERC1155SinglePortal(_inputBox);
     }
 
-    function testSupportsInterface(bytes4 interfaceId) public {
-        assertTrue(
-            _portal.supportsInterface(type(IERC1155SinglePortal).interfaceId)
-        );
-        assertTrue(_portal.supportsInterface(type(IInputRelay).interfaceId));
-        assertTrue(_portal.supportsInterface(type(IERC165).interfaceId));
+    function getERC165Contract() public view override returns (IERC165) {
+        return _portal;
+    }
 
-        assertFalse(_portal.supportsInterface(bytes4(0xffffffff)));
-
-        vm.assume(interfaceId != type(IERC1155SinglePortal).interfaceId);
-        vm.assume(interfaceId != type(IInputRelay).interfaceId);
-        vm.assume(interfaceId != type(IERC165).interfaceId);
-        assertFalse(_portal.supportsInterface(interfaceId));
+    function getSupportedInterfaces()
+        public
+        pure
+        override
+        returns (bytes4[] memory)
+    {
+        bytes4[] memory interfaceIds = new bytes4[](2);
+        interfaceIds[0] = type(IERC1155SinglePortal).interfaceId;
+        interfaceIds[1] = type(IInputRelay).interfaceId;
+        return interfaceIds;
     }
 
     function testGetInputBox() public {
