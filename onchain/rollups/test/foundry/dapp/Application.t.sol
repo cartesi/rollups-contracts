@@ -4,7 +4,7 @@
 /// @title Application Test
 pragma solidity ^0.8.22;
 
-import {TestBase} from "../util/TestBase.sol";
+import {ERC165Test} from "../util/ERC165Test.sol";
 
 import {Application} from "contracts/dapp/Application.sol";
 import {IApplication} from "contracts/dapp/IApplication.sol";
@@ -33,7 +33,7 @@ import {SimpleERC721} from "../util/SimpleERC721.sol";
 
 import "forge-std/console.sol";
 
-contract ApplicationTest is TestBase {
+contract ApplicationTest is ERC165Test {
     using LibServerManager for LibServerManager.RawFinishEpochResponse;
     using LibServerManager for LibServerManager.Proof;
     using LibServerManager for LibServerManager.Proof[];
@@ -119,19 +119,21 @@ contract ApplicationTest is TestBase {
         _readFinishEpochResponse();
     }
 
-    function testSupportsInterface(bytes4 randomInterfaceId) public {
-        assertTrue(_app.supportsInterface(type(IApplication).interfaceId));
-        assertTrue(_app.supportsInterface(type(IERC721Receiver).interfaceId));
-        assertTrue(_app.supportsInterface(type(IERC1155Receiver).interfaceId));
-        assertTrue(_app.supportsInterface(type(IERC165).interfaceId));
+    function getERC165Contract() public view override returns (IERC165) {
+        return _app;
+    }
 
-        assertFalse(_app.supportsInterface(bytes4(0xffffffff)));
-
-        vm.assume(randomInterfaceId != type(IApplication).interfaceId);
-        vm.assume(randomInterfaceId != type(IERC721Receiver).interfaceId);
-        vm.assume(randomInterfaceId != type(IERC1155Receiver).interfaceId);
-        vm.assume(randomInterfaceId != type(IERC165).interfaceId);
-        assertFalse(_app.supportsInterface(randomInterfaceId));
+    function getSupportedInterfaces()
+        public
+        pure
+        override
+        returns (bytes4[] memory)
+    {
+        bytes4[] memory interfaceIds = new bytes4[](3);
+        interfaceIds[0] = type(IApplication).interfaceId;
+        interfaceIds[1] = type(IERC721Receiver).interfaceId;
+        interfaceIds[2] = type(IERC1155Receiver).interfaceId;
+        return interfaceIds;
     }
 
     function testConstructorWithOwnerAsZeroAddress(
