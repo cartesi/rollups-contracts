@@ -10,7 +10,8 @@ on:
 concurrency: ${{ github.workflow }}-${{ github.ref }}
 
 jobs:
-  release:
+  version_or_publish:
+    name: Version packages or publish them to npm.js
     runs-on: ubuntu-latest
     defaults:
       run:
@@ -30,10 +31,10 @@ jobs:
         with:
           node-version: 18
 
-      - name: Install dependencies
+      - name: Install Node dependencies
         run: yarn install
 
-      - name: Create release PR or publish to npm
+      - name: Create release PR or publish packages to npm.js
         uses: changesets/action@f13b1baaa620fde937751f5d2c3572b9da32af23
         with:
           commit: "chore: version packages"
