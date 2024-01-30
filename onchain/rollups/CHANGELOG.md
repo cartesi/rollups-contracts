@@ -1,5 +1,14 @@
 # @cartesi/rollups
 
+## 2.0.0-rc.1
+
+### Patch Changes
+
+-   f29b098b: Adjusted the GitHub Action that publishes the Rust bindings to crates.io.
+
+    -   Initialize git submodules recursively
+    -   Install the foundry toolkit
+
 ## 2.0.0-rc.0
 
 ### Major Changes
