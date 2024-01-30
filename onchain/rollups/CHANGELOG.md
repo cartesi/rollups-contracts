@@ -1,5 +1,223 @@
 # @cartesi/rollups
 
+## 2.0.0-rc.0
+
+### Major Changes
+
+-   d8561fe3: Modified the `OutputValidityProof` struct:
+
+    -   Collapsed the `vouchersEpochRootHash` and `noticesEpochRootHash` fields into a single `outputsEpochRootHash` field
+    -   Added an `inputRange` field
+
+-   d8561fe3: Modified the ERC-20 deposit input:
+
+    -   Removed the `success` field, because the ERC-20 portal now only adds inputs for successful deposits.
+
+-   d8561fe3: Modified the `CanonicalMachine` library:
+
+    -   Collapsed the `VOUCHER_METADATA_LOG2_SIZE` and `NOTICE_METADATA_LOG2_SIZE` constants into a single `OUTPUT_METADATA_LOG2_SIZE` constant (with the same value).
+    -   Collapsed the `EPOCH_VOUCHER_LOG2_SIZE` and `EPOCH_NOTICE_LOG2_SIZE` constants into a single `EPOCH_OUTPUT_LOG2_SIZE` constant (with the same value).
+    -   Updated the value of the `INPUT_MAX_SIZE` constant to reflect a change in the off-chain machine.
+
+-   d8561fe3: Modified the `EtherPortal` contract:
+
+    -   Made it support the following interfaces (as in EIP-165):
+
+        -   `IERC165`
+        -   `IInputRelay`
+        -   `IEtherPortal`
+
+-   d8561fe3: Modified the `AbstractConsensus` contract:
+
+    -   Removed the `join` function
+    -   Implemented the `getEpochHash` function
+    -   Added an internal `_acceptClaim` function
+
+-   13eb18a4: Inputs are now blockchain-agnostic and self-contained blobs.
+-   4e2533ef: Include application address in `EvmAdvance` input.
+-   d8561fe3: Modified the `IInputRelay` interface:
+
+    -   Made it inherit from `IERC165`
+
+-   d8561fe3: Modified the `ERC1155BatchPortal` contract:
+
+    -   Made it support the following interfaces (as in EIP-165):
+
+        -   `IERC165`
+        -   `IInputRelay`
+        -   `IERC1155BatchPortal`
+
+-   d8561fe3: Modified the `IEtherPortal` interface:
+
+    -   Added an `EtherTransferFailed` error.
+
+-   d8561fe3: Bumped `@openzeppelin/contracts` from `4.9.2` to `5.0.0`.
+-   d8561fe3: Moved `Proof` to a dedicated file in the `common` directory.
+-   f39e4ef0: Added a `value` field to vouchers.
+-   d8561fe3: Moved `OutputValidityProof` to a dedicated file in the `common` directory.
+-   d8561fe3: Modified the `ICartesiDAppFactory` interface:
+
+    -   Renamed it as `IApplicationFactory`.
+    -   Added the following parameters to its functions and events:
+
+        -   `inputBox`
+        -   `inputRelays`
+
+-   d8561fe3: Modified the `CartesiDApp` contract:
+
+    -   Renamed it as `Application`.
+    -   Added the following parameters to its constructor:
+
+        -   `inputBox`
+        -   `inputRelays`
+
+    -   Made it support the following interfaces (as in EIP-165):
+
+        -   `IApplication`
+        -   `IERC721Receiver`
+
+    -   Removed the `withdrawEther` function.
+    -   Removed the `OnlyApplication` error.
+    -   Removed the `EtherTransferFailed` error.
+
+-   d8561fe3: Modified the `ERC1155SinglePortal` contract:
+
+    -   Made it support the following interfaces (as in EIP-165):
+
+        -   `IERC165`
+        -   `IInputRelay`
+        -   `IERC1155SinglePortal`
+
+-   d8561fe3: Removed:
+
+    -   the `History` contract.
+    -   the `IHistory` interface.
+    -   the `HistoryFactory` contract.
+    -   the `IHistoryFactory` interface.
+    -   the `AuthorityHistoryPairFactory` contract.
+    -   the `IAuthorityHistoryPairFactory` interface.
+    -   the `OutputEncoding` library.
+    -   the `LibInput` library.
+    -   the `ApplicationAddressRelay` contract.
+    -   the `IApplicationAddressRelay` interface.
+
+-   8892a88b: Include chain ID in `EvmAdvance` input.
+-   d8561fe3: Modified the `ICartesiDApp` interface:
+
+    -   Renamed it as `IApplication`.
+    -   Made it inherit from:
+
+        -   `IERC721Receiver`.
+        -   `IERC1155Receiver` (which inherits from `IERC165`).
+
+    -   Modified the `executeVoucher` function:
+
+        -   Renamed it as `executeOutput`.
+        -   Errors raised by low-level calls are bubbled up.
+        -   Changed the type of the `proof` parameter to `OutputValidityProof`.
+        -   Removed the boolean return value.
+
+    -   Modified the `validateNotice` function:
+
+        -   Renamed it as `validateOutput`.
+        -   Changed type of the `proof` parameter to `OutputValidityProof`.
+        -   Removed the boolean return value.
+
+    -   Modified the `VoucherExecuted` event:
+
+        -   Renamed it as `OutputExecuted`.
+        -   Split the `voucherId` parameter into `inputIndex` and `outputIndexWithinInput` parameters.
+        -   Added an `output` parameter.
+
+    -   Modified the `wasVoucherExecuted` function:
+
+        -   Renamed it as `wasOutputExecuted`.
+
+    -   Added a `getInputBox` function.
+    -   Added a `getInputRelays` function.
+    -   Added an `InputIndexOutOfRange` error.
+    -   Added an `OutputNotExecutable` error.
+    -   Added an `OutputNotReexecutable` error.
+    -   Added an `IncorrectEpochHash` error.
+    -   Added an `IncorrectOutputsEpochRootHash` error.
+    -   Added an `IncorrectOutputHashesRootHash` error.
+
+-   13eb18a4: Modified the `IInputBox` interface:
+
+    -   Modified the `InputAdded` event:
+
+        -   Removed the `sender` parameter.
+        -   Changed the semantics of the `input` parameter.
+
+    -   Added an `InputTooLarge` error.
+
+-   d8561fe3: Modified the `CartesiDAppFactory` contract:
+
+    -   Renamed it as `ApplicationFactory`.
+
+-   d8561fe3: Modified the `InputRelay` contract:
+
+    -   Made it support the following interfaces (as in EIP-165):
+
+        -   `IERC165`
+        -   `IInputRelay`
+
+-   d8561fe3: Modified the `Authority` contract:
+
+    -   Removed the `AuthorityWithdrawalFailed` error
+    -   Removed the `NewHistory` event
+    -   Removed the `getClaim` function
+    -   Removed the `getHistory` function
+    -   Removed the `join` function
+    -   Removed the `migrateHistoryToConsensus` function
+    -   Removed the `setHistory` function
+    -   Removed the `submitClaim(bytes)` function
+    -   Removed the `withdrawERC20Tokens` function
+    -   Implemented the `submitClaim(address,(uint64,uint64),bytes32)` function
+
+-   d8561fe3: Completely modified the `IConsensus` interface:
+
+    -   Removed the `join` function
+    -   Removed the `getClaim` function
+    -   Removed the `ApplicationJoined` event
+    -   Added a `submitClaim` function
+    -   Added a `getEpochHash` function
+    -   Added a `ClaimSubmission` event
+    -   Added a `ClaimAcceptance` event
+
+-   d8561fe3: Bumped the Solidity compiler from `0.8.19` to `0.8.23`.
+-   d8561fe3: Modified the `IERC20Portal` interface:
+
+    -   Added an `ERC20TransferFailed` error.
+
+-   d8561fe3: Modified the `ERC20Portal` contract:
+
+    -   Made it support the following interfaces (as in EIP-165):
+
+        -   `IERC165`
+        -   `IInputRelay`
+        -   `IERC20Portal`
+
+-   d8561fe3: Removed deployments to Goerli testnets (L1 and L2s).
+-   d8561fe3: Modified the `ERC721Portal` contract:
+
+    -   Made it support the following interfaces (as in EIP-165):
+
+        -   `IERC165`
+        -   `IInputRelay`
+        -   `IERC721Portal`
+
+### Minor Changes
+
+-   d8561fe3: Added:
+
+    -   an `Outputs` interface
+    -   an `InputRange` struct
+    -   a `LibInputRange` library
+    -   a `Quorum` contract (which implements the `IConsensus` interface)
+    -   a `QuorumFactory` contract
+    -   an `IQuorumFactory` interface
+
 ## 1.2.0
 
 ### Minor Changes
