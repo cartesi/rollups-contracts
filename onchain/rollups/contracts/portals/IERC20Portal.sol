@@ -3,11 +3,11 @@
 
 pragma solidity ^0.8.8;
 
-import {IInputRelay} from "../inputs/IInputRelay.sol";
+import {IPortal} from "./IPortal.sol";
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
 /// @title ERC-20 Portal interface
-interface IERC20Portal is IInputRelay {
+interface IERC20Portal is IPortal {
     // Errors
 
     /// @notice Failed to transfer ERC-20 tokens to application

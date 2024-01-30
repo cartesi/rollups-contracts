@@ -6,7 +6,7 @@ pragma solidity ^0.8.8;
 import {Application} from "./Application.sol";
 import {IConsensus} from "../consensus/IConsensus.sol";
 import {IInputBox} from "../inputs/IInputBox.sol";
-import {IInputRelay} from "../inputs/IInputRelay.sol";
+import {IPortal} from "../portals/IPortal.sol";
 
 /// @title Application Factory interface
 interface IApplicationFactory {
@@ -15,7 +15,7 @@ interface IApplicationFactory {
     /// @notice A new application was deployed.
     /// @param consensus The initial consensus contract
     /// @param inputBox The input box contract
-    /// @param inputRelays The input relays
+    /// @param portals The portals supported by the application
     /// @param appOwner The initial application owner
     /// @param templateHash The initial machine state hash
     /// @param app The application
@@ -23,7 +23,7 @@ interface IApplicationFactory {
     event ApplicationCreated(
         IConsensus indexed consensus,
         IInputBox inputBox,
-        IInputRelay[] inputRelays,
+        IPortal[] portals,
         address appOwner,
         bytes32 templateHash,
         Application app
@@ -34,7 +34,7 @@ interface IApplicationFactory {
     /// @notice Deploy a new application.
     /// @param consensus The initial consensus contract
     /// @param inputBox The input box contract
-    /// @param inputRelays The input relays
+    /// @param portals The portals supported by the application
     /// @param appOwner The initial application owner
     /// @param templateHash The initial machine state hash
     /// @return The application
@@ -42,7 +42,7 @@ interface IApplicationFactory {
     function newApplication(
         IConsensus consensus,
         IInputBox inputBox,
-        IInputRelay[] calldata inputRelays,
+        IPortal[] calldata portals,
         address appOwner,
         bytes32 templateHash
     ) external returns (Application);
@@ -50,7 +50,7 @@ interface IApplicationFactory {
     /// @notice Deploy a new application deterministically.
     /// @param consensus The initial consensus contract
     /// @param inputBox The input box contract
-    /// @param inputRelays The input relays
+    /// @param portals The portals supported by the application
     /// @param appOwner The initial application owner
     /// @param templateHash The initial machine state hash
     /// @param salt The salt used to deterministically generate the application address
@@ -59,7 +59,7 @@ interface IApplicationFactory {
     function newApplication(
         IConsensus consensus,
         IInputBox inputBox,
-        IInputRelay[] calldata inputRelays,
+        IPortal[] calldata portals,
         address appOwner,
         bytes32 templateHash,
         bytes32 salt
@@ -68,7 +68,7 @@ interface IApplicationFactory {
     /// @notice Calculate the address of an application to be deployed deterministically.
     /// @param consensus The initial consensus contract
     /// @param inputBox The input box contract
-    /// @param inputRelays The input relays
+    /// @param portals The portals supported by the application
     /// @param appOwner The initial application owner
     /// @param templateHash The initial machine state hash
     /// @param salt The salt used to deterministically generate the application address
@@ -78,7 +78,7 @@ interface IApplicationFactory {
     function calculateApplicationAddress(
         IConsensus consensus,
         IInputBox inputBox,
-        IInputRelay[] calldata inputRelays,
+        IPortal[] calldata portals,
         address appOwner,
         bytes32 templateHash,
         bytes32 salt

@@ -10,7 +10,7 @@ import {Application} from "contracts/dapp/Application.sol";
 import {IApplication} from "contracts/dapp/IApplication.sol";
 import {IConsensus} from "contracts/consensus/IConsensus.sol";
 import {IInputBox} from "contracts/inputs/IInputBox.sol";
-import {IInputRelay} from "contracts/inputs/IInputRelay.sol";
+import {IPortal} from "contracts/portals/IPortal.sol";
 import {LibOutputValidityProof} from "contracts/library/LibOutputValidityProof.sol";
 import {OutputValidityProof} from "contracts/common/OutputValidityProof.sol";
 import {Outputs} from "contracts/common/Outputs.sol";
@@ -57,7 +57,7 @@ contract ApplicationTest is ERC165Test {
     IConsensus _consensus;
     IERC20 _erc20Token;
     IERC721 _erc721Token;
-    IInputRelay[] _inputRelays;
+    IPortal[] _portals;
     LibServerManager.OutputEnum[] _outputEnums;
     mapping(uint256 => Voucher) _vouchers;
     mapping(uint256 => bytes) _notices;
@@ -103,10 +103,8 @@ contract ApplicationTest is ERC165Test {
             LibBytes.hashToUint256("transferAmount") %
             (_initialSupply + 1);
         for (uint256 i; i < 5; ++i) {
-            _inputRelays.push(
-                IInputRelay(
-                    LibBytes.hashToAddress(abi.encode("Input Relays", i))
-                )
+            _portals.push(
+                IPortal(LibBytes.hashToAddress(abi.encode("Portals", i)))
             );
         }
     }
@@ -138,7 +136,7 @@ contract ApplicationTest is ERC165Test {
 
     function testConstructorWithOwnerAsZeroAddress(
         IInputBox inputBox,
-        IInputRelay[] calldata inputRelays,
+        IPortal[] calldata portals,
         bytes32 templateHash
     ) public {
         vm.expectRevert(
@@ -150,7 +148,7 @@ contract ApplicationTest is ERC165Test {
         new Application(
             _consensus,
             inputBox,
-            inputRelays,
+            portals,
             address(0),
             templateHash
         );
@@ -158,7 +156,7 @@ contract ApplicationTest is ERC165Test {
 
     function testConstructor(
         IInputBox inputBox,
-        IInputRelay[] calldata inputRelays,
+        IPortal[] calldata portals,
         address owner,
         bytes32 templateHash
     ) public {
@@ -170,7 +168,7 @@ contract ApplicationTest is ERC165Test {
         _app = new Application(
             _consensus,
             inputBox,
-            inputRelays,
+            portals,
             owner,
             templateHash
         );
@@ -178,7 +176,7 @@ contract ApplicationTest is ERC165Test {
         assertEq(address(_app.getConsensus()), address(_consensus));
         assertEq(address(_app.getInputBox()), address(inputBox));
         // abi.encode is used instead of a loop
-        assertEq(abi.encode(_app.getInputRelays()), abi.encode(inputRelays));
+        assertEq(abi.encode(_app.getPortals()), abi.encode(portals));
         assertEq(_app.owner(), owner);
         assertEq(_app.getTemplateHash(), templateHash);
     }
@@ -495,7 +493,7 @@ contract ApplicationTest is ERC165Test {
 
     function testMigrateToConsensus(
         IInputBox inputBox,
-        IInputRelay[] calldata inputRelays,
+        IPortal[] calldata portals,
         address owner,
         bytes32 templateHash,
         address newOwner,
@@ -510,7 +508,7 @@ contract ApplicationTest is ERC165Test {
         _app = new Application(
             _consensus,
             inputBox,
-            inputRelays,
+            portals,
             owner,
             templateHash
         );
@@ -575,7 +573,7 @@ contract ApplicationTest is ERC165Test {
             new Application{salt: _salt}(
                 _consensus,
                 _inputBox,
-                _inputRelays,
+                _portals,
                 _appOwner,
                 _templateHash
             );
