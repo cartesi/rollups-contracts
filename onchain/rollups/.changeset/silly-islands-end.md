@@ -36,7 +36,7 @@ Modified the `ICartesiDApp` interface:
 
 -   Added a `getInputBox` function.
 
--   Added a `getInputRelays` function.
+-   Added a `getPortals` function.
 
 -   Added an `InputIndexOutOfRange` error.
 

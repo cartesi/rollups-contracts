@@ -9,7 +9,7 @@ Modified the `CartesiDApp` contract:
 -   Added the following parameters to its constructor:
 
     -   `inputBox`
-    -   `inputRelays`
+    -   `portals`
 
 -   Made it support the following interfaces (as in EIP-165):
 

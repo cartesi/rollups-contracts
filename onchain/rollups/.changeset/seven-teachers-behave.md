@@ -12,5 +12,5 @@ Removed:
 -   the `IAuthorityHistoryPairFactory` interface.
 -   the `OutputEncoding` library.
 -   the `LibInput` library.
--   the `ApplicationAddressRelay` contract.
--   the `IApplicationAddressRelay` interface.
+-   the `DAppAddressRelay` contract.
+-   the `IDAppAddressRelay` interface.
