@@ -9,4 +9,4 @@ Modified the `ICartesiDAppFactory` interface:
 -   Added the following parameters to its functions and events:
 
     -   `inputBox`
-    -   `inputRelays`
+    -   `portals`
