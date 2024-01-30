@@ -7,5 +7,5 @@ Modified the `ERC20Portal` contract:
 -   Made it support the following interfaces (as in EIP-165):
 
     -   `IERC165`
-    -   `IInputRelay`
+    -   `IPortal`
     -   `IERC20Portal`
