@@ -3,14 +3,14 @@
 
 pragma solidity ^0.8.8;
 
-import {IInputBox} from "./IInputBox.sol";
+import {IInputBox} from "../inputs/IInputBox.sol";
 import {IERC165} from "@openzeppelin/contracts/utils/introspection/IERC165.sol";
 
-/// @title Input Relay interface
-interface IInputRelay is IERC165 {
+/// @title Portal interface
+interface IPortal is IERC165 {
     // Permissionless functions
 
-    /// @notice Get the input box used by this input relay.
+    /// @notice Get the input box used by this portal.
     /// @return The input box
     function getInputBox() external view returns (IInputBox);
 }

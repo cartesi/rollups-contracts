@@ -9,7 +9,7 @@ import {IERC20, ERC20} from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import {ERC20Portal} from "contracts/portals/ERC20Portal.sol";
 import {IERC20Portal} from "contracts/portals/IERC20Portal.sol";
 import {IInputBox} from "contracts/inputs/IInputBox.sol";
-import {IInputRelay} from "contracts/inputs/IInputRelay.sol";
+import {IPortal} from "contracts/portals/IPortal.sol";
 import {InputEncoding} from "contracts/common/InputEncoding.sol";
 
 import {ERC165Test} from "../util/ERC165Test.sol";
@@ -50,7 +50,7 @@ contract ERC20PortalTest is ERC165Test {
     {
         bytes4[] memory interfaceIds = new bytes4[](2);
         interfaceIds[0] = type(IERC20Portal).interfaceId;
-        interfaceIds[1] = type(IInputRelay).interfaceId;
+        interfaceIds[1] = type(IPortal).interfaceId;
         return interfaceIds;
     }
 

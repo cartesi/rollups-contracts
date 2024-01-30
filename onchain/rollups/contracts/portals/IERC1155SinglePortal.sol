@@ -3,11 +3,11 @@
 
 pragma solidity ^0.8.8;
 
-import {IInputRelay} from "../inputs/IInputRelay.sol";
+import {IPortal} from "./IPortal.sol";
 import {IERC1155} from "@openzeppelin/contracts/token/ERC1155/IERC1155.sol";
 
 /// @title ERC-1155 Single Transfer Portal interface
-interface IERC1155SinglePortal is IInputRelay {
+interface IERC1155SinglePortal is IPortal {
     // Permissionless functions
 
     /// @notice Transfer an ERC-1155 token to an application and add an input to

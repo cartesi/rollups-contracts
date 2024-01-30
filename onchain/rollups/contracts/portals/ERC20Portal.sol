@@ -7,7 +7,7 @@ import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {IERC165} from "@openzeppelin/contracts/utils/introspection/IERC165.sol";
 
 import {IERC20Portal} from "./IERC20Portal.sol";
-import {InputRelay} from "../inputs/InputRelay.sol";
+import {Portal} from "./Portal.sol";
 import {IInputBox} from "../inputs/IInputBox.sol";
 import {InputEncoding} from "../common/InputEncoding.sol";
 
@@ -15,10 +15,10 @@ import {InputEncoding} from "../common/InputEncoding.sol";
 ///
 /// @notice This contract allows anyone to perform transfers of
 /// ERC-20 tokens to an application while informing the off-chain machine.
-contract ERC20Portal is IERC20Portal, InputRelay {
+contract ERC20Portal is IERC20Portal, Portal {
     /// @notice Constructs the portal.
     /// @param inputBox The input box used by the portal
-    constructor(IInputBox inputBox) InputRelay(inputBox) {}
+    constructor(IInputBox inputBox) Portal(inputBox) {}
 
     function depositERC20Tokens(
         IERC20 token,
@@ -44,7 +44,7 @@ contract ERC20Portal is IERC20Portal, InputRelay {
 
     function supportsInterface(
         bytes4 interfaceId
-    ) public view virtual override(IERC165, InputRelay) returns (bool) {
+    ) public view virtual override(IERC165, Portal) returns (bool) {
         return
             interfaceId == type(IERC20Portal).interfaceId ||
             super.supportsInterface(interfaceId);

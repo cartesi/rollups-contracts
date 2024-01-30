@@ -10,7 +10,7 @@ import {ApplicationFactory, IApplicationFactory} from "contracts/dapp/Applicatio
 import {Application} from "contracts/dapp/Application.sol";
 import {IConsensus} from "contracts/consensus/IConsensus.sol";
 import {IInputBox} from "contracts/inputs/IInputBox.sol";
-import {IInputRelay} from "contracts/inputs/IInputRelay.sol";
+import {IPortal} from "contracts/portals/IPortal.sol";
 import {Vm} from "forge-std/Vm.sol";
 
 contract ApplicationFactoryTest is TestBase {
@@ -24,7 +24,7 @@ contract ApplicationFactoryTest is TestBase {
 
     function testNewApplication(
         IInputBox inputBox,
-        IInputRelay[] calldata inputRelays,
+        IPortal[] calldata portals,
         address appOwner,
         bytes32 templateHash
     ) public {
@@ -33,7 +33,7 @@ contract ApplicationFactoryTest is TestBase {
         Application app = _factory.newApplication(
             _consensus,
             inputBox,
-            inputRelays,
+            portals,
             appOwner,
             templateHash
         );
@@ -41,14 +41,14 @@ contract ApplicationFactoryTest is TestBase {
         assertEq(address(app.getConsensus()), address(_consensus));
         assertEq(address(app.getInputBox()), address(inputBox));
         // abi.encode is used instead of a loop
-        assertEq(abi.encode(app.getInputRelays()), abi.encode(inputRelays));
+        assertEq(abi.encode(app.getPortals()), abi.encode(portals));
         assertEq(app.owner(), appOwner);
         assertEq(app.getTemplateHash(), templateHash);
     }
 
     function testNewApplicationDeterministic(
         IInputBox inputBox,
-        IInputRelay[] calldata inputRelays,
+        IPortal[] calldata portals,
         address appOwner,
         bytes32 templateHash,
         bytes32 salt
@@ -58,7 +58,7 @@ contract ApplicationFactoryTest is TestBase {
         address precalculatedAddress = _factory.calculateApplicationAddress(
             _consensus,
             inputBox,
-            inputRelays,
+            portals,
             appOwner,
             templateHash,
             salt
@@ -67,7 +67,7 @@ contract ApplicationFactoryTest is TestBase {
         Application app = _factory.newApplication(
             _consensus,
             inputBox,
-            inputRelays,
+            portals,
             appOwner,
             templateHash,
             salt
@@ -78,14 +78,14 @@ contract ApplicationFactoryTest is TestBase {
 
         assertEq(address(app.getConsensus()), address(_consensus));
         assertEq(address(app.getInputBox()), address(inputBox));
-        assertEq(abi.encode(app.getInputRelays()), abi.encode(inputRelays));
+        assertEq(abi.encode(app.getPortals()), abi.encode(portals));
         assertEq(app.owner(), appOwner);
         assertEq(app.getTemplateHash(), templateHash);
 
         precalculatedAddress = _factory.calculateApplicationAddress(
             _consensus,
             inputBox,
-            inputRelays,
+            portals,
             appOwner,
             templateHash,
             salt
@@ -99,7 +99,7 @@ contract ApplicationFactoryTest is TestBase {
         _factory.newApplication(
             _consensus,
             inputBox,
-            inputRelays,
+            portals,
             appOwner,
             templateHash,
             salt
@@ -108,7 +108,7 @@ contract ApplicationFactoryTest is TestBase {
 
     function testApplicationCreatedEvent(
         IInputBox inputBox,
-        IInputRelay[] calldata inputRelays,
+        IPortal[] calldata portals,
         address appOwner,
         bytes32 templateHash
     ) public {
@@ -119,14 +119,14 @@ contract ApplicationFactoryTest is TestBase {
         Application app = _factory.newApplication(
             _consensus,
             inputBox,
-            inputRelays,
+            portals,
             appOwner,
             templateHash
         );
 
         _testApplicationCreatedEventAux(
             inputBox,
-            inputRelays,
+            portals,
             appOwner,
             templateHash,
             app
@@ -135,7 +135,7 @@ contract ApplicationFactoryTest is TestBase {
 
     function testApplicationCreatedEventDeterministic(
         IInputBox inputBox,
-        IInputRelay[] calldata inputRelays,
+        IPortal[] calldata portals,
         address appOwner,
         bytes32 templateHash,
         bytes32 salt
@@ -147,7 +147,7 @@ contract ApplicationFactoryTest is TestBase {
         Application app = _factory.newApplication(
             _consensus,
             inputBox,
-            inputRelays,
+            portals,
             appOwner,
             templateHash,
             salt
@@ -155,7 +155,7 @@ contract ApplicationFactoryTest is TestBase {
 
         _testApplicationCreatedEventAux(
             inputBox,
-            inputRelays,
+            portals,
             appOwner,
             templateHash,
             app
@@ -164,7 +164,7 @@ contract ApplicationFactoryTest is TestBase {
 
     function _testApplicationCreatedEventAux(
         IInputBox inputBox,
-        IInputRelay[] calldata inputRelays,
+        IPortal[] calldata portals,
         address appOwner,
         bytes32 templateHash,
         Application app
@@ -190,23 +190,17 @@ contract ApplicationFactoryTest is TestBase {
 
                 (
                     IInputBox inputBox_,
-                    IInputRelay[] memory inputRelays_,
+                    IPortal[] memory portals_,
                     address appOwner_,
                     bytes32 templateHash_,
                     Application app_
                 ) = abi.decode(
                         entry.data,
-                        (
-                            IInputBox,
-                            IInputRelay[],
-                            address,
-                            bytes32,
-                            Application
-                        )
+                        (IInputBox, IPortal[], address, bytes32, Application)
                     );
 
                 assertEq(address(inputBox), address(inputBox_));
-                assertEq(abi.encode(inputRelays), abi.encode(inputRelays_));
+                assertEq(abi.encode(portals), abi.encode(portals_));
                 assertEq(appOwner, appOwner_);
                 assertEq(templateHash, templateHash_);
                 assertEq(address(app), address(app_));

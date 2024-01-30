@@ -7,7 +7,7 @@ import {IERC1155} from "@openzeppelin/contracts/token/ERC1155/IERC1155.sol";
 import {IERC165} from "@openzeppelin/contracts/utils/introspection/IERC165.sol";
 
 import {IERC1155SinglePortal} from "./IERC1155SinglePortal.sol";
-import {InputRelay} from "../inputs/InputRelay.sol";
+import {Portal} from "./Portal.sol";
 import {IInputBox} from "../inputs/IInputBox.sol";
 import {InputEncoding} from "../common/InputEncoding.sol";
 
@@ -15,10 +15,10 @@ import {InputEncoding} from "../common/InputEncoding.sol";
 ///
 /// @notice This contract allows anyone to perform single transfers of
 /// ERC-1155 tokens to an application while informing the off-chain machine.
-contract ERC1155SinglePortal is IERC1155SinglePortal, InputRelay {
+contract ERC1155SinglePortal is IERC1155SinglePortal, Portal {
     /// @notice Constructs the portal.
     /// @param inputBox The input box used by the portal
-    constructor(IInputBox inputBox) InputRelay(inputBox) {}
+    constructor(IInputBox inputBox) Portal(inputBox) {}
 
     function depositSingleERC1155Token(
         IERC1155 token,
@@ -44,7 +44,7 @@ contract ERC1155SinglePortal is IERC1155SinglePortal, InputRelay {
 
     function supportsInterface(
         bytes4 interfaceId
-    ) public view virtual override(IERC165, InputRelay) returns (bool) {
+    ) public view virtual override(IERC165, Portal) returns (bool) {
         return
             interfaceId == type(IERC1155SinglePortal).interfaceId ||
             super.supportsInterface(interfaceId);

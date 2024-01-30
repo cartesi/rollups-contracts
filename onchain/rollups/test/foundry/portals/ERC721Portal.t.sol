@@ -10,7 +10,7 @@ import {ERC721Holder} from "@openzeppelin/contracts/token/ERC721/utils/ERC721Hol
 import {ERC721Portal} from "contracts/portals/ERC721Portal.sol";
 import {IERC721Portal} from "contracts/portals/IERC721Portal.sol";
 import {IInputBox} from "contracts/inputs/IInputBox.sol";
-import {IInputRelay} from "contracts/inputs/IInputRelay.sol";
+import {IPortal} from "contracts/portals/IPortal.sol";
 import {InputEncoding} from "contracts/common/InputEncoding.sol";
 
 import {ERC165Test} from "../util/ERC165Test.sol";
@@ -53,7 +53,7 @@ contract ERC721PortalTest is ERC165Test {
     {
         bytes4[] memory interfaceIds = new bytes4[](2);
         interfaceIds[0] = type(IERC721Portal).interfaceId;
-        interfaceIds[1] = type(IInputRelay).interfaceId;
+        interfaceIds[1] = type(IPortal).interfaceId;
         return interfaceIds;
     }
 
