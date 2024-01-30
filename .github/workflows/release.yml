@@ -64,10 +64,14 @@ jobs:
 
     steps:
       - uses: actions/checkout@v4
+        with:
+          submodules: recursive
 
       - uses: actions/setup-node@v4
         with:
           node-version: 18
+
+      - uses: foundry-rs/foundry-toolchain@v1
 
       - name: Install Python dependencies
         run: pip install yq
