@@ -20,10 +20,9 @@ git submodule update --init --recursive
 ```
 
 This repository uses [Yarn](https://yarnpkg.com/getting-started/install) to manage JavaScript dependencies.
-In order to install them, please, run the following commands.
+In order to install them, please, run the following command.
 
 ```sh
-cd onchain/rollups
 yarn install
 ```
 
@@ -46,7 +45,7 @@ If the node is not listening to `http://localhost:8545/`, please set the `RPC_UR
 ## 🧪 Tests
 
 If you plan to run the [Forge](https://book.getfoundry.sh/getting-started/installation) tests, there still some setup left to do.
-Assuming you are on the `onchain/rollups` directory, and that [Docker Engine](https://docs.docker.com/get-docker/) is running on the background, you may run the following command.
+Assuming that [Docker Engine](https://docs.docker.com/get-docker/) is running on the background, you may run the following command.
 This command will build the Cartesi Machine image necessary to build the proofs.
 
 ```sh
