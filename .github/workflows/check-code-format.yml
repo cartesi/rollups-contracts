@@ -1,18 +1,10 @@
 name: Check code format
 
-on:
-  push:
-    paths:
-      - '.github/workflows/check-code-format.yml'
-      - 'onchain/rollups/**'
+on: [push]
 
 jobs:
   check-code-format:
     runs-on: ubuntu-latest
-    defaults:
-      run:
-        working-directory: onchain/rollups
-
     steps:
       - uses: actions/checkout@v4
 
