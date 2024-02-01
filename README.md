@@ -66,9 +66,11 @@ yarn proofs:update
 
 ## 📚 Documentation
 
-ℹ️ Check the [official Cartesi Rollups documentation website](https://docs.cartesi.io/cartesi-rollups/overview/).
+🚀 Smart contract documentation is kept up-to-date and deployed [**here**](https://cartesi.github.io/rollups-contracts).
 
-For an in-depth view of the on-chain architecture, we invite you to take a look at the [`CONTRACTS.md`](./CONTRACTS.md) file.
+ℹ️ You may also want to check the [official Cartesi Rollups documentation website](https://docs.cartesi.io/cartesi-rollups/overview/).
+
+🔎 For an in-depth view of the on-chain architecture, we invite you to take a look at the [`CONTRACTS.md`](./CONTRACTS.md) file.
 
 ## 🎨 Experimenting
 
