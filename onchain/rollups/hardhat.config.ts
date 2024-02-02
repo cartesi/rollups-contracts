@@ -20,6 +20,7 @@ import {
     optimism,
     optimismSepolia,
     sepolia,
+    rolluxTestnet,
 } from "viem/chains";
 
 // read MNEMONIC from env variable
@@ -62,6 +63,7 @@ const config: HardhatUserConfig = {
         sepolia: networkConfig(sepolia),
         optimism: networkConfig(optimism),
         optimism_sepolia: networkConfig(optimismSepolia),
+        rollux_testnet: networkConfig(rolluxTestnet),
     },
     solidity: {
         version: "0.8.23",
