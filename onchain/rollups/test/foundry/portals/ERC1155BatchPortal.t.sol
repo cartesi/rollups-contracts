@@ -10,10 +10,10 @@ import {IERC165} from "@openzeppelin/contracts/utils/introspection/IERC165.sol";
 import {ERC1155BatchPortal} from "contracts/portals/ERC1155BatchPortal.sol";
 import {IERC1155BatchPortal} from "contracts/portals/IERC1155BatchPortal.sol";
 import {IInputBox} from "contracts/inputs/IInputBox.sol";
-import {IInputRelay} from "contracts/inputs/IInputRelay.sol";
+import {IPortal} from "contracts/portals/IPortal.sol";
 import {InputEncoding} from "contracts/common/InputEncoding.sol";
 
-import {Test} from "forge-std/Test.sol";
+import {ERC165Test} from "../util/ERC165Test.sol";
 
 contract NormalToken is ERC1155 {
     constructor(
@@ -27,7 +27,7 @@ contract NormalToken is ERC1155 {
 
 contract TokenHolder is ERC1155Holder {}
 
-contract ERC1155BatchPortalTest is Test {
+contract ERC1155BatchPortalTest is ERC165Test {
     address _alice;
     address _app;
     IERC1155 _token;
@@ -42,19 +42,20 @@ contract ERC1155BatchPortalTest is Test {
         _portal = new ERC1155BatchPortal(_inputBox);
     }
 
-    function testSupportsInterface(bytes4 interfaceId) public {
-        assertTrue(
-            _portal.supportsInterface(type(IERC1155BatchPortal).interfaceId)
-        );
-        assertTrue(_portal.supportsInterface(type(IInputRelay).interfaceId));
-        assertTrue(_portal.supportsInterface(type(IERC165).interfaceId));
+    function getERC165Contract() public view override returns (IERC165) {
+        return _portal;
+    }
 
-        assertFalse(_portal.supportsInterface(bytes4(0xffffffff)));
-
-        vm.assume(interfaceId != type(IERC1155BatchPortal).interfaceId);
-        vm.assume(interfaceId != type(IInputRelay).interfaceId);
-        vm.assume(interfaceId != type(IERC165).interfaceId);
-        assertFalse(_portal.supportsInterface(interfaceId));
+    function getSupportedInterfaces()
+        public
+        pure
+        override
+        returns (bytes4[] memory)
+    {
+        bytes4[] memory interfaceIds = new bytes4[](2);
+        interfaceIds[0] = type(IERC1155BatchPortal).interfaceId;
+        interfaceIds[1] = type(IPortal).interfaceId;
+        return interfaceIds;
     }
 
     function testGetInputBox() public {
@@ -76,14 +77,14 @@ contract ERC1155BatchPortalTest is Test {
         vm.mockCall(address(_token), safeBatchTransferFrom, abi.encode());
         vm.expectCall(address(_token), safeBatchTransferFrom, 1);
 
-        bytes memory input = _encodeInput(
+        bytes memory payload = _encodePayload(
             tokenIds,
             values,
             baseLayerData,
             execLayerData
         );
 
-        bytes memory addInputCall = _encodeAddInput(input);
+        bytes memory addInputCall = _encodeAddInput(payload);
 
         vm.mockCall(address(_inputBox), addInputCall, abi.encode(bytes32(0)));
         vm.expectCall(address(_inputBox), addInputCall, 1);
@@ -115,14 +116,14 @@ contract ERC1155BatchPortalTest is Test {
         vm.mockCall(address(_token), safeBatchTransferFrom, abi.encode());
         vm.mockCallRevert(address(_token), safeBatchTransferFrom, errorData);
 
-        bytes memory input = _encodeInput(
+        bytes memory payload = _encodePayload(
             tokenIds,
             values,
             baseLayerData,
             execLayerData
         );
 
-        bytes memory addInputCall = _encodeAddInput(input);
+        bytes memory addInputCall = _encodeAddInput(payload);
 
         vm.mockCall(address(_inputBox), addInputCall, abi.encode(bytes32(0)));
 
@@ -205,7 +206,7 @@ contract ERC1155BatchPortalTest is Test {
         }
     }
 
-    function _encodeInput(
+    function _encodePayload(
         uint256[] calldata tokenIds,
         uint256[] calldata values,
         bytes calldata baseLayerData,
@@ -223,9 +224,9 @@ contract ERC1155BatchPortalTest is Test {
     }
 
     function _encodeAddInput(
-        bytes memory input
+        bytes memory payload
     ) internal view returns (bytes memory) {
-        return abi.encodeCall(IInputBox.addInput, (_app, input));
+        return abi.encodeCall(IInputBox.addInput, (_app, payload));
     }
 
     function _encodeSafeBatchTransferFrom(

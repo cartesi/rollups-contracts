@@ -6,23 +6,21 @@ pragma solidity ^0.8.8;
 import {IApplication} from "./IApplication.sol";
 import {IConsensus} from "../consensus/IConsensus.sol";
 import {IInputBox} from "../inputs/IInputBox.sol";
-import {IInputRelay} from "../inputs/IInputRelay.sol";
-import {LibOutputValidation} from "../library/LibOutputValidation.sol";
+import {IPortal} from "../portals/IPortal.sol";
+import {LibOutputValidityProof} from "../library/LibOutputValidityProof.sol";
 import {OutputValidityProof} from "../common/OutputValidityProof.sol";
-import {Proof} from "../common/Proof.sol";
-import {LibProof} from "../library/LibProof.sol";
+import {Outputs} from "../common/Outputs.sol";
 import {InputRange} from "../common/InputRange.sol";
+import {LibError} from "../library/LibError.sol";
 import {LibInputRange} from "../library/LibInputRange.sol";
 
 import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
 import {ERC721Holder} from "@openzeppelin/contracts/token/ERC721/utils/ERC721Holder.sol";
 import {ERC1155Holder} from "@openzeppelin/contracts/token/ERC1155/utils/ERC1155Holder.sol";
 import {ReentrancyGuard} from "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
-import {Address} from "@openzeppelin/contracts/utils/Address.sol";
 import {IERC721Receiver} from "@openzeppelin/contracts/token/ERC721/IERC721Receiver.sol";
 import {IERC165} from "@openzeppelin/contracts/utils/introspection/IERC165.sol";
 import {BitMaps} from "@openzeppelin/contracts/utils/structs/BitMaps.sol";
-import {SafeCast} from "@openzeppelin/contracts/utils/math/SafeCast.sol";
 
 contract Application is
     IApplication,
@@ -32,20 +30,17 @@ contract Application is
     ReentrancyGuard
 {
     using BitMaps for BitMaps.BitMap;
-    using LibOutputValidation for OutputValidityProof;
-    using LibProof for Proof;
+    using LibError for bytes;
+    using LibOutputValidityProof for OutputValidityProof;
     using LibInputRange for InputRange;
-    using Address for address;
-    using SafeCast for uint256;
 
     /// @notice The initial machine state hash.
     /// @dev See the `getTemplateHash` function.
     bytes32 internal immutable _templateHash;
 
-    /// @notice The executed voucher bitmask, which keeps track of which vouchers
-    ///         were executed already in order to avoid re-execution.
-    /// @dev See the `wasVoucherExecuted` function.
-    mapping(uint256 => BitMaps.BitMap) internal _voucherBitmaps;
+    /// @notice Keeps track of which outputs have been executed.
+    /// @dev See the `wasOutputExecuted` function.
+    mapping(uint256 => BitMaps.BitMap) internal _executed;
 
     /// @notice The current consensus contract.
     /// @dev See the `getConsensus` and `migrateToConsensus` functions.
@@ -55,34 +50,28 @@ contract Application is
     /// @dev See the `getInputBox` function.
     IInputBox internal immutable _inputBox;
 
-    /// @notice The input relays.
-    /// @dev See the `getInputRelays` function.
-    IInputRelay[] internal _inputRelays;
-
-    /// @notice Raised when the transfer fails.
-    error EtherTransferFailed();
-
-    /// @notice Raised when a mehtod is not called by application itself.
-    error OnlyApplication();
+    /// @notice The portals supported by the application.
+    /// @dev See the `getPortals` function.
+    IPortal[] internal _portals;
 
     /// @notice Creates an `Application` contract.
     /// @param consensus The initial consensus contract
     /// @param inputBox The input box contract
-    /// @param inputRelays The input relays
+    /// @param portals The portals supported by the application
     /// @param initialOwner The initial application owner
     /// @param templateHash The initial machine state hash
     constructor(
         IConsensus consensus,
         IInputBox inputBox,
-        IInputRelay[] memory inputRelays,
+        IPortal[] memory portals,
         address initialOwner,
         bytes32 templateHash
     ) Ownable(initialOwner) {
         _templateHash = templateHash;
         _consensus = consensus;
         _inputBox = inputBox;
-        for (uint256 i; i < inputRelays.length; ++i) {
-            _inputRelays.push(inputRelays[i]);
+        for (uint256 i; i < portals.length; ++i) {
+            _portals.push(portals[i]);
         }
     }
 
@@ -91,54 +80,35 @@ contract Application is
     ///      the backend of it, then please do so through the Ether portal contract.
     receive() external payable {}
 
-    /// @notice Transfer some amount of Ether to some recipient.
-    /// @param receiver The address which will receive the amount of Ether
-    /// @param value The amount of Ether to be transferred in Wei
-    /// @dev This function can only be called by the application itself through vouchers.
-    ///      If this method is not called by application itself, `OnlyApplication` error is raised.
-    ///      If the transfer fails, `EtherTransferFailed` error is raised.
-    function withdrawEther(address receiver, uint256 value) external {
-        if (msg.sender != address(this)) {
-            revert OnlyApplication();
-        }
-
-        (bool sent, ) = receiver.call{value: value}("");
-
-        if (!sent) {
-            revert EtherTransferFailed();
-        }
-    }
-
-    function executeVoucher(
-        address destination,
-        bytes calldata payload,
-        Proof calldata proof
+    function executeOutput(
+        bytes calldata output,
+        OutputValidityProof calldata proof
     ) external override nonReentrant {
+        validateOutput(output, proof);
+
         uint256 inputIndex = proof.calculateInputIndex();
+        uint64 outputIndexWithinInput = proof.outputIndexWithinInput;
 
-        if (!proof.inputRange.contains(inputIndex)) {
-            revert InputIndexOutOfRange(inputIndex, proof.inputRange);
+        BitMaps.BitMap storage bitmap = _executed[outputIndexWithinInput];
+
+        if (output.length < 4) {
+            revert OutputNotExecutable(output);
         }
 
-        bytes32 epochHash = _getEpochHash(proof.inputRange);
+        bytes4 selector = bytes4(output[:4]);
+        bytes calldata arguments = output[4:];
 
-        // reverts if proof isn't valid
-        proof.validity.validateVoucher(destination, payload, epochHash);
-
-        uint64 outputIndexWithinInput = proof.validity.outputIndexWithinInput;
-        BitMaps.BitMap storage bitmap = _voucherBitmaps[outputIndexWithinInput];
-
-        // check if voucher has been executed
-        if (bitmap.get(inputIndex)) {
-            revert VoucherReexecutionNotAllowed();
+        if (selector == Outputs.Voucher.selector) {
+            if (bitmap.get(inputIndex)) {
+                revert OutputNotReexecutable(output);
+            }
+            _executeVoucher(arguments);
+        } else {
+            revert OutputNotExecutable(output);
         }
 
-        // execute voucher
-        destination.functionCall(payload);
-
-        // mark it as executed and emit event
         bitmap.set(inputIndex);
-        emit VoucherExecuted(inputIndex.toUint64(), outputIndexWithinInput);
+        emit OutputExecuted(uint64(inputIndex), outputIndexWithinInput, output);
     }
 
     function migrateToConsensus(
@@ -148,17 +118,17 @@ contract Application is
         emit NewConsensus(newConsensus);
     }
 
-    function wasVoucherExecuted(
+    function wasOutputExecuted(
         uint256 inputIndex,
         uint256 outputIndexWithinInput
     ) external view override returns (bool) {
-        return _voucherBitmaps[outputIndexWithinInput].get(inputIndex);
+        return _executed[outputIndexWithinInput].get(inputIndex);
     }
 
-    function validateNotice(
-        bytes calldata notice,
-        Proof calldata proof
-    ) external view override {
+    function validateOutput(
+        bytes calldata output,
+        OutputValidityProof calldata proof
+    ) public view override {
         uint256 inputIndex = proof.calculateInputIndex();
 
         if (!proof.inputRange.contains(inputIndex)) {
@@ -167,8 +137,17 @@ contract Application is
 
         bytes32 epochHash = _getEpochHash(proof.inputRange);
 
-        // reverts if proof isn't valid
-        proof.validity.validateNotice(notice, epochHash);
+        if (!proof.isEpochHashValid(epochHash)) {
+            revert IncorrectEpochHash();
+        }
+
+        if (!proof.isOutputsEpochRootHashValid()) {
+            revert IncorrectOutputsEpochRootHash();
+        }
+
+        if (!proof.isOutputHashesRootHashValid(output)) {
+            revert IncorrectOutputHashesRootHash();
+        }
     }
 
     function getTemplateHash() external view override returns (bytes32) {
@@ -183,13 +162,8 @@ contract Application is
         return _inputBox;
     }
 
-    function getInputRelays()
-        external
-        view
-        override
-        returns (IInputRelay[] memory)
-    {
-        return _inputRelays;
+    function getPortals() external view override returns (IPortal[] memory) {
+        return _portals;
     }
 
     function supportsInterface(
@@ -209,5 +183,27 @@ contract Application is
         InputRange calldata inputRange
     ) internal view returns (bytes32) {
         return _consensus.getEpochHash(address(this), inputRange);
+    }
+
+    /// @notice Executes a voucher
+    /// @param arguments ABI-encoded arguments
+    function _executeVoucher(bytes calldata arguments) internal {
+        address destination;
+        uint256 value;
+        bytes memory payload;
+
+        (destination, value, payload) = abi.decode(
+            arguments,
+            (address, uint256, bytes)
+        );
+
+        bool success;
+        bytes memory returndata;
+
+        (success, returndata) = destination.call{value: value}(payload);
+
+        if (!success) {
+            returndata.raise();
+        }
     }
 }

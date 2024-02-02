@@ -3,10 +3,10 @@
 
 pragma solidity ^0.8.8;
 
-import {IInputRelay} from "../inputs/IInputRelay.sol";
+import {IPortal} from "./IPortal.sol";
 
 /// @title Ether Portal interface
-interface IEtherPortal is IInputRelay {
+interface IEtherPortal is IPortal {
     // Errors
 
     /// @notice Failed to transfer Ether to application

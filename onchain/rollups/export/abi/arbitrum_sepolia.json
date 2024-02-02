@@ -692,48 +692,6 @@
         }
       ]
     },
-    "DAppAddressRelay": {
-      "address": "0xF5DE34d6BbC0446E2a45719E718efEbaaE179daE",
-      "abi": [
-        {
-          "inputs": [
-            {
-              "internalType": "contract IInputBox",
-              "name": "_inputBox",
-              "type": "address"
-            }
-          ],
-          "stateMutability": "nonpayable",
-          "type": "constructor"
-        },
-        {
-          "inputs": [],
-          "name": "getInputBox",
-          "outputs": [
-            {
-              "internalType": "contract IInputBox",
-              "name": "",
-              "type": "address"
-            }
-          ],
-          "stateMutability": "view",
-          "type": "function"
-        },
-        {
-          "inputs": [
-            {
-              "internalType": "address",
-              "name": "_dapp",
-              "type": "address"
-            }
-          ],
-          "name": "relayDAppAddress",
-          "outputs": [],
-          "stateMutability": "nonpayable",
-          "type": "function"
-        }
-      ]
-    },
     "AuthorityFactory": {
       "address": "0xf26a5b278C25D8D41A136d22Ad719EACEd9c3e63",
       "abi": [

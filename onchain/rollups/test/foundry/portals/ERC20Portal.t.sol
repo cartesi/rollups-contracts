@@ -9,10 +9,10 @@ import {IERC20, ERC20} from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import {ERC20Portal} from "contracts/portals/ERC20Portal.sol";
 import {IERC20Portal} from "contracts/portals/IERC20Portal.sol";
 import {IInputBox} from "contracts/inputs/IInputBox.sol";
-import {IInputRelay} from "contracts/inputs/IInputRelay.sol";
+import {IPortal} from "contracts/portals/IPortal.sol";
 import {InputEncoding} from "contracts/common/InputEncoding.sol";
 
-import {Test} from "forge-std/Test.sol";
+import {ERC165Test} from "../util/ERC165Test.sol";
 
 contract NormalToken is ERC20 {
     constructor(
@@ -23,7 +23,7 @@ contract NormalToken is ERC20 {
     }
 }
 
-contract ERC20PortalTest is Test {
+contract ERC20PortalTest is ERC165Test {
     address _alice;
     address _app;
     IInputBox _inputBox;
@@ -38,17 +38,20 @@ contract ERC20PortalTest is Test {
         _portal = new ERC20Portal(_inputBox);
     }
 
-    function testSupportsInterface(bytes4 interfaceId) public {
-        assertTrue(_portal.supportsInterface(type(IERC20Portal).interfaceId));
-        assertTrue(_portal.supportsInterface(type(IInputRelay).interfaceId));
-        assertTrue(_portal.supportsInterface(type(IERC165).interfaceId));
+    function getERC165Contract() public view override returns (IERC165) {
+        return _portal;
+    }
 
-        assertFalse(_portal.supportsInterface(bytes4(0xffffffff)));
-
-        vm.assume(interfaceId != type(IERC20Portal).interfaceId);
-        vm.assume(interfaceId != type(IInputRelay).interfaceId);
-        vm.assume(interfaceId != type(IERC165).interfaceId);
-        assertFalse(_portal.supportsInterface(interfaceId));
+    function getSupportedInterfaces()
+        public
+        pure
+        override
+        returns (bytes4[] memory)
+    {
+        bytes4[] memory interfaceIds = new bytes4[](2);
+        interfaceIds[0] = type(IERC20Portal).interfaceId;
+        interfaceIds[1] = type(IPortal).interfaceId;
+        return interfaceIds;
     }
 
     function testGetInputBox() public {
@@ -60,9 +63,9 @@ contract ERC20PortalTest is Test {
 
         vm.mockCall(address(_token), transferFrom, abi.encode(true));
 
-        bytes memory input = _encodeInput(amount, data);
+        bytes memory payload = _encodePayload(amount, data);
 
-        bytes memory addInput = _encodeAddInput(input);
+        bytes memory addInput = _encodeAddInput(payload);
 
         vm.mockCall(address(_inputBox), addInput, abi.encode(bytes32(0)));
 
@@ -79,9 +82,9 @@ contract ERC20PortalTest is Test {
 
         vm.mockCall(address(_token), transferFrom, abi.encode(false));
 
-        bytes memory input = _encodeInput(amount, data);
+        bytes memory payload = _encodePayload(amount, data);
 
-        bytes memory addInput = _encodeAddInput(input);
+        bytes memory addInput = _encodeAddInput(payload);
 
         vm.mockCall(address(_inputBox), addInput, abi.encode(bytes32(0)));
 
@@ -100,9 +103,9 @@ contract ERC20PortalTest is Test {
 
         vm.mockCallRevert(address(_token), transferFrom, errorData);
 
-        bytes memory input = _encodeInput(amount, data);
+        bytes memory payload = _encodePayload(amount, data);
 
-        bytes memory addInput = _encodeAddInput(input);
+        bytes memory addInput = _encodeAddInput(payload);
 
         vm.mockCall(address(_inputBox), addInput, abi.encode(bytes32(0)));
 
@@ -150,7 +153,7 @@ contract ERC20PortalTest is Test {
         assertEq(token.balanceOf(address(_portal)), 0);
     }
 
-    function _encodeInput(
+    function _encodePayload(
         uint256 amount,
         bytes calldata data
     ) internal view returns (bytes memory) {
@@ -164,8 +167,8 @@ contract ERC20PortalTest is Test {
     }
 
     function _encodeAddInput(
-        bytes memory _input
+        bytes memory payload
     ) internal view returns (bytes memory) {
-        return abi.encodeCall(IInputBox.addInput, (_app, _input));
+        return abi.encodeCall(IInputBox.addInput, (_app, payload));
     }
 }

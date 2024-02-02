@@ -12,29 +12,23 @@ interface IInputBox {
     /// @notice MUST trigger when an input is added.
     /// @param app The application address
     /// @param index The input index
-    /// @param sender The input sender address
-    /// @param payload The input payload
-    event InputAdded(
-        address indexed app,
-        uint256 indexed index,
-        address sender,
-        bytes payload
-    );
+    /// @param input The input blob
+    event InputAdded(address indexed app, uint256 indexed index, bytes input);
 
-    /// @notice Payload is too large.
+    /// @notice Input is too large.
     /// @param app The application address
-    /// @param payloadLength The payload length
-    /// @param maxPayloadLength The maximum payload length
-    error PayloadTooLarge(
+    /// @param inputLength The input length
+    /// @param maxInputLength The maximum input length
+    error InputTooLarge(
         address app,
-        uint256 payloadLength,
-        uint256 maxPayloadLength
+        uint256 inputLength,
+        uint256 maxInputLength
     );
 
     /// @notice Send an input to an application.
     /// @param app The application address
     /// @param payload The input payload
-    /// @return The input hash
+    /// @return The hash of the input blob
     /// @dev MUST fire an `InputAdded` event.
     function addInput(
         address app,

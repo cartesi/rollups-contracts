@@ -3,18 +3,17 @@
 
 pragma solidity ^0.8.22;
 
-import {Address} from "@openzeppelin/contracts/utils/Address.sol";
 import {IERC165} from "@openzeppelin/contracts/utils/introspection/IERC165.sol";
 
 import {EtherPortal} from "contracts/portals/EtherPortal.sol";
 import {IEtherPortal} from "contracts/portals/IEtherPortal.sol";
 import {IInputBox} from "contracts/inputs/IInputBox.sol";
-import {IInputRelay} from "contracts/inputs/IInputRelay.sol";
+import {IPortal} from "contracts/portals/IPortal.sol";
 import {InputEncoding} from "contracts/common/InputEncoding.sol";
 
-import {Test} from "forge-std/Test.sol";
+import {ERC165Test} from "../util/ERC165Test.sol";
 
-contract EtherPortalTest is Test {
+contract EtherPortalTest is ERC165Test {
     address _alice;
     address _app;
     IInputBox _inputBox;
@@ -27,17 +26,20 @@ contract EtherPortalTest is Test {
         _portal = new EtherPortal(_inputBox);
     }
 
-    function testSupportsInterface(bytes4 interfaceId) public {
-        assertTrue(_portal.supportsInterface(type(IEtherPortal).interfaceId));
-        assertTrue(_portal.supportsInterface(type(IInputRelay).interfaceId));
-        assertTrue(_portal.supportsInterface(type(IERC165).interfaceId));
+    function getERC165Contract() public view override returns (IERC165) {
+        return _portal;
+    }
 
-        assertFalse(_portal.supportsInterface(bytes4(0xffffffff)));
-
-        vm.assume(interfaceId != type(IEtherPortal).interfaceId);
-        vm.assume(interfaceId != type(IInputRelay).interfaceId);
-        vm.assume(interfaceId != type(IERC165).interfaceId);
-        assertFalse(_portal.supportsInterface(interfaceId));
+    function getSupportedInterfaces()
+        public
+        pure
+        override
+        returns (bytes4[] memory)
+    {
+        bytes4[] memory interfaceIds = new bytes4[](2);
+        interfaceIds[0] = type(IEtherPortal).interfaceId;
+        interfaceIds[1] = type(IPortal).interfaceId;
+        return interfaceIds;
     }
 
     function testGetInputBox() public {
@@ -47,9 +49,9 @@ contract EtherPortalTest is Test {
     function testDeposit(uint256 value, bytes calldata data) public {
         value = _boundValue(value);
 
-        bytes memory input = _encodeInput(value, data);
+        bytes memory payload = _encodePayload(value, data);
 
-        bytes memory addInput = _encodeAddInput(input);
+        bytes memory addInput = _encodeAddInput(payload);
 
         vm.mockCall(address(_inputBox), addInput, abi.encode(bytes32(0)));
 
@@ -75,9 +77,9 @@ contract EtherPortalTest is Test {
 
         vm.mockCallRevert(_app, value, abi.encode(), errorData);
 
-        bytes memory input = _encodeInput(value, data);
+        bytes memory payload = _encodePayload(value, data);
 
-        bytes memory addInput = _encodeAddInput(input);
+        bytes memory addInput = _encodeAddInput(payload);
 
         vm.mockCall(address(_inputBox), addInput, abi.encode(bytes32(0)));
 
@@ -88,7 +90,7 @@ contract EtherPortalTest is Test {
         _portal.depositEther{value: value}(_app, data);
     }
 
-    function _encodeInput(
+    function _encodePayload(
         uint256 value,
         bytes calldata data
     ) internal view returns (bytes memory) {
@@ -96,9 +98,9 @@ contract EtherPortalTest is Test {
     }
 
     function _encodeAddInput(
-        bytes memory input
+        bytes memory payload
     ) internal view returns (bytes memory) {
-        return abi.encodeCall(IInputBox.addInput, (_app, input));
+        return abi.encodeCall(IInputBox.addInput, (_app, payload));
     }
 
     function _boundValue(uint256 value) internal view returns (uint256) {

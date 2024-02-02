@@ -8,7 +8,7 @@ import {Create2} from "@openzeppelin/contracts/utils/Create2.sol";
 import {IApplicationFactory} from "./IApplicationFactory.sol";
 import {IConsensus} from "../consensus/IConsensus.sol";
 import {IInputBox} from "../inputs/IInputBox.sol";
-import {IInputRelay} from "../inputs/IInputRelay.sol";
+import {IPortal} from "../portals/IPortal.sol";
 import {Application} from "./Application.sol";
 
 /// @title Application Factory
@@ -17,14 +17,14 @@ contract ApplicationFactory is IApplicationFactory {
     function newApplication(
         IConsensus consensus,
         IInputBox inputBox,
-        IInputRelay[] memory inputRelays,
+        IPortal[] memory portals,
         address appOwner,
         bytes32 templateHash
     ) external override returns (Application) {
         Application app = new Application(
             consensus,
             inputBox,
-            inputRelays,
+            portals,
             appOwner,
             templateHash
         );
@@ -32,7 +32,7 @@ contract ApplicationFactory is IApplicationFactory {
         emit ApplicationCreated(
             consensus,
             inputBox,
-            inputRelays,
+            portals,
             appOwner,
             templateHash,
             app
@@ -44,7 +44,7 @@ contract ApplicationFactory is IApplicationFactory {
     function newApplication(
         IConsensus consensus,
         IInputBox inputBox,
-        IInputRelay[] memory inputRelays,
+        IPortal[] memory portals,
         address appOwner,
         bytes32 templateHash,
         bytes32 salt
@@ -52,7 +52,7 @@ contract ApplicationFactory is IApplicationFactory {
         Application app = new Application{salt: salt}(
             consensus,
             inputBox,
-            inputRelays,
+            portals,
             appOwner,
             templateHash
         );
@@ -60,7 +60,7 @@ contract ApplicationFactory is IApplicationFactory {
         emit ApplicationCreated(
             consensus,
             inputBox,
-            inputRelays,
+            portals,
             appOwner,
             templateHash,
             app
@@ -72,7 +72,7 @@ contract ApplicationFactory is IApplicationFactory {
     function calculateApplicationAddress(
         IConsensus consensus,
         IInputBox inputBox,
-        IInputRelay[] memory inputRelays,
+        IPortal[] memory portals,
         address appOwner,
         bytes32 templateHash,
         bytes32 salt
@@ -86,7 +86,7 @@ contract ApplicationFactory is IApplicationFactory {
                         abi.encode(
                             consensus,
                             inputBox,
-                            inputRelays,
+                            portals,
                             appOwner,
                             templateHash
                         )

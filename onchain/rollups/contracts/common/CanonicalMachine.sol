@@ -20,21 +20,14 @@ library CanonicalMachine {
     /// @notice Keccak-256 output size (32 bytes).
     Log2Size constant KECCAK_LOG2_SIZE = Log2Size.wrap(5);
 
-    /// @notice Maximum input payload size (~2 megabytes).
-    /// @dev The offset and size fields use up the extra 64 bytes.
-    uint256 constant INPUT_PAYLOAD_MAX_SIZE = (1 << 21) - 64;
+    /// @notice Maximum input size (2 megabytes).
+    uint256 constant INPUT_MAX_SIZE = 1 << 21;
 
-    /// @notice Maximum voucher metadata memory range (2 megabytes).
-    Log2Size constant VOUCHER_METADATA_LOG2_SIZE = Log2Size.wrap(21);
+    /// @notice Maximum output metadata memory range (2 megabytes).
+    Log2Size constant OUTPUT_METADATA_LOG2_SIZE = Log2Size.wrap(21);
 
-    /// @notice Maximum notice metadata memory range (2 megabytes).
-    Log2Size constant NOTICE_METADATA_LOG2_SIZE = Log2Size.wrap(21);
-
-    /// @notice Maximum epoch voucher memory range (128 megabytes).
-    Log2Size constant EPOCH_VOUCHER_LOG2_SIZE = Log2Size.wrap(37);
-
-    /// @notice Maximum epoch notice memory range (128 megabytes).
-    Log2Size constant EPOCH_NOTICE_LOG2_SIZE = Log2Size.wrap(37);
+    /// @notice Maximum epoch output memory range (128 megabytes).
+    Log2Size constant EPOCH_OUTPUT_LOG2_SIZE = Log2Size.wrap(37);
 
     /// @notice Unwrap `s` into its underlying uint64 value.
     /// @param s Base-2 logarithm of some number of bytes

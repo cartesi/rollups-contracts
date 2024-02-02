@@ -10,10 +10,10 @@ import {ERC721Holder} from "@openzeppelin/contracts/token/ERC721/utils/ERC721Hol
 import {ERC721Portal} from "contracts/portals/ERC721Portal.sol";
 import {IERC721Portal} from "contracts/portals/IERC721Portal.sol";
 import {IInputBox} from "contracts/inputs/IInputBox.sol";
-import {IInputRelay} from "contracts/inputs/IInputRelay.sol";
+import {IPortal} from "contracts/portals/IPortal.sol";
 import {InputEncoding} from "contracts/common/InputEncoding.sol";
 
-import {Test} from "forge-std/Test.sol";
+import {ERC165Test} from "../util/ERC165Test.sol";
 
 contract NormalToken is ERC721 {
     constructor(
@@ -26,7 +26,7 @@ contract NormalToken is ERC721 {
 
 contract TokenHolder is ERC721Holder {}
 
-contract ERC721PortalTest is Test {
+contract ERC721PortalTest is ERC165Test {
     address _alice;
     address _app;
     IERC721 _token;
@@ -41,17 +41,20 @@ contract ERC721PortalTest is Test {
         _portal = new ERC721Portal(_inputBox);
     }
 
-    function testSupportsInterface(bytes4 interfaceId) public {
-        assertTrue(_portal.supportsInterface(type(IERC721Portal).interfaceId));
-        assertTrue(_portal.supportsInterface(type(IInputRelay).interfaceId));
-        assertTrue(_portal.supportsInterface(type(IERC165).interfaceId));
+    function getERC165Contract() public view override returns (IERC165) {
+        return _portal;
+    }
 
-        assertFalse(_portal.supportsInterface(bytes4(0xffffffff)));
-
-        vm.assume(interfaceId != type(IERC721Portal).interfaceId);
-        vm.assume(interfaceId != type(IInputRelay).interfaceId);
-        vm.assume(interfaceId != type(IERC165).interfaceId);
-        assertFalse(_portal.supportsInterface(interfaceId));
+    function getSupportedInterfaces()
+        public
+        pure
+        override
+        returns (bytes4[] memory)
+    {
+        bytes4[] memory interfaceIds = new bytes4[](2);
+        interfaceIds[0] = type(IERC721Portal).interfaceId;
+        interfaceIds[1] = type(IPortal).interfaceId;
+        return interfaceIds;
     }
 
     function testGetInputBox() public {
@@ -71,13 +74,13 @@ contract ERC721PortalTest is Test {
         vm.mockCall(address(_token), safeTransferFrom, abi.encode());
         vm.expectCall(address(_token), safeTransferFrom, 1);
 
-        bytes memory input = _encodeInput(
+        bytes memory payload = _encodePayload(
             tokenId,
             baseLayerData,
             execLayerData
         );
 
-        bytes memory addInputCall = _encodeAddInput(input);
+        bytes memory addInputCall = _encodeAddInput(payload);
 
         vm.mockCall(address(_inputBox), addInputCall, abi.encode(bytes32(0)));
         vm.expectCall(address(_inputBox), addInputCall, 1);
@@ -106,13 +109,13 @@ contract ERC721PortalTest is Test {
         vm.mockCall(address(_token), safeTransferFrom, abi.encode());
         vm.mockCallRevert(address(_token), safeTransferFrom, errorData);
 
-        bytes memory input = _encodeInput(
+        bytes memory payload = _encodePayload(
             tokenId,
             baseLayerData,
             execLayerData
         );
 
-        bytes memory addInputCall = _encodeAddInput(input);
+        bytes memory addInputCall = _encodeAddInput(payload);
 
         vm.mockCall(address(_inputBox), addInputCall, abi.encode(bytes32(0)));
 
@@ -166,7 +169,7 @@ contract ERC721PortalTest is Test {
         assertEq(token.ownerOf(tokenId), _app);
     }
 
-    function _encodeInput(
+    function _encodePayload(
         uint256 tokenId,
         bytes calldata baseLayerData,
         bytes calldata execLayerData
@@ -182,9 +185,9 @@ contract ERC721PortalTest is Test {
     }
 
     function _encodeAddInput(
-        bytes memory input
+        bytes memory payload
     ) internal view returns (bytes memory) {
-        return abi.encodeCall(IInputBox.addInput, (_app, input));
+        return abi.encodeCall(IInputBox.addInput, (_app, payload));
     }
 
     function _encodeSafeTransferFrom(
