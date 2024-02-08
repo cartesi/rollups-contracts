@@ -13,15 +13,14 @@ import {InputRange} from "contracts/common/InputRange.sol";
 import {LibInputRange} from "contracts/library/LibInputRange.sol";
 
 import {TestBase} from "../../util/TestBase.sol";
+import {LibTopic} from "../../util/LibTopic.sol";
 
 contract AuthorityTest is TestBase {
     using LibInputRange for InputRange;
+    using LibTopic for address;
 
     function testConstructor(address owner) public {
         vm.assume(owner != address(0));
-
-        vm.expectEmit(true, true, false, false);
-        emit Ownable.OwnershipTransferred(address(0), owner);
 
         vm.recordLogs();
 
@@ -29,9 +28,26 @@ contract AuthorityTest is TestBase {
 
         Vm.Log[] memory entries = vm.getRecordedLogs();
 
-        assertEq(entries.length, 1, "number of events");
+        uint256 numOfOwnershipTransferred;
 
-        assertEq(authority.owner(), owner, "authority owner");
+        for (uint256 i; i < entries.length; ++i) {
+            Vm.Log memory entry = entries[i];
+
+            if (
+                entry.emitter == address(authority) &&
+                entry.topics[0] == Ownable.OwnershipTransferred.selector
+            ) {
+                ++numOfOwnershipTransferred;
+
+                if (numOfOwnershipTransferred == 1) {
+                    assertEq(entry.topics[1], address(0).asTopic());
+                    assertEq(entry.topics[2], owner.asTopic());
+                }
+            }
+        }
+
+        assertEq(numOfOwnershipTransferred, 1);
+        assertEq(authority.owner(), owner);
     }
 
     function testRevertsOwnerAddressZero() public {
@@ -71,8 +87,7 @@ contract AuthorityTest is TestBase {
         address owner,
         address app,
         InputRange calldata inputRange,
-        bytes32 epochHash1,
-        bytes32 epochHash2
+        bytes32[2] calldata epochHashes
     ) public {
         vm.assume(owner != address(0));
 
@@ -80,21 +95,33 @@ contract AuthorityTest is TestBase {
 
         // First claim
 
-        _expectClaimEvents(authority, owner, app, inputRange, epochHash1);
+        _expectClaimEvents(authority, owner, app, inputRange, epochHashes[0]);
 
         vm.prank(owner);
-        authority.submitClaim(app, inputRange, epochHash1);
+        authority.submitClaim(app, inputRange, epochHashes[0]);
 
-        assertEq(authority.getEpochHash(app, inputRange), epochHash1);
+        assertEq(authority.getEpochHash(app, inputRange), epochHashes[0]);
 
         // Second claim
 
-        _expectClaimEvents(authority, owner, app, inputRange, epochHash2);
+        _expectClaimEvents(authority, owner, app, inputRange, epochHashes[1]);
 
         vm.prank(owner);
-        authority.submitClaim(app, inputRange, epochHash2);
+        authority.submitClaim(app, inputRange, epochHashes[1]);
 
-        assertEq(authority.getEpochHash(app, inputRange), epochHash2);
+        assertEq(authority.getEpochHash(app, inputRange), epochHashes[1]);
+    }
+
+    function testGetEpochHash(
+        address owner,
+        address app,
+        InputRange calldata inputRange
+    ) public {
+        vm.assume(owner != address(0));
+
+        Authority authority = new Authority(owner);
+
+        assertEq(authority.getEpochHash(app, inputRange), bytes32(0));
     }
 
     function _expectClaimEvents(

@@ -91,8 +91,6 @@ contract AuthorityFactoryTest is Test {
         }
 
         assertEq(numOfAuthorityCreated, 1);
-
-        // call to check authority's owner
         assertEq(authority.owner(), authorityOwner);
     }
 }
