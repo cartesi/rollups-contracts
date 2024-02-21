@@ -8,8 +8,8 @@ pragma solidity ^0.8.8;
 /// off-chain machine and verified by the on-chain contracts.
 interface Outputs {
     /// @notice A piece of verifiable information.
-    /// @param notice An arbitrary blob.
-    function Notice(bytes calldata notice) external;
+    /// @param payload An arbitrary payload.
+    function Notice(bytes calldata payload) external;
 
     /// @notice A single-use permission to execute a specific message call
     /// from the context of the application contract.
