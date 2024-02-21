@@ -6,6 +6,7 @@ pragma solidity ^0.8.22;
 
 import {ERC165Test} from "../util/ERC165Test.sol";
 
+import {Authority} from "contracts/consensus/authority/Authority.sol";
 import {Application} from "contracts/dapp/Application.sol";
 import {IApplication} from "contracts/dapp/IApplication.sol";
 import {IConsensus} from "contracts/consensus/IConsensus.sol";
@@ -27,7 +28,6 @@ import {SafeCast} from "@openzeppelin/contracts/utils/math/SafeCast.sol";
 
 import {LibServerManager} from "../util/LibServerManager.sol";
 import {LibBytes} from "../util/LibBytes.sol";
-import {SimpleConsensus} from "../util/SimpleConsensus.sol";
 import {SimpleERC20} from "../util/SimpleERC20.sol";
 import {SimpleERC721} from "../util/SimpleERC721.sol";
 
@@ -35,22 +35,18 @@ import "forge-std/console.sol";
 
 contract ApplicationTest is ERC165Test {
     using LibServerManager for LibServerManager.RawFinishEpochResponse;
+    using LibServerManager for LibServerManager.FinishEpochResponse;
     using LibServerManager for LibServerManager.Proof;
     using LibServerManager for LibServerManager.Proof[];
     using LibOutputValidityProof for OutputValidityProof;
     using SafeCast for uint256;
 
     enum OutputName {
-        DummyNotice,
-        ERC20TransferVoucher,
-        ETHWithdrawalVoucher,
-        ERC721TransferVoucher
-    }
-
-    struct Voucher {
-        address destination;
-        uint256 value;
-        bytes payload;
+        Empty,
+        HelloWorld,
+        ETHTransfer,
+        ERC20Transfer,
+        ERC721Transfer
     }
 
     Application _app;
@@ -58,11 +54,10 @@ contract ApplicationTest is ERC165Test {
     IERC20 _erc20Token;
     IERC721 _erc721Token;
     IPortal[] _portals;
-    LibServerManager.OutputEnum[] _outputEnums;
-    mapping(uint256 => Voucher) _vouchers;
-    mapping(uint256 => bytes) _notices;
+    bytes[] _outputs;
     bytes _encodedFinishEpochResponse;
     IInputBox immutable _inputBox;
+    address immutable _authorityOwner;
     address immutable _appOwner;
     address immutable _inputSender;
     address immutable _recipient;
@@ -73,23 +68,11 @@ contract ApplicationTest is ERC165Test {
     uint256 immutable _tokenId;
     uint256 immutable _transferAmount;
 
-    error UnexpectedOutputEnum(
-        LibServerManager.OutputEnum expected,
-        LibServerManager.OutputEnum obtained,
-        uint256 inputIndexWithinEpoch
-    );
-
-    error InputIndexWithinEpochOutOfBounds(
-        uint256 length,
-        uint256 inputIndexWithinEpoch
-    );
-
-    error ProofNotFound(
-        LibServerManager.OutputEnum outputEnum,
-        uint256 inputIndexWithinEpoch
-    );
+    error OutputNotFound(uint256 outputIndex);
+    error ProofNotFound(uint256 inputIndex, uint256 outputIndex);
 
     constructor() {
+        _authorityOwner = LibBytes.hashToAddress("authorityOwner");
         _appOwner = LibBytes.hashToAddress("appOwner");
         _initialSupply = LibBytes.hashToUint256("initialSupply");
         _inputBox = IInputBox(LibBytes.hashToAddress("inputBox"));
@@ -111,10 +94,11 @@ contract ApplicationTest is ERC165Test {
 
     function setUp() public {
         _deployContracts();
-        _generateOutputs();
+        _addOutputs();
         _writeInputs();
         _removeExtraInputs();
         _readFinishEpochResponse();
+        _submitClaim();
     }
 
     function getERC165Contract() public view override returns (IERC165) {
@@ -133,6 +117,9 @@ contract ApplicationTest is ERC165Test {
         interfaceIds[2] = type(IERC1155Receiver).interfaceId;
         return interfaceIds;
     }
+
+    /// @dev Used by the proof generation system
+    function testNothing() public pure {}
 
     function testConstructorWithOwnerAsZeroAddress(
         IInputBox inputBox,
@@ -181,31 +168,21 @@ contract ApplicationTest is ERC165Test {
         assertEq(_app.getTemplateHash(), templateHash);
     }
 
-    // test notices
+    // test output validation
 
-    function testNoticeValidation() public {
-        bytes memory notice = _getNotice(OutputName.DummyNotice);
-        OutputValidityProof memory proof = _setupNoticeProof(
-            OutputName.DummyNotice
-        );
-
-        _validateNotice(notice, proof);
-
-        // reverts if notice is incorrect
-        bytes memory falseNotice = abi.encodePacked(bytes4(0xdeaddead));
-        vm.expectRevert(IApplication.IncorrectOutputHashesRootHash.selector);
-        _validateNotice(falseNotice, proof);
+    function testOutputValidation() public {
+        for (uint256 i; i < _outputs.length; ++i) {
+            _testOutputValidation(i);
+        }
     }
 
-    // test vouchers
+    // test output execution
 
     function testExecuteVoucherAndEvent(uint256 appInitBalance) public {
         appInitBalance = _boundBalance(appInitBalance);
 
-        Voucher memory voucher = _getVoucher(OutputName.ERC20TransferVoucher);
-        OutputValidityProof memory proof = _setupVoucherProof(
-            OutputName.ERC20TransferVoucher
-        );
+        bytes memory output = _getOutput(OutputName.ERC20Transfer);
+        OutputValidityProof memory proof = _getProof(OutputName.ERC20Transfer);
 
         // not able to execute voucher because application has 0 balance
         assertEq(_erc20Token.balanceOf(address(_app)), 0);
@@ -218,7 +195,7 @@ contract ApplicationTest is ERC165Test {
                 _transferAmount
             )
         );
-        _executeVoucher(voucher, proof);
+        _app.executeOutput(output, proof);
         assertEq(_erc20Token.balanceOf(address(_app)), 0);
         assertEq(_erc20Token.balanceOf(_recipient), 0);
 
@@ -231,13 +208,13 @@ contract ApplicationTest is ERC165Test {
         // expect event
         vm.expectEmit(false, false, false, true, address(_app));
         emit IApplication.OutputExecuted(
-            _calculateInputIndex(proof).toUint64(),
+            proof.inputIndexWithinEpoch,
             proof.outputIndexWithinInput,
-            _encodeVoucher(voucher)
+            output
         );
 
         // perform call
-        _executeVoucher(voucher, proof);
+        _app.executeOutput(output, proof);
 
         // check result
         assertEq(
@@ -250,26 +227,24 @@ contract ApplicationTest is ERC165Test {
     function testRevertsReexecution(uint256 appInitBalance) public {
         appInitBalance = _boundBalance(appInitBalance);
 
-        Voucher memory voucher = _getVoucher(OutputName.ERC20TransferVoucher);
-        OutputValidityProof memory proof = _setupVoucherProof(
-            OutputName.ERC20TransferVoucher
-        );
+        bytes memory output = _getOutput(OutputName.ERC20Transfer);
+        OutputValidityProof memory proof = _getProof(OutputName.ERC20Transfer);
 
         // fund application
         vm.prank(_tokenOwner);
         _erc20Token.transfer(address(_app), appInitBalance);
 
         // 1st execution attempt should succeed
-        _executeVoucher(voucher, proof);
+        _app.executeOutput(output, proof);
 
         // 2nd execution attempt should fail
         vm.expectRevert(
             abi.encodeWithSelector(
                 IApplication.OutputNotReexecutable.selector,
-                _encodeVoucher(voucher)
+                output
             )
         );
-        _executeVoucher(voucher, proof);
+        _app.executeOutput(output, proof);
 
         // end result should be the same as executing successfully only once
         assertEq(
@@ -282,16 +257,12 @@ contract ApplicationTest is ERC165Test {
     function testWasVoucherExecuted(uint256 appInitBalance) public {
         appInitBalance = _boundBalance(appInitBalance);
 
-        Voucher memory voucher = _getVoucher(OutputName.ERC20TransferVoucher);
-        OutputValidityProof memory proof = _setupVoucherProof(
-            OutputName.ERC20TransferVoucher
-        );
-
-        uint256 inputIndex = _calculateInputIndex(proof);
+        bytes memory output = _getOutput(OutputName.ERC20Transfer);
+        OutputValidityProof memory proof = _getProof(OutputName.ERC20Transfer);
 
         // before executing voucher
         bool executed = _app.wasOutputExecuted(
-            inputIndex,
+            proof.inputIndexWithinEpoch,
             proof.outputIndexWithinInput
         );
         assertEq(executed, false);
@@ -305,11 +276,11 @@ contract ApplicationTest is ERC165Test {
                 _transferAmount
             )
         );
-        _executeVoucher(voucher, proof);
+        _app.executeOutput(output, proof);
 
         // `wasOutputExecuted` should still return false
         executed = _app.wasOutputExecuted(
-            inputIndex,
+            proof.inputIndexWithinEpoch,
             proof.outputIndexWithinInput
         );
         assertEq(executed, false);
@@ -317,70 +288,70 @@ contract ApplicationTest is ERC165Test {
         // execute voucher - succeeded
         vm.prank(_tokenOwner);
         _erc20Token.transfer(address(_app), appInitBalance);
-        _executeVoucher(voucher, proof);
+        _app.executeOutput(output, proof);
 
         // after executing voucher, `wasOutputExecuted` should return true
         executed = _app.wasOutputExecuted(
-            inputIndex,
+            proof.inputIndexWithinEpoch,
             proof.outputIndexWithinInput
         );
         assertEq(executed, true);
     }
 
     function testRevertsEpochHash() public {
-        Voucher memory voucher = _getVoucher(OutputName.ERC20TransferVoucher);
-        OutputValidityProof memory proof = _setupVoucherProof(
-            OutputName.ERC20TransferVoucher
-        );
+        bytes memory output = _getOutput(OutputName.ERC20Transfer);
+        OutputValidityProof memory proof = _getProof(OutputName.ERC20Transfer);
 
         proof.outputsEpochRootHash = bytes32(uint256(0xdeadbeef));
 
         vm.expectRevert(IApplication.IncorrectEpochHash.selector);
-        _executeVoucher(voucher, proof);
+        _app.executeOutput(output, proof);
     }
 
     function testRevertsOutputsEpochRootHash() public {
-        Voucher memory voucher = _getVoucher(OutputName.ERC20TransferVoucher);
-        OutputValidityProof memory proof = _setupVoucherProof(
-            OutputName.ERC20TransferVoucher
-        );
+        bytes memory output = _getOutput(OutputName.ERC20Transfer);
+        OutputValidityProof memory proof = _getProof(OutputName.ERC20Transfer);
 
         proof.outputHashesRootHash = bytes32(uint256(0xdeadbeef));
 
         vm.expectRevert(IApplication.IncorrectOutputsEpochRootHash.selector);
-        _executeVoucher(voucher, proof);
+        _app.executeOutput(output, proof);
     }
 
     function testRevertsOutputHashesRootHash() public {
-        Voucher memory voucher = _getVoucher(OutputName.ERC20TransferVoucher);
-        OutputValidityProof memory proof = _setupVoucherProof(
-            OutputName.ERC20TransferVoucher
-        );
+        bytes memory output = _getOutput(OutputName.ERC20Transfer);
+        OutputValidityProof memory proof = _getProof(OutputName.ERC20Transfer);
 
         proof.outputIndexWithinInput = 0xdeadbeef;
 
         vm.expectRevert(IApplication.IncorrectOutputHashesRootHash.selector);
-        _executeVoucher(voucher, proof);
+        _app.executeOutput(output, proof);
     }
 
     function testRevertsInputIndexOutOfRange() public {
-        OutputName outputName = OutputName.ERC20TransferVoucher;
-        Voucher memory voucher = _getVoucher(outputName);
-        OutputValidityProof memory proof = _getVoucherProof(
-            uint256(outputName)
-        );
-        uint256 inputIndex = _calculateInputIndex(proof);
+        OutputName outputName = OutputName.ERC20Transfer;
+        bytes memory output = _getOutput(outputName);
+        OutputValidityProof memory proof = _getProof(outputName);
+        uint256 inputIndex = proof.inputIndexWithinEpoch;
 
         // If the input index were 0, then there would be no way for the input index
         // in input box to be out of bounds because every claim is non-empty,
         // as it must contain at least one input
         require(inputIndex >= 1, "cannot test with input index less than 1");
 
-        // Here we change the input range artificially to make it look like it ends
+        // First we get the epoch hash for the app and input range
+        bytes32 epochHash = _consensus.getEpochHash(
+            address(_app),
+            proof.inputRange
+        );
+
+        // Then, we change the input range artificially to make it look like it ends
         // before the actual input (which is still provable!).
         // The `Application` contract, however, will not allow such proof.
-        proof.inputRange.lastIndex = inputIndex.toUint64() - 1;
-        _mockConsensus(proof);
+        proof.inputRange.lastIndex = uint64(inputIndex) - 1;
+
+        // Finally, we submit the same epoch hash but for the modified input range
+        _submitClaim(proof.inputRange, epochHash);
 
         vm.expectRevert(
             abi.encodeWithSelector(
@@ -389,24 +360,20 @@ contract ApplicationTest is ERC165Test {
                 proof.inputRange
             )
         );
-        _executeVoucher(voucher, proof);
+        _app.executeOutput(output, proof);
     }
-
-    // test ether transfer
 
     function testEtherTransfer(uint256 appInitBalance) public {
         appInitBalance = _boundBalance(appInitBalance);
 
-        Voucher memory voucher = _getVoucher(OutputName.ETHWithdrawalVoucher);
-        OutputValidityProof memory proof = _setupVoucherProof(
-            OutputName.ETHWithdrawalVoucher
-        );
+        bytes memory output = _getOutput(OutputName.ETHTransfer);
+        OutputValidityProof memory proof = _getProof(OutputName.ETHTransfer);
 
         // not able to execute voucher because application has 0 balance
         assertEq(address(_app).balance, 0);
         assertEq(address(_recipient).balance, 0);
         vm.expectRevert();
-        _executeVoucher(voucher, proof);
+        _app.executeOutput(output, proof);
         assertEq(address(_app).balance, 0);
         assertEq(address(_recipient).balance, 0);
 
@@ -418,13 +385,13 @@ contract ApplicationTest is ERC165Test {
         // expect event
         vm.expectEmit(false, false, false, true, address(_app));
         emit IApplication.OutputExecuted(
-            _calculateInputIndex(proof).toUint64(),
+            proof.inputIndexWithinEpoch,
             proof.outputIndexWithinInput,
-            _encodeVoucher(voucher)
+            output
         );
 
         // perform call
-        _executeVoucher(voucher, proof);
+        _app.executeOutput(output, proof);
 
         // check result
         assertEq(address(_app).balance, appInitBalance - _transferAmount);
@@ -434,19 +401,17 @@ contract ApplicationTest is ERC165Test {
         vm.expectRevert(
             abi.encodeWithSelector(
                 IApplication.OutputNotReexecutable.selector,
-                _encodeVoucher(voucher)
+                output
             )
         );
-        _executeVoucher(voucher, proof);
+        _app.executeOutput(output, proof);
     }
 
     // test NFT transfer
 
     function testWithdrawNFT() public {
-        Voucher memory voucher = _getVoucher(OutputName.ERC721TransferVoucher);
-        OutputValidityProof memory proof = _setupVoucherProof(
-            OutputName.ERC721TransferVoucher
-        );
+        bytes memory output = _getOutput(OutputName.ERC721Transfer);
+        OutputValidityProof memory proof = _getProof(OutputName.ERC721Transfer);
 
         // not able to execute voucher because application doesn't have the nft
         assertEq(_erc721Token.ownerOf(_tokenId), _tokenOwner);
@@ -457,7 +422,7 @@ contract ApplicationTest is ERC165Test {
                 _tokenId
             )
         );
-        _executeVoucher(voucher, proof);
+        _app.executeOutput(output, proof);
         assertEq(_erc721Token.ownerOf(_tokenId), _tokenOwner);
 
         // fund application
@@ -468,13 +433,13 @@ contract ApplicationTest is ERC165Test {
         // expect event
         vm.expectEmit(false, false, false, true, address(_app));
         emit IApplication.OutputExecuted(
-            _calculateInputIndex(proof).toUint64(),
+            proof.inputIndexWithinEpoch,
             proof.outputIndexWithinInput,
-            _encodeVoucher(voucher)
+            output
         );
 
         // perform call
-        _executeVoucher(voucher, proof);
+        _app.executeOutput(output, proof);
 
         // check result
         assertEq(_erc721Token.ownerOf(_tokenId), _recipient);
@@ -483,10 +448,10 @@ contract ApplicationTest is ERC165Test {
         vm.expectRevert(
             abi.encodeWithSelector(
                 IApplication.OutputNotReexecutable.selector,
-                _encodeVoucher(voucher)
+                output
             )
         );
-        _executeVoucher(voucher, proof);
+        _app.executeOutput(output, proof);
     }
 
     // test migration
@@ -494,6 +459,7 @@ contract ApplicationTest is ERC165Test {
     function testMigrateToConsensus(
         IInputBox inputBox,
         IPortal[] calldata portals,
+        IConsensus newConsensus,
         address owner,
         bytes32 templateHash,
         address newOwner,
@@ -512,8 +478,6 @@ contract ApplicationTest is ERC165Test {
             owner,
             templateHash
         );
-
-        IConsensus newConsensus = new SimpleConsensus();
 
         // migrate fail if not called from owner
         vm.expectRevert(
@@ -557,6 +521,22 @@ contract ApplicationTest is ERC165Test {
         _app.migrateToConsensus(_consensus);
     }
 
+    function _getOutput(
+        OutputName outputName
+    ) internal view returns (bytes memory) {
+        return _getOutput(uint256(outputName));
+    }
+
+    function _getOutput(
+        uint256 inputIndex
+    ) internal view returns (bytes memory) {
+        if (inputIndex < _outputs.length) {
+            return _outputs[inputIndex];
+        } else {
+            revert OutputNotFound(inputIndex);
+        }
+    }
+
     function _deployContracts() internal {
         _consensus = _deployConsensusDeterministically();
         _app = _deployApplicationDeterministically();
@@ -581,7 +561,7 @@ contract ApplicationTest is ERC165Test {
 
     function _deployConsensusDeterministically() internal returns (IConsensus) {
         vm.prank(_appOwner);
-        return new SimpleConsensus{salt: _salt}();
+        return new Authority{salt: _salt}(_authorityOwner);
     }
 
     function _deployERC20Deterministically() internal returns (IERC20) {
@@ -603,24 +583,27 @@ contract ApplicationTest is ERC165Test {
         uint256 value,
         bytes memory payload
     ) internal {
-        uint256 index = _outputEnums.length;
-        _outputEnums.push(LibServerManager.OutputEnum.VOUCHER);
-        _vouchers[index] = Voucher(destination, value, payload);
+        _addOutput(
+            abi.encodeCall(Outputs.Voucher, (destination, value, payload))
+        );
     }
 
-    function _addNotice(bytes memory notice) internal {
-        uint256 index = _outputEnums.length;
-        _outputEnums.push(LibServerManager.OutputEnum.NOTICE);
-        _notices[index] = notice;
+    function _addNotice(bytes memory payload) internal {
+        _addOutput(abi.encodeCall(Outputs.Notice, (payload)));
     }
 
-    function _generateOutputs() internal {
-        _addNotice(abi.encode(bytes4(0xfafafafa)));
+    function _addOutput(bytes memory output) internal {
+        _outputs.push(output);
+    }
+
+    function _addOutputs() internal {
+        _addOutput(abi.encode());
+        _addNotice("Hello, world!");
+        _addVoucher(_recipient, _transferAmount, abi.encode());
         _addVoucher(
             address(_erc20Token),
             abi.encodeCall(IERC20.transfer, (_recipient, _transferAmount))
         );
-        _addVoucher(_recipient, _transferAmount, abi.encode());
         _addVoucher(
             address(_erc721Token),
             abi.encodeWithSignature(
@@ -632,42 +615,16 @@ contract ApplicationTest is ERC165Test {
         );
     }
 
-    function _encodeVoucher(
-        Voucher memory voucher
-    ) internal pure returns (bytes memory) {
-        return
-            abi.encodeCall(
-                Outputs.Voucher,
-                (voucher.destination, voucher.value, voucher.payload)
-            );
-    }
-
-    function _encodeNotice(
-        bytes memory notice
-    ) internal pure returns (bytes memory) {
-        return abi.encodeCall(Outputs.Notice, (notice));
-    }
-
     function _writeInputs() internal {
-        for (uint256 i; i < _outputEnums.length; ++i) {
-            LibServerManager.OutputEnum outputEnum = _outputEnums[i];
-            if (outputEnum == LibServerManager.OutputEnum.VOUCHER) {
-                Voucher memory voucher = _getVoucher(i);
-                _writeInput(i, _encodeVoucher(voucher));
-            } else {
-                bytes memory notice = _getNotice(i);
-                _writeInput(i, _encodeNotice(notice));
-            }
+        // The ioctl-echo-loop program receives inputs
+        // and echoes them back as outputs.
+        for (uint256 i; i < _outputs.length; ++i) {
+            _writeInput(i, _outputs[i]);
         }
     }
 
-    function _writeInput(
-        uint256 inputIndexWithinEpoch,
-        bytes memory payload
-    ) internal {
-        string memory inputIndexWithinEpochStr = vm.toString(
-            inputIndexWithinEpoch
-        );
+    function _writeInput(uint256 inputIndex, bytes memory payload) internal {
+        string memory inputIndexWithinEpochStr = vm.toString(inputIndex);
         string memory objectKey = string.concat(
             "input",
             inputIndexWithinEpochStr
@@ -679,11 +636,11 @@ contract ApplicationTest is ERC165Test {
     }
 
     function _removeExtraInputs() internal {
-        uint256 inputIndexWithinEpoch = _outputEnums.length;
-        string memory path = _getInputPath(inputIndexWithinEpoch);
+        uint256 inputIndex = _outputs.length;
+        string memory path = _getInputPath(inputIndex);
         while (vm.isFile(path)) {
             vm.removeFile(path);
-            path = _getInputPath(++inputIndexWithinEpoch);
+            path = _getInputPath(++inputIndex);
         }
     }
 
@@ -710,108 +667,24 @@ contract ApplicationTest is ERC165Test {
         _encodedFinishEpochResponse = vm.parseJson(json);
     }
 
-    function _setupNoticeProof(
-        OutputName outputName
-    ) internal returns (OutputValidityProof memory) {
-        uint256 inputIndexWithinEpoch = uint256(outputName);
-        OutputValidityProof memory proof = _getNoticeProof(
-            inputIndexWithinEpoch
-        );
-        _mockConsensus(proof);
-        return proof;
+    function _submitClaim() internal {
+        LibServerManager.FinishEpochResponse memory response;
+        InputRange memory inputRange;
+        bytes32 epochHash;
+
+        response = _getFinishEpochResponse();
+        inputRange = response.proofs.getInputRange();
+        epochHash = response.getEpochHash();
+
+        _submitClaim(inputRange, epochHash);
     }
 
-    function _setupVoucherProof(
-        OutputName outputName
-    ) internal returns (OutputValidityProof memory) {
-        uint256 inputIndexWithinEpoch = uint256(outputName);
-        OutputValidityProof memory proof = _getNoticeProof(
-            inputIndexWithinEpoch
-        );
-        _mockConsensus(proof);
-        return proof;
-    }
-
-    function _executeVoucher(
-        Voucher memory voucher,
-        OutputValidityProof memory proof
+    function _submitClaim(
+        InputRange memory inputRange,
+        bytes32 epochHash
     ) internal {
-        _app.executeOutput(_encodeVoucher(voucher), proof);
-    }
-
-    // Mock the consensus contract so that calls to `getEpochHash` return
-    // the epoch hash to be used to validate the proof.
-    function _mockConsensus(OutputValidityProof memory proof) internal {
-        vm.mockCall(
-            address(_consensus),
-            abi.encodeCall(
-                IConsensus.getEpochHash,
-                (address(_app), proof.inputRange)
-            ),
-            abi.encode(_calculateEpochHash(proof))
-        );
-    }
-
-    function _checkInputIndexWithinEpoch(
-        uint256 inputIndexWithinEpoch
-    ) internal view {
-        uint256 length = _outputEnums.length;
-        if (inputIndexWithinEpoch >= length) {
-            revert InputIndexWithinEpochOutOfBounds(
-                length,
-                inputIndexWithinEpoch
-            );
-        }
-    }
-
-    function _checkOutputEnum(
-        uint256 inputIndexWithinEpoch,
-        LibServerManager.OutputEnum expected
-    ) internal view {
-        LibServerManager.OutputEnum obtained = _outputEnums[
-            inputIndexWithinEpoch
-        ];
-        if (expected != obtained) {
-            revert UnexpectedOutputEnum(
-                expected,
-                obtained,
-                inputIndexWithinEpoch
-            );
-        }
-    }
-
-    function _getVoucher(
-        uint256 inputIndexWithinEpoch
-    ) internal view returns (Voucher memory) {
-        _checkInputIndexWithinEpoch(inputIndexWithinEpoch);
-        _checkOutputEnum(
-            inputIndexWithinEpoch,
-            LibServerManager.OutputEnum.VOUCHER
-        );
-        return _vouchers[inputIndexWithinEpoch];
-    }
-
-    function _getVoucher(
-        OutputName _outputName
-    ) internal view returns (Voucher memory) {
-        return _getVoucher(uint256(_outputName));
-    }
-
-    function _getNotice(
-        uint256 inputIndexWithinEpoch
-    ) internal view returns (bytes memory) {
-        _checkInputIndexWithinEpoch(inputIndexWithinEpoch);
-        _checkOutputEnum(
-            inputIndexWithinEpoch,
-            LibServerManager.OutputEnum.NOTICE
-        );
-        return _notices[inputIndexWithinEpoch];
-    }
-
-    function _getNotice(
-        OutputName _outputName
-    ) internal view returns (bytes memory) {
-        return _getNotice(uint256(_outputName));
+        vm.prank(_authorityOwner);
+        _consensus.submitClaim(address(_app), inputRange, epochHash);
     }
 
     function _getInputPath(
@@ -833,101 +706,60 @@ contract ApplicationTest is ERC165Test {
     }
 
     function _getInputPath(
-        uint256 inputIndexWithinEpoch
+        uint256 inputIndex
     ) internal view returns (string memory) {
-        string memory inputIndexWithinEpochStr = vm.toString(
-            inputIndexWithinEpoch
-        );
-        return _getInputPath(inputIndexWithinEpochStr);
-    }
-
-    function _validateNotice(
-        bytes memory notice,
-        OutputValidityProof memory proof
-    ) internal view {
-        _app.validateOutput(_encodeNotice(notice), proof);
-    }
-
-    function _getNoticeProof(
-        uint256 inputIndexWithinEpoch
-    ) internal view returns (OutputValidityProof memory) {
-        return
-            _getProof(
-                LibServerManager.OutputEnum.NOTICE,
-                inputIndexWithinEpoch,
-                0
-            );
-    }
-
-    function _getVoucherProof(
-        uint256 inputIndexWithinEpoch
-    ) internal view returns (OutputValidityProof memory) {
-        return
-            _getProof(
-                LibServerManager.OutputEnum.VOUCHER,
-                inputIndexWithinEpoch,
-                0
-            );
+        return _getInputPath(vm.toString(inputIndex));
     }
 
     function _getProof(
-        LibServerManager.OutputEnum outputEnum,
-        uint256 inputIndexWithinEpoch,
-        uint256 outputIndex
+        OutputName outputName
     ) internal view returns (OutputValidityProof memory) {
-        // Decode ABI-encoded data into raw struct
-        LibServerManager.RawFinishEpochResponse memory raw = abi.decode(
+        return _getProof(uint256(outputName));
+    }
+
+    function _getProof(
+        uint256 inputIndex
+    ) internal view returns (OutputValidityProof memory) {
+        return _getProof(inputIndex, 0);
+    }
+
+    function _getFinishEpochResponse()
+        internal
+        view
+        returns (LibServerManager.FinishEpochResponse memory)
+    {
+        LibServerManager.RawFinishEpochResponse memory rawFinishEpochResponse;
+
+        rawFinishEpochResponse = abi.decode(
             _encodedFinishEpochResponse,
             (LibServerManager.RawFinishEpochResponse)
         );
 
-        // Format raw finish epoch response
-        LibServerManager.FinishEpochResponse memory response = raw.fmt(vm);
+        return rawFinishEpochResponse.fmt(vm);
+    }
 
-        // Get the array of proofs
-        LibServerManager.Proof[] memory proofs = response.proofs;
+    function _getProof(
+        uint256 inputIndex,
+        uint256 outputIndex
+    ) internal view returns (OutputValidityProof memory) {
+        LibServerManager.Proof[] memory proofs;
+        InputRange memory inputRange;
 
-        // Calculate input range from the array of proofs
-        InputRange memory inputRange = proofs.getInputRange();
+        proofs = _getFinishEpochResponse().proofs;
+        inputRange = proofs.getInputRange();
 
-        // Find the proof that proves the provided output
         for (uint256 i; i < proofs.length; ++i) {
             LibServerManager.Proof memory proof = proofs[i];
-            if (proof.proves(outputEnum, inputIndexWithinEpoch, outputIndex)) {
+            if (proof.proves(inputIndex, outputIndex)) {
                 return _convert(proof.validity, inputRange);
             }
         }
 
-        // If a proof was not found, raise an error
-        revert ProofNotFound(outputEnum, inputIndexWithinEpoch);
+        revert ProofNotFound(inputIndex, outputIndex);
     }
 
     function _boundBalance(uint256 balance) internal view returns (uint256) {
         return bound(balance, _transferAmount, _initialSupply);
-    }
-
-    function calculateInputIndex(
-        OutputValidityProof calldata proof
-    ) external pure returns (uint256) {
-        return proof.calculateInputIndex();
-    }
-
-    function _calculateInputIndex(
-        OutputValidityProof memory proof
-    ) internal view returns (uint256) {
-        return this.calculateInputIndex(proof);
-    }
-
-    function _calculateEpochHash(
-        OutputValidityProof memory validity
-    ) internal pure returns (bytes32) {
-        return
-            keccak256(
-                abi.encode(
-                    validity.outputsEpochRootHash,
-                    validity.machineStateHash
-                )
-            );
     }
 
     function _convert(
@@ -946,5 +778,28 @@ contract ApplicationTest is ERC165Test {
                     .outputHashInOutputHashesSiblings,
                 outputHashesInEpochSiblings: v.outputHashesInEpochSiblings
             });
+    }
+
+    function _testOutputValidation(uint256 inputIndex) internal {
+        bytes memory output = _getOutput(inputIndex);
+        OutputValidityProof memory proof = _getProof(inputIndex);
+
+        _app.validateOutput(output, proof);
+
+        // to test a different output, we give two options
+        // it is evident that the output cannot be equal to both
+
+        bytes memory otherOutput;
+        bytes memory option1 = bytes("deadbeef");
+        bytes memory option2 = bytes("beefdead");
+
+        if (keccak256(output) == keccak256(option1)) {
+            otherOutput = option2;
+        } else {
+            otherOutput = option1;
+        }
+
+        vm.expectRevert(IApplication.IncorrectOutputHashesRootHash.selector);
+        _app.validateOutput(otherOutput, proof);
     }
 }
