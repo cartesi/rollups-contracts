@@ -33,7 +33,7 @@ library LibServerManager {
     }
 
     struct RawProof {
-        bytes32 context;
+        bytes32 context; // unused
         string inputIndex;
         string outputEnum;
         string outputIndex;
@@ -167,6 +167,12 @@ library LibServerManager {
             });
     }
 
+    function getEpochHash(
+        FinishEpochResponse memory r
+    ) internal pure returns (bytes32) {
+        return keccak256(abi.encode(r.noticesEpochRootHash, r.machineHash));
+    }
+
     function getInputRange(
         Proof[] memory proofs
     ) internal pure returns (InputRange memory) {
@@ -180,8 +186,8 @@ library LibServerManager {
     function getFirstInputIndex(
         Proof[] memory proofs
     ) internal pure returns (uint256) {
-        uint256 first = proofs[0].inputIndex;
-        for (uint256 i = 1; i < proofs.length; ++i) {
+        uint256 first = type(uint64).max;
+        for (uint256 i; i < proofs.length; ++i) {
             Proof memory proof = proofs[i];
             if (proof.inputIndex < first) {
                 first = proof.inputIndex;
@@ -193,8 +199,8 @@ library LibServerManager {
     function getLastInputIndex(
         Proof[] memory proofs
     ) internal pure returns (uint256) {
-        uint256 last = proofs[0].inputIndex;
-        for (uint256 i = 1; i < proofs.length; ++i) {
+        uint256 last;
+        for (uint256 i; i < proofs.length; ++i) {
             Proof memory proof = proofs[i];
             if (proof.inputIndex > last) {
                 last = proof.inputIndex;
@@ -205,13 +211,12 @@ library LibServerManager {
 
     function proves(
         Proof memory p,
-        OutputEnum outputEnum,
-        uint256 inputIndexWithinEpoch,
+        uint256 inputIndex,
         uint256 outputIndex
     ) internal pure returns (bool) {
         return
-            p.outputEnum == outputEnum &&
-            p.validity.inputIndexWithinEpoch == inputIndexWithinEpoch &&
-            p.outputIndex == outputIndex;
+            p.inputIndex == inputIndex &&
+            p.outputIndex == outputIndex &&
+            p.outputEnum == OutputEnum.NOTICE;
     }
 }
