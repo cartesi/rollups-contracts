@@ -8,6 +8,7 @@ import {Quorum} from "contracts/consensus/quorum/Quorum.sol";
 import {IConsensus} from "contracts/consensus/IConsensus.sol";
 
 import {TestBase} from "../../util/TestBase.sol";
+import {LibTopic} from "../../util/LibTopic.sol";
 
 import {Vm} from "forge-std/Vm.sol";
 
@@ -17,7 +18,7 @@ struct Claim {
     bytes32 epochHash;
 }
 
-library LibClaim {
+library LibQuorum {
     function numOfValidatorsInFavorOf(
         Quorum quorum,
         Claim calldata claim
@@ -50,7 +51,8 @@ library LibClaim {
 }
 
 contract QuorumTest is TestBase {
-    using LibClaim for Quorum;
+    using LibQuorum for Quorum;
+    using LibTopic for address;
 
     function testConstructor(uint8 numOfValidators) external {
         address[] memory validators = _generateAddresses(numOfValidators);
@@ -103,16 +105,29 @@ contract QuorumTest is TestBase {
         }
     }
 
-    function testValidatorById(uint8 numOfValidators, uint8 id) external {
+    function testValidatorByIdZero(uint8 numOfValidators) external {
         Quorum quorum = _deployQuorum(numOfValidators);
+        assertEq(quorum.validatorById(0), address(0));
+    }
 
+    function testValidatorByIdValid(
+        uint8 numOfValidators,
+        uint256 id
+    ) external {
+        numOfValidators = uint8(bound(numOfValidators, 1, type(uint8).max));
+        id = bound(id, 1, numOfValidators);
+        Quorum quorum = _deployQuorum(numOfValidators);
         address validator = quorum.validatorById(id);
+        assertEq(quorum.validatorId(validator), id);
+    }
 
-        if (id >= 1 && id <= numOfValidators) {
-            assertEq(quorum.validatorId(validator), id);
-        } else {
-            assertEq(validator, address(0));
-        }
+    function testValidatorByIdTooLarge(
+        uint8 numOfValidators,
+        uint256 id
+    ) external {
+        id = bound(id, uint256(numOfValidators) + 1, type(uint256).max);
+        Quorum quorum = _deployQuorum(numOfValidators);
+        assertEq(quorum.validatorById(id), address(0));
     }
 
     function testSubmitClaimRevertsNotValidator(
@@ -120,9 +135,11 @@ contract QuorumTest is TestBase {
         address caller,
         Claim calldata claim
     ) external {
-        Quorum quorum = _deployQuorum(numOfValidators);
+        address[] memory validators = _generateAddresses(numOfValidators);
 
-        vm.assume(quorum.validatorId(caller) == 0);
+        Quorum quorum = new Quorum(validators);
+
+        vm.assume(!_contains(validators, caller));
 
         vm.expectRevert("Quorum: caller is not validator");
 
@@ -153,11 +170,11 @@ contract QuorumTest is TestBase {
     ) external {
         numOfValidators = uint8(bound(numOfValidators, 1, 7));
         Quorum quorum = _deployQuorum(numOfValidators);
-        bool[] memory submitted = new bool[](numOfValidators + 1);
+        bool[] memory inFavorOf = new bool[](numOfValidators + 1);
         for (uint256 id = 1; id <= numOfValidators; ++id) {
             _submitClaimAs(quorum, claim, id);
-            submitted[id] = true;
-            _checkSubmitted(quorum, claim, submitted);
+            inFavorOf[id] = true;
+            _checkSubmitted(quorum, claim, inFavorOf);
         }
     }
 
@@ -188,14 +205,14 @@ contract QuorumTest is TestBase {
     function _checkSubmitted(
         Quorum quorum,
         Claim calldata claim,
-        bool[] memory submitted
+        bool[] memory inFavorOf
     ) internal {
         uint256 inFavorCount;
         uint256 numOfValidators = quorum.numOfValidators();
 
         for (uint256 id = 1; id <= numOfValidators; ++id) {
-            assertEq(quorum.isValidatorInFavorOf(claim, id), submitted[id]);
-            if (submitted[id]) ++inFavorCount;
+            assertEq(quorum.isValidatorInFavorOf(claim, id), inFavorOf[id]);
+            if (inFavorOf[id]) ++inFavorCount;
         }
 
         assertEq(quorum.numOfValidatorsInFavorOf(claim), inFavorCount);
@@ -225,18 +242,14 @@ contract QuorumTest is TestBase {
                 entry.emitter == address(quorum) &&
                 entry.topics[0] == IConsensus.ClaimSubmission.selector
             ) {
-                address submitter = address(uint160(uint256(entry.topics[1])));
-                address dapp = address(uint160(uint256(entry.topics[2])));
-
                 (InputRange memory inputRange, bytes32 epochHash) = abi.decode(
                     entry.data,
                     (InputRange, bytes32)
                 );
 
-                assertEq(submitter, validator);
-                assertEq(dapp, claim.dapp);
-                assertEq(inputRange.firstIndex, claim.inputRange.firstIndex);
-                assertEq(inputRange.lastIndex, claim.inputRange.lastIndex);
+                assertEq(entry.topics[1], validator.asTopic());
+                assertEq(entry.topics[2], claim.dapp.asTopic());
+                assertEq(inputRange, claim.inputRange);
                 assertEq(epochHash, claim.epochHash);
 
                 ++numOfSubmissions;
@@ -246,16 +259,13 @@ contract QuorumTest is TestBase {
                 entry.emitter == address(quorum) &&
                 entry.topics[0] == IConsensus.ClaimAcceptance.selector
             ) {
-                address dapp = address(uint160(uint256(entry.topics[1])));
-
                 (InputRange memory inputRange, bytes32 epochHash) = abi.decode(
                     entry.data,
                     (InputRange, bytes32)
                 );
 
-                assertEq(dapp, claim.dapp);
-                assertEq(inputRange.firstIndex, claim.inputRange.firstIndex);
-                assertEq(inputRange.lastIndex, claim.inputRange.lastIndex);
+                assertEq(entry.topics[1], claim.dapp.asTopic());
+                assertEq(inputRange, claim.inputRange);
                 assertEq(epochHash, claim.epochHash);
 
                 ++numOfAcceptances;
@@ -279,5 +289,10 @@ contract QuorumTest is TestBase {
                 claim.epochHash
             );
         }
+    }
+
+    function assertEq(InputRange memory r1, InputRange memory r2) internal {
+        assertEq(r1.firstIndex, r2.firstIndex);
+        assertEq(r1.lastIndex, r2.lastIndex);
     }
 }
