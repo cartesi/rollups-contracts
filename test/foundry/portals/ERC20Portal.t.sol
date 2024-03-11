@@ -63,7 +63,7 @@ contract ERC20PortalTest is ERC165Test {
 
         vm.mockCall(address(_token), transferFrom, abi.encode(true));
 
-        bytes memory payload = _encodePayload(amount, data);
+        bytes memory payload = _encodePayload(_token, amount, data);
 
         bytes memory addInput = _encodeAddInput(payload);
 
@@ -82,7 +82,7 @@ contract ERC20PortalTest is ERC165Test {
 
         vm.mockCall(address(_token), transferFrom, abi.encode(false));
 
-        bytes memory payload = _encodePayload(amount, data);
+        bytes memory payload = _encodePayload(_token, amount, data);
 
         bytes memory addInput = _encodeAddInput(payload);
 
@@ -103,7 +103,7 @@ contract ERC20PortalTest is ERC165Test {
 
         vm.mockCallRevert(address(_token), transferFrom, errorData);
 
-        bytes memory payload = _encodePayload(amount, data);
+        bytes memory payload = _encodePayload(_token, amount, data);
 
         bytes memory addInput = _encodeAddInput(payload);
 
@@ -124,22 +124,24 @@ contract ERC20PortalTest is ERC165Test {
 
         NormalToken token = new NormalToken(_alice, supply);
 
+        bytes memory payload = _encodePayload(token, amount, data);
+
+        bytes memory addInput = _encodeAddInput(payload);
+
         vm.startPrank(_alice);
 
         token.approve(address(_portal), amount);
 
-        vm.mockCall(
-            address(_inputBox),
-            abi.encodeWithSelector(IInputBox.addInput.selector),
-            abi.encode(bytes32(0))
-        );
+        vm.mockCall(address(_inputBox), addInput, abi.encode(bytes32(0)));
 
         // balances before
         assertEq(token.balanceOf(_alice), supply);
         assertEq(token.balanceOf(_app), 0);
         assertEq(token.balanceOf(address(_portal)), 0);
 
-        vm.expectEmit(true, true, false, false, address(token));
+        vm.expectCall(address(_inputBox), addInput, 1);
+
+        vm.expectEmit(true, true, false, true, address(token));
         emit IERC20.Transfer(_alice, _app, amount);
 
         // deposit tokens
@@ -154,10 +156,11 @@ contract ERC20PortalTest is ERC165Test {
     }
 
     function _encodePayload(
+        IERC20 token,
         uint256 amount,
         bytes calldata data
     ) internal view returns (bytes memory) {
-        return InputEncoding.encodeERC20Deposit(_token, _alice, amount, data);
+        return InputEncoding.encodeERC20Deposit(token, _alice, amount, data);
     }
 
     function _encodeTransferFrom(
