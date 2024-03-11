@@ -4,7 +4,6 @@
 pragma solidity ^0.8.22;
 
 import {IERC1155, ERC1155} from "@openzeppelin/contracts/token/ERC1155/ERC1155.sol";
-import {ERC1155Holder} from "@openzeppelin/contracts/token/ERC1155/utils/ERC1155Holder.sol";
 import {IERC165} from "@openzeppelin/contracts/utils/introspection/IERC165.sol";
 
 import {ERC1155SinglePortal} from "contracts/portals/ERC1155SinglePortal.sol";
@@ -24,8 +23,6 @@ contract NormalToken is ERC1155 {
         _mint(tokenOwner, tokenId, supply, "");
     }
 }
-
-contract TokenHolder is ERC1155Holder {}
 
 contract ERC1155SinglePortalTest is ERC165Test {
     address _alice;
@@ -84,10 +81,10 @@ contract ERC1155SinglePortalTest is ERC165Test {
             execLayerData
         );
 
-        bytes memory addInputCall = _encodeAddInput(payload);
+        bytes memory addInput = _encodeAddInput(payload);
 
-        vm.mockCall(address(_inputBox), addInputCall, abi.encode(bytes32(0)));
-        vm.expectCall(address(_inputBox), addInputCall, 1);
+        vm.mockCall(address(_inputBox), addInput, abi.encode(bytes32(0)));
+        vm.expectCall(address(_inputBox), addInput, 1);
 
         vm.prank(_alice);
         _portal.depositSingleERC1155Token(
@@ -123,9 +120,9 @@ contract ERC1155SinglePortalTest is ERC165Test {
             execLayerData
         );
 
-        bytes memory addInputCall = _encodeAddInput(payload);
+        bytes memory addInput = _encodeAddInput(payload);
 
-        vm.mockCall(address(_inputBox), addInputCall, abi.encode(bytes32(0)));
+        vm.mockCall(address(_inputBox), addInput, abi.encode(bytes32(0)));
 
         vm.expectRevert(errorData);
 
@@ -149,25 +146,31 @@ contract ERC1155SinglePortalTest is ERC165Test {
     ) public {
         value = bound(value, 0, supply);
         _token = new NormalToken(_alice, tokenId, supply);
-        _app = address(new TokenHolder());
 
         vm.startPrank(_alice);
 
         // Allow the portal to withdraw tokens from Alice
         _token.setApprovalForAll(address(_portal), true);
 
-        vm.mockCall(
-            address(_inputBox),
-            abi.encodeWithSelector(IInputBox.addInput.selector),
-            abi.encode(bytes32(0))
+        bytes memory payload = _encodePayload(
+            tokenId,
+            value,
+            baseLayerData,
+            execLayerData
         );
+
+        bytes memory addInput = _encodeAddInput(payload);
+
+        vm.mockCall(address(_inputBox), addInput, abi.encode(bytes32(0)));
 
         // balances before
         assertEq(_token.balanceOf(_alice, tokenId), supply);
         assertEq(_token.balanceOf(_app, tokenId), 0);
         assertEq(_token.balanceOf(address(_portal), tokenId), 0);
 
-        vm.expectEmit(true, true, true, true);
+        vm.expectCall(address(_inputBox), addInput, 1);
+
+        vm.expectEmit(true, true, true, true, address(_token));
         emit IERC1155.TransferSingle(
             address(_portal),
             _alice,
