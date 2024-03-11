@@ -28,6 +28,7 @@ import {SafeCast} from "@openzeppelin/contracts/utils/math/SafeCast.sol";
 
 import {LibServerManager} from "../util/LibServerManager.sol";
 import {LibBytes} from "../util/LibBytes.sol";
+import {EtherReceiver} from "../util/EtherReceiver.sol";
 import {SimpleERC20} from "../util/SimpleERC20.sol";
 import {SimpleERC721} from "../util/SimpleERC721.sol";
 
@@ -46,18 +47,21 @@ contract ApplicationTest is ERC165Test {
         HelloWorld,
         MyOutput,
         ETHTransfer,
+        PayableFunc,
         ERC20Transfer,
         ERC721Transfer
     }
 
     Application _app;
     IConsensus _consensus;
+    EtherReceiver _etherReceiver;
     IERC20 _erc20Token;
     IERC721 _erc721Token;
     IPortal[] _portals;
     bytes[] _outputs;
     bytes _encodedFinishEpochResponse;
     IInputBox immutable _inputBox;
+    address immutable _deployer;
     address immutable _authorityOwner;
     address immutable _appOwner;
     address immutable _inputSender;
@@ -73,6 +77,7 @@ contract ApplicationTest is ERC165Test {
     error ProofNotFound(uint256 inputIndex, uint256 outputIndex);
 
     constructor() {
+        _deployer = LibBytes.hashToAddress("deployer");
         _authorityOwner = LibBytes.hashToAddress("authorityOwner");
         _appOwner = LibBytes.hashToAddress("appOwner");
         _initialSupply = LibBytes.hashToUint256("initialSupply");
@@ -408,8 +413,6 @@ contract ApplicationTest is ERC165Test {
         _app.executeOutput(output, proof);
     }
 
-    // test NFT transfer
-
     function testWithdrawNFT() public {
         bytes memory output = _getOutput(OutputName.ERC721Transfer);
         OutputValidityProof memory proof = _getProof(OutputName.ERC721Transfer);
@@ -453,6 +456,29 @@ contract ApplicationTest is ERC165Test {
             )
         );
         _app.executeOutput(output, proof);
+    }
+
+    function testPayableFunctionCall(uint256 appInitBalance) public {
+        appInitBalance = _boundBalance(appInitBalance);
+
+        bytes memory output = _getOutput(OutputName.PayableFunc);
+        OutputValidityProof memory proof = _getProof(OutputName.PayableFunc);
+
+        assertEq(_etherReceiver.balanceOf(address(_app)), 0);
+        assertEq(address(_app).balance, 0);
+
+        vm.expectRevert();
+        _app.executeOutput(output, proof);
+
+        vm.deal(address(_app), appInitBalance);
+
+        assertEq(_etherReceiver.balanceOf(address(_app)), 0);
+        assertEq(address(_app).balance, appInitBalance);
+
+        _app.executeOutput(output, proof);
+
+        assertEq(_etherReceiver.balanceOf(address(_app)), _transferAmount);
+        assertEq(address(_app).balance, appInitBalance - _transferAmount);
     }
 
     // test non-executable outputs
@@ -555,6 +581,7 @@ contract ApplicationTest is ERC165Test {
     function _deployContracts() internal {
         _consensus = _deployConsensusDeterministically();
         _app = _deployApplicationDeterministically();
+        _etherReceiver = _deployEtherReceiverDeterministically();
         _erc20Token = _deployERC20Deterministically();
         _erc721Token = _deployERC721Deterministically();
     }
@@ -563,7 +590,7 @@ contract ApplicationTest is ERC165Test {
         internal
         returns (Application)
     {
-        vm.prank(_appOwner);
+        vm.prank(_deployer);
         return
             new Application{salt: _salt}(
                 _consensus,
@@ -575,17 +602,25 @@ contract ApplicationTest is ERC165Test {
     }
 
     function _deployConsensusDeterministically() internal returns (IConsensus) {
-        vm.prank(_appOwner);
+        vm.prank(_deployer);
         return new Authority{salt: _salt}(_authorityOwner);
     }
 
+    function _deployEtherReceiverDeterministically()
+        internal
+        returns (EtherReceiver)
+    {
+        vm.prank(_deployer);
+        return new EtherReceiver{salt: _salt}();
+    }
+
     function _deployERC20Deterministically() internal returns (IERC20) {
-        vm.prank(_tokenOwner);
+        vm.prank(_deployer);
         return new SimpleERC20{salt: _salt}(_tokenOwner, _initialSupply);
     }
 
     function _deployERC721Deterministically() internal returns (IERC721) {
-        vm.prank(_tokenOwner);
+        vm.prank(_deployer);
         return new SimpleERC721{salt: _salt}(_tokenOwner, _tokenId);
     }
 
@@ -616,6 +651,11 @@ contract ApplicationTest is ERC165Test {
         _addNotice("Hello, world!");
         _addOutput(abi.encodeWithSignature("MyOutput()"));
         _addVoucher(_recipient, _transferAmount, abi.encode());
+        _addVoucher(
+            address(_etherReceiver),
+            _transferAmount,
+            abi.encodeCall(EtherReceiver.mint, ())
+        );
         _addVoucher(
             address(_erc20Token),
             abi.encodeCall(IERC20.transfer, (_recipient, _transferAmount))
