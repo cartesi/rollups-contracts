@@ -5,7 +5,6 @@ pragma solidity ^0.8.22;
 
 import {IERC165} from "@openzeppelin/contracts/utils/introspection/IERC165.sol";
 import {IERC721, ERC721} from "@openzeppelin/contracts/token/ERC721/ERC721.sol";
-import {ERC721Holder} from "@openzeppelin/contracts/token/ERC721/utils/ERC721Holder.sol";
 
 import {ERC721Portal} from "contracts/portals/ERC721Portal.sol";
 import {IERC721Portal} from "contracts/portals/IERC721Portal.sol";
@@ -23,8 +22,6 @@ contract NormalToken is ERC721 {
         _safeMint(tokenOwner, tokenId);
     }
 }
-
-contract TokenHolder is ERC721Holder {}
 
 contract ERC721PortalTest is ERC165Test {
     address _alice;
@@ -75,15 +72,16 @@ contract ERC721PortalTest is ERC165Test {
         vm.expectCall(address(_token), safeTransferFrom, 1);
 
         bytes memory payload = _encodePayload(
+            _token,
             tokenId,
             baseLayerData,
             execLayerData
         );
 
-        bytes memory addInputCall = _encodeAddInput(payload);
+        bytes memory addInput = _encodeAddInput(payload);
 
-        vm.mockCall(address(_inputBox), addInputCall, abi.encode(bytes32(0)));
-        vm.expectCall(address(_inputBox), addInputCall, 1);
+        vm.mockCall(address(_inputBox), addInput, abi.encode(bytes32(0)));
+        vm.expectCall(address(_inputBox), addInput, 1);
 
         vm.prank(_alice);
         _portal.depositERC721Token(
@@ -110,14 +108,15 @@ contract ERC721PortalTest is ERC165Test {
         vm.mockCallRevert(address(_token), safeTransferFrom, errorData);
 
         bytes memory payload = _encodePayload(
+            _token,
             tokenId,
             baseLayerData,
             execLayerData
         );
 
-        bytes memory addInputCall = _encodeAddInput(payload);
+        bytes memory addInput = _encodeAddInput(payload);
 
-        vm.mockCall(address(_inputBox), addInputCall, abi.encode(bytes32(0)));
+        vm.mockCall(address(_inputBox), addInput, abi.encode(bytes32(0)));
 
         vm.expectRevert(errorData);
 
@@ -137,20 +136,26 @@ contract ERC721PortalTest is ERC165Test {
         bytes calldata execLayerData
     ) public {
         NormalToken token = new NormalToken(_alice, tokenId);
-        _app = address(new TokenHolder());
 
         vm.startPrank(_alice);
 
         token.approve(address(_portal), tokenId);
 
-        vm.mockCall(
-            address(_inputBox),
-            abi.encodeWithSelector(IInputBox.addInput.selector),
-            abi.encode(bytes32(0))
-        );
-
         // token owner before
         assertEq(token.ownerOf(tokenId), _alice);
+
+        bytes memory payload = _encodePayload(
+            token,
+            tokenId,
+            baseLayerData,
+            execLayerData
+        );
+
+        bytes memory addInput = _encodeAddInput(payload);
+
+        vm.mockCall(address(_inputBox), addInput, abi.encode(bytes32(0)));
+
+        vm.expectCall(address(_inputBox), addInput, 1);
 
         vm.expectEmit(true, true, true, false, address(token));
         emit IERC721.Transfer(_alice, _app, tokenId);
@@ -170,13 +175,14 @@ contract ERC721PortalTest is ERC165Test {
     }
 
     function _encodePayload(
+        IERC721 token,
         uint256 tokenId,
         bytes calldata baseLayerData,
         bytes calldata execLayerData
     ) internal view returns (bytes memory) {
         return
             InputEncoding.encodeERC721Deposit(
-                _token,
+                token,
                 _alice,
                 tokenId,
                 baseLayerData,
