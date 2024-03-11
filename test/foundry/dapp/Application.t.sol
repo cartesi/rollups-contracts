@@ -44,6 +44,7 @@ contract ApplicationTest is ERC165Test {
     enum OutputName {
         Empty,
         HelloWorld,
+        MyOutput,
         ETHTransfer,
         ERC20Transfer,
         ERC721Transfer
@@ -454,6 +455,20 @@ contract ApplicationTest is ERC165Test {
         _app.executeOutput(output, proof);
     }
 
+    // test non-executable outputs
+
+    function testExecuteEmptyOutput() public {
+        _testOutputNotExecutable(OutputName.Empty);
+    }
+
+    function testExecuteNotice() public {
+        _testOutputNotExecutable(OutputName.HelloWorld);
+    }
+
+    function testExecuteNewTypeOfOutput() public {
+        _testOutputNotExecutable(OutputName.MyOutput);
+    }
+
     // test migration
 
     function testMigrateToConsensus(
@@ -599,6 +614,7 @@ contract ApplicationTest is ERC165Test {
     function _addOutputs() internal {
         _addOutput(abi.encode());
         _addNotice("Hello, world!");
+        _addOutput(abi.encodeWithSignature("MyOutput()"));
         _addVoucher(_recipient, _transferAmount, abi.encode());
         _addVoucher(
             address(_erc20Token),
@@ -801,5 +817,19 @@ contract ApplicationTest is ERC165Test {
 
         vm.expectRevert(IApplication.IncorrectOutputHashesRootHash.selector);
         _app.validateOutput(otherOutput, proof);
+    }
+
+    function _testOutputNotExecutable(OutputName outputName) internal {
+        bytes memory output = _getOutput(outputName);
+        OutputValidityProof memory proof = _getProof(outputName);
+
+        vm.expectRevert(
+            abi.encodeWithSelector(
+                IApplication.OutputNotExecutable.selector,
+                output
+            )
+        );
+
+        _app.executeOutput(output, proof);
     }
 }
