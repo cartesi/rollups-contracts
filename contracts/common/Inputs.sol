@@ -9,15 +9,15 @@ interface Inputs {
     /// @notice An advance request from an EVM-compatible blockchain to a Cartesi Machine.
     /// @param chainId The chain ID
     /// @param app The application address
-    /// @param sender The address of whoever sent the input
+    /// @param msgSender The address of whoever sent the input
     /// @param blockNumber The number of the block in which the input was added
     /// @param blockTimestamp The timestamp of the block in which the input was added
     /// @param index The input index
-    /// @param payload The payload provided by the sender
+    /// @param payload The payload provided by the message sender
     function EvmAdvance(
         uint256 chainId,
         address app,
-        address sender,
+        address msgSender,
         uint256 blockNumber,
         uint256 blockTimestamp,
         uint256 index,
