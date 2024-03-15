@@ -23,8 +23,4 @@ interface Inputs {
         uint256 index,
         bytes calldata payload
     ) external;
-
-    /// @notice An inspect request to a Cartesi Machine.
-    /// @param payload The inspect payload
-    function EvmInspect(bytes calldata payload) external;
 }
