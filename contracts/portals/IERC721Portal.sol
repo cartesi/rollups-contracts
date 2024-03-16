@@ -10,21 +10,21 @@ import {IERC721} from "@openzeppelin/contracts/token/ERC721/IERC721.sol";
 interface IERC721Portal is IPortal {
     // Permissionless functions
 
-    /// @notice Transfer an ERC-721 token to an application and add an input to
-    /// the application's input box to signal such operation.
+    /// @notice Transfer an ERC-721 token to an application contract
+    /// and add an input to the application's input box to signal such operation.
     ///
     /// The caller must change the approved address for the ERC-721 token
     /// to the portal address beforehand, by calling the `approve` function in the
     /// token contract.
     ///
     /// @param token The ERC-721 token contract
-    /// @param app The address of the application
+    /// @param appContract The application contract address
     /// @param tokenId The identifier of the token being transferred
     /// @param baseLayerData Additional data to be interpreted by the base layer
     /// @param execLayerData Additional data to be interpreted by the execution layer
     function depositERC721Token(
         IERC721 token,
-        address app,
+        address appContract,
         uint256 tokenId,
         bytes calldata baseLayerData,
         bytes calldata execLayerData

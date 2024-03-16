@@ -8,15 +8,15 @@ import {CanonicalMachine} from "../common/CanonicalMachine.sol";
 import {Inputs} from "../common/Inputs.sol";
 
 contract InputBox is IInputBox {
-    /// @notice Mapping of application addresses to arrays of input hashes.
+    /// @notice Mapping of application contract addresses to arrays of input hashes.
     mapping(address => bytes32[]) private _inputBoxes;
 
     /// @inheritdoc IInputBox
     function addInput(
-        address app,
+        address appContract,
         bytes calldata payload
     ) external override returns (bytes32) {
-        bytes32[] storage inputBox = _inputBoxes[app];
+        bytes32[] storage inputBox = _inputBoxes[appContract];
 
         uint256 index = inputBox.length;
 
@@ -24,7 +24,7 @@ contract InputBox is IInputBox {
             Inputs.EvmAdvance,
             (
                 block.chainid,
-                app,
+                appContract,
                 msg.sender,
                 block.number,
                 block.timestamp,
@@ -35,7 +35,7 @@ contract InputBox is IInputBox {
 
         if (input.length > CanonicalMachine.INPUT_MAX_SIZE) {
             revert InputTooLarge(
-                app,
+                appContract,
                 input.length,
                 CanonicalMachine.INPUT_MAX_SIZE
             );
@@ -45,23 +45,23 @@ contract InputBox is IInputBox {
 
         inputBox.push(inputHash);
 
-        emit InputAdded(app, index, input);
+        emit InputAdded(appContract, index, input);
 
         return inputHash;
     }
 
     /// @inheritdoc IInputBox
     function getNumberOfInputs(
-        address app
+        address appContract
     ) external view override returns (uint256) {
-        return _inputBoxes[app].length;
+        return _inputBoxes[appContract].length;
     }
 
     /// @inheritdoc IInputBox
     function getInputHash(
-        address app,
+        address appContract,
         uint256 index
     ) external view override returns (bytes32) {
-        return _inputBoxes[app][index];
+        return _inputBoxes[appContract][index];
     }
 }

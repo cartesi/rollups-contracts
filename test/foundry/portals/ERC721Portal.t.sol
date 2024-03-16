@@ -25,14 +25,14 @@ contract NormalToken is ERC721 {
 
 contract ERC721PortalTest is ERC165Test {
     address _alice;
-    address _app;
+    address _appContract;
     IERC721 _token;
     IInputBox _inputBox;
     IERC721Portal _portal;
 
     function setUp() public {
         _alice = vm.addr(1);
-        _app = vm.addr(2);
+        _appContract = vm.addr(2);
         _token = IERC721(vm.addr(3));
         _inputBox = IInputBox(vm.addr(4));
         _portal = new ERC721Portal(_inputBox);
@@ -86,7 +86,7 @@ contract ERC721PortalTest is ERC165Test {
         vm.prank(_alice);
         _portal.depositERC721Token(
             _token,
-            _app,
+            _appContract,
             tokenId,
             baseLayerData,
             execLayerData
@@ -123,7 +123,7 @@ contract ERC721PortalTest is ERC165Test {
         vm.prank(_alice);
         _portal.depositERC721Token(
             _token,
-            _app,
+            _appContract,
             tokenId,
             baseLayerData,
             execLayerData
@@ -158,11 +158,11 @@ contract ERC721PortalTest is ERC165Test {
         vm.expectCall(address(_inputBox), addInput, 1);
 
         vm.expectEmit(true, true, true, false, address(token));
-        emit IERC721.Transfer(_alice, _app, tokenId);
+        emit IERC721.Transfer(_alice, _appContract, tokenId);
 
         _portal.depositERC721Token(
             token,
-            _app,
+            _appContract,
             tokenId,
             baseLayerData,
             execLayerData
@@ -171,7 +171,7 @@ contract ERC721PortalTest is ERC165Test {
         vm.stopPrank();
 
         // token owner after
-        assertEq(token.ownerOf(tokenId), _app);
+        assertEq(token.ownerOf(tokenId), _appContract);
     }
 
     function _encodePayload(
@@ -193,7 +193,7 @@ contract ERC721PortalTest is ERC165Test {
     function _encodeAddInput(
         bytes memory payload
     ) internal view returns (bytes memory) {
-        return abi.encodeCall(IInputBox.addInput, (_app, payload));
+        return abi.encodeCall(IInputBox.addInput, (_appContract, payload));
     }
 
     function _encodeSafeTransferFrom(
@@ -204,7 +204,7 @@ contract ERC721PortalTest is ERC165Test {
             abi.encodeWithSignature(
                 "safeTransferFrom(address,address,uint256,bytes)",
                 _alice,
-                _app,
+                _appContract,
                 tokenId,
                 baseLayerData
             );

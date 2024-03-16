@@ -52,7 +52,7 @@ contract ApplicationTest is ERC165Test {
         ERC721Transfer
     }
 
-    Application _app;
+    Application _appContract;
     IConsensus _consensus;
     EtherReceiver _etherReceiver;
     IERC20 _erc20Token;
@@ -108,7 +108,7 @@ contract ApplicationTest is ERC165Test {
     }
 
     function getERC165Contract() public view override returns (IERC165) {
-        return _app;
+        return _appContract;
     }
 
     function getSupportedInterfaces()
@@ -158,7 +158,7 @@ contract ApplicationTest is ERC165Test {
         vm.expectEmit(true, true, false, false);
         emit Ownable.OwnershipTransferred(address(0), owner);
 
-        _app = new Application(
+        _appContract = new Application(
             _consensus,
             inputBox,
             portals,
@@ -166,12 +166,12 @@ contract ApplicationTest is ERC165Test {
             templateHash
         );
 
-        assertEq(address(_app.getConsensus()), address(_consensus));
-        assertEq(address(_app.getInputBox()), address(inputBox));
+        assertEq(address(_appContract.getConsensus()), address(_consensus));
+        assertEq(address(_appContract.getInputBox()), address(inputBox));
         // abi.encode is used instead of a loop
-        assertEq(abi.encode(_app.getPortals()), abi.encode(portals));
-        assertEq(_app.owner(), owner);
-        assertEq(_app.getTemplateHash(), templateHash);
+        assertEq(abi.encode(_appContract.getPortals()), abi.encode(portals));
+        assertEq(_appContract.owner(), owner);
+        assertEq(_appContract.getTemplateHash(), templateHash);
     }
 
     // test output validation
@@ -191,28 +191,28 @@ contract ApplicationTest is ERC165Test {
         OutputValidityProof memory proof = _getProof(OutputName.ERC20Transfer);
 
         // not able to execute voucher because application has 0 balance
-        assertEq(_erc20Token.balanceOf(address(_app)), 0);
+        assertEq(_erc20Token.balanceOf(address(_appContract)), 0);
         assertEq(_erc20Token.balanceOf(_recipient), 0);
         vm.expectRevert(
             abi.encodeWithSelector(
                 IERC20Errors.ERC20InsufficientBalance.selector,
-                address(_app),
+                address(_appContract),
                 0,
                 _transferAmount
             )
         );
-        _app.executeOutput(output, proof);
-        assertEq(_erc20Token.balanceOf(address(_app)), 0);
+        _appContract.executeOutput(output, proof);
+        assertEq(_erc20Token.balanceOf(address(_appContract)), 0);
         assertEq(_erc20Token.balanceOf(_recipient), 0);
 
         // fund application
         vm.prank(_tokenOwner);
-        _erc20Token.transfer(address(_app), appInitBalance);
-        assertEq(_erc20Token.balanceOf(address(_app)), appInitBalance);
+        _erc20Token.transfer(address(_appContract), appInitBalance);
+        assertEq(_erc20Token.balanceOf(address(_appContract)), appInitBalance);
         assertEq(_erc20Token.balanceOf(_recipient), 0);
 
         // expect event
-        vm.expectEmit(false, false, false, true, address(_app));
+        vm.expectEmit(false, false, false, true, address(_appContract));
         emit IApplication.OutputExecuted(
             proof.inputIndexWithinEpoch,
             proof.outputIndexWithinInput,
@@ -220,11 +220,11 @@ contract ApplicationTest is ERC165Test {
         );
 
         // perform call
-        _app.executeOutput(output, proof);
+        _appContract.executeOutput(output, proof);
 
         // check result
         assertEq(
-            _erc20Token.balanceOf(address(_app)),
+            _erc20Token.balanceOf(address(_appContract)),
             appInitBalance - _transferAmount
         );
         assertEq(_erc20Token.balanceOf(_recipient), _transferAmount);
@@ -238,10 +238,10 @@ contract ApplicationTest is ERC165Test {
 
         // fund application
         vm.prank(_tokenOwner);
-        _erc20Token.transfer(address(_app), appInitBalance);
+        _erc20Token.transfer(address(_appContract), appInitBalance);
 
         // 1st execution attempt should succeed
-        _app.executeOutput(output, proof);
+        _appContract.executeOutput(output, proof);
 
         // 2nd execution attempt should fail
         vm.expectRevert(
@@ -250,11 +250,11 @@ contract ApplicationTest is ERC165Test {
                 output
             )
         );
-        _app.executeOutput(output, proof);
+        _appContract.executeOutput(output, proof);
 
         // end result should be the same as executing successfully only once
         assertEq(
-            _erc20Token.balanceOf(address(_app)),
+            _erc20Token.balanceOf(address(_appContract)),
             appInitBalance - _transferAmount
         );
         assertEq(_erc20Token.balanceOf(_recipient), _transferAmount);
@@ -267,7 +267,7 @@ contract ApplicationTest is ERC165Test {
         OutputValidityProof memory proof = _getProof(OutputName.ERC20Transfer);
 
         // before executing voucher
-        bool executed = _app.wasOutputExecuted(
+        bool executed = _appContract.wasOutputExecuted(
             proof.inputIndexWithinEpoch,
             proof.outputIndexWithinInput
         );
@@ -277,15 +277,15 @@ contract ApplicationTest is ERC165Test {
         vm.expectRevert(
             abi.encodeWithSelector(
                 IERC20Errors.ERC20InsufficientBalance.selector,
-                address(_app),
+                address(_appContract),
                 0,
                 _transferAmount
             )
         );
-        _app.executeOutput(output, proof);
+        _appContract.executeOutput(output, proof);
 
         // `wasOutputExecuted` should still return false
-        executed = _app.wasOutputExecuted(
+        executed = _appContract.wasOutputExecuted(
             proof.inputIndexWithinEpoch,
             proof.outputIndexWithinInput
         );
@@ -293,11 +293,11 @@ contract ApplicationTest is ERC165Test {
 
         // execute voucher - succeeded
         vm.prank(_tokenOwner);
-        _erc20Token.transfer(address(_app), appInitBalance);
-        _app.executeOutput(output, proof);
+        _erc20Token.transfer(address(_appContract), appInitBalance);
+        _appContract.executeOutput(output, proof);
 
         // after executing voucher, `wasOutputExecuted` should return true
-        executed = _app.wasOutputExecuted(
+        executed = _appContract.wasOutputExecuted(
             proof.inputIndexWithinEpoch,
             proof.outputIndexWithinInput
         );
@@ -311,7 +311,7 @@ contract ApplicationTest is ERC165Test {
         proof.outputsEpochRootHash = bytes32(uint256(0xdeadbeef));
 
         vm.expectRevert(IApplication.IncorrectEpochHash.selector);
-        _app.executeOutput(output, proof);
+        _appContract.executeOutput(output, proof);
     }
 
     function testRevertsOutputsEpochRootHash() public {
@@ -321,7 +321,7 @@ contract ApplicationTest is ERC165Test {
         proof.outputHashesRootHash = bytes32(uint256(0xdeadbeef));
 
         vm.expectRevert(IApplication.IncorrectOutputsEpochRootHash.selector);
-        _app.executeOutput(output, proof);
+        _appContract.executeOutput(output, proof);
     }
 
     function testRevertsOutputHashesRootHash() public {
@@ -331,7 +331,7 @@ contract ApplicationTest is ERC165Test {
         proof.outputIndexWithinInput = 0xdeadbeef;
 
         vm.expectRevert(IApplication.IncorrectOutputHashesRootHash.selector);
-        _app.executeOutput(output, proof);
+        _appContract.executeOutput(output, proof);
     }
 
     function testRevertsInputIndexOutOfRange() public {
@@ -347,7 +347,7 @@ contract ApplicationTest is ERC165Test {
 
         // First we get the epoch hash for the app and input range
         bytes32 epochHash = _consensus.getEpochHash(
-            address(_app),
+            address(_appContract),
             proof.inputRange
         );
 
@@ -366,7 +366,7 @@ contract ApplicationTest is ERC165Test {
                 proof.inputRange
             )
         );
-        _app.executeOutput(output, proof);
+        _appContract.executeOutput(output, proof);
     }
 
     function testEtherTransfer(uint256 appInitBalance) public {
@@ -376,20 +376,20 @@ contract ApplicationTest is ERC165Test {
         OutputValidityProof memory proof = _getProof(OutputName.ETHTransfer);
 
         // not able to execute voucher because application has 0 balance
-        assertEq(address(_app).balance, 0);
+        assertEq(address(_appContract).balance, 0);
         assertEq(address(_recipient).balance, 0);
         vm.expectRevert();
-        _app.executeOutput(output, proof);
-        assertEq(address(_app).balance, 0);
+        _appContract.executeOutput(output, proof);
+        assertEq(address(_appContract).balance, 0);
         assertEq(address(_recipient).balance, 0);
 
         // fund application
-        vm.deal(address(_app), appInitBalance);
-        assertEq(address(_app).balance, appInitBalance);
+        vm.deal(address(_appContract), appInitBalance);
+        assertEq(address(_appContract).balance, appInitBalance);
         assertEq(address(_recipient).balance, 0);
 
         // expect event
-        vm.expectEmit(false, false, false, true, address(_app));
+        vm.expectEmit(false, false, false, true, address(_appContract));
         emit IApplication.OutputExecuted(
             proof.inputIndexWithinEpoch,
             proof.outputIndexWithinInput,
@@ -397,10 +397,13 @@ contract ApplicationTest is ERC165Test {
         );
 
         // perform call
-        _app.executeOutput(output, proof);
+        _appContract.executeOutput(output, proof);
 
         // check result
-        assertEq(address(_app).balance, appInitBalance - _transferAmount);
+        assertEq(
+            address(_appContract).balance,
+            appInitBalance - _transferAmount
+        );
         assertEq(address(_recipient).balance, _transferAmount);
 
         // cannot execute the same voucher again
@@ -410,7 +413,7 @@ contract ApplicationTest is ERC165Test {
                 output
             )
         );
-        _app.executeOutput(output, proof);
+        _appContract.executeOutput(output, proof);
     }
 
     function testWithdrawNFT() public {
@@ -422,20 +425,24 @@ contract ApplicationTest is ERC165Test {
         vm.expectRevert(
             abi.encodeWithSelector(
                 IERC721Errors.ERC721InsufficientApproval.selector,
-                address(_app),
+                address(_appContract),
                 _tokenId
             )
         );
-        _app.executeOutput(output, proof);
+        _appContract.executeOutput(output, proof);
         assertEq(_erc721Token.ownerOf(_tokenId), _tokenOwner);
 
         // fund application
         vm.prank(_tokenOwner);
-        _erc721Token.safeTransferFrom(_tokenOwner, address(_app), _tokenId);
-        assertEq(_erc721Token.ownerOf(_tokenId), address(_app));
+        _erc721Token.safeTransferFrom(
+            _tokenOwner,
+            address(_appContract),
+            _tokenId
+        );
+        assertEq(_erc721Token.ownerOf(_tokenId), address(_appContract));
 
         // expect event
-        vm.expectEmit(false, false, false, true, address(_app));
+        vm.expectEmit(false, false, false, true, address(_appContract));
         emit IApplication.OutputExecuted(
             proof.inputIndexWithinEpoch,
             proof.outputIndexWithinInput,
@@ -443,7 +450,7 @@ contract ApplicationTest is ERC165Test {
         );
 
         // perform call
-        _app.executeOutput(output, proof);
+        _appContract.executeOutput(output, proof);
 
         // check result
         assertEq(_erc721Token.ownerOf(_tokenId), _recipient);
@@ -455,7 +462,7 @@ contract ApplicationTest is ERC165Test {
                 output
             )
         );
-        _app.executeOutput(output, proof);
+        _appContract.executeOutput(output, proof);
     }
 
     function testPayableFunctionCall(uint256 appInitBalance) public {
@@ -464,21 +471,27 @@ contract ApplicationTest is ERC165Test {
         bytes memory output = _getOutput(OutputName.PayableFunc);
         OutputValidityProof memory proof = _getProof(OutputName.PayableFunc);
 
-        assertEq(_etherReceiver.balanceOf(address(_app)), 0);
-        assertEq(address(_app).balance, 0);
+        assertEq(_etherReceiver.balanceOf(address(_appContract)), 0);
+        assertEq(address(_appContract).balance, 0);
 
         vm.expectRevert();
-        _app.executeOutput(output, proof);
+        _appContract.executeOutput(output, proof);
 
-        vm.deal(address(_app), appInitBalance);
+        vm.deal(address(_appContract), appInitBalance);
 
-        assertEq(_etherReceiver.balanceOf(address(_app)), 0);
-        assertEq(address(_app).balance, appInitBalance);
+        assertEq(_etherReceiver.balanceOf(address(_appContract)), 0);
+        assertEq(address(_appContract).balance, appInitBalance);
 
-        _app.executeOutput(output, proof);
+        _appContract.executeOutput(output, proof);
 
-        assertEq(_etherReceiver.balanceOf(address(_app)), _transferAmount);
-        assertEq(address(_app).balance, appInitBalance - _transferAmount);
+        assertEq(
+            _etherReceiver.balanceOf(address(_appContract)),
+            _transferAmount
+        );
+        assertEq(
+            address(_appContract).balance,
+            appInitBalance - _transferAmount
+        );
     }
 
     // test non-executable outputs
@@ -512,7 +525,7 @@ contract ApplicationTest is ERC165Test {
         vm.assume(address(newOwner) != address(0));
         vm.assume(nonZeroAddress != address(0));
 
-        _app = new Application(
+        _appContract = new Application(
             _consensus,
             inputBox,
             portals,
@@ -527,18 +540,18 @@ contract ApplicationTest is ERC165Test {
                 address(this)
             )
         );
-        _app.migrateToConsensus(newConsensus);
+        _appContract.migrateToConsensus(newConsensus);
 
         // now impersonate owner
         vm.prank(owner);
-        vm.expectEmit(false, false, false, true, address(_app));
+        vm.expectEmit(false, false, false, true, address(_appContract));
         emit IApplication.NewConsensus(newConsensus);
-        _app.migrateToConsensus(newConsensus);
-        assertEq(address(_app.getConsensus()), address(newConsensus));
+        _appContract.migrateToConsensus(newConsensus);
+        assertEq(address(_appContract.getConsensus()), address(newConsensus));
 
         // if owner changes, then original owner no longer can migrate consensus
         vm.prank(owner);
-        _app.transferOwnership(newOwner);
+        _appContract.transferOwnership(newOwner);
         vm.expectRevert(
             abi.encodeWithSelector(
                 Ownable.OwnableUnauthorizedAccount.selector,
@@ -546,12 +559,12 @@ contract ApplicationTest is ERC165Test {
             )
         );
         vm.prank(owner);
-        _app.migrateToConsensus(_consensus);
+        _appContract.migrateToConsensus(_consensus);
 
         // if new owner renounce ownership (give ownership to address 0)
         // no one will be able to migrate consensus
         vm.prank(newOwner);
-        _app.renounceOwnership();
+        _appContract.renounceOwnership();
         vm.expectRevert(
             abi.encodeWithSelector(
                 Ownable.OwnableUnauthorizedAccount.selector,
@@ -559,7 +572,7 @@ contract ApplicationTest is ERC165Test {
             )
         );
         vm.prank(nonZeroAddress);
-        _app.migrateToConsensus(_consensus);
+        _appContract.migrateToConsensus(_consensus);
     }
 
     function _getOutput(
@@ -580,7 +593,7 @@ contract ApplicationTest is ERC165Test {
 
     function _deployContracts() internal {
         _consensus = _deployConsensusDeterministically();
-        _app = _deployApplicationDeterministically();
+        _appContract = _deployApplicationDeterministically();
         _etherReceiver = _deployEtherReceiverDeterministically();
         _erc20Token = _deployERC20Deterministically();
         _erc721Token = _deployERC721Deterministically();
@@ -664,7 +677,7 @@ contract ApplicationTest is ERC165Test {
             address(_erc721Token),
             abi.encodeWithSignature(
                 "safeTransferFrom(address,address,uint256)",
-                _app,
+                _appContract,
                 _recipient,
                 _tokenId
             )
@@ -740,7 +753,7 @@ contract ApplicationTest is ERC165Test {
         bytes32 epochHash
     ) internal {
         vm.prank(_authorityOwner);
-        _consensus.submitClaim(address(_app), inputRange, epochHash);
+        _consensus.submitClaim(address(_appContract), inputRange, epochHash);
     }
 
     function _getInputPath(
@@ -840,7 +853,7 @@ contract ApplicationTest is ERC165Test {
         bytes memory output = _getOutput(inputIndex);
         OutputValidityProof memory proof = _getProof(inputIndex);
 
-        _app.validateOutput(output, proof);
+        _appContract.validateOutput(output, proof);
 
         // to test a different output, we give two options
         // it is evident that the output cannot be equal to both
@@ -856,7 +869,7 @@ contract ApplicationTest is ERC165Test {
         }
 
         vm.expectRevert(IApplication.IncorrectOutputHashesRootHash.selector);
-        _app.validateOutput(otherOutput, proof);
+        _appContract.validateOutput(otherOutput, proof);
     }
 
     function _testOutputNotExecutable(OutputName outputName) internal {
@@ -870,6 +883,6 @@ contract ApplicationTest is ERC165Test {
             )
         );
 
-        _app.executeOutput(output, proof);
+        _appContract.executeOutput(output, proof);
     }
 }

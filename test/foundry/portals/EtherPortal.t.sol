@@ -15,13 +15,13 @@ import {ERC165Test} from "../util/ERC165Test.sol";
 
 contract EtherPortalTest is ERC165Test {
     address _alice;
-    address _app;
+    address _appContract;
     IInputBox _inputBox;
     IEtherPortal _portal;
 
     function setUp() public {
         _alice = vm.addr(1);
-        _app = vm.addr(2);
+        _appContract = vm.addr(2);
         _inputBox = IInputBox(vm.addr(3));
         _portal = new EtherPortal(_inputBox);
     }
@@ -55,17 +55,17 @@ contract EtherPortalTest is ERC165Test {
 
         vm.mockCall(address(_inputBox), addInput, abi.encode(bytes32(0)));
 
-        vm.expectCall(_app, value, abi.encode(), 1);
+        vm.expectCall(_appContract, value, abi.encode(), 1);
 
         vm.expectCall(address(_inputBox), addInput, 1);
 
-        uint256 balance = _app.balance;
+        uint256 balance = _appContract.balance;
 
         vm.deal(_alice, value);
         vm.prank(_alice);
-        _portal.depositEther{value: value}(_app, data);
+        _portal.depositEther{value: value}(_appContract, data);
 
-        assertEq(_app.balance, balance + value);
+        assertEq(_appContract.balance, balance + value);
     }
 
     function testDepositReverts(
@@ -75,7 +75,7 @@ contract EtherPortalTest is ERC165Test {
     ) public {
         value = _boundValue(value);
 
-        vm.mockCallRevert(_app, value, abi.encode(), errorData);
+        vm.mockCallRevert(_appContract, value, abi.encode(), errorData);
 
         bytes memory payload = _encodePayload(value, data);
 
@@ -87,7 +87,7 @@ contract EtherPortalTest is ERC165Test {
 
         vm.deal(_alice, value);
         vm.prank(_alice);
-        _portal.depositEther{value: value}(_app, data);
+        _portal.depositEther{value: value}(_appContract, data);
     }
 
     function _encodePayload(
@@ -100,7 +100,7 @@ contract EtherPortalTest is ERC165Test {
     function _encodeAddInput(
         bytes memory payload
     ) internal view returns (bytes memory) {
-        return abi.encodeCall(IInputBox.addInput, (_app, payload));
+        return abi.encodeCall(IInputBox.addInput, (_appContract, payload));
     }
 
     function _boundValue(uint256 value) internal view returns (uint256) {

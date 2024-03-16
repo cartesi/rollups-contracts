@@ -13,17 +13,17 @@ import {InputEncoding} from "../common/InputEncoding.sol";
 /// @title Ether Portal
 ///
 /// @notice This contract allows anyone to perform transfers of
-/// Ether to an application while informing the off-chain machine.
+/// Ether to an application contract while informing the off-chain machine.
 contract EtherPortal is IEtherPortal, Portal {
     /// @notice Constructs the portal.
     /// @param inputBox The input box used by the portal
     constructor(IInputBox inputBox) Portal(inputBox) {}
 
     function depositEther(
-        address app,
+        address appContract,
         bytes calldata execLayerData
     ) external payable override {
-        (bool success, ) = app.call{value: msg.value}("");
+        (bool success, ) = appContract.call{value: msg.value}("");
 
         if (!success) {
             revert EtherTransferFailed();
@@ -35,7 +35,7 @@ contract EtherPortal is IEtherPortal, Portal {
             execLayerData
         );
 
-        _inputBox.addInput(app, payload);
+        _inputBox.addInput(appContract, payload);
     }
 
     function supportsInterface(

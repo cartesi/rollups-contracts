@@ -63,7 +63,7 @@ contract AuthorityTest is TestBase {
     function testSubmitClaimRevertsCallerNotOwner(
         address owner,
         address notOwner,
-        address app,
+        address appContract,
         InputRange calldata inputRange,
         bytes32 epochHash
     ) public {
@@ -80,12 +80,12 @@ contract AuthorityTest is TestBase {
         );
 
         vm.prank(notOwner);
-        authority.submitClaim(app, inputRange, epochHash);
+        authority.submitClaim(appContract, inputRange, epochHash);
     }
 
     function testSubmitClaim(
         address owner,
-        address app,
+        address appContract,
         InputRange calldata inputRange,
         bytes32[2] calldata epochHashes
     ) public {
@@ -95,46 +95,69 @@ contract AuthorityTest is TestBase {
 
         // First claim
 
-        _expectClaimEvents(authority, owner, app, inputRange, epochHashes[0]);
+        _expectClaimEvents(
+            authority,
+            owner,
+            appContract,
+            inputRange,
+            epochHashes[0]
+        );
 
         vm.prank(owner);
-        authority.submitClaim(app, inputRange, epochHashes[0]);
+        authority.submitClaim(appContract, inputRange, epochHashes[0]);
 
-        assertEq(authority.getEpochHash(app, inputRange), epochHashes[0]);
+        assertEq(
+            authority.getEpochHash(appContract, inputRange),
+            epochHashes[0]
+        );
 
         // Second claim
 
-        _expectClaimEvents(authority, owner, app, inputRange, epochHashes[1]);
+        _expectClaimEvents(
+            authority,
+            owner,
+            appContract,
+            inputRange,
+            epochHashes[1]
+        );
 
         vm.prank(owner);
-        authority.submitClaim(app, inputRange, epochHashes[1]);
+        authority.submitClaim(appContract, inputRange, epochHashes[1]);
 
-        assertEq(authority.getEpochHash(app, inputRange), epochHashes[1]);
+        assertEq(
+            authority.getEpochHash(appContract, inputRange),
+            epochHashes[1]
+        );
     }
 
     function testGetEpochHash(
         address owner,
-        address app,
+        address appContract,
         InputRange calldata inputRange
     ) public {
         vm.assume(owner != address(0));
 
         Authority authority = new Authority(owner);
 
-        assertEq(authority.getEpochHash(app, inputRange), bytes32(0));
+        assertEq(authority.getEpochHash(appContract, inputRange), bytes32(0));
     }
 
     function _expectClaimEvents(
         Authority authority,
         address owner,
-        address app,
+        address appContract,
         InputRange calldata inputRange,
         bytes32 epochHash
     ) internal {
         vm.expectEmit(true, true, false, true, address(authority));
-        emit IConsensus.ClaimSubmission(owner, app, inputRange, epochHash);
+        emit IConsensus.ClaimSubmission(
+            owner,
+            appContract,
+            inputRange,
+            epochHash
+        );
 
         vm.expectEmit(true, false, false, true, address(authority));
-        emit IConsensus.ClaimAcceptance(app, inputRange, epochHash);
+        emit IConsensus.ClaimAcceptance(appContract, inputRange, epochHash);
     }
 }

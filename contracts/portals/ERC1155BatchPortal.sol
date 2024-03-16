@@ -14,7 +14,7 @@ import {InputEncoding} from "../common/InputEncoding.sol";
 /// @title ERC-1155 Batch Transfer Portal
 ///
 /// @notice This contract allows anyone to perform batch transfers of
-/// ERC-1155 tokens to an application while informing the off-chain machine.
+/// ERC-1155 tokens to an application contract while informing the off-chain machine.
 contract ERC1155BatchPortal is IERC1155BatchPortal, Portal {
     /// @notice Constructs the portal.
     /// @param inputBox The input box used by the portal
@@ -22,7 +22,7 @@ contract ERC1155BatchPortal is IERC1155BatchPortal, Portal {
 
     function depositBatchERC1155Token(
         IERC1155 token,
-        address app,
+        address appContract,
         uint256[] calldata tokenIds,
         uint256[] calldata values,
         bytes calldata baseLayerData,
@@ -30,7 +30,7 @@ contract ERC1155BatchPortal is IERC1155BatchPortal, Portal {
     ) external override {
         token.safeBatchTransferFrom(
             msg.sender,
-            app,
+            appContract,
             tokenIds,
             values,
             baseLayerData
@@ -45,7 +45,7 @@ contract ERC1155BatchPortal is IERC1155BatchPortal, Portal {
             execLayerData
         );
 
-        _inputBox.addInput(app, payload);
+        _inputBox.addInput(appContract, payload);
     }
 
     function supportsInterface(

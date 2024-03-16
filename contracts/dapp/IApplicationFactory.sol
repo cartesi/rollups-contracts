@@ -18,7 +18,7 @@ interface IApplicationFactory {
     /// @param portals The portals supported by the application
     /// @param appOwner The initial application owner
     /// @param templateHash The initial machine state hash
-    /// @param app The application
+    /// @param appContract The application contract
     /// @dev MUST be triggered on a successful call to `newApplication`.
     event ApplicationCreated(
         IConsensus indexed consensus,
@@ -26,7 +26,7 @@ interface IApplicationFactory {
         IPortal[] portals,
         address appOwner,
         bytes32 templateHash,
-        Application app
+        Application appContract
     );
 
     // Permissionless functions
@@ -53,7 +53,7 @@ interface IApplicationFactory {
     /// @param portals The portals supported by the application
     /// @param appOwner The initial application owner
     /// @param templateHash The initial machine state hash
-    /// @param salt The salt used to deterministically generate the application address
+    /// @param salt The salt used to deterministically generate the application contract address
     /// @return The application
     /// @dev On success, MUST emit an `ApplicationCreated` event.
     function newApplication(
@@ -65,14 +65,14 @@ interface IApplicationFactory {
         bytes32 salt
     ) external returns (Application);
 
-    /// @notice Calculate the address of an application to be deployed deterministically.
+    /// @notice Calculate the address of an application contract to be deployed deterministically.
     /// @param consensus The initial consensus contract
     /// @param inputBox The input box contract
     /// @param portals The portals supported by the application
     /// @param appOwner The initial application owner
     /// @param templateHash The initial machine state hash
-    /// @param salt The salt used to deterministically generate the application address
-    /// @return The deterministic application address
+    /// @param salt The salt used to deterministically generate the application contract address
+    /// @return The deterministic application contract address
     /// @dev Beware that only the `newApplication` function with the `salt` parameter
     ///      is able to deterministically deploy an application.
     function calculateApplicationAddress(

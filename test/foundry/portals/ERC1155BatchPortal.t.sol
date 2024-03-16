@@ -26,14 +26,14 @@ contract NormalToken is ERC1155 {
 
 contract ERC1155BatchPortalTest is ERC165Test {
     address _alice;
-    address _app;
+    address _appContract;
     IERC1155 _token;
     IInputBox _inputBox;
     IERC1155BatchPortal _portal;
 
     function setUp() public {
         _alice = vm.addr(1);
-        _app = vm.addr(2);
+        _appContract = vm.addr(2);
         _token = IERC1155(vm.addr(3));
         _inputBox = IInputBox(vm.addr(4));
         _portal = new ERC1155BatchPortal(_inputBox);
@@ -89,7 +89,7 @@ contract ERC1155BatchPortalTest is ERC165Test {
         vm.prank(_alice);
         _portal.depositBatchERC1155Token(
             _token,
-            _app,
+            _appContract,
             tokenIds,
             values,
             baseLayerData,
@@ -129,7 +129,7 @@ contract ERC1155BatchPortalTest is ERC165Test {
         vm.prank(_alice);
         _portal.depositBatchERC1155Token(
             _token,
-            _app,
+            _appContract,
             tokenIds,
             values,
             baseLayerData,
@@ -175,7 +175,7 @@ contract ERC1155BatchPortalTest is ERC165Test {
             uint256 tokenId = tokenIds[i];
             uint256 supply = supplies[i];
             assertEq(_token.balanceOf(_alice, tokenId), supply);
-            assertEq(_token.balanceOf(_app, tokenId), 0);
+            assertEq(_token.balanceOf(_appContract, tokenId), 0);
             assertEq(_token.balanceOf(address(_portal), tokenId), 0);
         }
 
@@ -185,14 +185,14 @@ contract ERC1155BatchPortalTest is ERC165Test {
         emit IERC1155.TransferBatch(
             address(_portal),
             _alice,
-            _app,
+            _appContract,
             tokenIds,
             values
         );
 
         _portal.depositBatchERC1155Token(
             _token,
-            _app,
+            _appContract,
             tokenIds,
             values,
             baseLayerData,
@@ -206,7 +206,7 @@ contract ERC1155BatchPortalTest is ERC165Test {
             uint256 value = values[i];
             uint256 supply = supplies[i];
             assertEq(_token.balanceOf(_alice, tokenId), supply - value);
-            assertEq(_token.balanceOf(_app, tokenId), value);
+            assertEq(_token.balanceOf(_appContract, tokenId), value);
             assertEq(_token.balanceOf(address(_portal), tokenId), 0);
         }
     }
@@ -231,7 +231,7 @@ contract ERC1155BatchPortalTest is ERC165Test {
     function _encodeAddInput(
         bytes memory payload
     ) internal view returns (bytes memory) {
-        return abi.encodeCall(IInputBox.addInput, (_app, payload));
+        return abi.encodeCall(IInputBox.addInput, (_appContract, payload));
     }
 
     function _encodeSafeBatchTransferFrom(
@@ -242,7 +242,7 @@ contract ERC1155BatchPortalTest is ERC165Test {
         return
             abi.encodeCall(
                 IERC1155.safeBatchTransferFrom,
-                (_alice, _app, tokenIds, values, baseLayerData)
+                (_alice, _appContract, tokenIds, values, baseLayerData)
             );
     }
 }

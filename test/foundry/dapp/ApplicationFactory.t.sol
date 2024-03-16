@@ -28,7 +28,7 @@ contract ApplicationFactoryTest is TestBase {
     ) public {
         vm.assume(appOwner != address(0));
 
-        Application app = _factory.newApplication(
+        Application appContract = _factory.newApplication(
             consensus,
             inputBox,
             portals,
@@ -36,12 +36,12 @@ contract ApplicationFactoryTest is TestBase {
             templateHash
         );
 
-        assertEq(address(app.getConsensus()), address(consensus));
-        assertEq(address(app.getInputBox()), address(inputBox));
+        assertEq(address(appContract.getConsensus()), address(consensus));
+        assertEq(address(appContract.getInputBox()), address(inputBox));
         // abi.encode is used instead of a loop
-        assertEq(abi.encode(app.getPortals()), abi.encode(portals));
-        assertEq(app.owner(), appOwner);
-        assertEq(app.getTemplateHash(), templateHash);
+        assertEq(abi.encode(appContract.getPortals()), abi.encode(portals));
+        assertEq(appContract.owner(), appOwner);
+        assertEq(appContract.getTemplateHash(), templateHash);
     }
 
     function testNewApplicationDeterministic(
@@ -63,7 +63,7 @@ contract ApplicationFactoryTest is TestBase {
             salt
         );
 
-        Application app = _factory.newApplication(
+        Application appContract = _factory.newApplication(
             consensus,
             inputBox,
             portals,
@@ -73,13 +73,13 @@ contract ApplicationFactoryTest is TestBase {
         );
 
         // Precalculated address must match actual address
-        assertEq(precalculatedAddress, address(app));
+        assertEq(precalculatedAddress, address(appContract));
 
-        assertEq(address(app.getConsensus()), address(consensus));
-        assertEq(address(app.getInputBox()), address(inputBox));
-        assertEq(abi.encode(app.getPortals()), abi.encode(portals));
-        assertEq(app.owner(), appOwner);
-        assertEq(app.getTemplateHash(), templateHash);
+        assertEq(address(appContract.getConsensus()), address(consensus));
+        assertEq(address(appContract.getInputBox()), address(inputBox));
+        assertEq(abi.encode(appContract.getPortals()), abi.encode(portals));
+        assertEq(appContract.owner(), appOwner);
+        assertEq(appContract.getTemplateHash(), templateHash);
 
         precalculatedAddress = _factory.calculateApplicationAddress(
             consensus,
@@ -91,7 +91,7 @@ contract ApplicationFactoryTest is TestBase {
         );
 
         // Precalculated address must STILL match actual address
-        assertEq(precalculatedAddress, address(app));
+        assertEq(precalculatedAddress, address(appContract));
 
         // Cannot deploy an application with the same salt twice
         vm.expectRevert(bytes(""));
@@ -116,7 +116,7 @@ contract ApplicationFactoryTest is TestBase {
 
         vm.recordLogs();
 
-        Application app = _factory.newApplication(
+        Application appContract = _factory.newApplication(
             consensus,
             inputBox,
             portals,
@@ -130,7 +130,7 @@ contract ApplicationFactoryTest is TestBase {
             portals,
             appOwner,
             templateHash,
-            app
+            appContract
         );
     }
 
@@ -146,7 +146,7 @@ contract ApplicationFactoryTest is TestBase {
 
         vm.recordLogs();
 
-        Application app = _factory.newApplication(
+        Application appContract = _factory.newApplication(
             consensus,
             inputBox,
             portals,
@@ -161,7 +161,7 @@ contract ApplicationFactoryTest is TestBase {
             portals,
             appOwner,
             templateHash,
-            app
+            appContract
         );
     }
 
@@ -171,7 +171,7 @@ contract ApplicationFactoryTest is TestBase {
         IPortal[] calldata portals,
         address appOwner,
         bytes32 templateHash,
-        Application app
+        Application appContract
     ) internal {
         Vm.Log[] memory entries = vm.getRecordedLogs();
 
@@ -207,7 +207,7 @@ contract ApplicationFactoryTest is TestBase {
                 assertEq(abi.encode(portals), abi.encode(portals_));
                 assertEq(appOwner, appOwner_);
                 assertEq(templateHash, templateHash_);
-                assertEq(address(app), address(app_));
+                assertEq(address(appContract), address(app_));
             }
         }
 

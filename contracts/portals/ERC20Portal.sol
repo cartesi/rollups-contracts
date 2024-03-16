@@ -14,7 +14,7 @@ import {InputEncoding} from "../common/InputEncoding.sol";
 /// @title ERC-20 Portal
 ///
 /// @notice This contract allows anyone to perform transfers of
-/// ERC-20 tokens to an application while informing the off-chain machine.
+/// ERC-20 tokens to an application contract while informing the off-chain machine.
 contract ERC20Portal is IERC20Portal, Portal {
     /// @notice Constructs the portal.
     /// @param inputBox The input box used by the portal
@@ -22,11 +22,11 @@ contract ERC20Portal is IERC20Portal, Portal {
 
     function depositERC20Tokens(
         IERC20 token,
-        address app,
+        address appContract,
         uint256 amount,
         bytes calldata execLayerData
     ) external override {
-        bool success = token.transferFrom(msg.sender, app, amount);
+        bool success = token.transferFrom(msg.sender, appContract, amount);
 
         if (!success) {
             revert ERC20TransferFailed();
@@ -39,7 +39,7 @@ contract ERC20Portal is IERC20Portal, Portal {
             execLayerData
         );
 
-        _inputBox.addInput(app, payload);
+        _inputBox.addInput(appContract, payload);
     }
 
     function supportsInterface(
