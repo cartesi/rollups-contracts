@@ -77,13 +77,13 @@ The Application Factory allows anyone to deploy `Application` contracts with a s
 
 ### Portals
 
-Portals, as the name suggests, are used to safely teleport assets from the base layer to the execution layer. It works in the following way. First, for some types of assets, the user has to allow the portal to deduct the asset(s) from their account. Second, the user tells the portal to transfer the asset(s) from their account to some application's account. The portal then adds an input to the application's input box to inform the machine of the transfer that just took place in the base layer. Finally, the off-chain machine is made aware of the transfer through the input sent by the portal. Note that the machine must know the address of the portal beforehand in order to validate such input.
+Portals, as the name suggests, are used to safely teleport assets from the base layer to the execution layer. It works in the following way. First, for some types of assets, the user has to allow the portal to deduct the asset(s) from their account. Second, the user tells the portal to transfer the asset(s) from their account to the application's account. The portal then adds an input to the application's input box to inform the machine of the transfer that just took place in the base layer. Finally, the off-chain machine is made aware of the transfer through the input sent by the portal. Note that the machine must know the address of the portal beforehand in order to validate such input.
 
 The application developer can choose to do whatever they want with this information. For example, they might choose to create a wallet for each user in the execution layer, where assets can be managed at a much lower cost through inputs that are understood by the Linux logic. In this sense, one could think of the application contract as a wallet, owned by the off-chain machine. Anyone can deposit assets there but only the application—through vouchers—can decide on withdrawals.
 
 The withdrawal process is quite simple from the user's perspective. Typically, the user would first send an input to the application requesting the withdrawal, which would then get processed and interpreted off-chain. If all goes well, the machine should generate a voucher that, once executed, transfers the asset(s) to the rightful recipient.
 
-Currently, we support the following types of assets:
+Currently, the following types of assets are supported:
 
 - [Ether](https://ethereum.org/en/eth/) (ETH)
 - [ERC-20](https://ethereum.org/en/developers/docs/standards/tokens/erc-20/) (Fungible tokens)
@@ -114,7 +114,7 @@ As an example, the deposit of 100 Wei (of Ether) sent by address `0xf39fd6e51aad
 
 Vouchers allow applications in the execution layer to interact with contracts in the base layer through message calls. They are emitted by the off-chain machine, and can be executed by anyone in the base layer. Each voucher is composed of a destination address, a value, and a payload. In the case of vouchers destined to Solidity contracts, the payload generally encodes a function call. Moreover, the value field denotes the amount of Wei to be passed along the message call to the destination, which can be used for Ether withdrawals and for payable function calls.
 
-A voucher can only be executed once the application's consensus accepts a claim containing it. They can be executed in any order. Although the application contract is indifferent to the content of the voucher being executed, it enforces some sanity checks before allowing its execution. First, it checks whether the voucher has been successfully executed already. Second, it ensures that the voucher has been emitted by the off-chain machine, by requiring a validity proof.
+A voucher can only be executed once the application's consensus accepts a claim containing it. They can be executed in any order. Although the application contract is indifferent to the content of the voucher being executed, it enforces some sanity checks before allowing its execution. First, it makes sure the voucher hasn't been executed yet. Second, it ensures that the voucher has been emitted by the off-chain machine by checking the provided validity proof.
 
 Because of their generality, vouchers can be used in a wide range of applications: from withdrawing funds to providing liquidity in DeFi protocols. Typically, applications use vouchers to withdraw assets. Below, we show how vouchers can be used to withdraw several types of assets. You can find more information about a particular function by clicking on the :page_facing_up: emoji near it.
 
