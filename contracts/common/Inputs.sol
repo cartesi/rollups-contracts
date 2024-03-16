@@ -8,7 +8,7 @@ pragma solidity ^0.8.8;
 interface Inputs {
     /// @notice An advance request from an EVM-compatible blockchain to a Cartesi Machine.
     /// @param chainId The chain ID
-    /// @param app The application address
+    /// @param appContract The application contract address
     /// @param msgSender The address of whoever sent the input
     /// @param blockNumber The number of the block in which the input was added
     /// @param blockTimestamp The timestamp of the block in which the input was added
@@ -16,7 +16,7 @@ interface Inputs {
     /// @param payload The payload provided by the message sender
     function EvmAdvance(
         uint256 chainId,
-        address app,
+        address appContract,
         address msgSender,
         uint256 blockNumber,
         uint256 blockTimestamp,
