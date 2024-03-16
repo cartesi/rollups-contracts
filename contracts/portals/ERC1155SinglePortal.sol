@@ -14,7 +14,7 @@ import {InputEncoding} from "../common/InputEncoding.sol";
 /// @title ERC-1155 Single Transfer Portal
 ///
 /// @notice This contract allows anyone to perform single transfers of
-/// ERC-1155 tokens to an application while informing the off-chain machine.
+/// ERC-1155 tokens to an application contract while informing the off-chain machine.
 contract ERC1155SinglePortal is IERC1155SinglePortal, Portal {
     /// @notice Constructs the portal.
     /// @param inputBox The input box used by the portal
@@ -22,13 +22,19 @@ contract ERC1155SinglePortal is IERC1155SinglePortal, Portal {
 
     function depositSingleERC1155Token(
         IERC1155 token,
-        address app,
+        address appContract,
         uint256 tokenId,
         uint256 value,
         bytes calldata baseLayerData,
         bytes calldata execLayerData
     ) external override {
-        token.safeTransferFrom(msg.sender, app, tokenId, value, baseLayerData);
+        token.safeTransferFrom(
+            msg.sender,
+            appContract,
+            tokenId,
+            value,
+            baseLayerData
+        );
 
         bytes memory payload = InputEncoding.encodeSingleERC1155Deposit(
             token,
@@ -39,7 +45,7 @@ contract ERC1155SinglePortal is IERC1155SinglePortal, Portal {
             execLayerData
         );
 
-        _inputBox.addInput(app, payload);
+        _inputBox.addInput(appContract, payload);
     }
 
     function supportsInterface(

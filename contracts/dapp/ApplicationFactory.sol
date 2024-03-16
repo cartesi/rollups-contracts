@@ -21,7 +21,7 @@ contract ApplicationFactory is IApplicationFactory {
         address appOwner,
         bytes32 templateHash
     ) external override returns (Application) {
-        Application app = new Application(
+        Application appContract = new Application(
             consensus,
             inputBox,
             portals,
@@ -35,10 +35,10 @@ contract ApplicationFactory is IApplicationFactory {
             portals,
             appOwner,
             templateHash,
-            app
+            appContract
         );
 
-        return app;
+        return appContract;
     }
 
     function newApplication(
@@ -49,7 +49,7 @@ contract ApplicationFactory is IApplicationFactory {
         bytes32 templateHash,
         bytes32 salt
     ) external override returns (Application) {
-        Application app = new Application{salt: salt}(
+        Application appContract = new Application{salt: salt}(
             consensus,
             inputBox,
             portals,
@@ -63,10 +63,10 @@ contract ApplicationFactory is IApplicationFactory {
             portals,
             appOwner,
             templateHash,
-            app
+            appContract
         );
 
-        return app;
+        return appContract;
     }
 
     function calculateApplicationAddress(

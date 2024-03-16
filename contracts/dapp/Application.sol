@@ -175,8 +175,7 @@ contract Application is
             super.supportsInterface(interfaceId);
     }
 
-    /// @notice Get the epoch hash regarding the given input range
-    /// and the application from the current consensus.
+    /// @notice Get the epoch hash regarding an input range from the current consensus.
     /// @param inputRange The input range
     /// @return The epoch hash
     function _getEpochHash(

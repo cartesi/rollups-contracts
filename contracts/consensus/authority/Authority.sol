@@ -17,17 +17,17 @@ contract Authority is AbstractConsensus, Ownable {
     constructor(address initialOwner) Ownable(initialOwner) {}
 
     /// @notice Submit a claim.
-    /// @param app The application contract address
+    /// @param appContract The application contract address
     /// @param inputRange The input range
     /// @param epochHash The epoch hash
     /// @dev Fires a `ClaimSubmission` event and a `ClaimAcceptance` event.
     /// @dev Can only be called by the owner.
     function submitClaim(
-        address app,
+        address appContract,
         InputRange calldata inputRange,
         bytes32 epochHash
     ) external override onlyOwner {
-        emit ClaimSubmission(msg.sender, app, inputRange, epochHash);
-        _acceptClaim(app, inputRange, epochHash);
+        emit ClaimSubmission(msg.sender, appContract, inputRange, epochHash);
+        _acceptClaim(appContract, inputRange, epochHash);
     }
 }

@@ -25,14 +25,14 @@ contract NormalToken is ERC20 {
 
 contract ERC20PortalTest is ERC165Test {
     address _alice;
-    address _app;
+    address _appContract;
     IInputBox _inputBox;
     IERC20 _token;
     IERC20Portal _portal;
 
     function setUp() public {
         _alice = vm.addr(1);
-        _app = vm.addr(2);
+        _appContract = vm.addr(2);
         _inputBox = IInputBox(vm.addr(3));
         _token = IERC20(vm.addr(4));
         _portal = new ERC20Portal(_inputBox);
@@ -74,7 +74,7 @@ contract ERC20PortalTest is ERC165Test {
         vm.expectCall(address(_inputBox), addInput, 1);
 
         vm.prank(_alice);
-        _portal.depositERC20Tokens(_token, _app, amount, data);
+        _portal.depositERC20Tokens(_token, _appContract, amount, data);
     }
 
     function testTokenReturnsFalse(uint256 amount, bytes calldata data) public {
@@ -91,7 +91,7 @@ contract ERC20PortalTest is ERC165Test {
         vm.expectRevert(IERC20Portal.ERC20TransferFailed.selector);
 
         vm.prank(_alice);
-        _portal.depositERC20Tokens(_token, _app, amount, data);
+        _portal.depositERC20Tokens(_token, _appContract, amount, data);
     }
 
     function testTokenReverts(
@@ -112,7 +112,7 @@ contract ERC20PortalTest is ERC165Test {
         vm.expectRevert(errorData);
 
         vm.prank(_alice);
-        _portal.depositERC20Tokens(_token, _app, amount, data);
+        _portal.depositERC20Tokens(_token, _appContract, amount, data);
     }
 
     function testNormalToken(
@@ -136,22 +136,22 @@ contract ERC20PortalTest is ERC165Test {
 
         // balances before
         assertEq(token.balanceOf(_alice), supply);
-        assertEq(token.balanceOf(_app), 0);
+        assertEq(token.balanceOf(_appContract), 0);
         assertEq(token.balanceOf(address(_portal)), 0);
 
         vm.expectCall(address(_inputBox), addInput, 1);
 
         vm.expectEmit(true, true, false, true, address(token));
-        emit IERC20.Transfer(_alice, _app, amount);
+        emit IERC20.Transfer(_alice, _appContract, amount);
 
         // deposit tokens
-        _portal.depositERC20Tokens(token, _app, amount, data);
+        _portal.depositERC20Tokens(token, _appContract, amount, data);
 
         vm.stopPrank();
 
         // balances after
         assertEq(token.balanceOf(_alice), supply - amount);
-        assertEq(token.balanceOf(_app), amount);
+        assertEq(token.balanceOf(_appContract), amount);
         assertEq(token.balanceOf(address(_portal)), 0);
     }
 
@@ -166,12 +166,13 @@ contract ERC20PortalTest is ERC165Test {
     function _encodeTransferFrom(
         uint256 amount
     ) internal view returns (bytes memory) {
-        return abi.encodeCall(IERC20.transferFrom, (_alice, _app, amount));
+        return
+            abi.encodeCall(IERC20.transferFrom, (_alice, _appContract, amount));
     }
 
     function _encodeAddInput(
         bytes memory payload
     ) internal view returns (bytes memory) {
-        return abi.encodeCall(IInputBox.addInput, (_app, payload));
+        return abi.encodeCall(IInputBox.addInput, (_appContract, payload));
     }
 }

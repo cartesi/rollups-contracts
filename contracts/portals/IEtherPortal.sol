@@ -14,17 +14,16 @@ interface IEtherPortal is IPortal {
 
     // Permissionless functions
 
-    /// @notice Transfer Ether to an application and add an input to
-    /// the application's input box to signal such operation.
+    /// @notice Transfer Ether to an application contract
+    /// and add an input to the application's input box to signal such operation.
     ///
-    /// All the value sent through this function is forwarded to the application.
-    ///
-    /// @param app The address of the application
+    /// @param appContract The application contract address
     /// @param execLayerData Additional data to be interpreted by the execution layer
-    /// @dev All the value sent through this function is forwarded to the application.
-    ///      If the transfer fails, an `EtherTransferFailed` error is raised.
+    ///
+    /// @dev Any Ether sent through this function will be forwarded to the application contract.
+    ///      If the transfer fails, an `EtherTransferFailed` error will be raised.
     function depositEther(
-        address app,
+        address appContract,
         bytes calldata execLayerData
     ) external payable;
 }

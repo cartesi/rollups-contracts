@@ -13,7 +13,7 @@ import {LibTopic} from "../../util/LibTopic.sol";
 import {Vm} from "forge-std/Vm.sol";
 
 struct Claim {
-    address dapp;
+    address appContract;
     InputRange inputRange;
     bytes32 epochHash;
 }
@@ -25,7 +25,7 @@ library LibQuorum {
     ) internal view returns (uint256) {
         return
             quorum.numOfValidatorsInFavorOf(
-                claim.dapp,
+                claim.appContract,
                 claim.inputRange,
                 claim.epochHash
             );
@@ -38,7 +38,7 @@ library LibQuorum {
     ) internal view returns (bool) {
         return
             quorum.isValidatorInFavorOf(
-                claim.dapp,
+                claim.appContract,
                 claim.inputRange,
                 claim.epochHash,
                 id
@@ -46,7 +46,11 @@ library LibQuorum {
     }
 
     function submitClaim(Quorum quorum, Claim calldata claim) internal {
-        quorum.submitClaim(claim.dapp, claim.inputRange, claim.epochHash);
+        quorum.submitClaim(
+            claim.appContract,
+            claim.inputRange,
+            claim.epochHash
+        );
     }
 }
 
@@ -248,7 +252,7 @@ contract QuorumTest is TestBase {
                 );
 
                 assertEq(entry.topics[1], validator.asTopic());
-                assertEq(entry.topics[2], claim.dapp.asTopic());
+                assertEq(entry.topics[2], claim.appContract.asTopic());
                 assertEq(inputRange, claim.inputRange);
                 assertEq(epochHash, claim.epochHash);
 
@@ -264,7 +268,7 @@ contract QuorumTest is TestBase {
                     (InputRange, bytes32)
                 );
 
-                assertEq(entry.topics[1], claim.dapp.asTopic());
+                assertEq(entry.topics[1], claim.appContract.asTopic());
                 assertEq(inputRange, claim.inputRange);
                 assertEq(epochHash, claim.epochHash);
 
@@ -285,7 +289,7 @@ contract QuorumTest is TestBase {
 
         if (inFavorCount > (numOfValidators / 2)) {
             assertEq(
-                quorum.getEpochHash(claim.dapp, claim.inputRange),
+                quorum.getEpochHash(claim.appContract, claim.inputRange),
                 claim.epochHash
             );
         }

@@ -18,34 +18,34 @@ contract InputBoxTest is Test {
         _inputBox = new InputBox();
     }
 
-    function testNoInputs(address app) public {
-        assertEq(_inputBox.getNumberOfInputs(app), 0);
+    function testNoInputs(address appContract) public {
+        assertEq(_inputBox.getNumberOfInputs(appContract), 0);
     }
 
     function testAddLargeInput() public {
-        address app = vm.addr(1);
+        address appContract = vm.addr(1);
         uint256 max = _getMaxInputPayloadLength();
 
-        _inputBox.addInput(app, new bytes(max));
+        _inputBox.addInput(appContract, new bytes(max));
 
         bytes memory largePayload = new bytes(max + 1);
         uint256 largeLength = EvmAdvanceEncoder
-            .encode(1, app, address(this), 1, largePayload)
+            .encode(1, appContract, address(this), 1, largePayload)
             .length;
         vm.expectRevert(
             abi.encodeWithSelector(
                 IInputBox.InputTooLarge.selector,
-                app,
+                appContract,
                 largeLength,
                 CanonicalMachine.INPUT_MAX_SIZE
             )
         );
-        _inputBox.addInput(app, largePayload);
+        _inputBox.addInput(appContract, largePayload);
     }
 
     function testAddInput(
         uint64 chainId,
-        address app,
+        address appContract,
         bytes[] calldata payloads
     ) public {
         vm.chainId(chainId); // foundry limits chain id to be less than 2^64 - 1
@@ -68,16 +68,16 @@ contract InputBoxTest is Test {
             vm.expectEmit(true, true, false, true, address(_inputBox));
             bytes memory input = EvmAdvanceEncoder.encode(
                 chainId,
-                app,
+                appContract,
                 address(this),
                 i,
                 payloads[i]
             );
-            emit IInputBox.InputAdded(app, i, input);
+            emit IInputBox.InputAdded(appContract, i, input);
 
-            returnedValues[i] = _inputBox.addInput(app, payloads[i]);
+            returnedValues[i] = _inputBox.addInput(appContract, payloads[i]);
 
-            assertEq(i + 1, _inputBox.getNumberOfInputs(app));
+            assertEq(i + 1, _inputBox.getNumberOfInputs(appContract));
         }
 
         // testing added inputs
@@ -87,7 +87,7 @@ contract InputBoxTest is Test {
                     Inputs.EvmAdvance,
                     (
                         chainId,
-                        app,
+                        appContract,
                         address(this),
                         i, // block.number
                         i + year2022, // block.timestamp
@@ -97,7 +97,7 @@ contract InputBoxTest is Test {
                 )
             );
             // test if input hash is the same as in InputBox
-            assertEq(inputHash, _inputBox.getInputHash(app, i));
+            assertEq(inputHash, _inputBox.getInputHash(appContract, i));
             // test if input hash is the same as returned from calling addInput() function
             assertEq(inputHash, returnedValues[i]);
         }

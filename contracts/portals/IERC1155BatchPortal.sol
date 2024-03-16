@@ -10,23 +10,23 @@ import {IERC1155} from "@openzeppelin/contracts/token/ERC1155/IERC1155.sol";
 interface IERC1155BatchPortal is IPortal {
     // Permissionless functions
 
-    /// @notice Transfer a batch of ERC-1155 tokens to an application and add an input to
-    /// the application's input box to signal such operation.
+    /// @notice Transfer a batch of ERC-1155 tokens of multiple types to an application contract
+    /// and add an input to the application's input box to signal such operation.
     ///
     /// The caller must enable approval for the portal to manage all of their tokens
     /// beforehand, by calling the `setApprovalForAll` function in the token contract.
     ///
     /// @param token The ERC-1155 token contract
-    /// @param app The address of the application
+    /// @param appContract The application contract address
     /// @param tokenIds The identifiers of the tokens being transferred
     /// @param values Transfer amounts per token type
     /// @param baseLayerData Additional data to be interpreted by the base layer
     /// @param execLayerData Additional data to be interpreted by the execution layer
     ///
-    /// @dev Please make sure `tokenIds` and `values` have the same length.
+    /// @dev Please make sure the arrays `tokenIds` and `values` have the same length.
     function depositBatchERC1155Token(
         IERC1155 token,
-        address app,
+        address appContract,
         uint256[] calldata tokenIds,
         uint256[] calldata values,
         bytes calldata baseLayerData,

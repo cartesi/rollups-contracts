@@ -9,7 +9,7 @@ import {Inputs} from "contracts/common/Inputs.sol";
 library EvmAdvanceEncoder {
     function encode(
         uint256 chainId,
-        address app,
+        address appContract,
         address sender,
         uint256 index,
         bytes memory payload
@@ -19,7 +19,7 @@ library EvmAdvanceEncoder {
                 Inputs.EvmAdvance,
                 (
                     chainId,
-                    app,
+                    appContract,
                     sender,
                     block.number,
                     block.timestamp,
