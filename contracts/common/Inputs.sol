@@ -12,7 +12,7 @@ interface Inputs {
     /// @param msgSender The address of whoever sent the input
     /// @param blockNumber The number of the block in which the input was added
     /// @param blockTimestamp The timestamp of the block in which the input was added
-    /// @param index The input index
+    /// @param index The index of the input in the input box
     /// @param payload The payload provided by the message sender
     function EvmAdvance(
         uint256 chainId,
