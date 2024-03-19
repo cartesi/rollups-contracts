@@ -20,20 +20,13 @@ jobs:
         with:
           submodules: recursive
 
-      - uses: actions/setup-node@v4
-        with:
-          node-version: 18
-
-      - uses: foundry-rs/foundry-toolchain@v1
-
-      - name: Install dependencies
-        run: yarn install
+      - uses: ./.github/workflows/setup
 
       - name: Generate proofs
-        run: yarn proofs:setup
+        run: pnpm proofs:setup
 
       - name: Run tests
-        run: yarn test
+        run: pnpm test
 
       - name: Upload signatures
         run: forge selectors upload --all

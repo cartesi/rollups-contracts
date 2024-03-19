@@ -1,0 +1,22 @@
+name: Install dependencies
+
+on:
+  workflow_call:
+
+runs:
+  using: 'composite'
+  steps:
+    - uses: pnpm/action-setup@v3
+      with:
+        version: 8
+
+    - uses: actions/setup-node@v4
+      with:
+        node-version: 18
+        cache: 'pnpm'
+
+    - name: Install Node packages
+      shell: bash
+      run: pnpm i
+
+    - uses: foundry-rs/foundry-toolchain@v1
