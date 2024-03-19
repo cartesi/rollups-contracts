@@ -6,7 +6,7 @@ If you are interested in taking a look at the off-chain part, please, head over 
 
 ## 🧩 Dependencies
 
-- [Yarn](https://yarnpkg.com/getting-started/install)
+- [pnpm](https://pnpm.io/installation)
 - [Forge](https://book.getfoundry.sh/getting-started/installation)
 - [Docker](https://docs.docker.com/get-docker/)
 
@@ -19,11 +19,11 @@ In order to properly initialize them, please, run the following command.
 git submodule update --init --recursive
 ```
 
-This repository uses [Yarn](https://yarnpkg.com/getting-started/install) to manage JavaScript dependencies.
+This repository uses [pnpm](https://pnpm.io/installation) to manage JavaScript dependencies.
 In order to install them, please, run the following command.
 
 ```sh
-yarn install
+pnpm i
 ```
 
 ## 🚀 Local deployment
@@ -31,13 +31,13 @@ yarn install
 If you want to run a [Hardhat](https://hardhat.org/) node and deploy the contracts, please run the following command.
 
 ```sh
-yarn start
+pnpm start
 ```
 
 If, instead, you wish to deploy the contracts to an already running node (e.g. [Anvil](https://book.getfoundry.sh/anvil/)), you can do so by running the following command.
 
 ```sh
-yarn deploy:development
+pnpm deploy:development
 ```
 
 If the node is not listening to `http://localhost:8545/`, please set the `RPC_URL` environment variable accordingly.
@@ -49,19 +49,19 @@ Assuming that [Docker Engine](https://docs.docker.com/get-docker/) is running on
 This command will build the Cartesi Machine image necessary to build the proofs.
 
 ```sh
-yarn proofs:setup
+pnpm proofs:setup
 ```
 
 Now, you may run the tests!
 
 ```sh
-yarn test
+pnpm test
 ```
 
 From this point on, after any change in the source code, you can update the proofs before running the tests again with the following command.
 
 ```sh
-yarn proofs:update
+pnpm proofs:update
 ```
 
 ## 📚 Documentation

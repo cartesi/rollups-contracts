@@ -714,7 +714,7 @@ contract ApplicationTest is ERC165Test {
         );
 
         // Require file to be in path
-        require(vm.isFile(path), "Please run `yarn proofs:setup`");
+        require(vm.isFile(path), "Please run `pnpm proofs:setup`");
 
         // Read contents of JSON file
         string memory json = vm.readFile(path);

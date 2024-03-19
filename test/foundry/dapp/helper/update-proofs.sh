@@ -60,16 +60,16 @@ fi
 echo2 $CYAN "Updating proofs..."
 echo
 
-echo3 $GREEN "Running yarn install..."
+echo3 $GREEN "Running pnpm i..."
 echo
 
-yarn install
+pnpm i
 echo
 
-echo3 $GREEN "Running yarn fmt:write..."
+echo3 $GREEN "Running pnpm fmt:write..."
 echo
 
-yarn fmt:write
+pnpm fmt:write
 echo
 
 echo3 $GREEN "Building contracts..."

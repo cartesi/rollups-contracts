@@ -25,6 +25,7 @@
         "proofs:update": "./test/foundry/dapp/helper/update-proofs.sh",
         "proofs:setup": "./test/foundry/dapp/helper/update-proofs.sh --setup",
         "proofs:clean": "rimraf ./test/foundry/dapp/helper/input/*.json ./test/foundry/dapp/helper/output/*.json",
+        "preinstall": "npx only-allow pnpm",
         "prepack": "run-s build tsc:prod copy-dts",
         "start": "hardhat node",
         "test": "forge test -vvv",
@@ -79,6 +80,5 @@
     ],
     "main": "./dist/src/types/index.js",
     "types": "./dist/src/types/index.d.ts",
-    "license": "Apache-2.0",
-    "packageManager": "yarn@4.0.1"
+    "license": "Apache-2.0"
 }
