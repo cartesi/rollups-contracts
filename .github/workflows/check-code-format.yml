@@ -1,27 +1,14 @@
 name: Check code format
 
-on:
-  push:
-    paths:
-      - '.github/workflows/check-code-format.yml'
-      - 'onchain/rollups/**'
+on: [push]
 
 jobs:
   check-code-format:
     runs-on: ubuntu-latest
-    defaults:
-      run:
-        working-directory: onchain/rollups
-
     steps:
       - uses: actions/checkout@v4
 
-      - uses: actions/setup-node@v4
-        with:
-          node-version: 18
-
-      - name: Install dependencies
-        run: yarn install
+      - uses: ./.github/workflows/setup
 
       - name: Check code format
-        run: yarn fmt:check
+        run: pnpm fmt:check

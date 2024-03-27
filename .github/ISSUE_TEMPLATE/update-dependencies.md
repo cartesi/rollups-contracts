@@ -16,5 +16,5 @@ Are there any clear downsides? (requires refactoring, bugs were introduced, etc)
 
 - [ ] Update major versions in `packages.json`.
 - [ ] If an update requires major work, create the corresponding issue.
-- [ ] Update the dependencies in `yarn.lock`.
+- [ ] Update the dependencies in `pnpm-lock.yaml`.
 - [ ] Verify whether everything is working as expected.
