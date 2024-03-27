@@ -1,5 +1,15 @@
 # @cartesi/rollups
 
+## 2.0.0-rc.2
+
+### Major Changes
+
+-   91d1c115: Remove `EvmInspect` function
+
+### Minor Changes
+
+-   91d1c115: Rename parameters of `EvmAdvance` function
+
 ## 2.0.0-rc.1
 
 ### Patch Changes
