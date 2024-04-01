@@ -18,18 +18,18 @@ interface IERC20Portal is IPortal {
     /// @notice Transfer ERC-20 tokens to an application contract
     /// and add an input to the application's input box to signal such operation.
     ///
-    /// The caller must allow the portal to withdraw at least `amount` tokens
+    /// The caller must allow the portal to withdraw at least `value` tokens
     /// from their account beforehand, by calling the `approve` function in the
     /// token contract.
     ///
     /// @param token The ERC-20 token contract
     /// @param appContract The application contract address
-    /// @param amount The amount of tokens to be transferred
+    /// @param value The amount of tokens to be transferred
     /// @param execLayerData Additional data to be interpreted by the execution layer
     function depositERC20Tokens(
         IERC20 token,
         address appContract,
-        uint256 amount,
+        uint256 value,
         bytes calldata execLayerData
     ) external;
 }
