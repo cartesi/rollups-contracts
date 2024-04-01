@@ -89,8 +89,8 @@ devDependencies:
     specifier: ^3.6.2
     version: 3.6.2(typescript@5.4.3)
   solhint-plugin-prettier:
-    specifier: ^0.0.5
-    version: 0.0.5(prettier-plugin-solidity@1.3.1)(prettier@3.2.5)
+    specifier: ^0.1.0
+    version: 0.1.0(prettier-plugin-solidity@1.3.1)(prettier@3.2.5)
   solidity-coverage:
     specifier: ^0.8.11
     version: 0.8.11(hardhat@2.22.2)
@@ -1068,6 +1068,14 @@ packages:
     requiresBuild: true
     dev: true
     optional: true
+
+  /@prettier/sync@0.3.0(prettier@3.2.5):
+    resolution: {integrity: sha512-3dcmCyAxIcxy036h1I7MQU/uEEBq8oLwf1CE3xeze+MPlgkdlb/+w6rGR/1dhp6Hqi17fRS6nvwnOzkESxEkOw==}
+    peerDependencies:
+      prettier: ^3.0.0
+    dependencies:
+      prettier: 3.2.5
+    dev: true
 
   /@safe-global/safe-singleton-factory@1.0.21:
     resolution: {integrity: sha512-/fdfbaaqbBlQJDv59Cb0JY1N/AsoY6O092dW4bIty6S/EW2ivho3U/GRa9dj2d+qZxjLBeYs426pdoR+ZfDb/w==}
@@ -5005,12 +5013,13 @@ packages:
       - debug
     dev: true
 
-  /solhint-plugin-prettier@0.0.5(prettier-plugin-solidity@1.3.1)(prettier@3.2.5):
-    resolution: {integrity: sha512-7jmWcnVshIrO2FFinIvDQmhQpfpS2rRRn3RejiYgnjIE68xO2bvrYvjqVNfrio4xH9ghOqn83tKuTzLjEbmGIA==}
+  /solhint-plugin-prettier@0.1.0(prettier-plugin-solidity@1.3.1)(prettier@3.2.5):
+    resolution: {integrity: sha512-SDOTSM6tZxZ6hamrzl3GUgzF77FM6jZplgL2plFBclj/OjKP8Z3eIPojKU73gRr0MvOS8ACZILn8a5g0VTz/Gw==}
     peerDependencies:
-      prettier: ^1.15.0 || ^2.0.0
-      prettier-plugin-solidity: ^1.0.0-alpha.14
+      prettier: ^3.0.0
+      prettier-plugin-solidity: ^1.0.0
     dependencies:
+      '@prettier/sync': 0.3.0(prettier@3.2.5)
       prettier: 3.2.5
       prettier-linter-helpers: 1.0.0
       prettier-plugin-solidity: 1.3.1(prettier@3.2.5)
