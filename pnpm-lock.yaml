@@ -9,8 +9,8 @@ dependencies:
     specifier: 6.1.0
     version: 6.1.0
   '@openzeppelin/contracts':
-    specifier: 5.0.0
-    version: 5.0.0
+    specifier: 5.0.2
+    version: 5.0.2
 
 devDependencies:
   '@changesets/cli':
@@ -1058,8 +1058,8 @@ packages:
       hardhat: 2.22.2(ts-node@10.9.2)(typescript@5.4.3)
     dev: true
 
-  /@openzeppelin/contracts@5.0.0:
-    resolution: {integrity: sha512-bv2sdS6LKqVVMLI5+zqnNrNU/CA+6z6CmwFXm/MzmOPBRSO5reEJN7z0Gbzvs0/bv/MZZXNklubpwy3v2+azsw==}
+  /@openzeppelin/contracts@5.0.2:
+    resolution: {integrity: sha512-ytPc6eLGcHHnapAZ9S+5qsdomhjo6QBHTDRRBFfTxXIpsicMhVPouPgmUPebZZZGX7vt9USA+Z+0M0dSVtSUEA==}
     dev: false
 
   /@pkgjs/parseargs@0.11.0:
