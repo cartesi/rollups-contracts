@@ -103,6 +103,11 @@ contract Application is
                 revert OutputNotReexecutable(output);
             }
             _executeVoucher(arguments);
+        } else if (selector == Outputs.DelegateCallVoucher.selector) {
+            if (bitmap.get(inputIndex)) {
+                revert OutputNotReexecutable(output);
+            }
+            _executeDelegateCallVoucher(arguments);
         } else {
             revert OutputNotExecutable(output);
         }
@@ -200,6 +205,24 @@ contract Application is
         bytes memory returndata;
 
         (success, returndata) = destination.call{value: value}(payload);
+
+        if (!success) {
+            returndata.raise();
+        }
+    }
+
+    /// @notice Executes a delegatecall voucher
+    /// @param arguments ABI-encoded arguments
+    function _executeDelegateCallVoucher(bytes calldata arguments) internal {
+        address destination;
+        bytes memory payload;
+
+        (destination, payload) = abi.decode(arguments, (address, bytes));
+
+        bool success;
+        bytes memory returndata;
+
+        (success, returndata) = destination.delegatecall(payload);
 
         if (!success) {
             returndata.raise();
