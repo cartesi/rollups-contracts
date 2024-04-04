@@ -1,7 +1,7 @@
 // (c) Cartesi and individual authors (see AUTHORS)
 // SPDX-License-Identifier: Apache-2.0 (see LICENSE)
 
-pragma solidity ^0.8.13;
+pragma solidity ^0.8.18;
 
 import {IInputBox} from "./IInputBox.sol";
 import {CanonicalMachine} from "../common/CanonicalMachine.sol";
@@ -28,6 +28,7 @@ contract InputBox is IInputBox {
                 msg.sender,
                 block.number,
                 block.timestamp,
+                block.prevrandao,
                 index,
                 payload
             )
