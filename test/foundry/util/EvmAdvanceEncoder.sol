@@ -23,6 +23,7 @@ library EvmAdvanceEncoder {
                     sender,
                     block.number,
                     block.timestamp,
+                    block.prevrandao,
                     index,
                     payload
                 )
