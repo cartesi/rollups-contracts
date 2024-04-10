@@ -83,7 +83,7 @@ echo
 
 forge test -vv \
     --match-contract CartesiDAppTest \
-    --match-test setUp > /dev/null || true
+    --match-test testNothing > /dev/null || true
 
 echo3 $GREEN "Running Docker image..."
 echo
