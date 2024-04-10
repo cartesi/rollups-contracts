@@ -53,7 +53,7 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@cartesi/rollups@workspace:."
   dependencies:
-    "@cartesi/util": "npm:6.1.0"
+    "@cartesi/util": "npm:6.2.0"
     "@changesets/cli": "npm:^2"
     "@ethersproject/abi": "npm:^5"
     "@ethersproject/bytes": "npm:^5"
@@ -90,10 +90,10 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@cartesi/util@npm:6.1.0":
-  version: 6.1.0
-  resolution: "@cartesi/util@npm:6.1.0"
-  checksum: ff2141d02052f5e0a07a228ec2eab50b2a130558969f8c0c9b2a14a1637d0feb1bf3469d38746238d8b77854e0ed6b712098e7ed4ccb5c0e7e6a2eec5d1b984f
+"@cartesi/util@npm:6.2.0":
+  version: 6.2.0
+  resolution: "@cartesi/util@npm:6.2.0"
+  checksum: 76b4ec134d43a216dda734e13aaf56cca9ad38d5589902be2c8b4b633a62f4a22abd2ae34c9c7391d630e951431c65d8e947572d2ad98f3dbe51f2f5fa8c94ba
   languageName: node
   linkType: hard
 
