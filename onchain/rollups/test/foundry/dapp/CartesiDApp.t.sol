@@ -97,6 +97,9 @@ contract CartesiDAppTest is TestBase {
         readFinishEpochResponse();
     }
 
+    /// @dev Used by the proof generation system
+    function testNothing() public pure {}
+
     function testConstructorWithOwnerAsZeroAddress(
         bytes32 _templateHash
     ) public {
