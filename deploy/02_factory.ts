@@ -21,16 +21,8 @@ const func: DeployFunction = async (hre: HardhatRuntimeEnvironment) => {
         log: true,
     };
 
-    const { MerkleV2 } = await deployments.all();
-
     await deployments.deploy("AuthorityFactory", opts);
-
-    await deployments.deploy("ApplicationFactory", {
-        ...opts,
-        libraries: {
-            MerkleV2: MerkleV2.address,
-        },
-    });
+    await deployments.deploy("ApplicationFactory", opts);
 };
 
 export default func;
