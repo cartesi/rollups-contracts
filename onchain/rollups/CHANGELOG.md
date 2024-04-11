@@ -1,5 +1,11 @@
 # @cartesi/rollups
 
+## 1.3.0
+
+### Minor Changes
+
+-   705bfa5: Support deployment to `base` network.
+
 ## 1.2.0
 
 ### Minor Changes
