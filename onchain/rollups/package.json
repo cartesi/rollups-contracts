@@ -16,6 +16,7 @@
         "deploy:arbitrum_goerli": "hardhat deploy --network arbitrum_goerli --export export/abi/arbitrum_goerli.json",
         "deploy:arbitrum_sepolia": "hardhat deploy --network arbitrum_sepolia --export export/abi/arbitrum_sepolia.json",
         "deploy:base": "hardhat deploy --network base --export export/abi/base.json",
+        "deploy:base_sepolia": "hardhat deploy --network base_sepolia --export export/abi/base_sepolia.json",
         "deploy:mainnet": "hardhat deploy --network mainnet --export export/abi/mainnet.json",
         "deploy:optimism": "hardhat deploy --network optimism --export export/abi/optimism.json",
         "deploy:optimism_goerli": "hardhat deploy --network optimism_goerli --export export/abi/optimism_goerli.json",
@@ -34,7 +35,7 @@
         "tsc:prod": "tsc -p tsconfig.prod.json"
     },
     "dependencies": {
-        "@cartesi/util": "6.2.0",
+        "@cartesi/util": "6.3.0",
         "@openzeppelin/contracts": "4.9.2"
     },
     "devDependencies": {
@@ -44,7 +45,7 @@
         "@ethersproject/providers": "^5",
         "@nomicfoundation/hardhat-verify": "^2",
         "@nomiclabs/hardhat-ethers": "^2",
-        "@safe-global/safe-singleton-factory": "^1",
+        "@safe-global/safe-singleton-factory": "^1.0.18",
         "@typechain/ethers-v5": "^11",
         "@typechain/hardhat": "^8",
         "@types/chai": "^4",
