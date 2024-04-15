@@ -22,9 +22,6 @@ jobs:
 
       - uses: ./.github/workflows/setup
 
-      - name: Generate proofs
-        run: pnpm proofs:setup
-
       - name: Run tests
         run: pnpm test
 
