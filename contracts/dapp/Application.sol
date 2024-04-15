@@ -150,7 +150,9 @@ contract Application is
             revert IncorrectOutputsEpochRootHash();
         }
 
-        if (!proof.isOutputHashesRootHashValid(output)) {
+        bytes32 outputHash = keccak256(output);
+
+        if (!proof.isOutputHashesRootHashValid(outputHash)) {
             revert IncorrectOutputHashesRootHash();
         }
     }
