@@ -55,7 +55,7 @@ pnpm test
 
 ℹ️ You may also want to check the [official Cartesi Rollups documentation website](https://docs.cartesi.io/cartesi-rollups/overview/).
 
-🔎 For an in-depth view of the on-chain architecture, we invite you to take a look at the [`CONTRACTS.md`](./CONTRACTS.md) file.
+🔎 For an in-depth view of the on-chain architecture, we invite you to take a look at the [`CONTRACTS.md`](https://github.com/cartesi/rollups-contracts/blob/main/CONTRACTS.md) file.
 
 ## 🎨 Experimenting
 
