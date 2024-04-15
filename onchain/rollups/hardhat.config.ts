@@ -18,6 +18,7 @@ import {
     arbitrumGoerli,
     arbitrumSepolia,
     base,
+    baseSepolia,
     mainnet,
     optimism,
     optimismGoerli,
@@ -63,6 +64,7 @@ const config: HardhatUserConfig = {
         arbitrum_goerli: networkConfig(arbitrumGoerli),
         arbitrum_sepolia: networkConfig(arbitrumSepolia),
         base: networkConfig(base),
+        base_sepolia: networkConfig(baseSepolia),
         mainnet: networkConfig(mainnet),
         sepolia: networkConfig(sepolia),
         optimism: networkConfig(optimism),
@@ -145,6 +147,7 @@ const config: HardhatUserConfig = {
                 ppath("@cartesi/util", "/deployments/arbitrum_sepolia"),
             ],
             base: [ppath("@cartesi/util", "/deployments/base")],
+            base_sepolia: [ppath("@cartesi/util", "/deployments/base_sepolia")],
             mainnet: [ppath("@cartesi/util", "/deployments/mainnet")],
             optimism: [ppath("@cartesi/util", "/deployments/optimism")],
             optimism_goerli: [

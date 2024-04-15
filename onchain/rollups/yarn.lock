@@ -53,7 +53,7 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@cartesi/rollups@workspace:."
   dependencies:
-    "@cartesi/util": "npm:6.2.0"
+    "@cartesi/util": "npm:6.3.0"
     "@changesets/cli": "npm:^2"
     "@ethersproject/abi": "npm:^5"
     "@ethersproject/bytes": "npm:^5"
@@ -61,7 +61,7 @@ __metadata:
     "@nomicfoundation/hardhat-verify": "npm:^2"
     "@nomiclabs/hardhat-ethers": "npm:^2"
     "@openzeppelin/contracts": "npm:4.9.2"
-    "@safe-global/safe-singleton-factory": "npm:^1"
+    "@safe-global/safe-singleton-factory": "npm:^1.0.18"
     "@typechain/ethers-v5": "npm:^11"
     "@typechain/hardhat": "npm:^8"
     "@types/chai": "npm:^4"
@@ -90,10 +90,10 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@cartesi/util@npm:6.2.0":
-  version: 6.2.0
-  resolution: "@cartesi/util@npm:6.2.0"
-  checksum: 76b4ec134d43a216dda734e13aaf56cca9ad38d5589902be2c8b4b633a62f4a22abd2ae34c9c7391d630e951431c65d8e947572d2ad98f3dbe51f2f5fa8c94ba
+"@cartesi/util@npm:6.3.0":
+  version: 6.3.0
+  resolution: "@cartesi/util@npm:6.3.0"
+  checksum: 833c132d0da9368d317385da4606b6a484295384b140c3770ca11277d5e21712729d563dbd831f749bfb69c932e6dad6e174c491760aaaacb99f5a37deec40a9
   languageName: node
   linkType: hard
 
@@ -1299,10 +1299,10 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@safe-global/safe-singleton-factory@npm:^1":
-  version: 1.0.16
-  resolution: "@safe-global/safe-singleton-factory@npm:1.0.16"
-  checksum: e420ddd3f0121fd83990ebaa111962aa107c6c1f30e81203d2601ecf83f563548272d40cb0e2d34ad13cbac491906fcc55ccd20a0daee4f1ce182b09eb6800f1
+"@safe-global/safe-singleton-factory@npm:^1.0.18":
+  version: 1.0.22
+  resolution: "@safe-global/safe-singleton-factory@npm:1.0.22"
+  checksum: a540180e19bdb548fb3b2d07f0f108f1a003e680256a01a9a6876f816fbffac09957d64df93b655e4ef1b5ca3845d316f811b737e00618fb2fb41ed14f8e81bd
   languageName: node
   linkType: hard
 
