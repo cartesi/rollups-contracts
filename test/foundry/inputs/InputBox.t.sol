@@ -18,7 +18,7 @@ contract InputBoxTest is Test {
         _inputBox = new InputBox();
     }
 
-    function testNoInputs(address appContract) public {
+    function testNoInputs(address appContract) public view {
         assertEq(_inputBox.getNumberOfInputs(appContract), 0);
     }
 
