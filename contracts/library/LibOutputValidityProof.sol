@@ -4,12 +4,13 @@
 pragma solidity ^0.8.8;
 
 import {CanonicalMachine} from "../common/CanonicalMachine.sol";
-import {MerkleV2} from "@cartesi/util/contracts/MerkleV2.sol";
 import {Outputs} from "../common/Outputs.sol";
 import {OutputValidityProof} from "../common/OutputValidityProof.sol";
 
+import {LibMerkle32} from "./LibMerkle32.sol";
+
 library LibOutputValidityProof {
-    using CanonicalMachine for CanonicalMachine.Log2Size;
+    using LibMerkle32 for bytes32[];
 
     /// @notice Check if epoch hash is valid
     /// @param v The output validity proof
@@ -28,61 +29,31 @@ library LibOutputValidityProof {
     function isOutputsEpochRootHashValid(
         OutputValidityProof calldata v
     ) internal pure returns (bool) {
+        bytes32[] calldata siblings = v.outputHashesInEpochSiblings;
         return
-            v.outputsEpochRootHash ==
-            MerkleV2.getRootAfterReplacementInDrive(
-                CanonicalMachine.getIntraMemoryRangePosition(
+            (siblings.length == CanonicalMachine.LOG2_MAX_INPUTS_PER_EPOCH) &&
+            (v.outputsEpochRootHash ==
+                siblings.merkleRootAfterReplacement(
                     v.inputIndexWithinEpoch,
-                    CanonicalMachine.KECCAK_LOG2_SIZE
-                ),
-                CanonicalMachine.KECCAK_LOG2_SIZE.uint64OfSize(),
-                CanonicalMachine.EPOCH_OUTPUT_LOG2_SIZE.uint64OfSize(),
-                v.outputHashesRootHash,
-                v.outputHashesInEpochSiblings
-            );
+                    v.outputHashesRootHash
+                ));
     }
 
     /// @notice Check if the output hashes root hash is valid
     /// @param v The output validity proof
-    /// @param output The output
-    /// @dev The hash of the output is converted to bytes (abi.encode) and
-    /// treated as data. The metadata output memory range stores that data while
-    /// being indifferent to its contents. To prove that the received
-    /// output is contained in the metadata output memory range we need to
-    /// prove that x, where:
-    /// ```
-    /// x = keccak(
-    ///          keccak(
-    ///              keccak(hashOfOutput[:8]),
-    ///              keccak(hashOfOutput[8:16])
-    ///          ),
-    ///          keccak(
-    ///              keccak(hashOfOutput[16:24]),
-    ///              keccak(hashOfOutput[24:])
-    ///          )
-    ///     )
-    /// ```
-    /// is contained in it. We can't simply use the output hash, because the
-    /// size of the leaf is 8 bytes, not 32.
+    /// @param outputHash The output hash
     function isOutputHashesRootHashValid(
         OutputValidityProof calldata v,
-        bytes calldata output
+        bytes32 outputHash
     ) internal pure returns (bool) {
+        bytes32[] calldata siblings = v.outputHashInOutputHashesSiblings;
         return
-            v.outputHashesRootHash ==
-            MerkleV2.getRootAfterReplacementInDrive(
-                CanonicalMachine.getIntraMemoryRangePosition(
+            (siblings.length == CanonicalMachine.LOG2_MAX_OUTPUTS_PER_INPUT) &&
+            (v.outputHashesRootHash ==
+                siblings.merkleRootAfterReplacement(
                     v.outputIndexWithinInput,
-                    CanonicalMachine.KECCAK_LOG2_SIZE
-                ),
-                CanonicalMachine.KECCAK_LOG2_SIZE.uint64OfSize(),
-                CanonicalMachine.OUTPUT_METADATA_LOG2_SIZE.uint64OfSize(),
-                MerkleV2.getMerkleRootFromBytes(
-                    abi.encode(keccak256(abi.encode(output))),
-                    CanonicalMachine.KECCAK_LOG2_SIZE.uint64OfSize()
-                ),
-                v.outputHashInOutputHashesSiblings
-            );
+                    outputHash
+                ));
     }
 
     /// @notice Calculate the input index
