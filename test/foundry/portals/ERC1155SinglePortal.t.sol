@@ -55,7 +55,7 @@ contract ERC1155SinglePortalTest is ERC165Test {
         return interfaceIds;
     }
 
-    function testGetInputBox() public {
+    function testGetInputBox() public view {
         assertEq(address(_portal.getInputBox()), address(_inputBox));
     }
 

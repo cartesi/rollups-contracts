@@ -210,7 +210,7 @@ contract QuorumTest is TestBase {
         Quorum quorum,
         Claim calldata claim,
         bool[] memory inFavorOf
-    ) internal {
+    ) internal view {
         uint256 inFavorCount;
         uint256 numOfValidators = quorum.numOfValidators();
 
@@ -295,7 +295,10 @@ contract QuorumTest is TestBase {
         }
     }
 
-    function assertEq(InputRange memory r1, InputRange memory r2) internal {
+    function assertEq(
+        InputRange memory r1,
+        InputRange memory r2
+    ) internal pure {
         assertEq(r1.firstIndex, r2.firstIndex);
         assertEq(r1.lastIndex, r2.lastIndex);
     }

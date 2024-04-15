@@ -54,7 +54,7 @@ library ExternalLibMerkle32 {
 contract LibMerkle32Test is Test {
     using ExternalLibMerkle32 for bytes32[];
 
-    function testMinHeight() external {
+    function testMinHeight() external pure {
         assertEq(_minHeight(0), 0);
         assertEq(_minHeight(1), 0);
         assertEq(_minHeight(2), 1);
@@ -70,7 +70,7 @@ contract LibMerkle32Test is Test {
         assertEq(_minHeight(type(uint256).max), 256);
     }
 
-    function testParent() external {
+    function testParent() external pure {
         assertEq(
             _parent(bytes32(0), bytes32(0)),
             0xad3228b676f7d3cd4284a5443f17f1962b36e491b30a40b2405849e597ba5fb5
@@ -81,7 +81,7 @@ contract LibMerkle32Test is Test {
         );
     }
 
-    function testParentFuzzy(bytes32 a, bytes32 b) external {
+    function testParentFuzzy(bytes32 a, bytes32 b) external pure {
         assertEq(_parent(a, b), LibMerkle32.parent(a, b));
     }
 
@@ -89,7 +89,7 @@ contract LibMerkle32Test is Test {
         bytes32 firstNode,
         bytes32 secondNode,
         bytes32 defaultNode
-    ) external {
+    ) external pure {
         bytes32[] memory leaves = new bytes32[](0);
 
         assertEq(leaves.at(0, defaultNode), defaultNode);
@@ -546,7 +546,7 @@ contract LibMerkle32Test is Test {
         bytes32[] calldata leaves,
         uint256 height,
         uint256 index
-    ) external {
+    ) external pure {
         height = _boundHeight(height, leaves.length);
         index = _boundBits(index, height);
 
@@ -580,7 +580,7 @@ contract LibMerkle32Test is Test {
     function _boundHeight(
         uint256 height,
         uint256 n
-    ) internal view returns (uint256) {
+    ) internal pure returns (uint256) {
         return bound(height, _minHeight(n), 256);
     }
 

@@ -118,7 +118,7 @@ contract ApplicationTest is ERC165Test {
         assertEq(appContract.getPortals(), portals);
     }
 
-    function assertEq(IPortal[] memory a, IPortal[] memory b) internal {
+    function assertEq(IPortal[] memory a, IPortal[] memory b) internal pure {
         assertEq(a.length, b.length);
         for (uint256 i; i < a.length; ++i) {
             assertEq(address(a[i]), address(b[i]));
@@ -202,7 +202,7 @@ contract ApplicationTest is ERC165Test {
     function testWasOutputExecuted(
         uint256 inputIndex,
         uint256 outputIndexWithinInput
-    ) external {
+    ) external view {
         assertFalse(
             _appContract.wasOutputExecuted(inputIndex, outputIndexWithinInput)
         );
