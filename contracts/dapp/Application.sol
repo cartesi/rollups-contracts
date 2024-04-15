@@ -140,20 +140,20 @@ contract Application is
             revert InputIndexOutOfRange(inputIndex, proof.inputRange);
         }
 
-        bytes32 epochHash = _getEpochHash(proof.inputRange);
+        bytes32 outputHash = keccak256(output);
 
-        if (!proof.isEpochHashValid(epochHash)) {
-            revert IncorrectEpochHash();
+        if (!proof.isOutputHashesRootHashValid(outputHash)) {
+            revert IncorrectOutputHashesRootHash();
         }
 
         if (!proof.isOutputsEpochRootHashValid()) {
             revert IncorrectOutputsEpochRootHash();
         }
 
-        bytes32 outputHash = keccak256(output);
+        bytes32 epochHash = _getEpochHash(proof.inputRange);
 
-        if (!proof.isOutputHashesRootHashValid(outputHash)) {
-            revert IncorrectOutputHashesRootHash();
+        if (!proof.isEpochHashValid(epochHash)) {
+            revert IncorrectEpochHash();
         }
     }
 
