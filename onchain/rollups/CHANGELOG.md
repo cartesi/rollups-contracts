@@ -1,5 +1,11 @@
 # @cartesi/rollups
 
+## 1.3.1
+
+### Patch Changes
+
+-   78f25b1: support base sepolia
+
 ## 1.3.0
 
 ### Minor Changes
