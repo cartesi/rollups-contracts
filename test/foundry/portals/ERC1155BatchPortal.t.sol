@@ -30,6 +30,7 @@ contract ERC1155BatchPortalTest is ERC165Test {
     IERC1155 _token;
     IInputBox _inputBox;
     IERC1155BatchPortal _portal;
+    bytes4[] _interfaceIds;
 
     function setUp() public {
         _alice = vm.addr(1);
@@ -37,6 +38,8 @@ contract ERC1155BatchPortalTest is ERC165Test {
         _token = IERC1155(vm.addr(3));
         _inputBox = IInputBox(vm.addr(4));
         _portal = new ERC1155BatchPortal(_inputBox);
+        _interfaceIds.push(type(IERC1155BatchPortal).interfaceId);
+        _interfaceIds.push(type(IPortal).interfaceId);
     }
 
     function getERC165Contract() public view override returns (IERC165) {
@@ -45,14 +48,11 @@ contract ERC1155BatchPortalTest is ERC165Test {
 
     function getSupportedInterfaces()
         public
-        pure
+        view
         override
         returns (bytes4[] memory)
     {
-        bytes4[] memory interfaceIds = new bytes4[](2);
-        interfaceIds[0] = type(IERC1155BatchPortal).interfaceId;
-        interfaceIds[1] = type(IPortal).interfaceId;
-        return interfaceIds;
+        return _interfaceIds;
     }
 
     function testGetInputBox() public view {

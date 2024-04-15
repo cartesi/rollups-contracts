@@ -29,6 +29,7 @@ contract ERC721PortalTest is ERC165Test {
     IERC721 _token;
     IInputBox _inputBox;
     IERC721Portal _portal;
+    bytes4[] _interfaceIds;
 
     function setUp() public {
         _alice = vm.addr(1);
@@ -36,6 +37,8 @@ contract ERC721PortalTest is ERC165Test {
         _token = IERC721(vm.addr(3));
         _inputBox = IInputBox(vm.addr(4));
         _portal = new ERC721Portal(_inputBox);
+        _interfaceIds.push(type(IERC721Portal).interfaceId);
+        _interfaceIds.push(type(IPortal).interfaceId);
     }
 
     function getERC165Contract() public view override returns (IERC165) {
@@ -44,14 +47,11 @@ contract ERC721PortalTest is ERC165Test {
 
     function getSupportedInterfaces()
         public
-        pure
+        view
         override
         returns (bytes4[] memory)
     {
-        bytes4[] memory interfaceIds = new bytes4[](2);
-        interfaceIds[0] = type(IERC721Portal).interfaceId;
-        interfaceIds[1] = type(IPortal).interfaceId;
-        return interfaceIds;
+        return _interfaceIds;
     }
 
     function testGetInputBox() public view {
