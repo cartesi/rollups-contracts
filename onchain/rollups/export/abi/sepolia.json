@@ -920,6 +920,141 @@
         }
       ]
     },
+    "SelfHostedApplicationFactory": {
+      "address": "0x9E32e06Fd23675b2DF8eA8e6b0A25c3DF6a60AbC",
+      "abi": [
+        {
+          "inputs": [
+            {
+              "internalType": "contract IAuthorityHistoryPairFactory",
+              "name": "_authorityHistoryPairFactory",
+              "type": "address"
+            },
+            {
+              "internalType": "contract ICartesiDAppFactory",
+              "name": "_applicationFactory",
+              "type": "address"
+            }
+          ],
+          "stateMutability": "nonpayable",
+          "type": "constructor"
+        },
+        {
+          "inputs": [
+            {
+              "internalType": "address",
+              "name": "_authorityOwner",
+              "type": "address"
+            },
+            {
+              "internalType": "address",
+              "name": "_dappOwner",
+              "type": "address"
+            },
+            {
+              "internalType": "bytes32",
+              "name": "_templateHash",
+              "type": "bytes32"
+            },
+            {
+              "internalType": "bytes32",
+              "name": "_salt",
+              "type": "bytes32"
+            }
+          ],
+          "name": "calculateAddresses",
+          "outputs": [
+            {
+              "internalType": "address",
+              "name": "application_",
+              "type": "address"
+            },
+            {
+              "internalType": "address",
+              "name": "authority_",
+              "type": "address"
+            },
+            {
+              "internalType": "address",
+              "name": "history_",
+              "type": "address"
+            }
+          ],
+          "stateMutability": "view",
+          "type": "function"
+        },
+        {
+          "inputs": [
+            {
+              "internalType": "address",
+              "name": "_authorityOwner",
+              "type": "address"
+            },
+            {
+              "internalType": "address",
+              "name": "_dappOwner",
+              "type": "address"
+            },
+            {
+              "internalType": "bytes32",
+              "name": "_templateHash",
+              "type": "bytes32"
+            },
+            {
+              "internalType": "bytes32",
+              "name": "_salt",
+              "type": "bytes32"
+            }
+          ],
+          "name": "deployContracts",
+          "outputs": [
+            {
+              "internalType": "contract CartesiDApp",
+              "name": "application_",
+              "type": "address"
+            },
+            {
+              "internalType": "contract Authority",
+              "name": "authority_",
+              "type": "address"
+            },
+            {
+              "internalType": "contract History",
+              "name": "history_",
+              "type": "address"
+            }
+          ],
+          "stateMutability": "nonpayable",
+          "type": "function"
+        },
+        {
+          "inputs": [],
+          "name": "getApplicationFactory",
+          "outputs": [
+            {
+              "internalType": "contract ICartesiDAppFactory",
+              "name": "",
+              "type": "address"
+            }
+          ],
+          "stateMutability": "view",
+          "type": "function"
+        },
+        {
+          "inputs": [],
+          "name": "getAuthorityHistoryPairFactory",
+          "outputs": [
+            {
+              "internalType": "contract IAuthorityHistoryPairFactory",
+              "name": "",
+              "type": "address"
+            }
+          ],
+          "stateMutability": "view",
+          "type": "function"
+        }
+      ]
+    },
     "Bitmask": {
       "address": "0xF5B2d8c81cDE4D6238bBf20D3D77DB37df13f735",
       "abi": []
