@@ -1,5 +1,12 @@
 # @cartesi/rollups
 
+## 1.4.0
+
+### Minor Changes
+
+-   fe973472: Remove arbitrum goerli and optimism goerli configuration
+-   c2c239e9: Add self-hosted application factory contract
+
 ## 1.3.1
 
 ### Patch Changes
