@@ -15,13 +15,11 @@ import "hardhat-gas-reporter";
 import {
     Chain,
     arbitrum,
-    arbitrumGoerli,
     arbitrumSepolia,
     base,
     baseSepolia,
     mainnet,
     optimism,
-    optimismGoerli,
     optimismSepolia,
     sepolia,
 } from "viem/chains";
@@ -61,14 +59,12 @@ const config: HardhatUserConfig = {
             accounts: mnemonic ? { mnemonic } : undefined,
         },
         arbitrum: networkConfig(arbitrum),
-        arbitrum_goerli: networkConfig(arbitrumGoerli),
         arbitrum_sepolia: networkConfig(arbitrumSepolia),
         base: networkConfig(base),
         base_sepolia: networkConfig(baseSepolia),
         mainnet: networkConfig(mainnet),
         sepolia: networkConfig(sepolia),
         optimism: networkConfig(optimism),
-        optimism_goerli: networkConfig(optimismGoerli),
         optimism_sepolia: networkConfig(optimismSepolia),
     },
     solidity: {
@@ -140,9 +136,6 @@ const config: HardhatUserConfig = {
         deployments: {
             localhost: ["deployments/localhost"],
             arbitrum: [ppath("@cartesi/util", "/deployments/arbitrum")],
-            arbitrum_goerli: [
-                ppath("@cartesi/util", "/deployments/arbitrum_goerli"),
-            ],
             arbitrum_sepolia: [
                 ppath("@cartesi/util", "/deployments/arbitrum_sepolia"),
             ],
@@ -150,9 +143,6 @@ const config: HardhatUserConfig = {
             base_sepolia: [ppath("@cartesi/util", "/deployments/base_sepolia")],
             mainnet: [ppath("@cartesi/util", "/deployments/mainnet")],
             optimism: [ppath("@cartesi/util", "/deployments/optimism")],
-            optimism_goerli: [
-                ppath("@cartesi/util", "/deployments/optimism_goerli"),
-            ],
             optimism_sepolia: [
                 ppath("@cartesi/util", "/deployments/optimism_sepolia"),
             ],
