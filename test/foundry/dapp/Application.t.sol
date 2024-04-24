@@ -19,9 +19,11 @@ import {InputBox} from "contracts/inputs/InputBox.sol";
 import {InputRange} from "contracts/common/InputRange.sol";
 import {OutputValidityProof} from "contracts/common/OutputValidityProof.sol";
 import {Outputs} from "contracts/common/Outputs.sol";
+import {SafeERC20Transfer} from "contracts/delegatecall/SafeERC20Transfer.sol";
 
 import {IERC1155Receiver} from "@openzeppelin/contracts/token/ERC1155/IERC1155Receiver.sol";
 import {IERC165} from "@openzeppelin/contracts/utils/introspection/IERC165.sol";
+import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import {IERC20Errors, IERC721Errors} from "@openzeppelin/contracts/interfaces/draft-IERC6093.sol";
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {IERC721Receiver} from "@openzeppelin/contracts/token/ERC721/IERC721Receiver.sol";
@@ -35,8 +37,6 @@ import {SimpleERC20} from "../util/SimpleERC20.sol";
 import {SimpleERC721} from "../util/SimpleERC721.sol";
 import {ExternalLibMerkle32} from "../library/LibMerkle32.t.sol";
 
-import "forge-std/console.sol";
-
 contract ApplicationTest is ERC165Test {
     using LibEmulator for LibEmulator.State;
     using ExternalLibMerkle32 for bytes32[];
@@ -48,6 +48,7 @@ contract ApplicationTest is ERC165Test {
     IERC721 _erc721Token;
     IInputBox _inputBox;
     IPortal[] _portals;
+    SafeERC20Transfer _safeERC20Transfer;
     LibEmulator.State _emulator;
     address _appOwner;
     address _authorityOwner;
@@ -302,8 +303,8 @@ contract ApplicationTest is ERC165Test {
         _appContract.executeOutput(output, proof);
     }
 
-    function testExecuteErc20TransferVoucher() external {
-        string memory name = "Erc20TransferVoucher";
+    function testExecuteERC20TransferVoucher() external {
+        string memory name = "ERC20TransferVoucher";
         bytes memory output = _getOutput(name);
         OutputValidityProof memory proof = _getProof(name);
 
@@ -353,8 +354,8 @@ contract ApplicationTest is ERC165Test {
         _appContract.executeOutput(output, proof);
     }
 
-    function testExecuteErc721TransferVoucher() external {
-        string memory name = "Erc721TransferVoucher";
+    function testExecuteERC721TransferVoucher() external {
+        string memory name = "ERC721TransferVoucher";
         bytes memory output = _getOutput(name);
         OutputValidityProof memory proof = _getProof(name);
 
@@ -425,6 +426,77 @@ contract ApplicationTest is ERC165Test {
         _appContract.executeOutput(output, proof);
     }
 
+    function testExecuteERC20TransferDelegateCallVoucher() external {
+        string memory name = "ERC20DelegateCallVoucher";
+        bytes memory output = _getOutput(name);
+        OutputValidityProof memory proof = _getProof(name);
+
+        assertLt(
+            _erc20Token.balanceOf(address(_appContract)),
+            _transferAmount,
+            "Application contract does not have enough ERC-20 tokens"
+        );
+
+        // test revert
+
+        vm.expectRevert(
+            abi.encodeWithSelector(
+                IERC20Errors.ERC20InsufficientBalance.selector,
+                address(_appContract),
+                _erc20Token.balanceOf(address(_appContract)),
+                _transferAmount
+            )
+        );
+        _appContract.executeOutput(output, proof);
+
+        // test return false
+
+        vm.mockCall(
+            address(_erc20Token),
+            abi.encodeCall(_erc20Token.transfer, (_recipient, _transferAmount)),
+            abi.encode(false)
+        );
+        vm.expectRevert(
+            abi.encodeWithSelector(
+                SafeERC20.SafeERC20FailedOperation.selector,
+                address(_erc20Token)
+            )
+        );
+        _appContract.executeOutput(output, proof);
+        vm.clearMockedCalls();
+
+        // test success
+
+        vm.prank(_tokenOwner);
+        _erc20Token.transfer(address(_appContract), _transferAmount);
+
+        uint256 recipientBalance = _erc20Token.balanceOf(address(_recipient));
+        uint256 appBalance = _erc20Token.balanceOf(address(_appContract));
+
+        _expectEmitOutputExecuted(output, proof);
+        _appContract.executeOutput(output, proof);
+
+        assertEq(
+            _erc20Token.balanceOf(address(_recipient)),
+            recipientBalance + _transferAmount,
+            "Recipient should have received the transfer amount"
+        );
+
+        assertEq(
+            _erc20Token.balanceOf(address(_appContract)),
+            appBalance - _transferAmount,
+            "Application contract should have the transfer amount deducted"
+        );
+
+        assertTrue(
+            _wasOutputExecuted(proof),
+            "Output should be marked as executed"
+        );
+
+        _expectRevertOutputNotReexecutable(output);
+        _appContract.executeOutput(output, proof);
+    }
+
     // -------
     // ERC-165
     // -------
@@ -474,6 +546,7 @@ contract ApplicationTest is ERC165Test {
             _appOwner,
             _templateHash
         );
+        _safeERC20Transfer = new SafeERC20Transfer();
     }
 
     function _addOutputs() internal {
@@ -511,7 +584,7 @@ contract ApplicationTest is ERC165Test {
         _finishEpoch();
 
         _nameOutput(
-            "Erc20TransferVoucher",
+            "ERC20TransferVoucher",
             _addOutput(
                 _encodeVoucher(
                     address(_erc20Token),
@@ -524,7 +597,7 @@ contract ApplicationTest is ERC165Test {
             )
         );
         _nameOutput(
-            "Erc721TransferVoucher",
+            "ERC721TransferVoucher",
             _addOutput(
                 _encodeVoucher(
                     address(_erc721Token),
@@ -534,6 +607,21 @@ contract ApplicationTest is ERC165Test {
                         _appContract,
                         _recipient,
                         _tokenId
+                    )
+                )
+            )
+        );
+        _finishInput();
+        _finishEpoch();
+
+        _nameOutput(
+            "ERC20DelegateCallVoucher",
+            _addOutput(
+                _encodeDelegateCallVoucher(
+                    address(_safeERC20Transfer),
+                    abi.encodeCall(
+                        SafeERC20Transfer.safeTransfer,
+                        (_erc20Token, _recipient, _transferAmount)
                     )
                 )
             )
@@ -558,6 +646,14 @@ contract ApplicationTest is ERC165Test {
         bytes memory payload
     ) internal pure returns (bytes memory) {
         return abi.encodeCall(Outputs.Voucher, (destination, value, payload));
+    }
+
+    function _encodeDelegateCallVoucher(
+        address destination,
+        bytes memory payload
+    ) internal pure returns (bytes memory) {
+        return
+            abi.encodeCall(Outputs.DelegateCallVoucher, (destination, payload));
     }
 
     function _addOutput(
