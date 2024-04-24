@@ -11,8 +11,8 @@ import {LibOutputValidityProof} from "../library/LibOutputValidityProof.sol";
 import {OutputValidityProof} from "../common/OutputValidityProof.sol";
 import {Outputs} from "../common/Outputs.sol";
 import {InputRange} from "../common/InputRange.sol";
-import {LibError} from "../library/LibError.sol";
 import {LibInputRange} from "../library/LibInputRange.sol";
+import {LibAddress} from "../library/LibAddress.sol";
 
 import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
 import {ERC721Holder} from "@openzeppelin/contracts/token/ERC721/utils/ERC721Holder.sol";
@@ -30,7 +30,7 @@ contract Application is
     ReentrancyGuard
 {
     using BitMaps for BitMaps.BitMap;
-    using LibError for bytes;
+    using LibAddress for address;
     using LibOutputValidityProof for OutputValidityProof;
     using LibInputRange for InputRange;
 
@@ -203,14 +203,7 @@ contract Application is
             (address, uint256, bytes)
         );
 
-        bool success;
-        bytes memory returndata;
-
-        (success, returndata) = destination.call{value: value}(payload);
-
-        if (!success) {
-            returndata.raise();
-        }
+        destination.safeCall(value, payload);
     }
 
     /// @notice Executes a delegatecall voucher
@@ -221,13 +214,6 @@ contract Application is
 
         (destination, payload) = abi.decode(arguments, (address, bytes));
 
-        bool success;
-        bytes memory returndata;
-
-        (success, returndata) = destination.delegatecall(payload);
-
-        if (!success) {
-            returndata.raise();
-        }
+        destination.safeDelegateCall(payload);
     }
 }
