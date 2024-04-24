@@ -31,7 +31,8 @@
     },
     "dependencies": {
         "@cartesi/util": "6.1.0",
-        "@openzeppelin/contracts": "5.0.2"
+        "@openzeppelin/contracts": "5.0.2",
+        "@ensdomains/ens-contracts": "1.1.4"
     },
     "devDependencies": {
         "@changesets/cli": "^2.27.1",
