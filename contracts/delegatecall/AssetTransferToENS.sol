@@ -4,7 +4,6 @@
 pragma solidity ^0.8.20;
 
 import {ENS} from "@ensdomains/ens-contracts/contracts/registry/ENS.sol";
-import {AddrResolver} from "@ensdomains/ens-contracts/contracts/resolvers/profiles/AddrResolver.sol";
 
 import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
@@ -12,10 +11,12 @@ import {IERC721} from "@openzeppelin/contracts/token/ERC721/IERC721.sol";
 import {IERC1155} from "@openzeppelin/contracts/token/ERC1155/IERC1155.sol";
 
 import {LibAddress} from "../library/LibAddress.sol";
+import {LibENS} from "../library/LibENS.sol";
 
 contract AssetTransferToENS {
     using LibAddress for address;
     using SafeERC20 for IERC20;
+    using LibENS for ENS;
 
     ENS immutable _ens;
 
@@ -28,7 +29,7 @@ contract AssetTransferToENS {
         uint256 value,
         bytes memory payload
     ) external {
-        address recipient = _resolveENS(node);
+        address recipient = _ens.resolveToAddress(node);
         recipient.safeCall(value, payload);
     }
 
@@ -37,7 +38,7 @@ contract AssetTransferToENS {
         bytes32 node,
         uint256 value
     ) external {
-        address recipient = _resolveENS(node);
+        address recipient = _ens.resolveToAddress(node);
         token.safeTransfer(recipient, value);
     }
 
@@ -47,7 +48,7 @@ contract AssetTransferToENS {
         uint256 tokenId,
         bytes calldata data
     ) external {
-        address recipient = _resolveENS(node);
+        address recipient = _ens.resolveToAddress(node);
         token.safeTransferFrom(address(this), recipient, tokenId, data);
     }
 
@@ -58,7 +59,7 @@ contract AssetTransferToENS {
         uint256 value,
         bytes calldata data
     ) external {
-        address recipient = _resolveENS(node);
+        address recipient = _ens.resolveToAddress(node);
         token.safeTransferFrom(address(this), recipient, id, value, data);
     }
 
@@ -69,7 +70,7 @@ contract AssetTransferToENS {
         uint256[] memory values,
         bytes calldata data
     ) external {
-        address recipient = _resolveENS(node);
+        address recipient = _ens.resolveToAddress(node);
         token.safeBatchTransferFrom(
             address(this),
             recipient,
@@ -77,10 +78,5 @@ contract AssetTransferToENS {
             values,
             data
         );
-    }
-
-    function _resolveENS(bytes32 node) internal view returns (address) {
-        AddrResolver resolver = AddrResolver(_ens.resolver(node));
-        return resolver.addr(node);
     }
 }
