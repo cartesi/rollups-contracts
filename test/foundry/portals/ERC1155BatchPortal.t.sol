@@ -13,16 +13,7 @@ import {IPortal} from "contracts/portals/IPortal.sol";
 import {InputEncoding} from "contracts/common/InputEncoding.sol";
 
 import {ERC165Test} from "../util/ERC165Test.sol";
-
-contract NormalToken is ERC1155 {
-    constructor(
-        address tokenOwner,
-        uint256[] memory tokenIds,
-        uint256[] memory supplies
-    ) ERC1155("BatchToken") {
-        _mintBatch(tokenOwner, tokenIds, supplies, "");
-    }
-}
+import {SimpleBatchERC1155} from "../util/SimpleERC1155.sol";
 
 contract ERC1155BatchPortalTest is ERC165Test {
     address _alice;
@@ -137,7 +128,7 @@ contract ERC1155BatchPortalTest is ERC165Test {
         );
     }
 
-    function testNormalToken(
+    function testSimpleBatchERC1155(
         uint256[] calldata supplies,
         bytes calldata baseLayerData,
         bytes calldata execLayerData
@@ -152,7 +143,7 @@ contract ERC1155BatchPortalTest is ERC165Test {
             values[i] = bound(i, 0, supplies[i]);
         }
 
-        _token = new NormalToken(_alice, tokenIds, supplies);
+        _token = new SimpleBatchERC1155(_alice, tokenIds, supplies);
 
         vm.startPrank(_alice);
 

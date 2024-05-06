@@ -254,34 +254,7 @@ contract ApplicationTest is ERC165Test {
         );
         _appContract.executeOutput(output, proof);
 
-        vm.prank(_tokenOwner);
-        _erc20Token.transfer(address(_appContract), _transferAmount);
-
-        uint256 recipientBalance = _erc20Token.balanceOf(address(_recipient));
-        uint256 appBalance = _erc20Token.balanceOf(address(_appContract));
-
-        _expectEmitOutputExecuted(output, proof);
-        _appContract.executeOutput(output, proof);
-
-        assertEq(
-            _erc20Token.balanceOf(address(_recipient)),
-            recipientBalance + _transferAmount,
-            "Recipient should have received the transfer amount"
-        );
-
-        assertEq(
-            _erc20Token.balanceOf(address(_appContract)),
-            appBalance - _transferAmount,
-            "Application contract should have the transfer amount deducted"
-        );
-
-        assertTrue(
-            _wasOutputExecuted(proof),
-            "Output should be marked as executed"
-        );
-
-        _expectRevertOutputNotReexecutable(output);
-        _appContract.executeOutput(output, proof);
+        _testERC20Success(output, proof);
     }
 
     function testExecuteERC721TransferVoucher() external {
@@ -290,6 +263,22 @@ contract ApplicationTest is ERC165Test {
         OutputValidityProof memory proof = _getProof(name);
 
         _testERC721Transfer(output, proof);
+    }
+
+    function testExecuteERC1155SingleTransferVoucher() external {
+        string memory name = "ERC1155SingleTransferVoucher";
+        bytes memory output = _getOutput(name);
+        OutputValidityProof memory proof = _getProof(name);
+
+        _testERC1155SingleTransfer(output, proof);
+    }
+
+    function testExecuteERC1155BatchTransferVoucher() external {
+        string memory name = "ERC1155BatchTransferVoucher";
+        bytes memory output = _getOutput(name);
+        OutputValidityProof memory proof = _getProof(name);
+
+        _testERC1155BatchTransfer(output, proof);
     }
 
     function testExecuteEmptyOutput() external {
@@ -386,56 +375,7 @@ contract ApplicationTest is ERC165Test {
         bytes memory output = _getOutput(name);
         OutputValidityProof memory proof = _getProof(name);
 
-        vm.expectRevert(
-            abi.encodeWithSelector(
-                IERC1155Errors.ERC1155InsufficientBalance.selector,
-                address(_appContract),
-                0,
-                _transferAmount,
-                _tokenId
-            )
-        );
-        _appContract.executeOutput(output, proof);
-
-        vm.prank(_tokenOwner);
-        _erc1155SingleToken.safeTransferFrom(
-            _tokenOwner,
-            address(_appContract),
-            _tokenId,
-            _initialSupply,
-            ""
-        );
-
-        uint256 recipientBalance = _erc1155SingleToken.balanceOf(
-            _recipient,
-            _tokenId
-        );
-        uint256 appBalance = _erc1155SingleToken.balanceOf(
-            address(_appContract),
-            _tokenId
-        );
-
-        _expectEmitOutputExecuted(output, proof);
-        _appContract.executeOutput(output, proof);
-
-        assertEq(
-            _erc1155SingleToken.balanceOf(address(_appContract), _tokenId),
-            appBalance - _transferAmount,
-            "Application contract should have the transfer amount deducted"
-        );
-        assertEq(
-            _erc1155SingleToken.balanceOf(_recipient, _tokenId),
-            recipientBalance + _transferAmount,
-            "Recipient should have received the transfer amount"
-        );
-
-        assertTrue(
-            _wasOutputExecuted(proof),
-            "Output should be marked as executed"
-        );
-
-        _expectRevertOutputNotReexecutable(output);
-        _appContract.executeOutput(output, proof);
+        _testERC1155SingleTransfer(output, proof);
     }
 
     function testERC1155BatchTransferToENS() external {
@@ -443,66 +383,7 @@ contract ApplicationTest is ERC165Test {
         bytes memory output = _getOutput(name);
         OutputValidityProof memory proof = _getProof(name);
 
-        vm.expectRevert(
-            abi.encodeWithSelector(
-                IERC1155Errors.ERC1155InsufficientBalance.selector,
-                address(_appContract),
-                0,
-                _transferAmounts[0],
-                _tokenIds[0]
-            )
-        );
-        _appContract.executeOutput(output, proof);
-
-        vm.prank(_tokenOwner);
-        _erc1155BatchToken.safeBatchTransferFrom(
-            _tokenOwner,
-            address(_appContract),
-            _tokenIds,
-            _initialSupplies,
-            ""
-        );
-
-        uint256 batchLength = _initialSupplies.length;
-        uint256[] memory appBalances = new uint256[](batchLength);
-        uint256[] memory recipientBalances = new uint256[](batchLength);
-        for (uint256 i; i < batchLength; ++i) {
-            appBalances[i] = _erc1155BatchToken.balanceOf(
-                address(_appContract),
-                _tokenIds[i]
-            );
-            recipientBalances[i] = _erc1155BatchToken.balanceOf(
-                _recipient,
-                _tokenIds[i]
-            );
-        }
-
-        _expectEmitOutputExecuted(output, proof);
-        _appContract.executeOutput(output, proof);
-
-        for (uint256 i; i < _tokenIds.length; ++i) {
-            assertEq(
-                _erc1155BatchToken.balanceOf(
-                    address(_appContract),
-                    _tokenIds[i]
-                ),
-                appBalances[i] - _transferAmounts[i],
-                "Application contract should have the transfer amount deducted"
-            );
-            assertEq(
-                _erc1155BatchToken.balanceOf(_recipient, _tokenIds[i]),
-                recipientBalances[i] + _transferAmounts[i],
-                "Recipient should have received the transfer amount"
-            );
-        }
-
-        assertTrue(
-            _wasOutputExecuted(proof),
-            "Output should be marked as executed"
-        );
-
-        _expectRevertOutputNotReexecutable(output);
-        _appContract.executeOutput(output, proof);
+        _testERC1155BatchTransfer(output, proof);
     }
 
     // -------
@@ -632,9 +513,47 @@ contract ApplicationTest is ERC165Test {
                     0,
                     abi.encodeWithSignature(
                         "safeTransferFrom(address,address,uint256)",
-                        _appContract,
+                        address(_appContract),
                         _recipient,
                         _tokenId
+                    )
+                )
+            )
+        );
+        _nameOutput(
+            "ERC1155SingleTransferVoucher",
+            _addOutput(
+                _encodeVoucher(
+                    address(_erc1155SingleToken),
+                    0,
+                    abi.encodeCall(
+                        IERC1155.safeTransferFrom,
+                        (
+                            address(_appContract),
+                            _recipient,
+                            _tokenId,
+                            _transferAmount,
+                            ""
+                        )
+                    )
+                )
+            )
+        );
+        _nameOutput(
+            "ERC1155BatchTransferVoucher",
+            _addOutput(
+                _encodeVoucher(
+                    address(_erc1155BatchToken),
+                    0,
+                    abi.encodeCall(
+                        IERC1155.safeBatchTransferFrom,
+                        (
+                            address(_appContract),
+                            _recipient,
+                            _tokenIds,
+                            _transferAmounts,
+                            ""
+                        )
                     )
                 )
             )
@@ -1091,6 +1010,128 @@ contract ApplicationTest is ERC165Test {
             appBalance - _transferAmount,
             "Application contract should have the transfer amount deducted"
         );
+
+        assertTrue(
+            _wasOutputExecuted(proof),
+            "Output should be marked as executed"
+        );
+
+        _expectRevertOutputNotReexecutable(output);
+        _appContract.executeOutput(output, proof);
+    }
+
+    function _testERC1155SingleTransfer(
+        bytes memory output,
+        OutputValidityProof memory proof
+    ) internal {
+        vm.expectRevert(
+            abi.encodeWithSelector(
+                IERC1155Errors.ERC1155InsufficientBalance.selector,
+                address(_appContract),
+                0,
+                _transferAmount,
+                _tokenId
+            )
+        );
+        _appContract.executeOutput(output, proof);
+
+        vm.prank(_tokenOwner);
+        _erc1155SingleToken.safeTransferFrom(
+            _tokenOwner,
+            address(_appContract),
+            _tokenId,
+            _initialSupply,
+            ""
+        );
+
+        uint256 recipientBalance = _erc1155SingleToken.balanceOf(
+            _recipient,
+            _tokenId
+        );
+        uint256 appBalance = _erc1155SingleToken.balanceOf(
+            address(_appContract),
+            _tokenId
+        );
+
+        _expectEmitOutputExecuted(output, proof);
+        _appContract.executeOutput(output, proof);
+
+        assertEq(
+            _erc1155SingleToken.balanceOf(address(_appContract), _tokenId),
+            appBalance - _transferAmount,
+            "Application contract should have the transfer amount deducted"
+        );
+        assertEq(
+            _erc1155SingleToken.balanceOf(_recipient, _tokenId),
+            recipientBalance + _transferAmount,
+            "Recipient should have received the transfer amount"
+        );
+
+        assertTrue(
+            _wasOutputExecuted(proof),
+            "Output should be marked as executed"
+        );
+
+        _expectRevertOutputNotReexecutable(output);
+        _appContract.executeOutput(output, proof);
+    }
+
+    function _testERC1155BatchTransfer(
+        bytes memory output,
+        OutputValidityProof memory proof
+    ) internal {
+        vm.expectRevert(
+            abi.encodeWithSelector(
+                IERC1155Errors.ERC1155InsufficientBalance.selector,
+                address(_appContract),
+                0,
+                _transferAmounts[0],
+                _tokenIds[0]
+            )
+        );
+        _appContract.executeOutput(output, proof);
+
+        vm.prank(_tokenOwner);
+        _erc1155BatchToken.safeBatchTransferFrom(
+            _tokenOwner,
+            address(_appContract),
+            _tokenIds,
+            _initialSupplies,
+            ""
+        );
+
+        uint256 batchLength = _initialSupplies.length;
+        uint256[] memory appBalances = new uint256[](batchLength);
+        uint256[] memory recipientBalances = new uint256[](batchLength);
+        for (uint256 i; i < batchLength; ++i) {
+            appBalances[i] = _erc1155BatchToken.balanceOf(
+                address(_appContract),
+                _tokenIds[i]
+            );
+            recipientBalances[i] = _erc1155BatchToken.balanceOf(
+                _recipient,
+                _tokenIds[i]
+            );
+        }
+
+        _expectEmitOutputExecuted(output, proof);
+        _appContract.executeOutput(output, proof);
+
+        for (uint256 i; i < _tokenIds.length; ++i) {
+            assertEq(
+                _erc1155BatchToken.balanceOf(
+                    address(_appContract),
+                    _tokenIds[i]
+                ),
+                appBalances[i] - _transferAmounts[i],
+                "Application contract should have the transfer amount deducted"
+            );
+            assertEq(
+                _erc1155BatchToken.balanceOf(_recipient, _tokenIds[i]),
+                recipientBalances[i] + _transferAmounts[i],
+                "Recipient should have received the transfer amount"
+            );
+        }
 
         assertTrue(
             _wasOutputExecuted(proof),
