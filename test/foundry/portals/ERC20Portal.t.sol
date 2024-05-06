@@ -13,15 +13,7 @@ import {IPortal} from "contracts/portals/IPortal.sol";
 import {InputEncoding} from "contracts/common/InputEncoding.sol";
 
 import {ERC165Test} from "../util/ERC165Test.sol";
-
-contract NormalToken is ERC20 {
-    constructor(
-        address tokenOwner,
-        uint256 initialSupply
-    ) ERC20("NormalToken", "NORMAL") {
-        _mint(tokenOwner, initialSupply);
-    }
-}
+import {SimpleERC20} from "../util/SimpleERC20.sol";
 
 contract ERC20PortalTest is ERC165Test {
     address _alice;
@@ -115,14 +107,14 @@ contract ERC20PortalTest is ERC165Test {
         _portal.depositERC20Tokens(_token, _appContract, value, data);
     }
 
-    function testNormalToken(
+    function testSimpleERC20(
         uint256 supply,
         uint256 value,
         bytes calldata data
     ) public {
         value = bound(value, 0, supply);
 
-        NormalToken token = new NormalToken(_alice, supply);
+        SimpleERC20 token = new SimpleERC20(_alice, supply);
 
         bytes memory payload = _encodePayload(token, value, data);
 
