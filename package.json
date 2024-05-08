@@ -25,7 +25,6 @@
         "preinstall": "npx only-allow pnpm",
         "prepack": "run-s build tsc:prod copy-dts",
         "start": "hardhat node",
-        "test": "forge test -vvv",
         "tsc": "tsc",
         "tsc:prod": "tsc -p tsconfig.prod.json"
     },
