@@ -46,7 +46,7 @@ If the node is not listening to `http://localhost:8545/`, please set the `RPC_UR
 If you want to run the tests, please run the following command.
 
 ```sh
-pnpm test
+forge test -vvv
 ```
 
 ## 📚 Documentation

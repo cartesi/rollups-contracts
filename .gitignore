@@ -1,11 +1,5 @@
-.DS_Store
-.env
-.node*
-.vscode
-/abi
 /artifacts
 /cache
-/contracts.json
 /coverage*
 /deployments/*/solcInputs/*.json
 /deployments/localhost

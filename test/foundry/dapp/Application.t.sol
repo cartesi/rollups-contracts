@@ -421,7 +421,7 @@ contract ApplicationTest is ERC165Test {
             _tokenIds.push(i);
             _initialSupplies.push(_initialSupply);
             _transferAmounts.push(
-                bound(uint256(keccak256(abi.encode(i))), 1, _initialSupply)
+                1 + (uint256(keccak256(abi.encode(i))) % _initialSupply)
             );
         }
     }
