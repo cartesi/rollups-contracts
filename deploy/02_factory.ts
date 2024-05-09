@@ -21,8 +21,16 @@ const func: DeployFunction = async (hre: HardhatRuntimeEnvironment) => {
         log: true,
     };
 
-    await deployments.deploy("AuthorityFactory", opts);
-    await deployments.deploy("ApplicationFactory", opts);
+    const AuthorityFactory = await deployments.deploy("AuthorityFactory", opts);
+    const ApplicationFactory = await deployments.deploy(
+        "ApplicationFactory",
+        opts,
+    );
+
+    await deployments.deploy("SelfHostedApplicationFactory", {
+        ...opts,
+        args: [AuthorityFactory.address, ApplicationFactory.address],
+    });
 };
 
 export default func;
