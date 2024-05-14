@@ -18,12 +18,15 @@ contract EtherPortalTest is ERC165Test {
     address _appContract;
     IInputBox _inputBox;
     IEtherPortal _portal;
+    bytes4[] _interfaceIds;
 
     function setUp() public {
         _alice = vm.addr(1);
         _appContract = vm.addr(2);
         _inputBox = IInputBox(vm.addr(3));
         _portal = new EtherPortal(_inputBox);
+        _interfaceIds.push(type(IEtherPortal).interfaceId);
+        _interfaceIds.push(type(IPortal).interfaceId);
     }
 
     function getERC165Contract() public view override returns (IERC165) {
@@ -32,17 +35,14 @@ contract EtherPortalTest is ERC165Test {
 
     function getSupportedInterfaces()
         public
-        pure
+        view
         override
         returns (bytes4[] memory)
     {
-        bytes4[] memory interfaceIds = new bytes4[](2);
-        interfaceIds[0] = type(IEtherPortal).interfaceId;
-        interfaceIds[1] = type(IPortal).interfaceId;
-        return interfaceIds;
+        return _interfaceIds;
     }
 
-    function testGetInputBox() public {
+    function testGetInputBox() public view {
         assertEq(address(_portal.getInputBox()), address(_inputBox));
     }
 

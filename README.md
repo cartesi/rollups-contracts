@@ -8,7 +8,6 @@ If you are interested in taking a look at the off-chain part, please, head over 
 
 - [pnpm](https://pnpm.io/installation)
 - [Forge](https://book.getfoundry.sh/getting-started/installation)
-- [Docker](https://docs.docker.com/get-docker/)
 
 ## 💡 Basic setup
 
@@ -44,24 +43,10 @@ If the node is not listening to `http://localhost:8545/`, please set the `RPC_UR
 
 ## 🧪 Tests
 
-If you plan to run the [Forge](https://book.getfoundry.sh/getting-started/installation) tests, there still some setup left to do.
-Assuming that [Docker Engine](https://docs.docker.com/get-docker/) is running on the background, you may run the following command.
-This command will build the Cartesi Machine image necessary to build the proofs.
+If you want to run the tests, please run the following command.
 
 ```sh
-pnpm proofs:setup
-```
-
-Now, you may run the tests!
-
-```sh
-pnpm test
-```
-
-From this point on, after any change in the source code, you can update the proofs before running the tests again with the following command.
-
-```sh
-pnpm proofs:update
+forge test -vvv
 ```
 
 ## 📚 Documentation
@@ -70,7 +55,7 @@ pnpm proofs:update
 
 ℹ️ You may also want to check the [official Cartesi Rollups documentation website](https://docs.cartesi.io/cartesi-rollups/overview/).
 
-🔎 For an in-depth view of the on-chain architecture, we invite you to take a look at the [`CONTRACTS.md`](./CONTRACTS.md) file.
+🔎 For an in-depth view of the on-chain architecture, we invite you to take a look at the [`CONTRACTS.md`](https://github.com/cartesi/rollups-contracts/blob/main/CONTRACTS.md) file.
 
 ## 🎨 Experimenting
 

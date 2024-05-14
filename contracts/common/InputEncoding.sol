@@ -14,7 +14,7 @@ import {IERC1155} from "@openzeppelin/contracts/token/ERC1155/IERC1155.sol";
 library InputEncoding {
     /// @notice Encode an Ether deposit.
     /// @param sender The Ether sender
-    /// @param value The amount of Ether being sent in Wei
+    /// @param value The amount of Wei being sent
     /// @param execLayerData Additional data to be interpreted by the execution layer
     /// @return The encoded input payload
     function encodeEtherDeposit(
@@ -33,20 +33,20 @@ library InputEncoding {
     /// @notice Encode an ERC-20 token deposit.
     /// @param token The token contract
     /// @param sender The token sender
-    /// @param amount The amount of tokens being sent
+    /// @param value The amount of tokens being sent
     /// @param execLayerData Additional data to be interpreted by the execution layer
     /// @return The encoded input payload
     function encodeERC20Deposit(
         IERC20 token,
         address sender,
-        uint256 amount,
+        uint256 value,
         bytes calldata execLayerData
     ) internal pure returns (bytes memory) {
         return
             abi.encodePacked(
                 token, //               20B
                 sender, //              20B
-                amount, //              32B
+                value, //               32B
                 execLayerData //        arbitrary size
             );
     }
@@ -132,6 +132,24 @@ library InputEncoding {
                 token, //                   20B
                 sender, //                  20B
                 data //                     arbitrary size
+            );
+    }
+
+    /// @notice Encode an ENS input.
+    /// @param node The ENS node
+    /// @param name The ENS name
+    /// @param execLayerData Additional data to be interpreted by the execution layer
+    /// @return The encoded input payload
+    function encodeENSInput(
+        bytes32 node,
+        bytes calldata name,
+        bytes calldata execLayerData
+    ) internal pure returns (bytes memory) {
+        return
+            abi.encode(
+                node, //                32B
+                name, //                arbitrary size
+                execLayerData //        arbitrary size
             );
     }
 }

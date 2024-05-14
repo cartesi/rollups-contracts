@@ -7,6 +7,8 @@ pragma solidity ^0.8.22;
 import {Test} from "forge-std/Test.sol";
 
 contract TestBase is Test {
+    uint256 private _numOfAccounts;
+
     /// @notice Guarantess `addr` is an address that can be mocked
     /// @dev Some addresses are reserved by Forge and should not be mocked
     modifier isMockable(address addr) {
@@ -38,5 +40,9 @@ contract TestBase is Test {
             array[i] = vm.addr(i + 1);
         }
         return array;
+    }
+
+    function _newAddr() internal returns (address) {
+        return vm.addr(++_numOfAccounts);
     }
 }

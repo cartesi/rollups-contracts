@@ -18,7 +18,7 @@ contract InputBoxTest is Test {
         _inputBox = new InputBox();
     }
 
-    function testNoInputs(address appContract) public {
+    function testNoInputs(address appContract) public view {
         assertEq(_inputBox.getNumberOfInputs(appContract), 0);
     }
 
@@ -64,6 +64,7 @@ contract InputBoxTest is Test {
             // test for different block number and timestamp
             vm.roll(i);
             vm.warp(i + year2022);
+            vm.prevrandao(bytes32(_prevrandao(i)));
 
             vm.expectEmit(true, true, false, true, address(_inputBox));
             bytes memory input = EvmAdvanceEncoder.encode(
@@ -91,6 +92,7 @@ contract InputBoxTest is Test {
                         address(this),
                         i, // block.number
                         i + year2022, // block.timestamp
+                        _prevrandao(i), // block.prevrandao
                         i, // inputBox.length
                         payloads[i]
                     )
@@ -103,10 +105,14 @@ contract InputBoxTest is Test {
         }
     }
 
+    function _prevrandao(uint256 blockNumber) internal pure returns (uint256) {
+        return uint256(keccak256(abi.encode("prevrandao", blockNumber)));
+    }
+
     function _getMaxInputPayloadLength() internal pure returns (uint256) {
         bytes memory blob = abi.encodeCall(
             Inputs.EvmAdvance,
-            (0, address(0), address(0), 0, 0, 0, new bytes(32))
+            (0, address(0), address(0), 0, 0, 0, 0, new bytes(32))
         );
         // number of bytes in input blob excluding input payload
         uint256 extraBytes = blob.length - 32;

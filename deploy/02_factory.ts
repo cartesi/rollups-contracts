@@ -21,15 +21,15 @@ const func: DeployFunction = async (hre: HardhatRuntimeEnvironment) => {
         log: true,
     };
 
-    const { MerkleV2 } = await deployments.all();
+    const AuthorityFactory = await deployments.deploy("AuthorityFactory", opts);
+    const ApplicationFactory = await deployments.deploy(
+        "ApplicationFactory",
+        opts,
+    );
 
-    await deployments.deploy("AuthorityFactory", opts);
-
-    await deployments.deploy("ApplicationFactory", {
+    await deployments.deploy("SelfHostedApplicationFactory", {
         ...opts,
-        libraries: {
-            MerkleV2: MerkleV2.address,
-        },
+        args: [AuthorityFactory.address, ApplicationFactory.address],
     });
 };
 

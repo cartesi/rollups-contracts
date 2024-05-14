@@ -11,8 +11,8 @@ import {LibOutputValidityProof} from "../library/LibOutputValidityProof.sol";
 import {OutputValidityProof} from "../common/OutputValidityProof.sol";
 import {Outputs} from "../common/Outputs.sol";
 import {InputRange} from "../common/InputRange.sol";
-import {LibError} from "../library/LibError.sol";
 import {LibInputRange} from "../library/LibInputRange.sol";
+import {LibAddress} from "../library/LibAddress.sol";
 
 import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
 import {ERC721Holder} from "@openzeppelin/contracts/token/ERC721/utils/ERC721Holder.sol";
@@ -30,7 +30,7 @@ contract Application is
     ReentrancyGuard
 {
     using BitMaps for BitMaps.BitMap;
-    using LibError for bytes;
+    using LibAddress for address;
     using LibOutputValidityProof for OutputValidityProof;
     using LibInputRange for InputRange;
 
@@ -103,6 +103,11 @@ contract Application is
                 revert OutputNotReexecutable(output);
             }
             _executeVoucher(arguments);
+        } else if (selector == Outputs.DelegateCallVoucher.selector) {
+            if (bitmap.get(inputIndex)) {
+                revert OutputNotReexecutable(output);
+            }
+            _executeDelegateCallVoucher(arguments);
         } else {
             revert OutputNotExecutable(output);
         }
@@ -135,18 +140,20 @@ contract Application is
             revert InputIndexOutOfRange(inputIndex, proof.inputRange);
         }
 
-        bytes32 epochHash = _getEpochHash(proof.inputRange);
+        bytes32 outputHash = keccak256(output);
 
-        if (!proof.isEpochHashValid(epochHash)) {
-            revert IncorrectEpochHash();
+        if (!proof.isOutputHashesRootHashValid(outputHash)) {
+            revert IncorrectOutputHashesRootHash();
         }
 
         if (!proof.isOutputsEpochRootHashValid()) {
             revert IncorrectOutputsEpochRootHash();
         }
 
-        if (!proof.isOutputHashesRootHashValid(output)) {
-            revert IncorrectOutputHashesRootHash();
+        bytes32 epochHash = _getEpochHash(proof.inputRange);
+
+        if (!proof.isEpochHashValid(epochHash)) {
+            revert IncorrectEpochHash();
         }
     }
 
@@ -196,13 +203,17 @@ contract Application is
             (address, uint256, bytes)
         );
 
-        bool success;
-        bytes memory returndata;
+        destination.safeCall(value, payload);
+    }
 
-        (success, returndata) = destination.call{value: value}(payload);
+    /// @notice Executes a delegatecall voucher
+    /// @param arguments ABI-encoded arguments
+    function _executeDelegateCallVoucher(bytes calldata arguments) internal {
+        address destination;
+        bytes memory payload;
 
-        if (!success) {
-            returndata.raise();
-        }
+        (destination, payload) = abi.decode(arguments, (address, bytes));
+
+        destination.safeDelegateCall(payload);
     }
 }

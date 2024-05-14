@@ -13,15 +13,7 @@ import {IPortal} from "contracts/portals/IPortal.sol";
 import {InputEncoding} from "contracts/common/InputEncoding.sol";
 
 import {ERC165Test} from "../util/ERC165Test.sol";
-
-contract NormalToken is ERC721 {
-    constructor(
-        address tokenOwner,
-        uint256 tokenId
-    ) ERC721("NormalToken", "NORMAL") {
-        _safeMint(tokenOwner, tokenId);
-    }
-}
+import {SimpleERC721} from "../util/SimpleERC721.sol";
 
 contract ERC721PortalTest is ERC165Test {
     address _alice;
@@ -29,6 +21,7 @@ contract ERC721PortalTest is ERC165Test {
     IERC721 _token;
     IInputBox _inputBox;
     IERC721Portal _portal;
+    bytes4[] _interfaceIds;
 
     function setUp() public {
         _alice = vm.addr(1);
@@ -36,6 +29,8 @@ contract ERC721PortalTest is ERC165Test {
         _token = IERC721(vm.addr(3));
         _inputBox = IInputBox(vm.addr(4));
         _portal = new ERC721Portal(_inputBox);
+        _interfaceIds.push(type(IERC721Portal).interfaceId);
+        _interfaceIds.push(type(IPortal).interfaceId);
     }
 
     function getERC165Contract() public view override returns (IERC165) {
@@ -44,17 +39,14 @@ contract ERC721PortalTest is ERC165Test {
 
     function getSupportedInterfaces()
         public
-        pure
+        view
         override
         returns (bytes4[] memory)
     {
-        bytes4[] memory interfaceIds = new bytes4[](2);
-        interfaceIds[0] = type(IERC721Portal).interfaceId;
-        interfaceIds[1] = type(IPortal).interfaceId;
-        return interfaceIds;
+        return _interfaceIds;
     }
 
-    function testGetInputBox() public {
+    function testGetInputBox() public view {
         assertEq(address(_portal.getInputBox()), address(_inputBox));
     }
 
@@ -130,12 +122,12 @@ contract ERC721PortalTest is ERC165Test {
         );
     }
 
-    function testNormalToken(
+    function testSimpleERC721(
         uint256 tokenId,
         bytes calldata baseLayerData,
         bytes calldata execLayerData
     ) public {
-        NormalToken token = new NormalToken(_alice, tokenId);
+        SimpleERC721 token = new SimpleERC721(_alice, tokenId);
 
         vm.startPrank(_alice);
 

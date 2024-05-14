@@ -23,10 +23,10 @@ contract ERC20Portal is IERC20Portal, Portal {
     function depositERC20Tokens(
         IERC20 token,
         address appContract,
-        uint256 amount,
+        uint256 value,
         bytes calldata execLayerData
     ) external override {
-        bool success = token.transferFrom(msg.sender, appContract, amount);
+        bool success = token.transferFrom(msg.sender, appContract, value);
 
         if (!success) {
             revert ERC20TransferFailed();
@@ -35,7 +35,7 @@ contract ERC20Portal is IERC20Portal, Portal {
         bytes memory payload = InputEncoding.encodeERC20Deposit(
             token,
             msg.sender,
-            amount,
+            value,
             execLayerData
         );
 
