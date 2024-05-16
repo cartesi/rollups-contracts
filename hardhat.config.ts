@@ -6,11 +6,9 @@ import { HardhatUserConfig } from "hardhat/config";
 import { HttpNetworkUserConfig } from "hardhat/types";
 import { getSingletonFactoryInfo } from "@safe-global/safe-singleton-factory";
 
-import "@nomiclabs/hardhat-ethers";
 import "@nomicfoundation/hardhat-verify";
 import "@typechain/hardhat";
 import "hardhat-deploy";
-import "hardhat-gas-reporter";
 
 import {
     Chain,
@@ -33,7 +31,7 @@ const ppath = (packageName: string, pathname: string) => {
 };
 
 const networkConfig = (chain: Chain): HttpNetworkUserConfig => {
-    let url = process.env.RPC_URL || chain.rpcUrls.public.http.at(0);
+    let url = process.env.RPC_URL || chain.rpcUrls.default.http.at(0);
 
     // support for infura and alchemy URLs through env variables
     if (process.env.INFURA_ID && chain.rpcUrls.infura?.http) {
@@ -99,7 +97,7 @@ const config: HardhatUserConfig = {
     },
     typechain: {
         outDir: "src/types",
-        target: "ethers-v5",
+        target: "ethers-v6",
     },
     etherscan: {
         apiKey: process.env.ETHERSCAN_API_KEY,
@@ -147,9 +145,6 @@ const config: HardhatUserConfig = {
         deployer: {
             default: 0,
         },
-    },
-    gasReporter: {
-        enabled: process.env.REPORT_GAS ? true : false,
     },
 };
 
