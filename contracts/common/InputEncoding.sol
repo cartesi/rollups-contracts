@@ -134,22 +134,4 @@ library InputEncoding {
                 data //                     arbitrary size
             );
     }
-
-    /// @notice Encode an ENS input.
-    /// @param node The ENS node
-    /// @param name The ENS name
-    /// @param execLayerData Additional data to be interpreted by the execution layer
-    /// @return The encoded input payload
-    function encodeENSInput(
-        bytes32 node,
-        bytes calldata name,
-        bytes calldata execLayerData
-    ) internal pure returns (bytes memory) {
-        return
-            abi.encode(
-                node, //                32B
-                name, //                arbitrary size
-                execLayerData //        arbitrary size
-            );
-    }
 }
