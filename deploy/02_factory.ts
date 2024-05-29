@@ -22,6 +22,8 @@ const func: DeployFunction = async (hre: HardhatRuntimeEnvironment) => {
     };
 
     const AuthorityFactory = await deployments.deploy("AuthorityFactory", opts);
+    await deployments.deploy("QuorumFactory", opts);
+
     const ApplicationFactory = await deployments.deploy(
         "ApplicationFactory",
         opts,
