@@ -21,19 +21,8 @@ const func: DeployFunction = async (hre: HardhatRuntimeEnvironment) => {
         log: true,
     };
 
-    const AuthorityFactory = await deployments.deploy("AuthorityFactory", opts);
-    await deployments.deploy("QuorumFactory", opts);
-
-    const ApplicationFactory = await deployments.deploy(
-        "ApplicationFactory",
-        opts,
-    );
-
-    await deployments.deploy("SelfHostedApplicationFactory", {
-        ...opts,
-        args: [AuthorityFactory.address, ApplicationFactory.address],
-    });
+    await deployments.deploy("SafeERC20Transfer", opts);
 };
 
 export default func;
-func.tags = ["Factory"];
+func.tags = ["Delegatecall"];

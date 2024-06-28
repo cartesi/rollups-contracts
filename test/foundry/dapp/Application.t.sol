@@ -20,7 +20,6 @@ import {InputRange} from "contracts/common/InputRange.sol";
 import {OutputValidityProof} from "contracts/common/OutputValidityProof.sol";
 import {Outputs} from "contracts/common/Outputs.sol";
 import {SafeERC20Transfer} from "contracts/delegatecall/SafeERC20Transfer.sol";
-import {AssetTransferToENS} from "contracts/delegatecall/AssetTransferToENS.sol";
 
 import {IERC1155Receiver} from "@openzeppelin/contracts/token/ERC1155/IERC1155Receiver.sol";
 import {IERC165} from "@openzeppelin/contracts/utils/introspection/IERC165.sol";
@@ -31,9 +30,6 @@ import {IERC721Receiver} from "@openzeppelin/contracts/token/ERC721/IERC721Recei
 import {IERC721} from "@openzeppelin/contracts/token/ERC721/IERC721.sol";
 import {IERC1155} from "@openzeppelin/contracts/token/ERC1155/IERC1155.sol";
 import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
-
-import {ENS} from "@ensdomains/ens-contracts/contracts/registry/ENS.sol";
-import {AddrResolver} from "@ensdomains/ens-contracts/contracts/resolvers/profiles/AddrResolver.sol";
 
 import {ERC165Test} from "../util/ERC165Test.sol";
 import {EtherReceiver} from "../util/EtherReceiver.sol";
@@ -57,9 +53,6 @@ contract ApplicationTest is ERC165Test {
     IInputBox _inputBox;
     IPortal[] _portals;
     SafeERC20Transfer _safeERC20Transfer;
-    AssetTransferToENS _assetTransferToENS;
-    ENS _ens;
-    AddrResolver _resolver;
 
     LibEmulator.State _emulator;
     address _appOwner;
@@ -77,14 +70,12 @@ contract ApplicationTest is ERC165Test {
     uint256 constant _initialSupply = 1000000000000000000000000000000000000;
     uint256 constant _tokenId = 88888888;
     uint256 constant _transferAmount = 42;
-    bytes32 constant _ensNode = keccak256("user.eth");
 
     function setUp() public {
         _initVariables();
         _deployContracts();
         _addOutputs();
         _submitClaims();
-        _mockENS();
     }
 
     // -----------
@@ -324,68 +315,6 @@ contract ApplicationTest is ERC165Test {
         _testERC20Success(output, proof);
     }
 
-    function testEtherTransferToENS() external {
-        string memory name = "EtherToENSDelegateCallVoucher";
-        bytes memory output = _getOutput(name);
-        OutputValidityProof memory proof = _getProof(name);
-
-        _testEtherTransfer(output, proof);
-    }
-
-    function testEtherTransferWithPayloadToENS() external {
-        string memory name = "EtherWithPayloadToENSDelegateCallVoucher";
-        bytes memory output = _getOutput(name);
-        OutputValidityProof memory proof = _getProof(name);
-
-        vm.mockCall(
-            address(_resolver),
-            abi.encodeWithSignature("addr(bytes32)", (_ensNode)),
-            abi.encode(address(_etherReceiver))
-        );
-
-        _testEtherMint(output, proof);
-    }
-
-    function testERC20TransferToENSFail() external {
-        string memory name = "ERC20ToENSDelegateCallVoucher";
-        bytes memory output = _getOutput(name);
-        OutputValidityProof memory proof = _getProof(name);
-
-        _testERC20Fail(output, proof);
-    }
-
-    function testERC20TransferToENSSuccess() external {
-        string memory name = "ERC20ToENSDelegateCallVoucher";
-        bytes memory output = _getOutput(name);
-        OutputValidityProof memory proof = _getProof(name);
-
-        _testERC20Success(output, proof);
-    }
-
-    function testERC721TransferToENS() external {
-        string memory name = "ERC721ToENSDelegateCallVoucher";
-        bytes memory output = _getOutput(name);
-        OutputValidityProof memory proof = _getProof(name);
-
-        _testERC721Transfer(output, proof);
-    }
-
-    function testERC1155SingleTransferToENS() external {
-        string memory name = "ERC1155SingleToENSDelegateCallVoucher";
-        bytes memory output = _getOutput(name);
-        OutputValidityProof memory proof = _getProof(name);
-
-        _testERC1155SingleTransfer(output, proof);
-    }
-
-    function testERC1155BatchTransferToENS() external {
-        string memory name = "ERC1155BatchToENSDelegateCallVoucher";
-        bytes memory output = _getOutput(name);
-        OutputValidityProof memory proof = _getProof(name);
-
-        _testERC1155BatchTransfer(output, proof);
-    }
-
     // -------
     // ERC-165
     // -------
@@ -412,8 +341,6 @@ contract ApplicationTest is ERC165Test {
         _appOwner = _newAddr();
         _recipient = _newAddr();
         _tokenOwner = _newAddr();
-        _ens = ENS(_newAddr());
-        _resolver = AddrResolver(_newAddr());
         _interfaceIds.push(type(IApplication).interfaceId);
         _interfaceIds.push(type(IERC721Receiver).interfaceId);
         _interfaceIds.push(type(IERC1155Receiver).interfaceId);
@@ -455,7 +382,6 @@ contract ApplicationTest is ERC165Test {
             _templateHash
         );
         _safeERC20Transfer = new SafeERC20Transfer();
-        _assetTransferToENS = new AssetTransferToENS(_ens);
     }
 
     function _addOutputs() internal {
@@ -569,97 +495,6 @@ contract ApplicationTest is ERC165Test {
                     abi.encodeCall(
                         SafeERC20Transfer.safeTransfer,
                         (_erc20Token, _recipient, _transferAmount)
-                    )
-                )
-            )
-        );
-        _finishInput();
-        _finishEpoch();
-
-        _nameOutput(
-            "EtherToENSDelegateCallVoucher",
-            _addOutput(
-                _encodeDelegateCallVoucher(
-                    address(_assetTransferToENS),
-                    abi.encodeCall(
-                        AssetTransferToENS.sendEtherToENS,
-                        (_ensNode, _transferAmount, "")
-                    )
-                )
-            )
-        );
-        _nameOutput(
-            "EtherWithPayloadToENSDelegateCallVoucher",
-            _addOutput(
-                _encodeDelegateCallVoucher(
-                    address(_assetTransferToENS),
-                    abi.encodeCall(
-                        AssetTransferToENS.sendEtherToENS,
-                        (
-                            _ensNode,
-                            _transferAmount,
-                            abi.encodeCall(EtherReceiver.mint, ())
-                        )
-                    )
-                )
-            )
-        );
-        _nameOutput(
-            "ERC20ToENSDelegateCallVoucher",
-            _addOutput(
-                _encodeDelegateCallVoucher(
-                    address(_assetTransferToENS),
-                    abi.encodeCall(
-                        AssetTransferToENS.sendERC20ToENS,
-                        (_erc20Token, _ensNode, _transferAmount)
-                    )
-                )
-            )
-        );
-        _nameOutput(
-            "ERC721ToENSDelegateCallVoucher",
-            _addOutput(
-                _encodeDelegateCallVoucher(
-                    address(_assetTransferToENS),
-                    abi.encodeCall(
-                        AssetTransferToENS.sendERC721ToENS,
-                        (_erc721Token, _ensNode, _tokenId, "")
-                    )
-                )
-            )
-        );
-        _nameOutput(
-            "ERC1155SingleToENSDelegateCallVoucher",
-            _addOutput(
-                _encodeDelegateCallVoucher(
-                    address(_assetTransferToENS),
-                    abi.encodeCall(
-                        AssetTransferToENS.sendERC1155ToENS,
-                        (
-                            _erc1155SingleToken,
-                            _ensNode,
-                            _tokenId,
-                            _transferAmount,
-                            ""
-                        )
-                    )
-                )
-            )
-        );
-        _nameOutput(
-            "ERC1155BatchToENSDelegateCallVoucher",
-            _addOutput(
-                _encodeDelegateCallVoucher(
-                    address(_assetTransferToENS),
-                    abi.encodeCall(
-                        AssetTransferToENS.sendBatchERC1155ToENS,
-                        (
-                            _erc1155BatchToken,
-                            _ensNode,
-                            _tokenIds,
-                            _transferAmounts,
-                            ""
-                        )
                     )
                 )
             )
@@ -789,19 +624,6 @@ contract ApplicationTest is ERC165Test {
                 proof.inputRange.firstIndex + proof.inputIndexWithinEpoch,
                 proof.outputIndexWithinInput
             );
-    }
-
-    function _mockENS() internal {
-        vm.mockCall(
-            address(_ens),
-            abi.encodeCall(ENS.resolver, (_ensNode)),
-            abi.encode(_resolver)
-        );
-        vm.mockCall(
-            address(_resolver),
-            abi.encodeWithSignature("addr(bytes32)", (_ensNode)),
-            abi.encode(_recipient)
-        );
     }
 
     function assertEq(IPortal[] memory a, IPortal[] memory b) internal pure {
