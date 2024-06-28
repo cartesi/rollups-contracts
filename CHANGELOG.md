@@ -1,5 +1,23 @@
 # @cartesi/rollups
 
+## 2.0.0-rc.4
+
+### Major Changes
+
+- 446d05a: Add the following fields as the input metadata:
+
+  - The application contract address
+  - The chain ID
+  - The latest RANDAO mix of the post beacon state of the previous block
+
+- eee5e13: Removed ENS-related contracts
+
+### Minor Changes
+
+- eee5e13: Deploy contracts to Ethereum Sepolia
+- eee5e13: Add `SafeERC20Transfer` to deploy script
+- eee5e13: Add `QuorumFactory` to deploy script
+
 ## 2.0.0-rc.3
 
 ### Major Changes
