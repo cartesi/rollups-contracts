@@ -8,8 +8,6 @@ import {TestBase} from "../util/TestBase.sol";
 import {ApplicationFactory, IApplicationFactory} from "contracts/dapp/ApplicationFactory.sol";
 import {Application} from "contracts/dapp/Application.sol";
 import {IConsensus} from "contracts/consensus/IConsensus.sol";
-import {IInputBox} from "contracts/inputs/IInputBox.sol";
-import {IPortal} from "contracts/portals/IPortal.sol";
 import {Vm} from "forge-std/Vm.sol";
 
 contract ApplicationFactoryTest is TestBase {
@@ -21,8 +19,6 @@ contract ApplicationFactoryTest is TestBase {
 
     function testNewApplication(
         IConsensus consensus,
-        IInputBox inputBox,
-        IPortal[] calldata portals,
         address appOwner,
         bytes32 templateHash
     ) public {
@@ -30,24 +26,17 @@ contract ApplicationFactoryTest is TestBase {
 
         Application appContract = _factory.newApplication(
             consensus,
-            inputBox,
-            portals,
             appOwner,
             templateHash
         );
 
         assertEq(address(appContract.getConsensus()), address(consensus));
-        assertEq(address(appContract.getInputBox()), address(inputBox));
-        // abi.encode is used instead of a loop
-        assertEq(abi.encode(appContract.getPortals()), abi.encode(portals));
         assertEq(appContract.owner(), appOwner);
         assertEq(appContract.getTemplateHash(), templateHash);
     }
 
     function testNewApplicationDeterministic(
         IConsensus consensus,
-        IInputBox inputBox,
-        IPortal[] calldata portals,
         address appOwner,
         bytes32 templateHash,
         bytes32 salt
@@ -56,8 +45,6 @@ contract ApplicationFactoryTest is TestBase {
 
         address precalculatedAddress = _factory.calculateApplicationAddress(
             consensus,
-            inputBox,
-            portals,
             appOwner,
             templateHash,
             salt
@@ -65,8 +52,6 @@ contract ApplicationFactoryTest is TestBase {
 
         Application appContract = _factory.newApplication(
             consensus,
-            inputBox,
-            portals,
             appOwner,
             templateHash,
             salt
@@ -76,15 +61,11 @@ contract ApplicationFactoryTest is TestBase {
         assertEq(precalculatedAddress, address(appContract));
 
         assertEq(address(appContract.getConsensus()), address(consensus));
-        assertEq(address(appContract.getInputBox()), address(inputBox));
-        assertEq(abi.encode(appContract.getPortals()), abi.encode(portals));
         assertEq(appContract.owner(), appOwner);
         assertEq(appContract.getTemplateHash(), templateHash);
 
         precalculatedAddress = _factory.calculateApplicationAddress(
             consensus,
-            inputBox,
-            portals,
             appOwner,
             templateHash,
             salt
@@ -95,20 +76,11 @@ contract ApplicationFactoryTest is TestBase {
 
         // Cannot deploy an application with the same salt twice
         vm.expectRevert(bytes(""));
-        _factory.newApplication(
-            consensus,
-            inputBox,
-            portals,
-            appOwner,
-            templateHash,
-            salt
-        );
+        _factory.newApplication(consensus, appOwner, templateHash, salt);
     }
 
     function testApplicationCreatedEvent(
         IConsensus consensus,
-        IInputBox inputBox,
-        IPortal[] calldata portals,
         address appOwner,
         bytes32 templateHash
     ) public {
@@ -118,16 +90,12 @@ contract ApplicationFactoryTest is TestBase {
 
         Application appContract = _factory.newApplication(
             consensus,
-            inputBox,
-            portals,
             appOwner,
             templateHash
         );
 
         _testApplicationCreatedEventAux(
             consensus,
-            inputBox,
-            portals,
             appOwner,
             templateHash,
             appContract
@@ -136,8 +104,6 @@ contract ApplicationFactoryTest is TestBase {
 
     function testApplicationCreatedEventDeterministic(
         IConsensus consensus,
-        IInputBox inputBox,
-        IPortal[] calldata portals,
         address appOwner,
         bytes32 templateHash,
         bytes32 salt
@@ -148,8 +114,6 @@ contract ApplicationFactoryTest is TestBase {
 
         Application appContract = _factory.newApplication(
             consensus,
-            inputBox,
-            portals,
             appOwner,
             templateHash,
             salt
@@ -157,8 +121,6 @@ contract ApplicationFactoryTest is TestBase {
 
         _testApplicationCreatedEventAux(
             consensus,
-            inputBox,
-            portals,
             appOwner,
             templateHash,
             appContract
@@ -167,8 +129,6 @@ contract ApplicationFactoryTest is TestBase {
 
     function _testApplicationCreatedEventAux(
         IConsensus consensus,
-        IInputBox inputBox,
-        IPortal[] calldata portals,
         address appOwner,
         bytes32 templateHash,
         Application appContract
@@ -193,18 +153,11 @@ contract ApplicationFactoryTest is TestBase {
                 );
 
                 (
-                    IInputBox inputBox_,
-                    IPortal[] memory portals_,
                     address appOwner_,
                     bytes32 templateHash_,
                     Application app_
-                ) = abi.decode(
-                        entry.data,
-                        (IInputBox, IPortal[], address, bytes32, Application)
-                    );
+                ) = abi.decode(entry.data, (address, bytes32, Application));
 
-                assertEq(address(inputBox), address(inputBox_));
-                assertEq(abi.encode(portals), abi.encode(portals_));
                 assertEq(appOwner, appOwner_);
                 assertEq(templateHash, templateHash_);
                 assertEq(address(appContract), address(app_));
