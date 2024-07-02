@@ -13,4 +13,4 @@ Modified the `Authority` contract:
 -   Removed the `setHistory` function
 -   Removed the `submitClaim(bytes)` function
 -   Removed the `withdrawERC20Tokens` function
--   Implemented the `submitClaim(address,(uint64,uint64),bytes32)` function
+-   Implemented the `submitClaim(address,bytes32)` function

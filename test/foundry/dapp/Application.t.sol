@@ -16,28 +16,27 @@ import {IConsensus} from "contracts/consensus/IConsensus.sol";
 import {IInputBox} from "contracts/inputs/IInputBox.sol";
 import {IPortal} from "contracts/portals/IPortal.sol";
 import {InputBox} from "contracts/inputs/InputBox.sol";
-import {InputRange} from "contracts/common/InputRange.sol";
 import {OutputValidityProof} from "contracts/common/OutputValidityProof.sol";
 import {Outputs} from "contracts/common/Outputs.sol";
 import {SafeERC20Transfer} from "contracts/delegatecall/SafeERC20Transfer.sol";
 
 import {IERC1155Receiver} from "@openzeppelin/contracts/token/ERC1155/IERC1155Receiver.sol";
+import {IERC1155} from "@openzeppelin/contracts/token/ERC1155/IERC1155.sol";
 import {IERC165} from "@openzeppelin/contracts/utils/introspection/IERC165.sol";
-import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import {IERC20Errors, IERC721Errors, IERC1155Errors} from "@openzeppelin/contracts/interfaces/draft-IERC6093.sol";
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {IERC721Receiver} from "@openzeppelin/contracts/token/ERC721/IERC721Receiver.sol";
 import {IERC721} from "@openzeppelin/contracts/token/ERC721/IERC721.sol";
-import {IERC1155} from "@openzeppelin/contracts/token/ERC1155/IERC1155.sol";
 import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
+import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 
 import {ERC165Test} from "../util/ERC165Test.sol";
 import {EtherReceiver} from "../util/EtherReceiver.sol";
+import {ExternalLibMerkle32} from "../library/LibMerkle32.t.sol";
 import {LibEmulator} from "../util/LibEmulator.sol";
 import {SimpleERC20} from "../util/SimpleERC20.sol";
 import {SimpleERC721} from "../util/SimpleERC721.sol";
 import {SimpleSingleERC1155, SimpleBatchERC1155} from "../util/SimpleERC1155.sol";
-import {ExternalLibMerkle32} from "../library/LibMerkle32.t.sol";
 
 contract ApplicationTest is ERC165Test {
     using LibEmulator for LibEmulator.State;
@@ -64,7 +63,7 @@ contract ApplicationTest is ERC165Test {
     uint256[] _tokenIds;
     uint256[] _initialSupplies;
     uint256[] _transferAmounts;
-    mapping(string => LibEmulator.OutputId) _outputIdsByName;
+    mapping(string => LibEmulator.OutputIndex) _outputIndexByName;
 
     bytes32 constant _templateHash = keccak256("templateHash");
     uint256 constant _initialSupply = 1000000000000000000000000000000000000;
@@ -75,7 +74,7 @@ contract ApplicationTest is ERC165Test {
         _initVariables();
         _deployContracts();
         _addOutputs();
-        _submitClaims();
+        _submitClaim();
     }
 
     // -----------
@@ -156,56 +155,55 @@ contract ApplicationTest is ERC165Test {
     // output validation
     // -----------------
 
-    function testValidateOutput() external view {
+    function testValidateOutputAndOutputHash() external view {
         for (uint256 i; i < _outputNames.length; ++i) {
             string memory name = _outputNames[i];
             bytes memory output = _getOutput(name);
             OutputValidityProof memory proof = _getProof(name);
             _appContract.validateOutput(output, proof);
+            _appContract.validateOutputHash(keccak256(output), proof);
         }
     }
 
-    function testValidateFakeOutput() external {
+    function testRevertsInvalidOutputHashesSiblingsArrayLength() external {
+        string memory name = "HelloWorldNotice";
+        bytes memory output = _getOutput(name);
+        OutputValidityProof memory proof = _getProof(name);
+
+        proof.outputHashesSiblings = new bytes32[](0);
+
+        _expectRevertInvalidOutputHashesSiblingsArrayLength();
+        _appContract.validateOutput(output, proof);
+
+        _expectRevertInvalidOutputHashesSiblingsArrayLength();
+        _appContract.validateOutputHash(keccak256(output), proof);
+    }
+
+    function testRevertsClaimNotAccepted() external {
         string memory name = "HelloWorldNotice";
         OutputValidityProof memory proof = _getProof(name);
 
         bytes memory fakeOutput = _encodeNotice("Goodbye, World!");
-
-        vm.expectRevert(IApplication.IncorrectOutputHashesRootHash.selector);
-        _appContract.validateOutput(fakeOutput, proof);
-
-        proof.outputHashesRootHash = proof
-            .outputHashInOutputHashesSiblings
+        bytes32 fakeClaim = proof
+            .outputHashesSiblings
             .merkleRootAfterReplacement(
-                proof.outputIndexWithinInput,
+                proof.outputIndex,
                 keccak256(fakeOutput)
             );
 
-        vm.expectRevert(IApplication.IncorrectOutputsEpochRootHash.selector);
+        _expectRevertClaimNotAccepted(fakeClaim);
         _appContract.validateOutput(fakeOutput, proof);
 
-        proof.outputsEpochRootHash = proof
-            .outputHashesInEpochSiblings
-            .merkleRootAfterReplacement(
-                proof.inputIndexWithinEpoch,
-                proof.outputHashesRootHash
-            );
-
-        vm.expectRevert(IApplication.IncorrectEpochHash.selector);
-        _appContract.validateOutput(fakeOutput, proof);
+        _expectRevertClaimNotAccepted(fakeClaim);
+        _appContract.validateOutputHash(keccak256(fakeOutput), proof);
     }
 
     // ----------------
     // output execution
     // ----------------
 
-    function testWasOutputExecuted(
-        uint256 inputIndex,
-        uint256 outputIndexWithinInput
-    ) external view {
-        assertFalse(
-            _appContract.wasOutputExecuted(inputIndex, outputIndexWithinInput)
-        );
+    function testWasOutputExecuted(uint256 outputIndex) external view {
+        assertFalse(_appContract.wasOutputExecuted(outputIndex));
     }
 
     function testExecuteEtherTransferVoucher() external {
@@ -390,15 +388,10 @@ contract ApplicationTest is ERC165Test {
             "HelloWorldNotice",
             _addOutput(_encodeNotice("Hello, world!"))
         );
-        _finishInput();
-
         _nameOutput(
             "MyOutput",
             _addOutput(abi.encodeWithSignature("MyOutput()"))
         );
-        _finishInput();
-        _finishEpoch();
-
         _nameOutput(
             "EtherTransferVoucher",
             _addOutput(
@@ -415,9 +408,6 @@ contract ApplicationTest is ERC165Test {
                 )
             )
         );
-        _finishInput();
-        _finishEpoch();
-
         _nameOutput(
             "ERC20TransferVoucher",
             _addOutput(
@@ -484,9 +474,6 @@ contract ApplicationTest is ERC165Test {
                 )
             )
         );
-        _finishInput();
-        _finishEpoch();
-
         _nameOutput(
             "ERC20DelegateCallVoucher",
             _addOutput(
@@ -499,12 +486,6 @@ contract ApplicationTest is ERC165Test {
                 )
             )
         );
-        _finishInput();
-        _finishEpoch();
-
-        // Test input with no outputs
-        _finishInput();
-        _finishEpoch();
     }
 
     function _encodeNotice(
@@ -531,59 +512,34 @@ contract ApplicationTest is ERC165Test {
 
     function _addOutput(
         bytes memory output
-    ) internal returns (LibEmulator.OutputId memory) {
+    ) internal returns (LibEmulator.OutputIndex) {
         return _emulator.addOutput(output);
     }
 
     function _nameOutput(
         string memory name,
-        LibEmulator.OutputId memory oid
+        LibEmulator.OutputIndex outputIndex
     ) internal {
-        _outputIdsByName[name] = oid;
+        _outputIndexByName[name] = outputIndex;
         _outputNames.push(name);
     }
 
     function _getOutput(
         string memory name
     ) internal view returns (bytes storage) {
-        return _emulator.getOutput(_outputIdsByName[name]);
+        return _emulator.getOutput(_outputIndexByName[name]);
     }
 
     function _getProof(
         string memory name
     ) internal view returns (OutputValidityProof memory) {
-        return _emulator.getOutputValidityProof(_outputIdsByName[name]);
+        return _emulator.getOutputValidityProof(_outputIndexByName[name]);
     }
 
-    function _finishInput() internal {
-        _emulator.finishInput();
-    }
-
-    function _finishEpoch() internal {
-        _emulator.finishEpoch(_getMachineStateHash(_emulator.epochCount));
-    }
-
-    function _getMachineStateHash(
-        uint256 epochIndex
-    ) internal pure returns (bytes32) {
-        return keccak256(abi.encode("machineStateHash", epochIndex));
-    }
-
-    function _submitClaims() internal {
-        uint256 epochCount = _emulator.epochCount;
-        for (uint256 epochIndex; epochIndex < epochCount; ++epochIndex) {
-            InputRange memory inputRange = _emulator.getInputRange(epochIndex);
-            bytes32 epochHash = _emulator.getEpochHash(epochIndex);
-            _submitClaim(inputRange, epochHash);
-        }
-    }
-
-    function _submitClaim(
-        InputRange memory inputRange,
-        bytes32 epochHash
-    ) internal {
+    function _submitClaim() internal {
+        bytes32 claim = _emulator.getClaim();
         vm.prank(_authorityOwner);
-        _consensus.submitClaim(address(_appContract), inputRange, epochHash);
+        _consensus.submitClaim(address(_appContract), claim);
     }
 
     function _expectEmitOutputExecuted(
@@ -591,11 +547,7 @@ contract ApplicationTest is ERC165Test {
         OutputValidityProof memory proof
     ) internal {
         vm.expectEmit(false, false, false, true, address(_appContract));
-        emit IApplication.OutputExecuted(
-            proof.inputRange.firstIndex + proof.inputIndexWithinEpoch,
-            proof.outputIndexWithinInput,
-            output
-        );
+        emit IApplication.OutputExecuted(proof.outputIndex, output);
     }
 
     function _expectRevertOutputNotExecutable(bytes memory output) internal {
@@ -616,14 +568,25 @@ contract ApplicationTest is ERC165Test {
         );
     }
 
+    function _expectRevertInvalidOutputHashesSiblingsArrayLength() internal {
+        vm.expectRevert(
+            IApplication.InvalidOutputHashesSiblingsArrayLength.selector
+        );
+    }
+
+    function _expectRevertClaimNotAccepted(bytes32 claim) internal {
+        vm.expectRevert(
+            abi.encodeWithSelector(
+                IApplication.ClaimNotAccepted.selector,
+                claim
+            )
+        );
+    }
+
     function _wasOutputExecuted(
         OutputValidityProof memory proof
     ) internal view returns (bool) {
-        return
-            _appContract.wasOutputExecuted(
-                proof.inputRange.firstIndex + proof.inputIndexWithinEpoch,
-                proof.outputIndexWithinInput
-            );
+        return _appContract.wasOutputExecuted(proof.outputIndex);
     }
 
     function assertEq(IPortal[] memory a, IPortal[] memory b) internal pure {
