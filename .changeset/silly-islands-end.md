@@ -37,10 +37,6 @@ Modified the `ICartesiDApp` interface:
 
 -   Added a `validateOutputHash` function.
 
--   Added a `getInputBox` function.
-
--   Added a `getPortals` function.
-
 -   Added an `InputIndexOutOfRange` error.
 
 -   Added an `OutputNotExecutable` error.

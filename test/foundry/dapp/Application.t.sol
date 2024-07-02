@@ -6,16 +6,8 @@ pragma solidity ^0.8.22;
 import {Application} from "contracts/dapp/Application.sol";
 import {Authority} from "contracts/consensus/authority/Authority.sol";
 import {CanonicalMachine} from "contracts/common/CanonicalMachine.sol";
-import {ERC1155BatchPortal} from "contracts/portals/ERC1155BatchPortal.sol";
-import {ERC1155SinglePortal} from "contracts/portals/ERC1155SinglePortal.sol";
-import {ERC20Portal} from "contracts/portals/ERC20Portal.sol";
-import {ERC721Portal} from "contracts/portals/ERC721Portal.sol";
-import {EtherPortal} from "contracts/portals/EtherPortal.sol";
 import {IApplication} from "contracts/dapp/IApplication.sol";
 import {IConsensus} from "contracts/consensus/IConsensus.sol";
-import {IInputBox} from "contracts/inputs/IInputBox.sol";
-import {IPortal} from "contracts/portals/IPortal.sol";
-import {InputBox} from "contracts/inputs/InputBox.sol";
 import {OutputValidityProof} from "contracts/common/OutputValidityProof.sol";
 import {Outputs} from "contracts/common/Outputs.sol";
 import {SafeERC20Transfer} from "contracts/delegatecall/SafeERC20Transfer.sol";
@@ -49,8 +41,6 @@ contract ApplicationTest is ERC165Test {
     IERC721 _erc721Token;
     IERC1155 _erc1155SingleToken;
     IERC1155 _erc1155BatchToken;
-    IInputBox _inputBox;
-    IPortal[] _portals;
     SafeERC20Transfer _safeERC20Transfer;
 
     LibEmulator.State _emulator;
@@ -88,19 +78,11 @@ contract ApplicationTest is ERC165Test {
                 address(0)
             )
         );
-        new Application(
-            _consensus,
-            _inputBox,
-            _portals,
-            address(0),
-            _templateHash
-        );
+        new Application(_consensus, address(0), _templateHash);
     }
 
     function testConstructor(
         IConsensus consensus,
-        IInputBox inputBox,
-        IPortal[] calldata portals,
         address owner,
         bytes32 templateHash
     ) external {
@@ -111,17 +93,13 @@ contract ApplicationTest is ERC165Test {
 
         Application appContract = new Application(
             consensus,
-            inputBox,
-            portals,
             owner,
             templateHash
         );
 
         assertEq(address(appContract.getConsensus()), address(consensus));
-        assertEq(address(appContract.getInputBox()), address(inputBox));
         assertEq(appContract.owner(), owner);
         assertEq(appContract.getTemplateHash(), templateHash);
-        assertEq(appContract.getPortals(), portals);
     }
 
     // -------------------
@@ -365,20 +343,8 @@ contract ApplicationTest is ERC165Test {
             _tokenIds,
             _initialSupplies
         );
-        _inputBox = new InputBox();
-        _portals.push(new EtherPortal(_inputBox));
-        _portals.push(new ERC20Portal(_inputBox));
-        _portals.push(new ERC721Portal(_inputBox));
-        _portals.push(new ERC1155SinglePortal(_inputBox));
-        _portals.push(new ERC1155BatchPortal(_inputBox));
         _consensus = new Authority(_authorityOwner);
-        _appContract = new Application(
-            _consensus,
-            _inputBox,
-            _portals,
-            _appOwner,
-            _templateHash
-        );
+        _appContract = new Application(_consensus, _appOwner, _templateHash);
         _safeERC20Transfer = new SafeERC20Transfer();
     }
 
@@ -587,13 +553,6 @@ contract ApplicationTest is ERC165Test {
         OutputValidityProof memory proof
     ) internal view returns (bool) {
         return _appContract.wasOutputExecuted(proof.outputIndex);
-    }
-
-    function assertEq(IPortal[] memory a, IPortal[] memory b) internal pure {
-        assertEq(a.length, b.length);
-        for (uint256 i; i < a.length; ++i) {
-            assertEq(address(a[i]), address(b[i]));
-        }
     }
 
     function _testEtherTransfer(

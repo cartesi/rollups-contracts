@@ -6,11 +6,6 @@ Modified the `CartesiDApp` contract:
 
 -   Renamed it as `Application`.
 
--   Added the following parameters to its constructor:
-
-    -   `inputBox`
-    -   `portals`
-
 -   Made it support the following interfaces (as in EIP-165):
 
     -   `IApplication`

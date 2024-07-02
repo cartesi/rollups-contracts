@@ -5,8 +5,6 @@ pragma solidity ^0.8.8;
 
 import {IApplication} from "./IApplication.sol";
 import {IConsensus} from "../consensus/IConsensus.sol";
-import {IInputBox} from "../inputs/IInputBox.sol";
-import {IPortal} from "../portals/IPortal.sol";
 import {LibOutputValidityProof} from "../library/LibOutputValidityProof.sol";
 import {OutputValidityProof} from "../common/OutputValidityProof.sol";
 import {Outputs} from "../common/Outputs.sol";
@@ -43,33 +41,17 @@ contract Application is
     /// @dev See the `getConsensus` and `migrateToConsensus` functions.
     IConsensus internal _consensus;
 
-    /// @notice The input box contract.
-    /// @dev See the `getInputBox` function.
-    IInputBox internal immutable _inputBox;
-
-    /// @notice The portals supported by the application.
-    /// @dev See the `getPortals` function.
-    IPortal[] internal _portals;
-
     /// @notice Creates an `Application` contract.
     /// @param consensus The initial consensus contract
-    /// @param inputBox The input box contract
-    /// @param portals The portals supported by the application
     /// @param initialOwner The initial application owner
     /// @param templateHash The initial machine state hash
     constructor(
         IConsensus consensus,
-        IInputBox inputBox,
-        IPortal[] memory portals,
         address initialOwner,
         bytes32 templateHash
     ) Ownable(initialOwner) {
         _templateHash = templateHash;
         _consensus = consensus;
-        _inputBox = inputBox;
-        for (uint256 i; i < portals.length; ++i) {
-            _portals.push(portals[i]);
-        }
     }
 
     /// @notice Accept Ether transfers.
@@ -151,14 +133,6 @@ contract Application is
 
     function getConsensus() external view override returns (IConsensus) {
         return _consensus;
-    }
-
-    function getInputBox() external view override returns (IInputBox) {
-        return _inputBox;
-    }
-
-    function getPortals() external view override returns (IPortal[] memory) {
-        return _portals;
     }
 
     function supportsInterface(
