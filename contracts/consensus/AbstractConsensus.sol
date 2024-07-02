@@ -4,40 +4,31 @@
 pragma solidity ^0.8.8;
 
 import {IConsensus} from "./IConsensus.sol";
-import {InputRange} from "../common/InputRange.sol";
 
-/// @notice Stores epoch hashes for several applications and input ranges.
+/// @notice Stores accepted claims for several applications.
 /// @dev This contract was designed to be inherited by implementations of the `IConsensus` interface
-/// that only need a simple mechanism of storage and retrieval of epoch hashes.
+/// that only need a simple mechanism of storage and retrieval of accepted claims.
 abstract contract AbstractConsensus is IConsensus {
-    /// @notice Indexes epoch hashes by application contract address, first input index and last input index.
-    mapping(address => mapping(uint256 => mapping(uint256 => bytes32)))
-        private _epochHashes;
+    /// @notice Indexes accepted claims by application contract address.
+    mapping(address => mapping(bytes32 => bool)) private _acceptedClaims;
 
-    /// @notice Get the epoch hash for a certain application and input range.
+    /// @notice Check if an output Merkle root hash was ever accepted by the consensus
+    /// for a particular application.
     /// @param appContract The application contract address
-    /// @param r The input range
-    /// @return epochHash The epoch hash
-    /// @dev For claimed epochs, returns the epoch hash of the last accepted claim.
-    /// @dev For unclaimed epochs, returns `bytes32(0)`.
-    function getEpochHash(
+    /// @param claim The output Merkle root hash
+    function wasClaimAccepted(
         address appContract,
-        InputRange calldata r
-    ) public view override returns (bytes32 epochHash) {
-        epochHash = _epochHashes[appContract][r.firstIndex][r.lastIndex];
+        bytes32 claim
+    ) public view override returns (bool) {
+        return _acceptedClaims[appContract][claim];
     }
 
     /// @notice Accept a claim.
     /// @param appContract The application contract address
-    /// @param r The input range
-    /// @param epochHash The epoch hash
-    /// @dev On successs, emits a `ClaimAcceptance` event.
-    function _acceptClaim(
-        address appContract,
-        InputRange calldata r,
-        bytes32 epochHash
-    ) internal {
-        _epochHashes[appContract][r.firstIndex][r.lastIndex] = epochHash;
-        emit ClaimAcceptance(appContract, r, epochHash);
+    /// @param claim The output Merkle root hash
+    /// @dev Emits a `ClaimAcceptance` event.
+    function _acceptClaim(address appContract, bytes32 claim) internal {
+        _acceptedClaims[appContract][claim] = true;
+        emit ClaimAcceptance(appContract, claim);
     }
 }

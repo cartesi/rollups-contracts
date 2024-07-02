@@ -9,14 +9,11 @@ import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
 
 import {Authority} from "contracts/consensus/authority/Authority.sol";
 import {IConsensus} from "contracts/consensus/IConsensus.sol";
-import {InputRange} from "contracts/common/InputRange.sol";
-import {LibInputRange} from "contracts/library/LibInputRange.sol";
 
 import {TestBase} from "../../util/TestBase.sol";
 import {LibTopic} from "../../util/LibTopic.sol";
 
 contract AuthorityTest is TestBase {
-    using LibInputRange for InputRange;
     using LibTopic for address;
 
     function testConstructor(address owner) public {
@@ -64,8 +61,7 @@ contract AuthorityTest is TestBase {
         address owner,
         address notOwner,
         address appContract,
-        InputRange calldata inputRange,
-        bytes32 epochHash
+        bytes32 claim
     ) public {
         vm.assume(owner != address(0));
         vm.assume(owner != notOwner);
@@ -80,84 +76,48 @@ contract AuthorityTest is TestBase {
         );
 
         vm.prank(notOwner);
-        authority.submitClaim(appContract, inputRange, epochHash);
+        authority.submitClaim(appContract, claim);
     }
 
     function testSubmitClaim(
         address owner,
         address appContract,
-        InputRange calldata inputRange,
-        bytes32[2] calldata epochHashes
+        bytes32 claim
     ) public {
         vm.assume(owner != address(0));
 
         Authority authority = new Authority(owner);
 
-        // First claim
-
-        _expectClaimEvents(
-            authority,
-            owner,
-            appContract,
-            inputRange,
-            epochHashes[0]
-        );
+        _expectClaimEvents(authority, owner, appContract, claim);
 
         vm.prank(owner);
-        authority.submitClaim(appContract, inputRange, epochHashes[0]);
+        authority.submitClaim(appContract, claim);
 
-        assertEq(
-            authority.getEpochHash(appContract, inputRange),
-            epochHashes[0]
-        );
-
-        // Second claim
-
-        _expectClaimEvents(
-            authority,
-            owner,
-            appContract,
-            inputRange,
-            epochHashes[1]
-        );
-
-        vm.prank(owner);
-        authority.submitClaim(appContract, inputRange, epochHashes[1]);
-
-        assertEq(
-            authority.getEpochHash(appContract, inputRange),
-            epochHashes[1]
-        );
+        assertTrue(authority.wasClaimAccepted(appContract, claim));
     }
 
-    function testGetEpochHash(
+    function testWasClaimAccepted(
         address owner,
         address appContract,
-        InputRange calldata inputRange
+        bytes32 claim
     ) public {
         vm.assume(owner != address(0));
 
         Authority authority = new Authority(owner);
 
-        assertEq(authority.getEpochHash(appContract, inputRange), bytes32(0));
+        assertFalse(authority.wasClaimAccepted(appContract, claim));
     }
 
     function _expectClaimEvents(
         Authority authority,
         address owner,
         address appContract,
-        InputRange calldata inputRange,
-        bytes32 epochHash
+        bytes32 claim
     ) internal {
         vm.expectEmit(true, true, false, true, address(authority));
-        emit IConsensus.ClaimSubmission(
-            owner,
-            appContract,
-            inputRange,
-            epochHash
-        );
+        emit IConsensus.ClaimSubmission(owner, appContract, claim);
 
         vm.expectEmit(true, false, false, true, address(authority));
-        emit IConsensus.ClaimAcceptance(appContract, inputRange, epochHash);
+        emit IConsensus.ClaimAcceptance(appContract, claim);
     }
 }

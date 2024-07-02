@@ -11,9 +11,6 @@ library CanonicalMachine {
     /// @notice Maximum input size (2 megabytes).
     uint256 constant INPUT_MAX_SIZE = 1 << 21;
 
-    /// @notice Log of maximum number of inputs per epoch.
-    uint256 constant LOG2_MAX_INPUTS_PER_EPOCH = 32;
-
-    /// @notice Log of maximum number of outputs per input.
-    uint256 constant LOG2_MAX_OUTPUTS_PER_INPUT = 16;
+    /// @notice Log2 of maximum number of outputs.
+    uint256 constant LOG2_MAX_OUTPUTS = 63;
 }

@@ -7,7 +7,6 @@ import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
 
 import {IConsensus} from "../IConsensus.sol";
 import {AbstractConsensus} from "../AbstractConsensus.sol";
-import {InputRange} from "../../common/InputRange.sol";
 
 /// @notice A consensus contract controlled by a single address, the owner.
 /// @dev This contract inherits from OpenZeppelin's `Ownable` contract.
@@ -18,16 +17,14 @@ contract Authority is AbstractConsensus, Ownable {
 
     /// @notice Submit a claim.
     /// @param appContract The application contract address
-    /// @param inputRange The input range
-    /// @param epochHash The epoch hash
+    /// @param claim The output Merkle root hash
     /// @dev Fires a `ClaimSubmission` event and a `ClaimAcceptance` event.
     /// @dev Can only be called by the owner.
     function submitClaim(
         address appContract,
-        InputRange calldata inputRange,
-        bytes32 epochHash
-    ) external override onlyOwner {
-        emit ClaimSubmission(msg.sender, appContract, inputRange, epochHash);
-        _acceptClaim(appContract, inputRange, epochHash);
+        bytes32 claim
+    ) external onlyOwner {
+        emit ClaimSubmission(msg.sender, appContract, claim);
+        _acceptClaim(appContract, claim);
     }
 }

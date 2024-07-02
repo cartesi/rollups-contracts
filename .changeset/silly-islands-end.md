@@ -27,12 +27,15 @@ Modified the `ICartesiDApp` interface:
 -   Modified the `VoucherExecuted` event:
 
     -   Renamed it as `OutputExecuted`.
-    -   Split the `voucherId` parameter into `inputIndex` and `outputIndexWithinInput` parameters.
+    -   Removed `voucherId` parameters.
+    -   Added an `outputIndex` parameter.
     -   Added an `output` parameter.
 
 -   Modified the `wasVoucherExecuted` function:
 
     -   Renamed it as `wasOutputExecuted`.
+
+-   Added a `validateOutputHash` function.
 
 -   Added a `getInputBox` function.
 
@@ -44,8 +47,6 @@ Modified the `ICartesiDApp` interface:
 
 -   Added an `OutputNotReexecutable` error.
 
--   Added an `IncorrectEpochHash` error.
+-   Added an `InvalidOutputHashesSiblingsArrayLength` error.
 
--   Added an `IncorrectOutputsEpochRootHash` error.
-
--   Added an `IncorrectOutputHashesRootHash` error.
+-   Added an `ClaimNotAccepted` error.

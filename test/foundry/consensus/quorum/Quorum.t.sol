@@ -3,7 +3,6 @@
 
 pragma solidity ^0.8.22;
 
-import {InputRange} from "contracts/common/InputRange.sol";
 import {Quorum} from "contracts/consensus/quorum/Quorum.sol";
 import {IConsensus} from "contracts/consensus/IConsensus.sol";
 
@@ -14,8 +13,7 @@ import {Vm} from "forge-std/Vm.sol";
 
 struct Claim {
     address appContract;
-    InputRange inputRange;
-    bytes32 epochHash;
+    bytes32 outputHashesRootHash;
 }
 
 library LibQuorum {
@@ -26,8 +24,7 @@ library LibQuorum {
         return
             quorum.numOfValidatorsInFavorOf(
                 claim.appContract,
-                claim.inputRange,
-                claim.epochHash
+                claim.outputHashesRootHash
             );
     }
 
@@ -39,18 +36,24 @@ library LibQuorum {
         return
             quorum.isValidatorInFavorOf(
                 claim.appContract,
-                claim.inputRange,
-                claim.epochHash,
+                claim.outputHashesRootHash,
                 id
             );
     }
 
     function submitClaim(Quorum quorum, Claim calldata claim) internal {
-        quorum.submitClaim(
-            claim.appContract,
-            claim.inputRange,
-            claim.epochHash
-        );
+        quorum.submitClaim(claim.appContract, claim.outputHashesRootHash);
+    }
+
+    function wasClaimAccepted(
+        Quorum quorum,
+        Claim calldata claim
+    ) internal view returns (bool) {
+        return
+            quorum.wasClaimAccepted(
+                claim.appContract,
+                claim.outputHashesRootHash
+            );
     }
 }
 
@@ -246,15 +249,14 @@ contract QuorumTest is TestBase {
                 entry.emitter == address(quorum) &&
                 entry.topics[0] == IConsensus.ClaimSubmission.selector
             ) {
-                (InputRange memory inputRange, bytes32 epochHash) = abi.decode(
+                bytes32 outputHashesRootHash = abi.decode(
                     entry.data,
-                    (InputRange, bytes32)
+                    (bytes32)
                 );
 
                 assertEq(entry.topics[1], validator.asTopic());
                 assertEq(entry.topics[2], claim.appContract.asTopic());
-                assertEq(inputRange, claim.inputRange);
-                assertEq(epochHash, claim.epochHash);
+                assertEq(outputHashesRootHash, claim.outputHashesRootHash);
 
                 ++numOfSubmissions;
             }
@@ -263,14 +265,13 @@ contract QuorumTest is TestBase {
                 entry.emitter == address(quorum) &&
                 entry.topics[0] == IConsensus.ClaimAcceptance.selector
             ) {
-                (InputRange memory inputRange, bytes32 epochHash) = abi.decode(
+                bytes32 outputHashesRootHash = abi.decode(
                     entry.data,
-                    (InputRange, bytes32)
+                    (bytes32)
                 );
 
                 assertEq(entry.topics[1], claim.appContract.asTopic());
-                assertEq(inputRange, claim.inputRange);
-                assertEq(epochHash, claim.epochHash);
+                assertEq(outputHashesRootHash, claim.outputHashesRootHash);
 
                 ++numOfAcceptances;
             }
@@ -287,19 +288,9 @@ contract QuorumTest is TestBase {
             assertEq(numOfAcceptances, 0);
         }
 
-        if (inFavorCount > (numOfValidators / 2)) {
-            assertEq(
-                quorum.getEpochHash(claim.appContract, claim.inputRange),
-                claim.epochHash
-            );
-        }
-    }
-
-    function assertEq(
-        InputRange memory r1,
-        InputRange memory r2
-    ) internal pure {
-        assertEq(r1.firstIndex, r2.firstIndex);
-        assertEq(r1.lastIndex, r2.lastIndex);
+        assertEq(
+            quorum.wasClaimAccepted(claim),
+            inFavorCount > (numOfValidators / 2)
+        );
     }
 }
