@@ -10,7 +10,6 @@ import {IConsensus} from "../consensus/IConsensus.sol";
 import {IInputBox} from "../inputs/IInputBox.sol";
 import {IPortal} from "../portals/IPortal.sol";
 import {OutputValidityProof} from "../common/OutputValidityProof.sol";
-import {InputRange} from "../common/InputRange.sol";
 
 /// @notice The base layer incarnation of an application running on the execution layer.
 /// @notice The state of the application advances through inputs sent to an `IInputBox` contract (see the `getInputBox` function).
@@ -38,22 +37,11 @@ interface IApplication is IERC721Receiver, IERC1155Receiver {
     event NewConsensus(IConsensus newConsensus);
 
     /// @notice MUST trigger when an output is executed.
-    /// @param inputIndex The index of the input that emitted the output
-    /// @param outputIndexWithinInput The index of the output amongst all outputs emitted by the input
+    /// @param outputIndex The index of the output
     /// @param output The output
-    event OutputExecuted(
-        uint64 inputIndex,
-        uint64 outputIndexWithinInput,
-        bytes output
-    );
+    event OutputExecuted(uint64 outputIndex, bytes output);
 
     // Errors
-
-    /// @notice Could not validate an output because the input
-    /// that generated it is outside the input range of the epoch.
-    /// @param inputIndex The input index
-    /// @param inputRange The input range
-    error InputIndexOutOfRange(uint256 inputIndex, InputRange inputRange);
 
     /// @notice Could not execute an output, because the application contract doesn't know how to.
     /// @param output The output
@@ -63,17 +51,12 @@ interface IApplication is IERC721Receiver, IERC1155Receiver {
     /// @param output The output
     error OutputNotReexecutable(bytes output);
 
-    /// @notice Raised when some `OutputValidityProof` variables does not match
-    ///         the presented finalized epoch.
-    error IncorrectEpochHash();
+    /// @notice Raised when the output hashes siblings array has an invalid size.
+    /// @dev Please consult `CanonicalMachine` for the maximum number of outputs.
+    error InvalidOutputHashesSiblingsArrayLength();
 
-    /// @notice Raised when `OutputValidityProof` metadata memory range is NOT
-    ///         contained in epoch's output memory range.
-    error IncorrectOutputsEpochRootHash();
-
-    /// @notice Raised when Merkle root of output hash is NOT contained
-    ///         in the output metadata array memory range.
-    error IncorrectOutputHashesRootHash();
+    /// @notice Raised when the required claim was not accepted by the current consensus.
+    error ClaimNotAccepted(bytes32 claim);
 
     // Permissioned functions
 
@@ -87,7 +70,7 @@ interface IApplication is IERC721Receiver, IERC1155Receiver {
     /// @notice Execute an output.
     /// @param output The output
     /// @param proof The proof used to validate the output against
-    ///              a claim submitted by the current consensus contract
+    ///              a claim submitted to the current consensus contract
     /// @dev On a successful execution, emits a `OutputExecuted` event.
     /// @dev May raise any of the errors raised by `validateOutput`,
     /// as well as `OutputNotExecutable` and `OutputNotReexecutable`.
@@ -97,22 +80,30 @@ interface IApplication is IERC721Receiver, IERC1155Receiver {
     ) external;
 
     /// @notice Check whether an output has been executed.
-    /// @param inputIndex The index of the input in the input box
-    /// @param outputIndexWithinInput The index of output emitted by the input
+    /// @param outputIndex The index of output
     /// @return Whether the output has been executed before
     function wasOutputExecuted(
-        uint256 inputIndex,
-        uint256 outputIndexWithinInput
+        uint256 outputIndex
     ) external view returns (bool);
 
     /// @notice Validate an output.
     /// @param output The output
     /// @param proof The proof used to validate the output against
-    ///              a claim submitted by the current consensus contract
-    /// @dev May raise `InputIndexOutOfRange`, `IncorrectEpochHash`,
-    /// `IncorrectOutputsEpochRootHash`, or `IncorrectOutputHashesRootHash`.
+    ///              a claim submitted to the current consensus contract
+    /// @dev May raise any of the errors raised by `validateOutputHash`.
     function validateOutput(
         bytes calldata output,
+        OutputValidityProof calldata proof
+    ) external view;
+
+    /// @notice Validate an output hash.
+    /// @param outputHash The output hash
+    /// @param proof The proof used to validate the output against
+    ///              a claim submitted to the current consensus contract
+    /// @dev May raise `InvalidOutputHashesSiblingsArrayLength`
+    /// or `ClaimNotAccepted`.
+    function validateOutputHash(
+        bytes32 outputHash,
         OutputValidityProof calldata proof
     ) external view;
 

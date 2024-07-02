@@ -3,23 +3,13 @@
 
 pragma solidity ^0.8.8;
 
-import {InputRange} from "./InputRange.sol";
-
-/// @param inputRange The range of inputs accepted during the epoch
-/// @param inputIndexWithinEpoch Which input, inside the epoch, the output belongs to
-/// @param outputIndexWithinInput Index of output emitted by the input
-/// @param outputHashesRootHash Merkle root of hashes of outputs emitted by the input
-/// @param outputsEpochRootHash Merkle root of all epoch's outputs metadata hashes
-/// @param machineStateHash Hash of the machine state claimed this epoch
-/// @param outputHashInOutputHashesSiblings Proof that this output metadata is in metadata memory range
-/// @param outputHashesInEpochSiblings Proof that this output metadata is in epoch's output memory range
+/// @notice Proof of inclusion of an output in the output Merkle tree.
+/// @param outputIndex Index of output in the Merkle tree
+/// @param outputHashesSiblings Siblings of the output in the Merkle tree
+/// @dev From the index and siblings, one can calculate the root of the Merkle tree.
+/// @dev The siblings array should have size equal to the log2 of the maximum number of outputs.
+/// @dev See the `CanonicalMachine` library for constants.
 struct OutputValidityProof {
-    InputRange inputRange;
-    uint64 inputIndexWithinEpoch;
-    uint64 outputIndexWithinInput;
-    bytes32 outputHashesRootHash;
-    bytes32 outputsEpochRootHash;
-    bytes32 machineStateHash;
-    bytes32[] outputHashInOutputHashesSiblings;
-    bytes32[] outputHashesInEpochSiblings;
+    uint64 outputIndex;
+    bytes32[] outputHashesSiblings;
 }

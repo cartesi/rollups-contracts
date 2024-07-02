@@ -8,6 +8,6 @@ Completely modified the `IConsensus` interface:
 -   Removed the `getClaim` function
 -   Removed the `ApplicationJoined` event
 -   Added a `submitClaim` function
--   Added a `getEpochHash` function
+-   Added a `wasClaimAccepted` function
 -   Added a `ClaimSubmission` event
 -   Added a `ClaimAcceptance` event

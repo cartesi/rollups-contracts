@@ -2,7 +2,10 @@
 "@cartesi/rollups": major
 ---
 
-Modified the `OutputValidityProof` struct:
+Modified the `OutputValidityProof` struct
 
--   Collapsed the `vouchersEpochRootHash` and `noticesEpochRootHash` fields into a single `outputsEpochRootHash` field
--   Added an `inputRange` field
+-   Removed all fields
+
+-   Added an `outputIndex` field
+
+-   Added an `outputHashesSiblings` field
