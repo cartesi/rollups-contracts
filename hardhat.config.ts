@@ -120,27 +120,6 @@ const config: HardhatUserConfig = {
             },
         ],
     },
-    external: {
-        contracts: [
-            {
-                artifacts: ppath("@cartesi/util", "/export/artifacts"),
-                deploy: ppath("@cartesi/util", "/dist/deploy"),
-            },
-        ],
-        deployments: {
-            localhost: ["deployments/localhost"],
-            arbitrum: [ppath("@cartesi/util", "/deployments/arbitrum")],
-            arbitrum_sepolia: [
-                ppath("@cartesi/util", "/deployments/arbitrum_sepolia"),
-            ],
-            mainnet: [ppath("@cartesi/util", "/deployments/mainnet")],
-            optimism: [ppath("@cartesi/util", "/deployments/optimism")],
-            optimism_sepolia: [
-                ppath("@cartesi/util", "/deployments/optimism_sepolia"),
-            ],
-            sepolia: [ppath("@cartesi/util", "/deployments/sepolia")],
-        },
-    },
     namedAccounts: {
         deployer: {
             default: 0,
