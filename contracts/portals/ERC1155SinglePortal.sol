@@ -4,7 +4,6 @@
 pragma solidity ^0.8.8;
 
 import {IERC1155} from "@openzeppelin/contracts/token/ERC1155/IERC1155.sol";
-import {IERC165} from "@openzeppelin/contracts/utils/introspection/IERC165.sol";
 
 import {IERC1155SinglePortal} from "./IERC1155SinglePortal.sol";
 import {Portal} from "./Portal.sol";
@@ -46,13 +45,5 @@ contract ERC1155SinglePortal is IERC1155SinglePortal, Portal {
         );
 
         _inputBox.addInput(appContract, payload);
-    }
-
-    function supportsInterface(
-        bytes4 interfaceId
-    ) public view virtual override(IERC165, Portal) returns (bool) {
-        return
-            interfaceId == type(IERC1155SinglePortal).interfaceId ||
-            super.supportsInterface(interfaceId);
     }
 }
