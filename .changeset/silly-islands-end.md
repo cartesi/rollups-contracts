@@ -9,7 +9,7 @@ Modified the `ICartesiDApp` interface:
 -   Made it inherit from:
 
     -   `IERC721Receiver`.
-    -   `IERC1155Receiver` (which inherits from `IERC165`).
+    -   `IERC1155Receiver`.
 
 -   Modified the `executeVoucher` function:
 
