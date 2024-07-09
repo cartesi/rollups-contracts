@@ -3,8 +3,6 @@
 
 pragma solidity ^0.8.8;
 
-import {IERC165} from "@openzeppelin/contracts/utils/introspection/IERC165.sol";
-
 import {IEtherPortal} from "./IEtherPortal.sol";
 import {Portal} from "./Portal.sol";
 import {IInputBox} from "../inputs/IInputBox.sol";
@@ -36,13 +34,5 @@ contract EtherPortal is IEtherPortal, Portal {
         );
 
         _inputBox.addInput(appContract, payload);
-    }
-
-    function supportsInterface(
-        bytes4 interfaceId
-    ) public view virtual override(IERC165, Portal) returns (bool) {
-        return
-            interfaceId == type(IEtherPortal).interfaceId ||
-            super.supportsInterface(interfaceId);
     }
 }

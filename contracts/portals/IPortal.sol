@@ -4,10 +4,9 @@
 pragma solidity ^0.8.8;
 
 import {IInputBox} from "../inputs/IInputBox.sol";
-import {IERC165} from "@openzeppelin/contracts/utils/introspection/IERC165.sol";
 
 /// @title Portal interface
-interface IPortal is IERC165 {
+interface IPortal {
     // Permissionless functions
 
     /// @notice Get the input box used by this portal.
