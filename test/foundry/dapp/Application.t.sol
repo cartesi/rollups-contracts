@@ -14,7 +14,6 @@ import {SafeERC20Transfer} from "contracts/delegatecall/SafeERC20Transfer.sol";
 
 import {IERC1155Receiver} from "@openzeppelin/contracts/token/ERC1155/IERC1155Receiver.sol";
 import {IERC1155} from "@openzeppelin/contracts/token/ERC1155/IERC1155.sol";
-import {IERC165} from "@openzeppelin/contracts/utils/introspection/IERC165.sol";
 import {IERC20Errors, IERC721Errors, IERC1155Errors} from "@openzeppelin/contracts/interfaces/draft-IERC6093.sol";
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {IERC721Receiver} from "@openzeppelin/contracts/token/ERC721/IERC721Receiver.sol";
@@ -22,7 +21,7 @@ import {IERC721} from "@openzeppelin/contracts/token/ERC721/IERC721.sol";
 import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
 import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 
-import {ERC165Test} from "../util/ERC165Test.sol";
+import {TestBase} from "../util/TestBase.sol";
 import {EtherReceiver} from "../util/EtherReceiver.sol";
 import {ExternalLibMerkle32} from "../library/LibMerkle32.t.sol";
 import {LibEmulator} from "../util/LibEmulator.sol";
@@ -30,7 +29,7 @@ import {SimpleERC20} from "../util/SimpleERC20.sol";
 import {SimpleERC721} from "../util/SimpleERC721.sol";
 import {SimpleSingleERC1155, SimpleBatchERC1155} from "../util/SimpleERC1155.sol";
 
-contract ApplicationTest is ERC165Test {
+contract ApplicationTest is TestBase {
     using LibEmulator for LibEmulator.State;
     using ExternalLibMerkle32 for bytes32[];
 
@@ -289,23 +288,6 @@ contract ApplicationTest is ERC165Test {
         OutputValidityProof memory proof = _getProof(name);
 
         _testERC20Success(output, proof);
-    }
-
-    // -------
-    // ERC-165
-    // -------
-
-    function getERC165Contract() public view override returns (IERC165) {
-        return _appContract;
-    }
-
-    function getSupportedInterfaces()
-        public
-        view
-        override
-        returns (bytes4[] memory)
-    {
-        return _interfaceIds;
     }
 
     // ------------------

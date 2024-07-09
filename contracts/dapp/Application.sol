@@ -15,7 +15,6 @@ import {ERC721Holder} from "@openzeppelin/contracts/token/ERC721/utils/ERC721Hol
 import {ERC1155Holder} from "@openzeppelin/contracts/token/ERC1155/utils/ERC1155Holder.sol";
 import {ReentrancyGuard} from "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
 import {IERC721Receiver} from "@openzeppelin/contracts/token/ERC721/IERC721Receiver.sol";
-import {IERC165} from "@openzeppelin/contracts/utils/introspection/IERC165.sol";
 import {BitMaps} from "@openzeppelin/contracts/utils/structs/BitMaps.sol";
 
 contract Application is
@@ -133,15 +132,6 @@ contract Application is
 
     function getConsensus() external view override returns (IConsensus) {
         return _consensus;
-    }
-
-    function supportsInterface(
-        bytes4 interfaceId
-    ) public view virtual override(ERC1155Holder, IERC165) returns (bool) {
-        return
-            interfaceId == type(IApplication).interfaceId ||
-            interfaceId == type(IERC721Receiver).interfaceId ||
-            super.supportsInterface(interfaceId);
     }
 
     /// @notice Check if an output Merkle root hash was ever accepted by the current consensus.
