@@ -3,7 +3,6 @@
 
 pragma solidity ^0.8.22;
 
-import {IERC165} from "@openzeppelin/contracts/utils/introspection/IERC165.sol";
 import {IERC20, ERC20} from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 
 import {ERC20Portal} from "contracts/portals/ERC20Portal.sol";
@@ -12,10 +11,10 @@ import {IInputBox} from "contracts/inputs/IInputBox.sol";
 import {IPortal} from "contracts/portals/IPortal.sol";
 import {InputEncoding} from "contracts/common/InputEncoding.sol";
 
-import {ERC165Test} from "../util/ERC165Test.sol";
+import {TestBase} from "../util/TestBase.sol";
 import {SimpleERC20} from "../util/SimpleERC20.sol";
 
-contract ERC20PortalTest is ERC165Test {
+contract ERC20PortalTest is TestBase {
     address _alice;
     address _appContract;
     IInputBox _inputBox;
@@ -31,19 +30,6 @@ contract ERC20PortalTest is ERC165Test {
         _portal = new ERC20Portal(_inputBox);
         _interfaceIds.push(type(IERC20Portal).interfaceId);
         _interfaceIds.push(type(IPortal).interfaceId);
-    }
-
-    function getERC165Contract() public view override returns (IERC165) {
-        return _portal;
-    }
-
-    function getSupportedInterfaces()
-        public
-        view
-        override
-        returns (bytes4[] memory)
-    {
-        return _interfaceIds;
     }
 
     function testGetInputBox() public view {

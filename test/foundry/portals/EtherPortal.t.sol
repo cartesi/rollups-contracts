@@ -3,17 +3,15 @@
 
 pragma solidity ^0.8.22;
 
-import {IERC165} from "@openzeppelin/contracts/utils/introspection/IERC165.sol";
-
 import {EtherPortal} from "contracts/portals/EtherPortal.sol";
 import {IEtherPortal} from "contracts/portals/IEtherPortal.sol";
 import {IInputBox} from "contracts/inputs/IInputBox.sol";
 import {IPortal} from "contracts/portals/IPortal.sol";
 import {InputEncoding} from "contracts/common/InputEncoding.sol";
 
-import {ERC165Test} from "../util/ERC165Test.sol";
+import {TestBase} from "../util/TestBase.sol";
 
-contract EtherPortalTest is ERC165Test {
+contract EtherPortalTest is TestBase {
     address _alice;
     address _appContract;
     IInputBox _inputBox;
@@ -27,19 +25,6 @@ contract EtherPortalTest is ERC165Test {
         _portal = new EtherPortal(_inputBox);
         _interfaceIds.push(type(IEtherPortal).interfaceId);
         _interfaceIds.push(type(IPortal).interfaceId);
-    }
-
-    function getERC165Contract() public view override returns (IERC165) {
-        return _portal;
-    }
-
-    function getSupportedInterfaces()
-        public
-        view
-        override
-        returns (bytes4[] memory)
-    {
-        return _interfaceIds;
     }
 
     function testGetInputBox() public view {

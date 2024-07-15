@@ -9,8 +9,6 @@ import {IAuthorityFactory} from "../consensus/authority/IAuthorityFactory.sol";
 import {Application} from "./Application.sol";
 import {IApplicationFactory} from "./IApplicationFactory.sol";
 import {ISelfHostedApplicationFactory} from "./ISelfHostedApplicationFactory.sol";
-import {IInputBox} from "../inputs/IInputBox.sol";
-import {IPortal} from "../portals/IPortal.sol";
 
 /// @title Self-hosted Application Factory
 /// @notice Allows anyone to reliably deploy a new Authority contract,
@@ -49,8 +47,6 @@ contract SelfHostedApplicationFactory is ISelfHostedApplicationFactory {
 
     function deployContracts(
         address authorityOwner,
-        IInputBox inputBox,
-        IPortal[] memory portals,
         address appOwner,
         bytes32 templateHash,
         bytes32 salt
@@ -59,8 +55,6 @@ contract SelfHostedApplicationFactory is ISelfHostedApplicationFactory {
 
         application = _applicationFactory.newApplication(
             authority,
-            inputBox,
-            portals,
             appOwner,
             templateHash,
             salt
@@ -69,8 +63,6 @@ contract SelfHostedApplicationFactory is ISelfHostedApplicationFactory {
 
     function calculateAddresses(
         address authorityOwner,
-        IInputBox inputBox,
-        IPortal[] memory portals,
         address appOwner,
         bytes32 templateHash,
         bytes32 salt
@@ -82,8 +74,6 @@ contract SelfHostedApplicationFactory is ISelfHostedApplicationFactory {
 
         application = _applicationFactory.calculateApplicationAddress(
             IConsensus(authority),
-            inputBox,
-            portals,
             appOwner,
             templateHash,
             salt

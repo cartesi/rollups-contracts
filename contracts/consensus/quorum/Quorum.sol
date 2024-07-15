@@ -6,12 +6,11 @@ pragma solidity ^0.8.8;
 import {BitMaps} from "@openzeppelin/contracts/utils/structs/BitMaps.sol";
 
 import {AbstractConsensus} from "../AbstractConsensus.sol";
-import {InputRange} from "../../common/InputRange.sol";
 
 /// @notice A consensus model controlled by a small, immutable set of `n` validators.
 /// @notice You can know the value of `n` by calling the `numOfValidators` function.
 /// @notice Upon construction, each validator is assigned a unique number between 1 and `n`.
-/// These numbers are used internally instead of addresses for optimization reasons.
+/// These numbers are used internally instead of addresses for gas optimization reasons.
 /// @notice You can list the validators in the quorum by calling the `validatorById`
 /// function for each ID from 1 to `n`.
 contract Quorum is AbstractConsensus {
@@ -41,11 +40,9 @@ contract Quorum is AbstractConsensus {
         BitMaps.BitMap inFavorById;
     }
 
-    /// @notice Votes indexed by claim
-    /// (application contract address, first input index, last input index, and epoch hash).
+    /// @notice Votes indexed by application contract address and claim.
     /// @dev See the `numOfValidatorsInFavorOf` and `isValidatorInFavorOf` functions.
-    mapping(address => mapping(uint256 => mapping(uint256 => mapping(bytes32 => Votes))))
-        private _votes;
+    mapping(address => mapping(bytes32 => Votes)) private _votes;
 
     /// @param validators The array of validator addresses
     /// @dev Duplicates in the `validators` array are ignored.
@@ -63,27 +60,23 @@ contract Quorum is AbstractConsensus {
     }
 
     /// @notice Submit a claim.
-    /// @notice If the majority of the quorum submit a claim, it is accepted.
     /// @param appContract The application contract address
-    /// @param r The input range
-    /// @param epochHash The epoch hash
+    /// @param claim The output Merkle root hash
+    /// @dev Fires a `ClaimSubmission` event if the message sender is a validator.
+    /// @dev Fires a `ClaimAcceptance` event if the claim reaches a majority.
     /// @dev Can only be called by a validator.
-    function submitClaim(
-        address appContract,
-        InputRange calldata r,
-        bytes32 epochHash
-    ) external {
+    function submitClaim(address appContract, bytes32 claim) external {
         uint256 id = _validatorId[msg.sender];
         require(id > 0, "Quorum: caller is not validator");
 
-        emit ClaimSubmission(msg.sender, appContract, r, epochHash);
+        emit ClaimSubmission(msg.sender, appContract, claim);
 
-        Votes storage votes = _getVotes(appContract, r, epochHash);
+        Votes storage votes = _getVotes(appContract, claim);
 
         if (!votes.inFavorById.get(id)) {
             votes.inFavorById.set(id);
             if (++votes.inFavorCount == 1 + _numOfValidators / 2) {
-                _acceptClaim(appContract, r, epochHash);
+                _acceptClaim(appContract, claim);
             }
         }
     }
@@ -111,43 +104,37 @@ contract Quorum is AbstractConsensus {
 
     /// @notice Get the number of validators in favor of a claim.
     /// @param appContract The application contract address
-    /// @param r The input range
-    /// @param epochHash The epoch hash
+    /// @param claim The output Merkle root hash
     /// @return Number of validators in favor of claim
     function numOfValidatorsInFavorOf(
         address appContract,
-        InputRange calldata r,
-        bytes32 epochHash
+        bytes32 claim
     ) external view returns (uint256) {
-        return _getVotes(appContract, r, epochHash).inFavorCount;
+        return _getVotes(appContract, claim).inFavorCount;
     }
 
     /// @notice Check whether a validator is in favor of a claim.
     /// @param appContract The application contract address
-    /// @param r The input range
-    /// @param epochHash The epoch hash
+    /// @param claim The output Merkle root hash
     /// @param id The ID of the validator
     /// @return Whether validator is in favor of claim
     /// @dev Assumes the provided ID is valid.
     function isValidatorInFavorOf(
         address appContract,
-        InputRange calldata r,
-        bytes32 epochHash,
+        bytes32 claim,
         uint256 id
     ) external view returns (bool) {
-        return _getVotes(appContract, r, epochHash).inFavorById.get(id);
+        return _getVotes(appContract, claim).inFavorById.get(id);
     }
 
     /// @notice Get a `Votes` structure from storage from a given claim.
     /// @param appContract The application contract address
-    /// @param r The input range
-    /// @param epochHash The epoch hash
-    /// @return The `Votes` structure related to given claim
+    /// @param claim The output Merkle root hash
+    /// @return The `Votes` structure related to a given claim
     function _getVotes(
         address appContract,
-        InputRange calldata r,
-        bytes32 epochHash
+        bytes32 claim
     ) internal view returns (Votes storage) {
-        return _votes[appContract][r.firstIndex][r.lastIndex][epochHash];
+        return _votes[appContract][claim];
     }
 }

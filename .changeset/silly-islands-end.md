@@ -9,7 +9,7 @@ Modified the `ICartesiDApp` interface:
 -   Made it inherit from:
 
     -   `IERC721Receiver`.
-    -   `IERC1155Receiver` (which inherits from `IERC165`).
+    -   `IERC1155Receiver`.
 
 -   Modified the `executeVoucher` function:
 
@@ -27,16 +27,15 @@ Modified the `ICartesiDApp` interface:
 -   Modified the `VoucherExecuted` event:
 
     -   Renamed it as `OutputExecuted`.
-    -   Split the `voucherId` parameter into `inputIndex` and `outputIndexWithinInput` parameters.
+    -   Removed `voucherId` parameters.
+    -   Added an `outputIndex` parameter.
     -   Added an `output` parameter.
 
 -   Modified the `wasVoucherExecuted` function:
 
     -   Renamed it as `wasOutputExecuted`.
 
--   Added a `getInputBox` function.
-
--   Added a `getPortals` function.
+-   Added a `validateOutputHash` function.
 
 -   Added an `InputIndexOutOfRange` error.
 
@@ -44,8 +43,6 @@ Modified the `ICartesiDApp` interface:
 
 -   Added an `OutputNotReexecutable` error.
 
--   Added an `IncorrectEpochHash` error.
+-   Added an `InvalidOutputHashesSiblingsArrayLength` error.
 
--   Added an `IncorrectOutputsEpochRootHash` error.
-
--   Added an `IncorrectOutputHashesRootHash` error.
+-   Added an `ClaimNotAccepted` error.

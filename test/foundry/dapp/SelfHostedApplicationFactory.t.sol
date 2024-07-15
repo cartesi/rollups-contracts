@@ -12,8 +12,6 @@ import {ApplicationFactory} from "contracts/dapp/ApplicationFactory.sol";
 import {Application} from "contracts/dapp/Application.sol";
 import {ISelfHostedApplicationFactory} from "contracts/dapp/ISelfHostedApplicationFactory.sol";
 import {SelfHostedApplicationFactory} from "contracts/dapp/SelfHostedApplicationFactory.sol";
-import {IInputBox} from "contracts/inputs/IInputBox.sol";
-import {IPortal} from "contracts/portals/IPortal.sol";
 import {TestBase} from "../util/TestBase.sol";
 
 contract SelfHostedApplicationFactoryTest is TestBase {
@@ -46,8 +44,6 @@ contract SelfHostedApplicationFactoryTest is TestBase {
 
     function testDeployContracts(
         address authorityOwner,
-        IInputBox inputBox,
-        IPortal[] calldata portals,
         address appOwner,
         bytes32 templateHash,
         bytes32 salt
@@ -60,8 +56,6 @@ contract SelfHostedApplicationFactoryTest is TestBase {
 
         (appAddr, authorityAddr) = factory.calculateAddresses(
             authorityOwner,
-            inputBox,
-            portals,
             appOwner,
             templateHash,
             salt
@@ -72,8 +66,6 @@ contract SelfHostedApplicationFactoryTest is TestBase {
 
         (application, authority) = factory.deployContracts(
             authorityOwner,
-            inputBox,
-            portals,
             appOwner,
             templateHash,
             salt
@@ -85,8 +77,6 @@ contract SelfHostedApplicationFactoryTest is TestBase {
         assertEq(authority.owner(), authorityOwner);
 
         assertEq(address(application.getConsensus()), authorityAddr);
-        assertEq(address(application.getInputBox()), address(inputBox));
-        assertEq(abi.encode(application.getPortals()), abi.encode(portals));
         assertEq(application.owner(), appOwner);
         assertEq(application.getTemplateHash(), templateHash);
     }

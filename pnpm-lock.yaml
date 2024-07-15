@@ -5,9 +5,6 @@ settings:
   excludeLinksFromLockfile: false
 
 dependencies:
-  '@cartesi/util':
-    specifier: 6.3.0
-    version: 6.3.0
   '@openzeppelin/contracts':
     specifier: 5.0.2
     version: 5.0.2
@@ -137,10 +134,6 @@ packages:
     dependencies:
       regenerator-runtime: 0.14.1
     dev: true
-
-  /@cartesi/util@6.3.0:
-    resolution: {integrity: sha512-UgsyTklI4mf3ZbnPHQTuYJcMyldM3y9Xm+ib9xBgDzDq6TxMO81xkrPv/gwA23seHL2/bkJ5flXJEhCE8poW8Q==}
-    dev: false
 
   /@changesets/apply-release-plan@7.0.0:
     resolution: {integrity: sha512-vfi69JR416qC9hWmFGSxj7N6wA5J222XNBmezSVATPWDVPIF7gkd4d8CpbEbXmRWbVrkoli3oerGS6dcL/BGsQ==}

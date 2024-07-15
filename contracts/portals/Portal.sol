@@ -5,11 +5,10 @@ pragma solidity ^0.8.8;
 
 import {IPortal} from "./IPortal.sol";
 import {IInputBox} from "../inputs/IInputBox.sol";
-import {ERC165, IERC165} from "@openzeppelin/contracts/utils/introspection/ERC165.sol";
 
 /// @title Portal
 /// @notice This contract serves as a base for all the other portals.
-contract Portal is IPortal, ERC165 {
+contract Portal is IPortal {
     /// @notice The input box used by the portal.
     IInputBox internal immutable _inputBox;
 
@@ -21,13 +20,5 @@ contract Portal is IPortal, ERC165 {
 
     function getInputBox() external view override returns (IInputBox) {
         return _inputBox;
-    }
-
-    function supportsInterface(
-        bytes4 interfaceId
-    ) public view virtual override(ERC165, IERC165) returns (bool) {
-        return
-            interfaceId == type(IPortal).interfaceId ||
-            super.supportsInterface(interfaceId);
     }
 }
