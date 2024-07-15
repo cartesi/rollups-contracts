@@ -1,6 +1,6 @@
 {
     "name": "@cartesi/rollups",
-    "version": "2.0.0-rc.4",
+    "version": "2.0.0-rc.5",
     "scripts": {
         "build": "run-s compile export",
         "clean:ignored": "rimraf artifacts cache coverage deployments/localhost dist generated-src src/types/*",
