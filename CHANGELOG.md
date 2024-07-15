@@ -1,5 +1,36 @@
 # @cartesi/rollups
 
+## 2.0.0-rc.5
+
+### Major Changes
+
+- 5b46210: Add `validateOutputHash` function to `IApplication`
+- 5b46210: Removed `InputRange` struct
+- 5b46210: Refactored `IConsensus`
+
+  - Removed `InputRange` from functions and events
+  - Claim is now output hashes root hash
+  - Replaced `getEpochHash` with `wasClaimAccepted`
+
+- 5b46210: Updated `wasOutputExecuted` function signature
+
+  - Removed `inputIndex` parameter
+  - Renamed `outputIndexWithinInput` as `outputIndex`
+
+- 5b46210: Remove functions `getInputBox` and `getPortals` from `IApplication`
+- 5b46210: Removed parameters from `Application` contracts
+
+  - `IInputBox` (not used)
+  - `IPortals[]` (wasted gas on `SSTORE`, not used)
+
+- 5b46210: Removed support to ERC-165 (not used)
+- 5b46210: Remove `IInputBox` and `IPortal[]` parameters from `IApplicationFactory` and `ISelfHostedApplicationFactory` functions and events
+- 5b46210: Completely restructured `OutputValidityProof`
+
+  - Removed all fields
+  - Added `outputIndex`
+  - Added `outputHashesSiblings`
+
 ## 2.0.0-rc.4
 
 ### Major Changes
