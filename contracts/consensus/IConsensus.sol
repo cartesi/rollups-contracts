@@ -3,12 +3,13 @@
 
 pragma solidity ^0.8.8;
 
-/// @notice Provides consensus over the set of valid output Merkle root hashes for applications.
-/// @notice The latest output Merkle root hash is available after the machine processes every input.
-/// This hash can be later used to prove that any given output was ever produced by the machine.
-/// @notice After an epoch is finalized, a validator may submit a claim containing the application contract address,
-/// and the output Merkle root hash.
-/// @notice Validators may synchronize epoch finalization, but such mechanism is not specified by this interface.
+/// @notice Each application has its own stream of inputs.
+/// See the `IInputBox` interface for calldata-based on-chain data availability.
+/// @notice When an input is fed to the application, it may yield several outputs.
+/// @notice Since genesis, a Merkle tree of all outputs ever produced is maintained
+/// both inside and outside the Cartesi Machine.
+/// @notice The claim that validators may submit to the consensus contract
+/// is the root of this Merkle tree after processing all base layer blocks until some height.
 /// @notice A validator should be able to save transaction fees by not submitting a claim if it was...
 /// - already submitted by the validator (see the `ClaimSubmission` event) or;
 /// - already accepted by the consensus (see the `ClaimAcceptance` event).
@@ -22,30 +23,41 @@ interface IConsensus {
     /// @notice MUST trigger when a claim is submitted.
     /// @param submitter The submitter address
     /// @param appContract The application contract address
-    /// @param claim The output Merkle root hash
+    /// @param lastProcessedBlockNumber The number of the last processed block
+    /// @param claim The root of the Merkle tree of outputs
     event ClaimSubmission(
         address indexed submitter,
         address indexed appContract,
+        uint256 lastProcessedBlockNumber,
         bytes32 claim
     );
 
     /// @notice MUST trigger when a claim is accepted.
     /// @param appContract The application contract address
-    /// @param claim The output Merkle root hash
-    /// @dev MUST be triggered after some `ClaimSubmission` event regarding `appContract`.
-    event ClaimAcceptance(address indexed appContract, bytes32 claim);
+    /// @param lastProcessedBlockNumber The number of the last processed block
+    /// @param claim The root of the Merkle tree of outputs
+    event ClaimAcceptance(
+        address indexed appContract,
+        uint256 lastProcessedBlockNumber,
+        bytes32 claim
+    );
 
     /// @notice Submit a claim to the consensus.
     /// @param appContract The application contract address
-    /// @param claim The output Merkle root hash
+    /// @param lastProcessedBlockNumber The number of the last processed block
+    /// @param claim The root of the Merkle tree of outputs
     /// @dev MUST fire a `ClaimSubmission` event.
     /// @dev MAY fire a `ClaimAcceptance` event, if the acceptance criteria is met.
-    function submitClaim(address appContract, bytes32 claim) external;
+    function submitClaim(
+        address appContract,
+        uint256 lastProcessedBlockNumber,
+        bytes32 claim
+    ) external;
 
     /// @notice Check if an output Merkle root hash was ever accepted by the consensus
     /// for a particular application.
     /// @param appContract The application contract address
-    /// @param claim The output Merkle root hash
+    /// @param claim The root of the Merkle tree of outputs
     function wasClaimAccepted(
         address appContract,
         bytes32 claim

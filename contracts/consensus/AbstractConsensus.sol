@@ -25,10 +25,15 @@ abstract contract AbstractConsensus is IConsensus {
 
     /// @notice Accept a claim.
     /// @param appContract The application contract address
+    /// @param lastProcessedBlockNumber The number of the last processed block
     /// @param claim The output Merkle root hash
     /// @dev Emits a `ClaimAcceptance` event.
-    function _acceptClaim(address appContract, bytes32 claim) internal {
+    function _acceptClaim(
+        address appContract,
+        uint256 lastProcessedBlockNumber,
+        bytes32 claim
+    ) internal {
         _acceptedClaims[appContract][claim] = true;
-        emit ClaimAcceptance(appContract, claim);
+        emit ClaimAcceptance(appContract, lastProcessedBlockNumber, claim);
     }
 }

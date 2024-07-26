@@ -61,6 +61,7 @@ contract AuthorityTest is TestBase {
         address owner,
         address notOwner,
         address appContract,
+        uint256 lastProcessedBlockNumber,
         bytes32 claim
     ) public {
         vm.assume(owner != address(0));
@@ -76,22 +77,29 @@ contract AuthorityTest is TestBase {
         );
 
         vm.prank(notOwner);
-        authority.submitClaim(appContract, claim);
+        authority.submitClaim(appContract, lastProcessedBlockNumber, claim);
     }
 
     function testSubmitClaim(
         address owner,
         address appContract,
+        uint256 lastProcessedBlockNumber,
         bytes32 claim
     ) public {
         vm.assume(owner != address(0));
 
         Authority authority = new Authority(owner);
 
-        _expectClaimEvents(authority, owner, appContract, claim);
+        _expectClaimEvents(
+            authority,
+            owner,
+            appContract,
+            lastProcessedBlockNumber,
+            claim
+        );
 
         vm.prank(owner);
-        authority.submitClaim(appContract, claim);
+        authority.submitClaim(appContract, lastProcessedBlockNumber, claim);
 
         assertTrue(authority.wasClaimAccepted(appContract, claim));
     }
@@ -112,12 +120,22 @@ contract AuthorityTest is TestBase {
         Authority authority,
         address owner,
         address appContract,
+        uint256 lastProcessedBlockNumber,
         bytes32 claim
     ) internal {
         vm.expectEmit(true, true, false, true, address(authority));
-        emit IConsensus.ClaimSubmission(owner, appContract, claim);
+        emit IConsensus.ClaimSubmission(
+            owner,
+            appContract,
+            lastProcessedBlockNumber,
+            claim
+        );
 
         vm.expectEmit(true, false, false, true, address(authority));
-        emit IConsensus.ClaimAcceptance(appContract, claim);
+        emit IConsensus.ClaimAcceptance(
+            appContract,
+            lastProcessedBlockNumber,
+            claim
+        );
     }
 }

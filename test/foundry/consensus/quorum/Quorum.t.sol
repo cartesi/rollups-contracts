@@ -13,6 +13,7 @@ import {Vm} from "forge-std/Vm.sol";
 
 struct Claim {
     address appContract;
+    uint256 lastProcessedBlockNumber;
     bytes32 outputHashesRootHash;
 }
 
@@ -24,6 +25,7 @@ library LibQuorum {
         return
             quorum.numOfValidatorsInFavorOf(
                 claim.appContract,
+                claim.lastProcessedBlockNumber,
                 claim.outputHashesRootHash
             );
     }
@@ -36,13 +38,18 @@ library LibQuorum {
         return
             quorum.isValidatorInFavorOf(
                 claim.appContract,
+                claim.lastProcessedBlockNumber,
                 claim.outputHashesRootHash,
                 id
             );
     }
 
     function submitClaim(Quorum quorum, Claim calldata claim) internal {
-        quorum.submitClaim(claim.appContract, claim.outputHashesRootHash);
+        quorum.submitClaim(
+            claim.appContract,
+            claim.lastProcessedBlockNumber,
+            claim.outputHashesRootHash
+        );
     }
 
     function wasClaimAccepted(
@@ -249,13 +256,17 @@ contract QuorumTest is TestBase {
                 entry.emitter == address(quorum) &&
                 entry.topics[0] == IConsensus.ClaimSubmission.selector
             ) {
-                bytes32 outputHashesRootHash = abi.decode(
-                    entry.data,
-                    (bytes32)
-                );
+                (
+                    uint256 lastProcessedBlockNumber,
+                    bytes32 outputHashesRootHash
+                ) = abi.decode(entry.data, (uint256, bytes32));
 
                 assertEq(entry.topics[1], validator.asTopic());
                 assertEq(entry.topics[2], claim.appContract.asTopic());
+                assertEq(
+                    lastProcessedBlockNumber,
+                    claim.lastProcessedBlockNumber
+                );
                 assertEq(outputHashesRootHash, claim.outputHashesRootHash);
 
                 ++numOfSubmissions;
@@ -265,12 +276,16 @@ contract QuorumTest is TestBase {
                 entry.emitter == address(quorum) &&
                 entry.topics[0] == IConsensus.ClaimAcceptance.selector
             ) {
-                bytes32 outputHashesRootHash = abi.decode(
-                    entry.data,
-                    (bytes32)
-                );
+                (
+                    uint256 lastProcessedBlockNumber,
+                    bytes32 outputHashesRootHash
+                ) = abi.decode(entry.data, (uint256, bytes32));
 
                 assertEq(entry.topics[1], claim.appContract.asTopic());
+                assertEq(
+                    lastProcessedBlockNumber,
+                    claim.lastProcessedBlockNumber
+                );
                 assertEq(outputHashesRootHash, claim.outputHashesRootHash);
 
                 ++numOfAcceptances;

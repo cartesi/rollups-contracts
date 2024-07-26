@@ -487,7 +487,7 @@ contract ApplicationTest is TestBase {
     function _submitClaim() internal {
         bytes32 claim = _emulator.getClaim();
         vm.prank(_authorityOwner);
-        _consensus.submitClaim(address(_appContract), claim);
+        _consensus.submitClaim(address(_appContract), 0, claim);
     }
 
     function _expectEmitOutputExecuted(
