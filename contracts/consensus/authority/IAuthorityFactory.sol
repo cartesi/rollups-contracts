@@ -10,10 +10,9 @@ interface IAuthorityFactory {
     // Events
 
     /// @notice A new authority was deployed.
-    /// @param authorityOwner The initial authority owner
     /// @param authority The authority
     /// @dev MUST be triggered on a successful call to `newAuthority`.
-    event AuthorityCreated(address authorityOwner, Authority authority);
+    event AuthorityCreated(Authority authority);
 
     // Permissionless functions
 

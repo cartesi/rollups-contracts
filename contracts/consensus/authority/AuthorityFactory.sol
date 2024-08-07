@@ -16,7 +16,7 @@ contract AuthorityFactory is IAuthorityFactory {
     ) external override returns (Authority) {
         Authority authority = new Authority(authorityOwner);
 
-        emit AuthorityCreated(authorityOwner, authority);
+        emit AuthorityCreated(authority);
 
         return authority;
     }
@@ -27,7 +27,7 @@ contract AuthorityFactory is IAuthorityFactory {
     ) external override returns (Authority) {
         Authority authority = new Authority{salt: salt}(authorityOwner);
 
-        emit AuthorityCreated(authorityOwner, authority);
+        emit AuthorityCreated(authority);
 
         return authority;
     }
