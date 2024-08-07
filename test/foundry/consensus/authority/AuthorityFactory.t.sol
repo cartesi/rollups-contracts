@@ -4,55 +4,103 @@
 /// @title Authority Factory Test
 pragma solidity ^0.8.22;
 
+import {Vm} from "forge-std/Vm.sol";
 import {Test} from "forge-std/Test.sol";
+import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
+
 import {AuthorityFactory, IAuthorityFactory} from "contracts/consensus/authority/AuthorityFactory.sol";
 import {Authority} from "contracts/consensus/authority/Authority.sol";
-import {Vm} from "forge-std/Vm.sol";
 
 contract AuthorityFactoryTest is Test {
     AuthorityFactory _factory;
-
-    struct AuthorityCreatedEventData {
-        address authorityOwner;
-        Authority authority;
-    }
 
     function setUp() public {
         _factory = new AuthorityFactory();
     }
 
-    function testNewAuthority(address authorityOwner) public {
-        vm.assume(authorityOwner != address(0));
+    function testRevertsOwnerAddressZero(
+        uint256 epochLength,
+        bytes32 salt
+    ) public {
+        vm.assume(epochLength > 0);
 
-        vm.recordLogs();
+        vm.expectRevert(
+            abi.encodeWithSelector(
+                Ownable.OwnableInvalidOwner.selector,
+                address(0)
+            )
+        );
+        _factory.newAuthority(address(0), epochLength);
 
-        Authority authority = _factory.newAuthority(authorityOwner);
-
-        _testNewAuthorityAux(authorityOwner, authority);
+        vm.expectRevert(
+            abi.encodeWithSelector(
+                Ownable.OwnableInvalidOwner.selector,
+                address(0)
+            )
+        );
+        _factory.newAuthority(address(0), epochLength, salt);
     }
 
-    function testNewAuthorityDeterministic(
+    function testRevertsEpochLengthZero(
         address authorityOwner,
         bytes32 salt
     ) public {
         vm.assume(authorityOwner != address(0));
 
+        vm.expectRevert("epoch length must not be zero");
+        _factory.newAuthority(authorityOwner, 0);
+
+        vm.expectRevert("epoch length must not be zero");
+        _factory.newAuthority(authorityOwner, 0, salt);
+    }
+
+    function testNewAuthority(
+        address authorityOwner,
+        uint256 epochLength
+    ) public {
+        vm.assume(authorityOwner != address(0));
+        vm.assume(epochLength > 0);
+
+        vm.recordLogs();
+
+        Authority authority = _factory.newAuthority(
+            authorityOwner,
+            epochLength
+        );
+
+        _testNewAuthorityAux(authorityOwner, epochLength, authority);
+    }
+
+    function testNewAuthorityDeterministic(
+        address authorityOwner,
+        uint256 epochLength,
+        bytes32 salt
+    ) public {
+        vm.assume(authorityOwner != address(0));
+        vm.assume(epochLength > 0);
+
         address precalculatedAddress = _factory.calculateAuthorityAddress(
             authorityOwner,
+            epochLength,
             salt
         );
 
         vm.recordLogs();
 
-        Authority authority = _factory.newAuthority(authorityOwner, salt);
+        Authority authority = _factory.newAuthority(
+            authorityOwner,
+            epochLength,
+            salt
+        );
 
-        _testNewAuthorityAux(authorityOwner, authority);
+        _testNewAuthorityAux(authorityOwner, epochLength, authority);
 
         // Precalculated address must match actual address
         assertEq(precalculatedAddress, address(authority));
 
         precalculatedAddress = _factory.calculateAuthorityAddress(
             authorityOwner,
+            epochLength,
             salt
         );
 
@@ -61,11 +109,12 @@ contract AuthorityFactoryTest is Test {
 
         // Cannot deploy an authority with the same salt twice
         vm.expectRevert();
-        _factory.newAuthority(authorityOwner, salt);
+        _factory.newAuthority(authorityOwner, epochLength, salt);
     }
 
     function _testNewAuthorityAux(
         address authorityOwner,
+        uint256 epochLength,
         Authority authority
     ) internal {
         Vm.Log[] memory entries = vm.getRecordedLogs();
@@ -81,16 +130,14 @@ contract AuthorityFactoryTest is Test {
             ) {
                 ++numOfAuthorityCreated;
 
-                AuthorityCreatedEventData memory eventData;
+                address authorityAddress = abi.decode(entry.data, (address));
 
-                eventData = abi.decode(entry.data, (AuthorityCreatedEventData));
-
-                assertEq(authorityOwner, eventData.authorityOwner);
-                assertEq(address(authority), address(eventData.authority));
+                assertEq(address(authority), authorityAddress);
             }
         }
 
         assertEq(numOfAuthorityCreated, 1);
         assertEq(authority.owner(), authorityOwner);
+        assertEq(authority.getEpochLength(), epochLength);
     }
 }

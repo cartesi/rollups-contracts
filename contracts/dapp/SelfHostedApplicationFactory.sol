@@ -47,11 +47,16 @@ contract SelfHostedApplicationFactory is ISelfHostedApplicationFactory {
 
     function deployContracts(
         address authorityOwner,
+        uint256 epochLength,
         address appOwner,
         bytes32 templateHash,
         bytes32 salt
     ) external returns (Application application, Authority authority) {
-        authority = _authorityFactory.newAuthority(authorityOwner, salt);
+        authority = _authorityFactory.newAuthority(
+            authorityOwner,
+            epochLength,
+            salt
+        );
 
         application = _applicationFactory.newApplication(
             authority,
@@ -63,12 +68,14 @@ contract SelfHostedApplicationFactory is ISelfHostedApplicationFactory {
 
     function calculateAddresses(
         address authorityOwner,
+        uint256 epochLength,
         address appOwner,
         bytes32 templateHash,
         bytes32 salt
     ) external view returns (address application, address authority) {
         authority = _authorityFactory.calculateAuthorityAddress(
             authorityOwner,
+            epochLength,
             salt
         );
 

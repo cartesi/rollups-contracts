@@ -23,13 +23,18 @@ interface ISelfHostedApplicationFactory {
 
     /// @notice Deploy new application and authority contracts deterministically.
     /// @param authorityOwner The initial authority owner
+    /// @param epochLength The epoch length
     /// @param appOwner The initial Application owner
     /// @param templateHash The initial machine state hash
     /// @param salt The salt used to deterministically generate the addresses
     /// @return The application contract
     /// @return The authority contract
+    /// @dev Reverts if the authority owner address is zero.
+    /// @dev Reverts if the application owner address is zero.
+    /// @dev Reverts if the epoch length is zero.
     function deployContracts(
         address authorityOwner,
+        uint256 epochLength,
         address appOwner,
         bytes32 templateHash,
         bytes32 salt
@@ -38,6 +43,7 @@ interface ISelfHostedApplicationFactory {
     /// @notice Calculate the addresses of the application and authority contracts
     /// to be deployed deterministically.
     /// @param authorityOwner The initial authority owner
+    /// @param epochLength The epoch length
     /// @param appOwner The initial Application owner
     /// @param templateHash The initial machine state hash
     /// @param salt The salt used to deterministically generate the addresses
@@ -45,6 +51,7 @@ interface ISelfHostedApplicationFactory {
     /// @return The authority address
     function calculateAddresses(
         address authorityOwner,
+        uint256 epochLength,
         address appOwner,
         bytes32 templateHash,
         bytes32 salt

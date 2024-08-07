@@ -13,18 +13,30 @@ import {AbstractConsensus} from "../AbstractConsensus.sol";
 ///      For more information on `Ownable`, please consult OpenZeppelin's official documentation.
 contract Authority is AbstractConsensus, Ownable {
     /// @param initialOwner The initial contract owner
-    constructor(address initialOwner) Ownable(initialOwner) {}
+    /// @param epochLength The epoch length
+    /// @dev Reverts if the epoch length is zero.
+    constructor(
+        address initialOwner,
+        uint256 epochLength
+    ) AbstractConsensus(epochLength) Ownable(initialOwner) {}
 
     /// @notice Submit a claim.
     /// @param appContract The application contract address
+    /// @param lastProcessedBlockNumber The number of the last processed block
     /// @param claim The output Merkle root hash
     /// @dev Fires a `ClaimSubmission` event and a `ClaimAcceptance` event.
     /// @dev Can only be called by the owner.
     function submitClaim(
         address appContract,
+        uint256 lastProcessedBlockNumber,
         bytes32 claim
     ) external onlyOwner {
-        emit ClaimSubmission(msg.sender, appContract, claim);
-        _acceptClaim(appContract, claim);
+        emit ClaimSubmission(
+            msg.sender,
+            appContract,
+            lastProcessedBlockNumber,
+            claim
+        );
+        _acceptClaim(appContract, lastProcessedBlockNumber, claim);
     }
 }
