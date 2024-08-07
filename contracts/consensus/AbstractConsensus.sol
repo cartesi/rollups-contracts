@@ -12,10 +12,7 @@ abstract contract AbstractConsensus is IConsensus {
     /// @notice Indexes accepted claims by application contract address.
     mapping(address => mapping(bytes32 => bool)) private _acceptedClaims;
 
-    /// @notice Check if an output Merkle root hash was ever accepted by the consensus
-    /// for a particular application.
-    /// @param appContract The application contract address
-    /// @param claim The output Merkle root hash
+    /// @inheritdoc IConsensus
     function wasClaimAccepted(
         address appContract,
         bytes32 claim
