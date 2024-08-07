@@ -1,5 +1,21 @@
 # @cartesi/rollups
 
+## 2.0.0-rc.6
+
+### Major Changes
+
+- f8c25e9: Added a `lastProcessedBlockNumber` parameter to `IConsensus` functions and events.
+- 3d40890: Removed `authorityOwner` parameter from `AuthorityCreated` event.
+- 7f27379: Added an `epochLength` parameter to functions of:
+
+  - `IAuthorityFactory`
+  - `ISelfHostedApplicationFactory`
+  - `IQuorumFactory`
+
+### Minor Changes
+
+- 7f27379: Added a `getEpochLength` function to `IConsensus` interface.
+
 ## 2.0.0-rc.5
 
 ### Major Changes
