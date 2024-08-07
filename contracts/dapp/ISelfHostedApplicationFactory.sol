@@ -28,6 +28,8 @@ interface ISelfHostedApplicationFactory {
     /// @param salt The salt used to deterministically generate the addresses
     /// @return The application contract
     /// @return The authority contract
+    /// @dev Reverts if the authority owner address is zero.
+    /// @dev Reverts if the application owner address is zero.
     function deployContracts(
         address authorityOwner,
         address appOwner,

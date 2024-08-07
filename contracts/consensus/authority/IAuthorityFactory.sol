@@ -20,6 +20,7 @@ interface IAuthorityFactory {
     /// @param authorityOwner The initial authority owner
     /// @return The authority
     /// @dev On success, MUST emit an `AuthorityCreated` event.
+    /// @dev Reverts if the authority owner address is zero.
     function newAuthority(address authorityOwner) external returns (Authority);
 
     /// @notice Deploy a new authority deterministically.
@@ -27,6 +28,7 @@ interface IAuthorityFactory {
     /// @param salt The salt used to deterministically generate the authority address
     /// @return The authority
     /// @dev On success, MUST emit an `AuthorityCreated` event.
+    /// @dev Reverts if the authority owner address is zero.
     function newAuthority(
         address authorityOwner,
         bytes32 salt

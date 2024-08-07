@@ -44,6 +44,7 @@ contract Application is
     /// @param consensus The initial consensus contract
     /// @param initialOwner The initial application owner
     /// @param templateHash The initial machine state hash
+    /// @dev Reverts if the initial application owner address is zero.
     constructor(
         IConsensus consensus,
         address initialOwner,

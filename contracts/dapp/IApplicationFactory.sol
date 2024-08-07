@@ -31,6 +31,7 @@ interface IApplicationFactory {
     /// @param templateHash The initial machine state hash
     /// @return The application
     /// @dev On success, MUST emit an `ApplicationCreated` event.
+    /// @dev Reverts if the application owner address is zero.
     function newApplication(
         IConsensus consensus,
         address appOwner,
@@ -44,6 +45,7 @@ interface IApplicationFactory {
     /// @param salt The salt used to deterministically generate the application contract address
     /// @return The application
     /// @dev On success, MUST emit an `ApplicationCreated` event.
+    /// @dev Reverts if the application owner address is zero.
     function newApplication(
         IConsensus consensus,
         address appOwner,
