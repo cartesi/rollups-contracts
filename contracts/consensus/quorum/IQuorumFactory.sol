@@ -20,6 +20,7 @@ interface IQuorumFactory {
     /// @param validators the list of validators
     /// @return The quorum
     /// @dev On success, MUST emit a `QuorumCreated` event.
+    /// @dev Duplicates in the `validators` array are ignored.
     function newQuorum(address[] calldata validators) external returns (Quorum);
 
     /// @notice Deploy a new quorum deterministically.
@@ -27,6 +28,7 @@ interface IQuorumFactory {
     /// @param salt The salt used to deterministically generate the quorum address
     /// @return The quorum
     /// @dev On success, MUST emit a `QuorumCreated` event.
+    /// @dev Duplicates in the `validators` array are ignored.
     function newQuorum(
         address[] calldata validators,
         bytes32 salt
