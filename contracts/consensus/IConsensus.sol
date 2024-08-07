@@ -62,4 +62,9 @@ interface IConsensus {
         address appContract,
         bytes32 claim
     ) external view returns (bool);
+
+    /// @notice Get the epoch length, in number of base layer blocks.
+    /// @dev The epoch number of a block is defined as
+    /// the integer division of the block number by the epoch length.
+    function getEpochLength() external view returns (uint256);
 }

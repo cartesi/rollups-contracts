@@ -47,8 +47,13 @@ contract Quorum is AbstractConsensus {
         private _votes;
 
     /// @param validators The array of validator addresses
+    /// @param epochLength The epoch length
     /// @dev Duplicates in the `validators` array are ignored.
-    constructor(address[] memory validators) {
+    /// @dev Reverts if the epoch length is zero.
+    constructor(
+        address[] memory validators,
+        uint256 epochLength
+    ) AbstractConsensus(epochLength) {
         uint256 n;
         for (uint256 i; i < validators.length; ++i) {
             address validator = validators[i];

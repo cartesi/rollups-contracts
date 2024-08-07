@@ -68,12 +68,18 @@ contract QuorumTest is TestBase {
     using LibQuorum for Quorum;
     using LibTopic for address;
 
-    function testConstructor(uint8 numOfValidators) external {
+    function testConstructor(
+        uint8 numOfValidators,
+        uint256 epochLength
+    ) external {
+        vm.assume(epochLength > 0);
+
         address[] memory validators = _generateAddresses(numOfValidators);
 
-        Quorum quorum = new Quorum(validators);
+        Quorum quorum = new Quorum(validators, epochLength);
 
         assertEq(quorum.numOfValidators(), numOfValidators);
+        assertEq(quorum.getEpochLength(), epochLength);
 
         for (uint256 i; i < numOfValidators; ++i) {
             address validator = validators[i];
@@ -83,7 +89,14 @@ contract QuorumTest is TestBase {
         }
     }
 
-    function testConstructorIgnoresDuplicates() external {
+    function testRevertsEpochLengthZero(uint8 numOfValidators) external {
+        vm.expectRevert("epoch length must not be zero");
+        new Quorum(_generateAddresses(numOfValidators), 0);
+    }
+
+    function testConstructorIgnoresDuplicates(uint256 epochLength) external {
+        vm.assume(epochLength > 0);
+
         address[] memory validators = new address[](7);
 
         validators[0] = vm.addr(1);
@@ -94,7 +107,7 @@ contract QuorumTest is TestBase {
         validators[5] = vm.addr(1);
         validators[6] = vm.addr(3);
 
-        Quorum quorum = new Quorum(validators);
+        Quorum quorum = new Quorum(validators, epochLength);
 
         assertEq(quorum.numOfValidators(), 3);
 
@@ -104,10 +117,16 @@ contract QuorumTest is TestBase {
         }
     }
 
-    function testValidatorId(uint8 numOfValidators, address addr) external {
+    function testValidatorId(
+        uint8 numOfValidators,
+        address addr,
+        uint256 epochLength
+    ) external {
+        vm.assume(epochLength > 0);
+
         address[] memory validators = _generateAddresses(numOfValidators);
 
-        Quorum quorum = new Quorum(validators);
+        Quorum quorum = new Quorum(validators, epochLength);
 
         uint256 id = quorum.validatorId(addr);
 
@@ -119,39 +138,47 @@ contract QuorumTest is TestBase {
         }
     }
 
-    function testValidatorByIdZero(uint8 numOfValidators) external {
-        Quorum quorum = _deployQuorum(numOfValidators);
+    function testValidatorByIdZero(
+        uint8 numOfValidators,
+        uint256 epochLength
+    ) external {
+        Quorum quorum = _deployQuorum(numOfValidators, epochLength);
         assertEq(quorum.validatorById(0), address(0));
     }
 
     function testValidatorByIdValid(
         uint8 numOfValidators,
-        uint256 id
+        uint256 id,
+        uint256 epochLength
     ) external {
         numOfValidators = uint8(bound(numOfValidators, 1, type(uint8).max));
         id = bound(id, 1, numOfValidators);
-        Quorum quorum = _deployQuorum(numOfValidators);
+        Quorum quorum = _deployQuorum(numOfValidators, epochLength);
         address validator = quorum.validatorById(id);
         assertEq(quorum.validatorId(validator), id);
     }
 
     function testValidatorByIdTooLarge(
         uint8 numOfValidators,
-        uint256 id
+        uint256 id,
+        uint256 epochLength
     ) external {
         id = bound(id, uint256(numOfValidators) + 1, type(uint256).max);
-        Quorum quorum = _deployQuorum(numOfValidators);
+        Quorum quorum = _deployQuorum(numOfValidators, epochLength);
         assertEq(quorum.validatorById(id), address(0));
     }
 
     function testSubmitClaimRevertsNotValidator(
         uint8 numOfValidators,
+        uint256 epochLength,
         address caller,
         Claim calldata claim
     ) external {
+        vm.assume(epochLength > 0);
+
         address[] memory validators = _generateAddresses(numOfValidators);
 
-        Quorum quorum = new Quorum(validators);
+        Quorum quorum = new Quorum(validators, epochLength);
 
         vm.assume(!_contains(validators, caller));
 
@@ -163,27 +190,30 @@ contract QuorumTest is TestBase {
 
     function testNumOfValidatorsInFavorOf(
         uint8 numOfValidators,
+        uint256 epochLength,
         Claim calldata claim
     ) external {
-        Quorum quorum = _deployQuorum(numOfValidators);
+        Quorum quorum = _deployQuorum(numOfValidators, epochLength);
         assertEq(quorum.numOfValidatorsInFavorOf(claim), 0);
     }
 
     function testIsValidatorInFavorOf(
         uint8 numOfValidators,
+        uint256 epochLength,
         Claim calldata claim,
         uint256 id
     ) external {
-        Quorum quorum = _deployQuorum(numOfValidators);
+        Quorum quorum = _deployQuorum(numOfValidators, epochLength);
         assertFalse(quorum.isValidatorInFavorOf(claim, id));
     }
 
     function testSubmitClaim(
         uint8 numOfValidators,
+        uint256 epochLength,
         Claim calldata claim
     ) external {
         numOfValidators = uint8(bound(numOfValidators, 1, 7));
-        Quorum quorum = _deployQuorum(numOfValidators);
+        Quorum quorum = _deployQuorum(numOfValidators, epochLength);
         bool[] memory inFavorOf = new bool[](numOfValidators + 1);
         for (uint256 id = 1; id <= numOfValidators; ++id) {
             _submitClaimAs(quorum, claim, id);
@@ -196,10 +226,13 @@ contract QuorumTest is TestBase {
     /// @dev Each slot has 256 bits, one for each validator ID.
     /// The first bit is skipped because validator IDs start from 1.
     /// Therefore, validator ID 256 is the first to use a new slot.
-    function testSubmitClaim256(Claim calldata claim) external {
+    function testSubmitClaim256(
+        Claim calldata claim,
+        uint256 epochLength
+    ) external {
         uint256 numOfValidators = 256;
 
-        Quorum quorum = _deployQuorum(numOfValidators);
+        Quorum quorum = _deployQuorum(numOfValidators, epochLength);
 
         uint256 id = numOfValidators;
 
@@ -212,8 +245,12 @@ contract QuorumTest is TestBase {
     // Internal functions
     // ------------------
 
-    function _deployQuorum(uint256 numOfValidators) internal returns (Quorum) {
-        return new Quorum(_generateAddresses(numOfValidators));
+    function _deployQuorum(
+        uint256 numOfValidators,
+        uint256 epochLength
+    ) internal returns (Quorum) {
+        vm.assume(epochLength > 0);
+        return new Quorum(_generateAddresses(numOfValidators), epochLength);
     }
 
     function _checkSubmitted(

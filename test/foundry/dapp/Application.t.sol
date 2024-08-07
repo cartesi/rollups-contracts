@@ -54,6 +54,7 @@ contract ApplicationTest is TestBase {
     uint256[] _transferAmounts;
     mapping(string => LibEmulator.OutputIndex) _outputIndexByName;
 
+    uint256 constant _epochLength = 1;
     bytes32 constant _templateHash = keccak256("templateHash");
     uint256 constant _initialSupply = 1000000000000000000000000000000000000;
     uint256 constant _tokenId = 88888888;
@@ -325,7 +326,7 @@ contract ApplicationTest is TestBase {
             _tokenIds,
             _initialSupplies
         );
-        _consensus = new Authority(_authorityOwner);
+        _consensus = new Authority(_authorityOwner, _epochLength);
         _appContract = new Application(_consensus, _appOwner, _templateHash);
         _safeERC20Transfer = new SafeERC20Transfer();
     }
