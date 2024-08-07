@@ -13,7 +13,12 @@ import {AbstractConsensus} from "../AbstractConsensus.sol";
 ///      For more information on `Ownable`, please consult OpenZeppelin's official documentation.
 contract Authority is AbstractConsensus, Ownable {
     /// @param initialOwner The initial contract owner
-    constructor(address initialOwner) Ownable(initialOwner) {}
+    /// @param epochLength The epoch length
+    /// @dev Reverts if the epoch length is zero.
+    constructor(
+        address initialOwner,
+        uint256 epochLength
+    ) AbstractConsensus(epochLength) Ownable(initialOwner) {}
 
     /// @notice Submit a claim.
     /// @param appContract The application contract address

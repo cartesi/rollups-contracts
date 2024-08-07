@@ -18,37 +18,58 @@ contract QuorumFactoryTest is TestBase {
         _factory = new QuorumFactory();
     }
 
-    function testNewQuorum(uint256 seed) public {
+    function testRevertsEpochLengthZero(uint256 seed, bytes32 salt) public {
+        uint256 numOfValidators = bound(seed, 1, _QUORUM_MAX_SIZE);
+        address[] memory validators = _generateAddresses(numOfValidators);
+
+        vm.expectRevert("epoch length must not be zero");
+        _factory.newQuorum(validators, 0);
+
+        vm.expectRevert("epoch length must not be zero");
+        _factory.newQuorum(validators, 0, salt);
+    }
+
+    function testNewQuorum(uint256 seed, uint256 epochLength) public {
+        vm.assume(epochLength > 0);
+
         uint256 numOfValidators = bound(seed, 1, _QUORUM_MAX_SIZE);
         address[] memory validators = _generateAddresses(numOfValidators);
 
         vm.recordLogs();
 
-        Quorum quorum = _factory.newQuorum(validators);
+        Quorum quorum = _factory.newQuorum(validators, epochLength);
 
-        _testNewQuorumAux(validators, quorum);
+        _testNewQuorumAux(validators, epochLength, quorum);
     }
 
-    function testNewQuorumDeterministic(uint256 seed, bytes32 salt) public {
+    function testNewQuorumDeterministic(
+        uint256 seed,
+        uint256 epochLength,
+        bytes32 salt
+    ) public {
+        vm.assume(epochLength > 0);
+
         uint256 numOfValidators = bound(seed, 1, _QUORUM_MAX_SIZE);
         address[] memory validators = _generateAddresses(numOfValidators);
 
         address precalculatedAddress = _factory.calculateQuorumAddress(
             validators,
+            epochLength,
             salt
         );
 
         vm.recordLogs();
 
-        Quorum quorum = _factory.newQuorum(validators, salt);
+        Quorum quorum = _factory.newQuorum(validators, epochLength, salt);
 
-        _testNewQuorumAux(validators, quorum);
+        _testNewQuorumAux(validators, epochLength, quorum);
 
         // Precalculated address must match actual address
         assertEq(precalculatedAddress, address(quorum));
 
         precalculatedAddress = _factory.calculateQuorumAddress(
             validators,
+            epochLength,
             salt
         );
 
@@ -57,11 +78,12 @@ contract QuorumFactoryTest is TestBase {
 
         // Cannot deploy a quorum with the same salt twice
         vm.expectRevert();
-        _factory.newQuorum(validators, salt);
+        _factory.newQuorum(validators, epochLength, salt);
     }
 
     function _testNewQuorumAux(
         address[] memory validators,
+        uint256 epochLength,
         Quorum quorum
     ) internal {
         Vm.Log[] memory entries = vm.getRecordedLogs();
@@ -86,5 +108,7 @@ contract QuorumFactoryTest is TestBase {
         for (uint256 i; i < numOfValidators; ++i) {
             assertEq(validators[i], quorum.validatorById(i + 1));
         }
+
+        assertEq(epochLength, quorum.getEpochLength());
     }
 }

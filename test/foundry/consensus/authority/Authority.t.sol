@@ -16,12 +16,13 @@ import {LibTopic} from "../../util/LibTopic.sol";
 contract AuthorityTest is TestBase {
     using LibTopic for address;
 
-    function testConstructor(address owner) public {
+    function testConstructor(address owner, uint256 epochLength) public {
         vm.assume(owner != address(0));
+        vm.assume(epochLength > 0);
 
         vm.recordLogs();
 
-        Authority authority = new Authority(owner);
+        Authority authority = new Authority(owner, epochLength);
 
         Vm.Log[] memory entries = vm.getRecordedLogs();
 
@@ -45,29 +46,41 @@ contract AuthorityTest is TestBase {
 
         assertEq(numOfOwnershipTransferred, 1);
         assertEq(authority.owner(), owner);
+        assertEq(authority.getEpochLength(), epochLength);
     }
 
-    function testRevertsOwnerAddressZero() public {
+    function testRevertsOwnerAddressZero(uint256 epochLength) public {
+        vm.assume(epochLength > 0);
+
         vm.expectRevert(
             abi.encodeWithSelector(
                 Ownable.OwnableInvalidOwner.selector,
                 address(0)
             )
         );
-        new Authority(address(0));
+        new Authority(address(0), epochLength);
+    }
+
+    function testRevertsEpochLengthZero(address owner) public {
+        vm.assume(owner != address(0));
+
+        vm.expectRevert("epoch length must not be zero");
+        new Authority(owner, 0);
     }
 
     function testSubmitClaimRevertsCallerNotOwner(
         address owner,
         address notOwner,
+        uint256 epochLength,
         address appContract,
         uint256 lastProcessedBlockNumber,
         bytes32 claim
     ) public {
         vm.assume(owner != address(0));
         vm.assume(owner != notOwner);
+        vm.assume(epochLength > 0);
 
-        Authority authority = new Authority(owner);
+        Authority authority = new Authority(owner, epochLength);
 
         vm.expectRevert(
             abi.encodeWithSelector(
@@ -82,13 +95,15 @@ contract AuthorityTest is TestBase {
 
     function testSubmitClaim(
         address owner,
+        uint256 epochLength,
         address appContract,
         uint256 lastProcessedBlockNumber,
         bytes32 claim
     ) public {
         vm.assume(owner != address(0));
+        vm.assume(epochLength > 0);
 
-        Authority authority = new Authority(owner);
+        Authority authority = new Authority(owner, epochLength);
 
         _expectClaimEvents(
             authority,
@@ -106,12 +121,14 @@ contract AuthorityTest is TestBase {
 
     function testWasClaimAccepted(
         address owner,
+        uint256 epochLength,
         address appContract,
         bytes32 claim
     ) public {
         vm.assume(owner != address(0));
+        vm.assume(epochLength > 0);
 
-        Authority authority = new Authority(owner);
+        Authority authority = new Authority(owner, epochLength);
 
         assertFalse(authority.wasClaimAccepted(appContract, claim));
     }
