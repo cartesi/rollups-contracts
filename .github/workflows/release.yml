@@ -63,7 +63,8 @@ jobs:
         run: |
           forge bind \
             --crate-name cartesi-rollups-contracts \
-            --crate-version "$VERSION"
+            --crate-version "$VERSION" \
+            --alloy
         env:
           VERSION: ${{ needs.version_or_publish.outputs.version }}
 
