@@ -1,5 +1,11 @@
 # @cartesi/rollups
 
+## 2.0.0-rc.8
+
+### Patch Changes
+
+- 25da049: Fix alloy dependency in Cargo.toml
+
 ## 2.0.0-rc.7
 
 ### Patch Changes
