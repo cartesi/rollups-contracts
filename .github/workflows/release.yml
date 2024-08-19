@@ -73,6 +73,8 @@ jobs:
         run: |
           tomlq -ti '.package.license = "Apache-2.0"' Cargo.toml
           tomlq -ti '.package.description = "Rust bindings for Cartesi Rollups smart contracts"' Cargo.toml
+          tomlq -ti 'del(.dependencies.alloy.git)' Cargo.toml
+          tomlq -ti '.dependencies.alloy.version = "0.2.1"' Cargo.toml
 
       - name: Publish Rust package to crates.io
         working-directory: out/bindings
