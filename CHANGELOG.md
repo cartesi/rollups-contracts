@@ -1,5 +1,11 @@
 # @cartesi/rollups
 
+## 2.0.0-rc.7
+
+### Patch Changes
+
+- 56a8d11: Generate Alloy bindings in the CI
+
 ## 2.0.0-rc.6
 
 ### Major Changes
