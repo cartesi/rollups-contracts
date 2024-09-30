@@ -93,7 +93,7 @@ jobs:
           VERSION: ${{ needs.version_or_publish.outputs.version }}
 
       - name: Edit Rust package manifest
-        working-directory: out/bindings
+        working-directory: onchain/rollups/out/bindings
         run: |
           tomlq -ti '.package.license = "Apache-2.0"' Cargo.toml
           tomlq -ti '.package.description = "Rust bindings for Cartesi Rollups smart contracts"' Cargo.toml
@@ -101,7 +101,7 @@ jobs:
           tomlq -ti '.dependencies.alloy.version = "0.3.1"' Cargo.toml
 
       - name: Publish Rust package to crates.io
-        working-directory: out/bindings
+        working-directory: onchain/rollups/out/bindings
         run: cargo publish
         env:
           CARGO_REGISTRY_TOKEN: ${{ secrets.CARGO_REGISTRY_TOKEN }}
