@@ -1,5 +1,11 @@
 # @cartesi/rollups
 
+## 1.4.1
+
+### Patch Changes
+
+-   f0393282: Push bindings to crates.io
+
 ## 1.4.0
 
 ### Minor Changes
