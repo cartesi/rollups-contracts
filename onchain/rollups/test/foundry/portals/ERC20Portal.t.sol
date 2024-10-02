@@ -305,6 +305,7 @@ contract ERC20PortalHandler is Test {
             _dapp == address(0) ||
             sender == address(0) ||
             _dapp == address(this) ||
+            sender == address(_dapp) ||
             sender == address(portal) ||
             _dapp == address(portal)
         ) return;
