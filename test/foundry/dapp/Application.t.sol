@@ -4,6 +4,7 @@
 pragma solidity ^0.8.22;
 
 import {Application} from "contracts/dapp/Application.sol";
+import {IApplication} from "contracts/dapp/IApplication.sol";
 import {Authority} from "contracts/consensus/authority/Authority.sol";
 import {CanonicalMachine} from "contracts/common/CanonicalMachine.sol";
 import {IApplication} from "contracts/dapp/IApplication.sol";
@@ -11,6 +12,7 @@ import {IConsensus} from "contracts/consensus/IConsensus.sol";
 import {OutputValidityProof} from "contracts/common/OutputValidityProof.sol";
 import {Outputs} from "contracts/common/Outputs.sol";
 import {SafeERC20Transfer} from "contracts/delegatecall/SafeERC20Transfer.sol";
+import {IOwnable} from "contracts/access/IOwnable.sol";
 
 import {IERC1155Receiver} from "@openzeppelin/contracts/token/ERC1155/IERC1155Receiver.sol";
 import {IERC1155} from "@openzeppelin/contracts/token/ERC1155/IERC1155.sol";
@@ -22,6 +24,7 @@ import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
 import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 
 import {TestBase} from "../util/TestBase.sol";
+import {OwnableTest} from "../util/OwnableTest.sol";
 import {EtherReceiver} from "../util/EtherReceiver.sol";
 import {ExternalLibMerkle32} from "../library/LibMerkle32.t.sol";
 import {LibEmulator} from "../util/LibEmulator.sol";
@@ -29,11 +32,11 @@ import {SimpleERC20} from "../util/SimpleERC20.sol";
 import {SimpleERC721} from "../util/SimpleERC721.sol";
 import {SimpleSingleERC1155, SimpleBatchERC1155} from "../util/SimpleERC1155.sol";
 
-contract ApplicationTest is TestBase {
+contract ApplicationTest is TestBase, OwnableTest {
     using LibEmulator for LibEmulator.State;
     using ExternalLibMerkle32 for bytes32[];
 
-    Application _appContract;
+    IApplication _appContract;
     EtherReceiver _etherReceiver;
     IConsensus _consensus;
     IERC20 _erc20Token;
@@ -67,6 +70,14 @@ contract ApplicationTest is TestBase {
         _submitClaim();
     }
 
+    // ------------
+    // ownable test
+    // ------------
+
+    function _getOwnableContract() internal view override returns (IOwnable) {
+        return _appContract;
+    }
+
     // -----------
     // constructor
     // -----------
@@ -91,7 +102,7 @@ contract ApplicationTest is TestBase {
         vm.expectEmit(true, true, false, false);
         emit Ownable.OwnershipTransferred(address(0), owner);
 
-        Application appContract = new Application(
+        IApplication appContract = new Application(
             consensus,
             owner,
             templateHash
