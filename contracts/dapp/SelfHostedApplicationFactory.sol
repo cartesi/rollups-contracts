@@ -6,13 +6,13 @@ pragma solidity ^0.8.8;
 import {IConsensus} from "../consensus/IConsensus.sol";
 import {Authority} from "../consensus/authority/Authority.sol";
 import {IAuthorityFactory} from "../consensus/authority/IAuthorityFactory.sol";
-import {Application} from "./Application.sol";
+import {IApplication} from "./IApplication.sol";
 import {IApplicationFactory} from "./IApplicationFactory.sol";
 import {ISelfHostedApplicationFactory} from "./ISelfHostedApplicationFactory.sol";
 
 /// @title Self-hosted Application Factory
 /// @notice Allows anyone to reliably deploy a new Authority contract,
-/// along with an Application contract already linked to it.
+/// along with an IApplication contract already linked to it.
 contract SelfHostedApplicationFactory is ISelfHostedApplicationFactory {
     IAuthorityFactory immutable _authorityFactory;
     IApplicationFactory immutable _applicationFactory;
@@ -51,7 +51,7 @@ contract SelfHostedApplicationFactory is ISelfHostedApplicationFactory {
         address appOwner,
         bytes32 templateHash,
         bytes32 salt
-    ) external returns (Application application, Authority authority) {
+    ) external returns (IApplication application, Authority authority) {
         authority = _authorityFactory.newAuthority(
             authorityOwner,
             epochLength,
