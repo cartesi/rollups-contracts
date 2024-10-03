@@ -11,7 +11,7 @@ import {AuthorityFactory} from "contracts/consensus/authority/AuthorityFactory.s
 import {Authority} from "contracts/consensus/authority/Authority.sol";
 import {IApplicationFactory} from "contracts/dapp/IApplicationFactory.sol";
 import {ApplicationFactory} from "contracts/dapp/ApplicationFactory.sol";
-import {Application} from "contracts/dapp/Application.sol";
+import {IApplication} from "contracts/dapp/IApplication.sol";
 import {ISelfHostedApplicationFactory} from "contracts/dapp/ISelfHostedApplicationFactory.sol";
 import {SelfHostedApplicationFactory} from "contracts/dapp/SelfHostedApplicationFactory.sol";
 
@@ -134,7 +134,7 @@ contract SelfHostedApplicationFactoryTest is TestBase {
             salt
         );
 
-        Application application;
+        IApplication application;
         Authority authority;
 
         (application, authority) = factory.deployContracts(

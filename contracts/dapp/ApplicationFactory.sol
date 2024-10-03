@@ -8,16 +8,17 @@ import {Create2} from "@openzeppelin/contracts/utils/Create2.sol";
 import {IApplicationFactory} from "./IApplicationFactory.sol";
 import {IConsensus} from "../consensus/IConsensus.sol";
 import {Application} from "./Application.sol";
+import {IApplication} from "./IApplication.sol";
 
 /// @title Application Factory
-/// @notice Allows anyone to reliably deploy a new `Application` contract.
+/// @notice Allows anyone to reliably deploy a new `IApplication` contract.
 contract ApplicationFactory is IApplicationFactory {
     function newApplication(
         IConsensus consensus,
         address appOwner,
         bytes32 templateHash
-    ) external override returns (Application) {
-        Application appContract = new Application(
+    ) external override returns (IApplication) {
+        IApplication appContract = new Application(
             consensus,
             appOwner,
             templateHash
@@ -33,8 +34,8 @@ contract ApplicationFactory is IApplicationFactory {
         address appOwner,
         bytes32 templateHash,
         bytes32 salt
-    ) external override returns (Application) {
-        Application appContract = new Application{salt: salt}(
+    ) external override returns (IApplication) {
+        IApplication appContract = new Application{salt: salt}(
             consensus,
             appOwner,
             templateHash

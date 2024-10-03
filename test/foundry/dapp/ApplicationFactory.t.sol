@@ -6,7 +6,7 @@ pragma solidity ^0.8.22;
 
 import {TestBase} from "../util/TestBase.sol";
 import {ApplicationFactory, IApplicationFactory} from "contracts/dapp/ApplicationFactory.sol";
-import {Application} from "contracts/dapp/Application.sol";
+import {IApplication} from "contracts/dapp/IApplication.sol";
 import {IConsensus} from "contracts/consensus/IConsensus.sol";
 import {Vm} from "forge-std/Vm.sol";
 
@@ -24,7 +24,7 @@ contract ApplicationFactoryTest is TestBase {
     ) public {
         vm.assume(appOwner != address(0));
 
-        Application appContract = _factory.newApplication(
+        IApplication appContract = _factory.newApplication(
             consensus,
             appOwner,
             templateHash
@@ -50,7 +50,7 @@ contract ApplicationFactoryTest is TestBase {
             salt
         );
 
-        Application appContract = _factory.newApplication(
+        IApplication appContract = _factory.newApplication(
             consensus,
             appOwner,
             templateHash,
@@ -88,7 +88,7 @@ contract ApplicationFactoryTest is TestBase {
 
         vm.recordLogs();
 
-        Application appContract = _factory.newApplication(
+        IApplication appContract = _factory.newApplication(
             consensus,
             appOwner,
             templateHash
@@ -112,7 +112,7 @@ contract ApplicationFactoryTest is TestBase {
 
         vm.recordLogs();
 
-        Application appContract = _factory.newApplication(
+        IApplication appContract = _factory.newApplication(
             consensus,
             appOwner,
             templateHash,
@@ -131,7 +131,7 @@ contract ApplicationFactoryTest is TestBase {
         IConsensus consensus,
         address appOwner,
         bytes32 templateHash,
-        Application appContract
+        IApplication appContract
     ) internal {
         Vm.Log[] memory entries = vm.getRecordedLogs();
 
@@ -155,8 +155,8 @@ contract ApplicationFactoryTest is TestBase {
                 (
                     address appOwner_,
                     bytes32 templateHash_,
-                    Application app_
-                ) = abi.decode(entry.data, (address, bytes32, Application));
+                    IApplication app_
+                ) = abi.decode(entry.data, (address, bytes32, IApplication));
 
                 assertEq(appOwner, appOwner_);
                 assertEq(templateHash, templateHash_);
