@@ -3,7 +3,7 @@
 
 pragma solidity ^0.8.8;
 
-import {Authority} from "./Authority.sol";
+import {IAuthority} from "./IAuthority.sol";
 
 /// @title Authority Factory interface
 interface IAuthorityFactory {
@@ -12,7 +12,7 @@ interface IAuthorityFactory {
     /// @notice A new authority was deployed.
     /// @param authority The authority
     /// @dev MUST be triggered on a successful call to `newAuthority`.
-    event AuthorityCreated(Authority authority);
+    event AuthorityCreated(IAuthority authority);
 
     // Permissionless functions
 
@@ -26,7 +26,7 @@ interface IAuthorityFactory {
     function newAuthority(
         address authorityOwner,
         uint256 epochLength
-    ) external returns (Authority);
+    ) external returns (IAuthority);
 
     /// @notice Deploy a new authority deterministically.
     /// @param authorityOwner The initial authority owner
@@ -40,7 +40,7 @@ interface IAuthorityFactory {
         address authorityOwner,
         uint256 epochLength,
         bytes32 salt
-    ) external returns (Authority);
+    ) external returns (IAuthority);
 
     /// @notice Calculate the address of an authority to be deployed deterministically.
     /// @param authorityOwner The initial authority owner

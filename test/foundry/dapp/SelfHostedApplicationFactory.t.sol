@@ -8,7 +8,7 @@ import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
 
 import {IAuthorityFactory} from "contracts/consensus/authority/IAuthorityFactory.sol";
 import {AuthorityFactory} from "contracts/consensus/authority/AuthorityFactory.sol";
-import {Authority} from "contracts/consensus/authority/Authority.sol";
+import {IAuthority} from "contracts/consensus/authority/IAuthority.sol";
 import {IApplicationFactory} from "contracts/dapp/IApplicationFactory.sol";
 import {ApplicationFactory} from "contracts/dapp/ApplicationFactory.sol";
 import {IApplication} from "contracts/dapp/IApplication.sol";
@@ -135,7 +135,7 @@ contract SelfHostedApplicationFactoryTest is TestBase {
         );
 
         IApplication application;
-        Authority authority;
+        IAuthority authority;
 
         (application, authority) = factory.deployContracts(
             authorityOwner,

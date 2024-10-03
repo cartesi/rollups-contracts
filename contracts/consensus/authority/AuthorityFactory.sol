@@ -7,15 +7,16 @@ import {Create2} from "@openzeppelin/contracts/utils/Create2.sol";
 
 import {IAuthorityFactory} from "./IAuthorityFactory.sol";
 import {Authority} from "./Authority.sol";
+import {IAuthority} from "./IAuthority.sol";
 
 /// @title Authority Factory
-/// @notice Allows anyone to reliably deploy a new `Authority` contract.
+/// @notice Allows anyone to reliably deploy a new `IAuthority` contract.
 contract AuthorityFactory is IAuthorityFactory {
     function newAuthority(
         address authorityOwner,
         uint256 epochLength
-    ) external override returns (Authority) {
-        Authority authority = new Authority(authorityOwner, epochLength);
+    ) external override returns (IAuthority) {
+        IAuthority authority = new Authority(authorityOwner, epochLength);
 
         emit AuthorityCreated(authority);
 
@@ -26,8 +27,8 @@ contract AuthorityFactory is IAuthorityFactory {
         address authorityOwner,
         uint256 epochLength,
         bytes32 salt
-    ) external override returns (Authority) {
-        Authority authority = new Authority{salt: salt}(
+    ) external override returns (IAuthority) {
+        IAuthority authority = new Authority{salt: salt}(
             authorityOwner,
             epochLength
         );
