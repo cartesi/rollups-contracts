@@ -3,7 +3,7 @@
 
 pragma solidity ^0.8.8;
 
-import {Quorum} from "./Quorum.sol";
+import {IQuorum} from "./IQuorum.sol";
 
 /// @title Quorum Factory interface
 interface IQuorumFactory {
@@ -12,7 +12,7 @@ interface IQuorumFactory {
     /// @notice A new quorum was deployed.
     /// @param quorum The quorum
     /// @dev MUST be triggered on a successful call to `newQuorum`.
-    event QuorumCreated(Quorum quorum);
+    event QuorumCreated(IQuorum quorum);
 
     // Permissionless functions
 
@@ -26,7 +26,7 @@ interface IQuorumFactory {
     function newQuorum(
         address[] calldata validators,
         uint256 epochLength
-    ) external returns (Quorum);
+    ) external returns (IQuorum);
 
     /// @notice Deploy a new quorum deterministically.
     /// @param validators the list of validators
@@ -40,7 +40,7 @@ interface IQuorumFactory {
         address[] calldata validators,
         uint256 epochLength,
         bytes32 salt
-    ) external returns (Quorum);
+    ) external returns (IQuorum);
 
     /// @notice Calculate the address of a quorum to be deployed deterministically.
     /// @param validators the list of validators

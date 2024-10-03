@@ -5,7 +5,7 @@
 pragma solidity ^0.8.22;
 
 import {QuorumFactory, IQuorumFactory} from "contracts/consensus/quorum/QuorumFactory.sol";
-import {Quorum} from "contracts/consensus/quorum/Quorum.sol";
+import {IQuorum} from "contracts/consensus/quorum/IQuorum.sol";
 import {Vm} from "forge-std/Vm.sol";
 
 import {TestBase} from "../../util/TestBase.sol";
@@ -37,7 +37,7 @@ contract QuorumFactoryTest is TestBase {
 
         vm.recordLogs();
 
-        Quorum quorum = _factory.newQuorum(validators, epochLength);
+        IQuorum quorum = _factory.newQuorum(validators, epochLength);
 
         _testNewQuorumAux(validators, epochLength, quorum);
     }
@@ -60,7 +60,7 @@ contract QuorumFactoryTest is TestBase {
 
         vm.recordLogs();
 
-        Quorum quorum = _factory.newQuorum(validators, epochLength, salt);
+        IQuorum quorum = _factory.newQuorum(validators, epochLength, salt);
 
         _testNewQuorumAux(validators, epochLength, quorum);
 
@@ -84,7 +84,7 @@ contract QuorumFactoryTest is TestBase {
     function _testNewQuorumAux(
         address[] memory validators,
         uint256 epochLength,
-        Quorum quorum
+        IQuorum quorum
     ) internal {
         Vm.Log[] memory entries = vm.getRecordedLogs();
 
@@ -97,7 +97,7 @@ contract QuorumFactoryTest is TestBase {
                 entry.topics[0] == IQuorumFactory.QuorumCreated.selector
             ) {
                 ++numQuorumCreated;
-                Quorum eventQuorum = abi.decode(entry.data, (Quorum));
+                IQuorum eventQuorum = abi.decode(entry.data, (IQuorum));
                 assertEq(address(eventQuorum), address(quorum));
             }
         }
