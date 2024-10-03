@@ -8,13 +8,26 @@ import {Vm} from "forge-std/Vm.sol";
 import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
 
 import {Authority} from "contracts/consensus/authority/Authority.sol";
+import {IAuthority} from "contracts/consensus/authority/IAuthority.sol";
 import {IConsensus} from "contracts/consensus/IConsensus.sol";
+import {IOwnable} from "contracts/access/IOwnable.sol";
 
 import {TestBase} from "../../util/TestBase.sol";
 import {LibTopic} from "../../util/LibTopic.sol";
+import {OwnableTest} from "../../util/OwnableTest.sol";
 
-contract AuthorityTest is TestBase {
+contract AuthorityTest is TestBase, OwnableTest {
     using LibTopic for address;
+
+    IAuthority _authority;
+
+    function setUp() external {
+        _authority = new Authority(vm.addr(1), 1);
+    }
+
+    function _getOwnableContract() internal view override returns (IOwnable) {
+        return _authority;
+    }
 
     function testConstructor(address owner, uint256 epochLength) public {
         vm.assume(owner != address(0));
@@ -22,7 +35,7 @@ contract AuthorityTest is TestBase {
 
         vm.recordLogs();
 
-        Authority authority = new Authority(owner, epochLength);
+        IAuthority authority = new Authority(owner, epochLength);
 
         Vm.Log[] memory entries = vm.getRecordedLogs();
 
@@ -80,7 +93,7 @@ contract AuthorityTest is TestBase {
         vm.assume(owner != notOwner);
         vm.assume(epochLength > 0);
 
-        Authority authority = new Authority(owner, epochLength);
+        IAuthority authority = new Authority(owner, epochLength);
 
         vm.expectRevert(
             abi.encodeWithSelector(
@@ -103,7 +116,7 @@ contract AuthorityTest is TestBase {
         vm.assume(owner != address(0));
         vm.assume(epochLength > 0);
 
-        Authority authority = new Authority(owner, epochLength);
+        IAuthority authority = new Authority(owner, epochLength);
 
         _expectClaimEvents(
             authority,
@@ -128,13 +141,13 @@ contract AuthorityTest is TestBase {
         vm.assume(owner != address(0));
         vm.assume(epochLength > 0);
 
-        Authority authority = new Authority(owner, epochLength);
+        IAuthority authority = new Authority(owner, epochLength);
 
         assertFalse(authority.wasClaimAccepted(appContract, claim));
     }
 
     function _expectClaimEvents(
-        Authority authority,
+        IAuthority authority,
         address owner,
         address appContract,
         uint256 lastProcessedBlockNumber,
