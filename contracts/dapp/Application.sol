@@ -9,6 +9,7 @@ import {LibOutputValidityProof} from "../library/LibOutputValidityProof.sol";
 import {OutputValidityProof} from "../common/OutputValidityProof.sol";
 import {Outputs} from "../common/Outputs.sol";
 import {LibAddress} from "../library/LibAddress.sol";
+import {IOwnable} from "../access/IOwnable.sol";
 
 import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
 import {ERC721Holder} from "@openzeppelin/contracts/token/ERC721/utils/ERC721Holder.sol";
@@ -133,6 +134,20 @@ contract Application is
 
     function getConsensus() external view override returns (IConsensus) {
         return _consensus;
+    }
+
+    function owner() public view override(IOwnable, Ownable) returns (address) {
+        return super.owner();
+    }
+
+    function renounceOwnership() public override(IOwnable, Ownable) {
+        super.renounceOwnership();
+    }
+
+    function transferOwnership(
+        address newOwner
+    ) public override(IOwnable, Ownable) {
+        super.transferOwnership(newOwner);
     }
 
     /// @notice Check if an output Merkle root hash was ever accepted by the current consensus.
