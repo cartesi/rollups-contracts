@@ -3,14 +3,14 @@
 
 pragma solidity ^0.8.8;
 
-import {Authority} from "../consensus/authority/Authority.sol";
+import {IAuthority} from "../consensus/authority/IAuthority.sol";
 import {IAuthorityFactory} from "../consensus/authority/IAuthorityFactory.sol";
 import {IApplication} from "./IApplication.sol";
 import {IApplicationFactory} from "./IApplicationFactory.sol";
 
 /// @title Self-hosted Application Factory interface
 interface ISelfHostedApplicationFactory {
-    /// @notice Get the factory used to deploy `Authority` contracts
+    /// @notice Get the factory used to deploy `IAuthority` contracts
     /// @return The authority factory
     function getAuthorityFactory() external view returns (IAuthorityFactory);
 
@@ -38,7 +38,7 @@ interface ISelfHostedApplicationFactory {
         address appOwner,
         bytes32 templateHash,
         bytes32 salt
-    ) external returns (IApplication, Authority);
+    ) external returns (IApplication, IAuthority);
 
     /// @notice Calculate the addresses of the application and authority contracts
     /// to be deployed deterministically.
