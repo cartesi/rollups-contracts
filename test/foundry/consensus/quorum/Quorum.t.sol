@@ -4,6 +4,7 @@
 pragma solidity ^0.8.22;
 
 import {Quorum} from "contracts/consensus/quorum/Quorum.sol";
+import {IQuorum} from "contracts/consensus/quorum/IQuorum.sol";
 import {IConsensus} from "contracts/consensus/IConsensus.sol";
 
 import {TestBase} from "../../util/TestBase.sol";
@@ -19,7 +20,7 @@ struct Claim {
 
 library LibQuorum {
     function numOfValidatorsInFavorOf(
-        Quorum quorum,
+        IQuorum quorum,
         Claim calldata claim
     ) internal view returns (uint256) {
         return
@@ -31,7 +32,7 @@ library LibQuorum {
     }
 
     function isValidatorInFavorOf(
-        Quorum quorum,
+        IQuorum quorum,
         Claim calldata claim,
         uint256 id
     ) internal view returns (bool) {
@@ -44,7 +45,7 @@ library LibQuorum {
             );
     }
 
-    function submitClaim(Quorum quorum, Claim calldata claim) internal {
+    function submitClaim(IQuorum quorum, Claim calldata claim) internal {
         quorum.submitClaim(
             claim.appContract,
             claim.lastProcessedBlockNumber,
@@ -53,7 +54,7 @@ library LibQuorum {
     }
 
     function wasClaimAccepted(
-        Quorum quorum,
+        IQuorum quorum,
         Claim calldata claim
     ) internal view returns (bool) {
         return
@@ -65,7 +66,7 @@ library LibQuorum {
 }
 
 contract QuorumTest is TestBase {
-    using LibQuorum for Quorum;
+    using LibQuorum for IQuorum;
     using LibTopic for address;
 
     function testConstructor(
@@ -76,7 +77,7 @@ contract QuorumTest is TestBase {
 
         address[] memory validators = _generateAddresses(numOfValidators);
 
-        Quorum quorum = new Quorum(validators, epochLength);
+        IQuorum quorum = new Quorum(validators, epochLength);
 
         assertEq(quorum.numOfValidators(), numOfValidators);
         assertEq(quorum.getEpochLength(), epochLength);
@@ -107,7 +108,7 @@ contract QuorumTest is TestBase {
         validators[5] = vm.addr(1);
         validators[6] = vm.addr(3);
 
-        Quorum quorum = new Quorum(validators, epochLength);
+        IQuorum quorum = new Quorum(validators, epochLength);
 
         assertEq(quorum.numOfValidators(), 3);
 
@@ -126,7 +127,7 @@ contract QuorumTest is TestBase {
 
         address[] memory validators = _generateAddresses(numOfValidators);
 
-        Quorum quorum = new Quorum(validators, epochLength);
+        IQuorum quorum = new Quorum(validators, epochLength);
 
         uint256 id = quorum.validatorId(addr);
 
@@ -142,7 +143,7 @@ contract QuorumTest is TestBase {
         uint8 numOfValidators,
         uint256 epochLength
     ) external {
-        Quorum quorum = _deployQuorum(numOfValidators, epochLength);
+        IQuorum quorum = _deployQuorum(numOfValidators, epochLength);
         assertEq(quorum.validatorById(0), address(0));
     }
 
@@ -153,7 +154,7 @@ contract QuorumTest is TestBase {
     ) external {
         numOfValidators = uint8(bound(numOfValidators, 1, type(uint8).max));
         id = bound(id, 1, numOfValidators);
-        Quorum quorum = _deployQuorum(numOfValidators, epochLength);
+        IQuorum quorum = _deployQuorum(numOfValidators, epochLength);
         address validator = quorum.validatorById(id);
         assertEq(quorum.validatorId(validator), id);
     }
@@ -164,7 +165,7 @@ contract QuorumTest is TestBase {
         uint256 epochLength
     ) external {
         id = bound(id, uint256(numOfValidators) + 1, type(uint256).max);
-        Quorum quorum = _deployQuorum(numOfValidators, epochLength);
+        IQuorum quorum = _deployQuorum(numOfValidators, epochLength);
         assertEq(quorum.validatorById(id), address(0));
     }
 
@@ -178,7 +179,7 @@ contract QuorumTest is TestBase {
 
         address[] memory validators = _generateAddresses(numOfValidators);
 
-        Quorum quorum = new Quorum(validators, epochLength);
+        IQuorum quorum = new Quorum(validators, epochLength);
 
         vm.assume(!_contains(validators, caller));
 
@@ -193,7 +194,7 @@ contract QuorumTest is TestBase {
         uint256 epochLength,
         Claim calldata claim
     ) external {
-        Quorum quorum = _deployQuorum(numOfValidators, epochLength);
+        IQuorum quorum = _deployQuorum(numOfValidators, epochLength);
         assertEq(quorum.numOfValidatorsInFavorOf(claim), 0);
     }
 
@@ -203,7 +204,7 @@ contract QuorumTest is TestBase {
         Claim calldata claim,
         uint256 id
     ) external {
-        Quorum quorum = _deployQuorum(numOfValidators, epochLength);
+        IQuorum quorum = _deployQuorum(numOfValidators, epochLength);
         assertFalse(quorum.isValidatorInFavorOf(claim, id));
     }
 
@@ -213,7 +214,7 @@ contract QuorumTest is TestBase {
         Claim calldata claim
     ) external {
         numOfValidators = uint8(bound(numOfValidators, 1, 7));
-        Quorum quorum = _deployQuorum(numOfValidators, epochLength);
+        IQuorum quorum = _deployQuorum(numOfValidators, epochLength);
         bool[] memory inFavorOf = new bool[](numOfValidators + 1);
         for (uint256 id = 1; id <= numOfValidators; ++id) {
             _submitClaimAs(quorum, claim, id);
@@ -232,7 +233,7 @@ contract QuorumTest is TestBase {
     ) external {
         uint256 numOfValidators = 256;
 
-        Quorum quorum = _deployQuorum(numOfValidators, epochLength);
+        IQuorum quorum = _deployQuorum(numOfValidators, epochLength);
 
         uint256 id = numOfValidators;
 
@@ -248,13 +249,13 @@ contract QuorumTest is TestBase {
     function _deployQuorum(
         uint256 numOfValidators,
         uint256 epochLength
-    ) internal returns (Quorum) {
+    ) internal returns (IQuorum) {
         vm.assume(epochLength > 0);
         return new Quorum(_generateAddresses(numOfValidators), epochLength);
     }
 
     function _checkSubmitted(
-        Quorum quorum,
+        IQuorum quorum,
         Claim calldata claim,
         bool[] memory inFavorOf
     ) internal view {
@@ -270,7 +271,7 @@ contract QuorumTest is TestBase {
     }
 
     function _submitClaimAs(
-        Quorum quorum,
+        IQuorum quorum,
         Claim calldata claim,
         uint256 id
     ) internal {
