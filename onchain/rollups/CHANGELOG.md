@@ -1,5 +1,11 @@
 # @cartesi/rollups
 
+## 1.4.2
+
+### Patch Changes
+
+-   20733325: Fix paths in CI that publishes Rust bindings
+
 ## 1.4.1
 
 ### Patch Changes
