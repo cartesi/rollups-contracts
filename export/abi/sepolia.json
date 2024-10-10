@@ -2,21 +2,148 @@
   "name": "sepolia",
   "chainId": "11155111",
   "contracts": {
+    "ApplicationFactory": {
+      "address": "0x1d4CfBD2622d802A07CeB4C3401Bbb455c9dbdC3",
+      "abi": [
+        {
+          "anonymous": false,
+          "inputs": [
+            {
+              "indexed": true,
+              "internalType": "contract IConsensus",
+              "name": "consensus",
+              "type": "address"
+            },
+            {
+              "indexed": false,
+              "internalType": "address",
+              "name": "appOwner",
+              "type": "address"
+            },
+            {
+              "indexed": false,
+              "internalType": "bytes32",
+              "name": "templateHash",
+              "type": "bytes32"
+            },
+            {
+              "indexed": false,
+              "internalType": "contract IApplication",
+              "name": "appContract",
+              "type": "address"
+            }
+          ],
+          "name": "ApplicationCreated",
+          "type": "event"
+        },
+        {
+          "inputs": [
+            {
+              "internalType": "contract IConsensus",
+              "name": "consensus",
+              "type": "address"
+            },
+            {
+              "internalType": "address",
+              "name": "appOwner",
+              "type": "address"
+            },
+            {
+              "internalType": "bytes32",
+              "name": "templateHash",
+              "type": "bytes32"
+            },
+            {
+              "internalType": "bytes32",
+              "name": "salt",
+              "type": "bytes32"
+            }
+          ],
+          "name": "calculateApplicationAddress",
+          "outputs": [
+            {
+              "internalType": "address",
+              "name": "",
+              "type": "address"
+            }
+          ],
+          "stateMutability": "view",
+          "type": "function"
+        },
+        {
+          "inputs": [
+            {
+              "internalType": "contract IConsensus",
+              "name": "consensus",
+              "type": "address"
+            },
+            {
+              "internalType": "address",
+              "name": "appOwner",
+              "type": "address"
+            },
+            {
+              "internalType": "bytes32",
+              "name": "templateHash",
+              "type": "bytes32"
+            },
+            {
+              "internalType": "bytes32",
+              "name": "salt",
+              "type": "bytes32"
+            }
+          ],
+          "name": "newApplication",
+          "outputs": [
+            {
+              "internalType": "contract IApplication",
+              "name": "",
+              "type": "address"
+            }
+          ],
+          "stateMutability": "nonpayable",
+          "type": "function"
+        },
+        {
+          "inputs": [
+            {
+              "internalType": "contract IConsensus",
+              "name": "consensus",
+              "type": "address"
+            },
+            {
+              "internalType": "address",
+              "name": "appOwner",
+              "type": "address"
+            },
+            {
+              "internalType": "bytes32",
+              "name": "templateHash",
+              "type": "bytes32"
+            }
+          ],
+          "name": "newApplication",
+          "outputs": [
+            {
+              "internalType": "contract IApplication",
+              "name": "",
+              "type": "address"
+            }
+          ],
+          "stateMutability": "nonpayable",
+          "type": "function"
+        }
+      ]
+    },
     "AuthorityFactory": {
-      "address": "0xFc6c1Fc6546898eb2f9cb7De360B3eA52E601D46",
+      "address": "0xB897F7Fe78f220aE34B7FA9493092701a873Ed45",
       "abi": [
         {
           "anonymous": false,
           "inputs": [
             {
               "indexed": false,
-              "internalType": "address",
-              "name": "authorityOwner",
-              "type": "address"
-            },
-            {
-              "indexed": false,
-              "internalType": "contract Authority",
+              "internalType": "contract IAuthority",
               "name": "authority",
               "type": "address"
             }
@@ -30,6 +157,11 @@
               "internalType": "address",
               "name": "authorityOwner",
               "type": "address"
+            },
+            {
+              "internalType": "uint256",
+              "name": "epochLength",
+              "type": "uint256"
             },
             {
               "internalType": "bytes32",
@@ -56,15 +188,15 @@
               "type": "address"
             },
             {
-              "internalType": "bytes32",
-              "name": "salt",
-              "type": "bytes32"
+              "internalType": "uint256",
+              "name": "epochLength",
+              "type": "uint256"
             }
           ],
           "name": "newAuthority",
           "outputs": [
             {
-              "internalType": "contract Authority",
+              "internalType": "contract IAuthority",
               "name": "",
               "type": "address"
             }
@@ -78,12 +210,22 @@
               "internalType": "address",
               "name": "authorityOwner",
               "type": "address"
+            },
+            {
+              "internalType": "uint256",
+              "name": "epochLength",
+              "type": "uint256"
+            },
+            {
+              "internalType": "bytes32",
+              "name": "salt",
+              "type": "bytes32"
             }
           ],
           "name": "newAuthority",
           "outputs": [
             {
-              "internalType": "contract Authority",
+              "internalType": "contract IAuthority",
               "name": "",
               "type": "address"
             }
@@ -94,7 +236,7 @@
       ]
     },
     "ERC1155BatchPortal": {
-      "address": "0x8A55f9AD8E78A8FBaf6c4c09D43e8ea0694b46E1",
+      "address": "0x4a218D331C0933d7E3EB496ac901669f28D94981",
       "abi": [
         {
           "inputs": [
@@ -157,30 +299,11 @@
           ],
           "stateMutability": "view",
           "type": "function"
-        },
-        {
-          "inputs": [
-            {
-              "internalType": "bytes4",
-              "name": "interfaceId",
-              "type": "bytes4"
-            }
-          ],
-          "name": "supportsInterface",
-          "outputs": [
-            {
-              "internalType": "bool",
-              "name": "",
-              "type": "bool"
-            }
-          ],
-          "stateMutability": "view",
-          "type": "function"
         }
       ]
     },
     "ERC1155SinglePortal": {
-      "address": "0x7a87676A40aEd3A780Cd8D58c22129D5673eaBc8",
+      "address": "0x2f0D587DD6EcF67d25C558f2e9c3839c579e5e38",
       "abi": [
         {
           "inputs": [
@@ -243,30 +366,11 @@
           ],
           "stateMutability": "view",
           "type": "function"
-        },
-        {
-          "inputs": [
-            {
-              "internalType": "bytes4",
-              "name": "interfaceId",
-              "type": "bytes4"
-            }
-          ],
-          "name": "supportsInterface",
-          "outputs": [
-            {
-              "internalType": "bool",
-              "name": "",
-              "type": "bool"
-            }
-          ],
-          "stateMutability": "view",
-          "type": "function"
         }
       ]
     },
     "ERC20Portal": {
-      "address": "0x406f11E905D58E3DE4f7ff0DBe8e69d38BF496F2",
+      "address": "0xB0e28881FF7ee9CD5B1229d570540d74bce23D39",
       "abi": [
         {
           "inputs": [
@@ -324,30 +428,11 @@
           ],
           "stateMutability": "view",
           "type": "function"
-        },
-        {
-          "inputs": [
-            {
-              "internalType": "bytes4",
-              "name": "interfaceId",
-              "type": "bytes4"
-            }
-          ],
-          "name": "supportsInterface",
-          "outputs": [
-            {
-              "internalType": "bool",
-              "name": "",
-              "type": "bool"
-            }
-          ],
-          "stateMutability": "view",
-          "type": "function"
         }
       ]
     },
     "ERC721Portal": {
-      "address": "0x922a84c4a6dED3598Dd5E2b9c7575CF652049E3A",
+      "address": "0x874b3245ead7474Cb9f3b83cD1446dC522f6bd36",
       "abi": [
         {
           "inputs": [
@@ -405,30 +490,11 @@
           ],
           "stateMutability": "view",
           "type": "function"
-        },
-        {
-          "inputs": [
-            {
-              "internalType": "bytes4",
-              "name": "interfaceId",
-              "type": "bytes4"
-            }
-          ],
-          "name": "supportsInterface",
-          "outputs": [
-            {
-              "internalType": "bool",
-              "name": "",
-              "type": "bool"
-            }
-          ],
-          "stateMutability": "view",
-          "type": "function"
         }
       ]
     },
     "EtherPortal": {
-      "address": "0xa1D048Bf4231b532b866de31AD42443D38A7Dc5B",
+      "address": "0xfa2292f6D85ea4e629B156A4f99219e30D12EE17",
       "abi": [
         {
           "inputs": [
@@ -476,30 +542,11 @@
           ],
           "stateMutability": "view",
           "type": "function"
-        },
-        {
-          "inputs": [
-            {
-              "internalType": "bytes4",
-              "name": "interfaceId",
-              "type": "bytes4"
-            }
-          ],
-          "name": "supportsInterface",
-          "outputs": [
-            {
-              "internalType": "bool",
-              "name": "",
-              "type": "bool"
-            }
-          ],
-          "stateMutability": "view",
-          "type": "function"
         }
       ]
     },
     "InputBox": {
-      "address": "0x58Df21fE097d4bE5dCf61e01d9ea3f6B81c2E1dB",
+      "address": "0x593E5BCf894D6829Dd26D0810DA7F064406aebB6",
       "abi": [
         {
           "inputs": [
@@ -617,14 +664,14 @@
       ]
     },
     "QuorumFactory": {
-      "address": "0xB41851d69891748b27779e382cc8de6e8C128e1C",
+      "address": "0x22AFD9162079c7Ac0aF874054298Bf46F29157F1",
       "abi": [
         {
           "anonymous": false,
           "inputs": [
             {
               "indexed": false,
-              "internalType": "contract Quorum",
+              "internalType": "contract IQuorum",
               "name": "quorum",
               "type": "address"
             }
@@ -638,6 +685,11 @@
               "internalType": "address[]",
               "name": "validators",
               "type": "address[]"
+            },
+            {
+              "internalType": "uint256",
+              "name": "epochLength",
+              "type": "uint256"
             },
             {
               "internalType": "bytes32",
@@ -662,12 +714,22 @@
               "internalType": "address[]",
               "name": "validators",
               "type": "address[]"
+            },
+            {
+              "internalType": "uint256",
+              "name": "epochLength",
+              "type": "uint256"
+            },
+            {
+              "internalType": "bytes32",
+              "name": "salt",
+              "type": "bytes32"
             }
           ],
           "name": "newQuorum",
           "outputs": [
             {
-              "internalType": "contract Quorum",
+              "internalType": "contract IQuorum",
               "name": "",
               "type": "address"
             }
@@ -683,617 +745,20 @@
               "type": "address[]"
             },
             {
-              "internalType": "bytes32",
-              "name": "salt",
-              "type": "bytes32"
+              "internalType": "uint256",
+              "name": "epochLength",
+              "type": "uint256"
             }
           ],
           "name": "newQuorum",
           "outputs": [
             {
-              "internalType": "contract Quorum",
+              "internalType": "contract IQuorum",
               "name": "",
               "type": "address"
             }
           ],
           "stateMutability": "nonpayable",
-          "type": "function"
-        }
-      ]
-    },
-    "Bitmask": {
-      "address": "0xF5B2d8c81cDE4D6238bBf20D3D77DB37df13f735",
-      "abi": []
-    },
-    "CartesiMathV2": {
-      "address": "0xB634F716BEd5Dd5A2b9a91C92474C499e50Cb27D",
-      "abi": [
-        {
-          "inputs": [
-            {
-              "internalType": "uint256",
-              "name": "_num",
-              "type": "uint256"
-            }
-          ],
-          "name": "clz",
-          "outputs": [
-            {
-              "internalType": "uint256",
-              "name": "",
-              "type": "uint256"
-            }
-          ],
-          "stateMutability": "pure",
-          "type": "function"
-        },
-        {
-          "inputs": [
-            {
-              "internalType": "uint256",
-              "name": "_num",
-              "type": "uint256"
-            }
-          ],
-          "name": "ctz",
-          "outputs": [
-            {
-              "internalType": "uint256",
-              "name": "",
-              "type": "uint256"
-            }
-          ],
-          "stateMutability": "pure",
-          "type": "function"
-        },
-        {
-          "inputs": [
-            {
-              "internalType": "uint256",
-              "name": "_num",
-              "type": "uint256"
-            }
-          ],
-          "name": "getLog2Floor",
-          "outputs": [
-            {
-              "internalType": "uint8",
-              "name": "",
-              "type": "uint8"
-            }
-          ],
-          "stateMutability": "pure",
-          "type": "function"
-        },
-        {
-          "inputs": [
-            {
-              "internalType": "uint256",
-              "name": "_num",
-              "type": "uint256"
-            }
-          ],
-          "name": "getLog2TableTimes1M",
-          "outputs": [
-            {
-              "internalType": "uint256",
-              "name": "",
-              "type": "uint256"
-            }
-          ],
-          "stateMutability": "pure",
-          "type": "function"
-        },
-        {
-          "inputs": [
-            {
-              "internalType": "uint256",
-              "name": "_num",
-              "type": "uint256"
-            }
-          ],
-          "name": "isPowerOf2",
-          "outputs": [
-            {
-              "internalType": "bool",
-              "name": "",
-              "type": "bool"
-            }
-          ],
-          "stateMutability": "pure",
-          "type": "function"
-        },
-        {
-          "inputs": [
-            {
-              "internalType": "uint256",
-              "name": "_num",
-              "type": "uint256"
-            }
-          ],
-          "name": "log2ApproxTimes1M",
-          "outputs": [
-            {
-              "internalType": "uint256",
-              "name": "",
-              "type": "uint256"
-            }
-          ],
-          "stateMutability": "pure",
-          "type": "function"
-        }
-      ]
-    },
-    "MerkleV2": {
-      "address": "0x33436035441927Df1a73FE3AAC5906854632e53d",
-      "abi": [
-        {
-          "inputs": [
-            {
-              "internalType": "bytes32[]",
-              "name": "hashes",
-              "type": "bytes32[]"
-            }
-          ],
-          "name": "calculateRootFromPowerOfTwo",
-          "outputs": [
-            {
-              "internalType": "bytes32",
-              "name": "",
-              "type": "bytes32"
-            }
-          ],
-          "stateMutability": "pure",
-          "type": "function"
-        },
-        {
-          "inputs": [
-            {
-              "internalType": "uint256",
-              "name": "_index",
-              "type": "uint256"
-            }
-          ],
-          "name": "getEmptyTreeHashAtIndex",
-          "outputs": [
-            {
-              "internalType": "bytes32",
-              "name": "",
-              "type": "bytes32"
-            }
-          ],
-          "stateMutability": "pure",
-          "type": "function"
-        },
-        {
-          "inputs": [
-            {
-              "internalType": "bytes",
-              "name": "_data",
-              "type": "bytes"
-            },
-            {
-              "internalType": "uint256",
-              "name": "_wordIndex",
-              "type": "uint256"
-            }
-          ],
-          "name": "getHashOfWordAtIndex",
-          "outputs": [
-            {
-              "internalType": "bytes32",
-              "name": "",
-              "type": "bytes32"
-            }
-          ],
-          "stateMutability": "pure",
-          "type": "function"
-        },
-        {
-          "inputs": [
-            {
-              "internalType": "bytes",
-              "name": "_data",
-              "type": "bytes"
-            },
-            {
-              "internalType": "uint256",
-              "name": "_log2Size",
-              "type": "uint256"
-            }
-          ],
-          "name": "getMerkleRootFromBytes",
-          "outputs": [
-            {
-              "internalType": "bytes32",
-              "name": "",
-              "type": "bytes32"
-            }
-          ],
-          "stateMutability": "pure",
-          "type": "function"
-        },
-        {
-          "inputs": [
-            {
-              "internalType": "uint256",
-              "name": "_position",
-              "type": "uint256"
-            },
-            {
-              "internalType": "uint256",
-              "name": "_logSizeOfReplacement",
-              "type": "uint256"
-            },
-            {
-              "internalType": "uint256",
-              "name": "_logSizeOfFullDrive",
-              "type": "uint256"
-            },
-            {
-              "internalType": "bytes32",
-              "name": "_replacement",
-              "type": "bytes32"
-            },
-            {
-              "internalType": "bytes32[]",
-              "name": "siblings",
-              "type": "bytes32[]"
-            }
-          ],
-          "name": "getRootAfterReplacementInDrive",
-          "outputs": [
-            {
-              "internalType": "bytes32",
-              "name": "",
-              "type": "bytes32"
-            }
-          ],
-          "stateMutability": "pure",
-          "type": "function"
-        }
-      ]
-    },
-    "UnrolledCordic": {
-      "address": "0x3F8FdcD1B0F421D817BF58C96b7C91B98100B450",
-      "abi": [
-        {
-          "inputs": [
-            {
-              "internalType": "uint256",
-              "name": "val",
-              "type": "uint256"
-            }
-          ],
-          "name": "log2Times1e18",
-          "outputs": [
-            {
-              "internalType": "uint256",
-              "name": "",
-              "type": "uint256"
-            }
-          ],
-          "stateMutability": "pure",
-          "type": "function"
-        }
-      ]
-    },
-    "ApplicationFactory": {
-      "address": "0x159876e08d642c2Fe9a52804756189E1DbF497F0",
-      "abi": [
-        {
-          "anonymous": false,
-          "inputs": [
-            {
-              "indexed": true,
-              "internalType": "contract IConsensus",
-              "name": "consensus",
-              "type": "address"
-            },
-            {
-              "indexed": false,
-              "internalType": "contract IInputBox",
-              "name": "inputBox",
-              "type": "address"
-            },
-            {
-              "indexed": false,
-              "internalType": "contract IPortal[]",
-              "name": "portals",
-              "type": "address[]"
-            },
-            {
-              "indexed": false,
-              "internalType": "address",
-              "name": "appOwner",
-              "type": "address"
-            },
-            {
-              "indexed": false,
-              "internalType": "bytes32",
-              "name": "templateHash",
-              "type": "bytes32"
-            },
-            {
-              "indexed": false,
-              "internalType": "contract Application",
-              "name": "appContract",
-              "type": "address"
-            }
-          ],
-          "name": "ApplicationCreated",
-          "type": "event"
-        },
-        {
-          "inputs": [
-            {
-              "internalType": "contract IConsensus",
-              "name": "consensus",
-              "type": "address"
-            },
-            {
-              "internalType": "contract IInputBox",
-              "name": "inputBox",
-              "type": "address"
-            },
-            {
-              "internalType": "contract IPortal[]",
-              "name": "portals",
-              "type": "address[]"
-            },
-            {
-              "internalType": "address",
-              "name": "appOwner",
-              "type": "address"
-            },
-            {
-              "internalType": "bytes32",
-              "name": "templateHash",
-              "type": "bytes32"
-            },
-            {
-              "internalType": "bytes32",
-              "name": "salt",
-              "type": "bytes32"
-            }
-          ],
-          "name": "calculateApplicationAddress",
-          "outputs": [
-            {
-              "internalType": "address",
-              "name": "",
-              "type": "address"
-            }
-          ],
-          "stateMutability": "view",
-          "type": "function"
-        },
-        {
-          "inputs": [
-            {
-              "internalType": "contract IConsensus",
-              "name": "consensus",
-              "type": "address"
-            },
-            {
-              "internalType": "contract IInputBox",
-              "name": "inputBox",
-              "type": "address"
-            },
-            {
-              "internalType": "contract IPortal[]",
-              "name": "portals",
-              "type": "address[]"
-            },
-            {
-              "internalType": "address",
-              "name": "appOwner",
-              "type": "address"
-            },
-            {
-              "internalType": "bytes32",
-              "name": "templateHash",
-              "type": "bytes32"
-            },
-            {
-              "internalType": "bytes32",
-              "name": "salt",
-              "type": "bytes32"
-            }
-          ],
-          "name": "newApplication",
-          "outputs": [
-            {
-              "internalType": "contract Application",
-              "name": "",
-              "type": "address"
-            }
-          ],
-          "stateMutability": "nonpayable",
-          "type": "function"
-        },
-        {
-          "inputs": [
-            {
-              "internalType": "contract IConsensus",
-              "name": "consensus",
-              "type": "address"
-            },
-            {
-              "internalType": "contract IInputBox",
-              "name": "inputBox",
-              "type": "address"
-            },
-            {
-              "internalType": "contract IPortal[]",
-              "name": "portals",
-              "type": "address[]"
-            },
-            {
-              "internalType": "address",
-              "name": "appOwner",
-              "type": "address"
-            },
-            {
-              "internalType": "bytes32",
-              "name": "templateHash",
-              "type": "bytes32"
-            }
-          ],
-          "name": "newApplication",
-          "outputs": [
-            {
-              "internalType": "contract Application",
-              "name": "",
-              "type": "address"
-            }
-          ],
-          "stateMutability": "nonpayable",
-          "type": "function"
-        }
-      ]
-    },
-    "SelfHostedApplicationFactory": {
-      "address": "0x1fD0E73b5739eDBdf978e3ad2063F86cF78056aF",
-      "abi": [
-        {
-          "inputs": [
-            {
-              "internalType": "contract IAuthorityFactory",
-              "name": "authorityFactory",
-              "type": "address"
-            },
-            {
-              "internalType": "contract IApplicationFactory",
-              "name": "applicationFactory",
-              "type": "address"
-            }
-          ],
-          "stateMutability": "nonpayable",
-          "type": "constructor"
-        },
-        {
-          "inputs": [
-            {
-              "internalType": "address",
-              "name": "authorityOwner",
-              "type": "address"
-            },
-            {
-              "internalType": "contract IInputBox",
-              "name": "inputBox",
-              "type": "address"
-            },
-            {
-              "internalType": "contract IPortal[]",
-              "name": "portals",
-              "type": "address[]"
-            },
-            {
-              "internalType": "address",
-              "name": "appOwner",
-              "type": "address"
-            },
-            {
-              "internalType": "bytes32",
-              "name": "templateHash",
-              "type": "bytes32"
-            },
-            {
-              "internalType": "bytes32",
-              "name": "salt",
-              "type": "bytes32"
-            }
-          ],
-          "name": "calculateAddresses",
-          "outputs": [
-            {
-              "internalType": "address",
-              "name": "application",
-              "type": "address"
-            },
-            {
-              "internalType": "address",
-              "name": "authority",
-              "type": "address"
-            }
-          ],
-          "stateMutability": "view",
-          "type": "function"
-        },
-        {
-          "inputs": [
-            {
-              "internalType": "address",
-              "name": "authorityOwner",
-              "type": "address"
-            },
-            {
-              "internalType": "contract IInputBox",
-              "name": "inputBox",
-              "type": "address"
-            },
-            {
-              "internalType": "contract IPortal[]",
-              "name": "portals",
-              "type": "address[]"
-            },
-            {
-              "internalType": "address",
-              "name": "appOwner",
-              "type": "address"
-            },
-            {
-              "internalType": "bytes32",
-              "name": "templateHash",
-              "type": "bytes32"
-            },
-            {
-              "internalType": "bytes32",
-              "name": "salt",
-              "type": "bytes32"
-            }
-          ],
-          "name": "deployContracts",
-          "outputs": [
-            {
-              "internalType": "contract Application",
-              "name": "application",
-              "type": "address"
-            },
-            {
-              "internalType": "contract Authority",
-              "name": "authority",
-              "type": "address"
-            }
-          ],
-          "stateMutability": "nonpayable",
-          "type": "function"
-        },
-        {
-          "inputs": [],
-          "name": "getApplicationFactory",
-          "outputs": [
-            {
-              "internalType": "contract IApplicationFactory",
-              "name": "",
-              "type": "address"
-            }
-          ],
-          "stateMutability": "view",
-          "type": "function"
-        },
-        {
-          "inputs": [],
-          "name": "getAuthorityFactory",
-          "outputs": [
-            {
-              "internalType": "contract IAuthorityFactory",
-              "name": "",
-              "type": "address"
-            }
-          ],
-          "stateMutability": "view",
           "type": "function"
         }
       ]
@@ -1360,6 +825,141 @@
           "name": "safeTransfer",
           "outputs": [],
           "stateMutability": "nonpayable",
+          "type": "function"
+        }
+      ]
+    },
+    "SelfHostedApplicationFactory": {
+      "address": "0x4C11C7F82D6D56a726f9B53dd99af031AFd86BB6",
+      "abi": [
+        {
+          "inputs": [
+            {
+              "internalType": "contract IAuthorityFactory",
+              "name": "authorityFactory",
+              "type": "address"
+            },
+            {
+              "internalType": "contract IApplicationFactory",
+              "name": "applicationFactory",
+              "type": "address"
+            }
+          ],
+          "stateMutability": "nonpayable",
+          "type": "constructor"
+        },
+        {
+          "inputs": [
+            {
+              "internalType": "address",
+              "name": "authorityOwner",
+              "type": "address"
+            },
+            {
+              "internalType": "uint256",
+              "name": "epochLength",
+              "type": "uint256"
+            },
+            {
+              "internalType": "address",
+              "name": "appOwner",
+              "type": "address"
+            },
+            {
+              "internalType": "bytes32",
+              "name": "templateHash",
+              "type": "bytes32"
+            },
+            {
+              "internalType": "bytes32",
+              "name": "salt",
+              "type": "bytes32"
+            }
+          ],
+          "name": "calculateAddresses",
+          "outputs": [
+            {
+              "internalType": "address",
+              "name": "application",
+              "type": "address"
+            },
+            {
+              "internalType": "address",
+              "name": "authority",
+              "type": "address"
+            }
+          ],
+          "stateMutability": "view",
+          "type": "function"
+        },
+        {
+          "inputs": [
+            {
+              "internalType": "address",
+              "name": "authorityOwner",
+              "type": "address"
+            },
+            {
+              "internalType": "uint256",
+              "name": "epochLength",
+              "type": "uint256"
+            },
+            {
+              "internalType": "address",
+              "name": "appOwner",
+              "type": "address"
+            },
+            {
+              "internalType": "bytes32",
+              "name": "templateHash",
+              "type": "bytes32"
+            },
+            {
+              "internalType": "bytes32",
+              "name": "salt",
+              "type": "bytes32"
+            }
+          ],
+          "name": "deployContracts",
+          "outputs": [
+            {
+              "internalType": "contract IApplication",
+              "name": "application",
+              "type": "address"
+            },
+            {
+              "internalType": "contract IAuthority",
+              "name": "authority",
+              "type": "address"
+            }
+          ],
+          "stateMutability": "nonpayable",
+          "type": "function"
+        },
+        {
+          "inputs": [],
+          "name": "getApplicationFactory",
+          "outputs": [
+            {
+              "internalType": "contract IApplicationFactory",
+              "name": "",
+              "type": "address"
+            }
+          ],
+          "stateMutability": "view",
+          "type": "function"
+        },
+        {
+          "inputs": [],
+          "name": "getAuthorityFactory",
+          "outputs": [
+            {
+              "internalType": "contract IAuthorityFactory",
+              "name": "",
+              "type": "address"
+            }
+          ],
+          "stateMutability": "view",
           "type": "function"
         }
       ]
