@@ -6,7 +6,6 @@
 /dist
 /docs
 /export/artifacts
-/forge-cache
 /node_modules
 /out
 /src/types
