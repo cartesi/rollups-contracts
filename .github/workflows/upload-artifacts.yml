@@ -1,0 +1,38 @@
+name: Upload artifacts
+
+on:
+  push:
+    tags:
+      - v*
+
+jobs:
+  upload:
+    name: Upload contract artifacts to GitHub Releases
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - uses: ./.github/workflows/setup
+
+      - name: Build contracts
+        run: pnpm build
+
+      - name: Create upload folder
+        run: mkdir -p upload
+
+      - name: Extract version from tag
+        id: extract_version
+        run: echo "version=${GITHUB_REF#refs/tags/v}" >> $GITHUB_OUTPUT
+
+      - name: Compress contract artifacts
+        run: tar -czf "$FILEPATH" -C export/artifacts/contracts .
+        env:
+          FILEPATH: upload/rollups-contracts-${{ steps.extract_version.outputs.version }}-artifacts.tar.gz
+
+      - name: Upload files to GitHub Releases
+        uses: softprops/action-gh-release@v2
+        with:
+          files: upload/*
+
