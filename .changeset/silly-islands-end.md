@@ -6,10 +6,7 @@ Modified the `ICartesiDApp` interface:
 
 -   Renamed it as `IApplication`.
 
--   Made it inherit from:
-
-    -   `IERC721Receiver`.
-    -   `IERC1155Receiver`.
+-   Made it inherit from `IOwnable`.
 
 -   Modified the `executeVoucher` function:
 

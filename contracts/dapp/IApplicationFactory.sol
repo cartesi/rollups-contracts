@@ -3,7 +3,7 @@
 
 pragma solidity ^0.8.8;
 
-import {Application} from "./Application.sol";
+import {IApplication} from "./IApplication.sol";
 import {IConsensus} from "../consensus/IConsensus.sol";
 
 /// @title Application Factory interface
@@ -20,7 +20,7 @@ interface IApplicationFactory {
         IConsensus indexed consensus,
         address appOwner,
         bytes32 templateHash,
-        Application appContract
+        IApplication appContract
     );
 
     // Permissionless functions
@@ -36,7 +36,7 @@ interface IApplicationFactory {
         IConsensus consensus,
         address appOwner,
         bytes32 templateHash
-    ) external returns (Application);
+    ) external returns (IApplication);
 
     /// @notice Deploy a new application deterministically.
     /// @param consensus The initial consensus contract
@@ -51,7 +51,7 @@ interface IApplicationFactory {
         address appOwner,
         bytes32 templateHash,
         bytes32 salt
-    ) external returns (Application);
+    ) external returns (IApplication);
 
     /// @notice Calculate the address of an application contract to be deployed deterministically.
     /// @param consensus The initial consensus contract

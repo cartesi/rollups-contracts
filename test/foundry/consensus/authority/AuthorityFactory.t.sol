@@ -9,7 +9,7 @@ import {Test} from "forge-std/Test.sol";
 import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
 
 import {AuthorityFactory, IAuthorityFactory} from "contracts/consensus/authority/AuthorityFactory.sol";
-import {Authority} from "contracts/consensus/authority/Authority.sol";
+import {IAuthority} from "contracts/consensus/authority/IAuthority.sol";
 
 contract AuthorityFactoryTest is Test {
     AuthorityFactory _factory;
@@ -63,7 +63,7 @@ contract AuthorityFactoryTest is Test {
 
         vm.recordLogs();
 
-        Authority authority = _factory.newAuthority(
+        IAuthority authority = _factory.newAuthority(
             authorityOwner,
             epochLength
         );
@@ -87,7 +87,7 @@ contract AuthorityFactoryTest is Test {
 
         vm.recordLogs();
 
-        Authority authority = _factory.newAuthority(
+        IAuthority authority = _factory.newAuthority(
             authorityOwner,
             epochLength,
             salt
@@ -115,7 +115,7 @@ contract AuthorityFactoryTest is Test {
     function _testNewAuthorityAux(
         address authorityOwner,
         uint256 epochLength,
-        Authority authority
+        IAuthority authority
     ) internal {
         Vm.Log[] memory entries = vm.getRecordedLogs();
 

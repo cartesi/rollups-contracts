@@ -3,9 +3,7 @@
 
 pragma solidity ^0.8.8;
 
-import {IERC1155Receiver} from "@openzeppelin/contracts/token/ERC1155/IERC1155Receiver.sol";
-import {IERC721Receiver} from "@openzeppelin/contracts/token/ERC721/IERC721Receiver.sol";
-
+import {IOwnable} from "../access/IOwnable.sol";
 import {IConsensus} from "../consensus/IConsensus.sol";
 import {OutputValidityProof} from "../common/OutputValidityProof.sol";
 
@@ -27,7 +25,7 @@ import {OutputValidityProof} from "../common/OutputValidityProof.sol";
 /// - DAO (decentralized autonomous organization)
 /// - self-owned application (off-chain governance logic)
 /// @notice See `IConsensus` for examples of consensus models.
-interface IApplication is IERC721Receiver, IERC1155Receiver {
+interface IApplication is IOwnable {
     // Events
 
     /// @notice MUST trigger when a new consensus is chosen.

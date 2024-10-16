@@ -3,18 +3,18 @@
 
 pragma solidity ^0.8.8;
 
-import {Authority} from "../consensus/authority/Authority.sol";
+import {IAuthority} from "../consensus/authority/IAuthority.sol";
 import {IAuthorityFactory} from "../consensus/authority/IAuthorityFactory.sol";
-import {Application} from "./Application.sol";
+import {IApplication} from "./IApplication.sol";
 import {IApplicationFactory} from "./IApplicationFactory.sol";
 
 /// @title Self-hosted Application Factory interface
 interface ISelfHostedApplicationFactory {
-    /// @notice Get the factory used to deploy `Authority` contracts
+    /// @notice Get the factory used to deploy `IAuthority` contracts
     /// @return The authority factory
     function getAuthorityFactory() external view returns (IAuthorityFactory);
 
-    /// @notice Get the factory used to deploy `Application` contracts
+    /// @notice Get the factory used to deploy `IApplication` contracts
     /// @return The application factory
     function getApplicationFactory()
         external
@@ -24,7 +24,7 @@ interface ISelfHostedApplicationFactory {
     /// @notice Deploy new application and authority contracts deterministically.
     /// @param authorityOwner The initial authority owner
     /// @param epochLength The epoch length
-    /// @param appOwner The initial Application owner
+    /// @param appOwner The initial application owner
     /// @param templateHash The initial machine state hash
     /// @param salt The salt used to deterministically generate the addresses
     /// @return The application contract
@@ -38,13 +38,13 @@ interface ISelfHostedApplicationFactory {
         address appOwner,
         bytes32 templateHash,
         bytes32 salt
-    ) external returns (Application, Authority);
+    ) external returns (IApplication, IAuthority);
 
     /// @notice Calculate the addresses of the application and authority contracts
     /// to be deployed deterministically.
     /// @param authorityOwner The initial authority owner
     /// @param epochLength The epoch length
-    /// @param appOwner The initial Application owner
+    /// @param appOwner The initial application owner
     /// @param templateHash The initial machine state hash
     /// @param salt The salt used to deterministically generate the addresses
     /// @return The application address
