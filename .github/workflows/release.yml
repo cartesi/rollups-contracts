@@ -44,34 +44,6 @@ jobs:
         id: get_version
         run: jq -r '"version=\(.version)"' package.json >> "$GITHUB_OUTPUT"
 
-  upload_contract_artifacts_to_gh_releases:
-    name: Upload contract artifacts to GitHub Releases
-    needs: version_or_publish
-    if: ${{ needs.version_or_publish.outputs.published == 'true' }}
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-        with:
-          submodules: recursive
-
-      - uses: ./.github/workflows/setup
-
-      - name: Build contracts
-        run: pnpm build
-
-      - name: Create upload folder
-        run: mkdir -p upload
-
-      - name: Compress contract artifacts
-        run: tar -czf "$FILEPATH" -C export/artifacts/contracts .
-        env:
-          FILEPATH: upload/rollups-contracts-${{ needs.version_or_publish.outputs.version }}-artifacts.tar.gz
-
-      - name: Upload files to GitHub Releases
-        uses: softprops/action-gh-release@v2
-        with:
-          files: upload/*
-
   rust_bindings:
     name: Generate and publish Rust bindings
     needs: version_or_publish
