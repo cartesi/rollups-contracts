@@ -36,7 +36,7 @@ pnpm start
 If, instead, you wish to deploy the contracts to an already running node (e.g. [Anvil](https://book.getfoundry.sh/anvil/)), you can do so by running the following command.
 
 ```sh
-pnpm deploy:development
+pnpm deploy:localhost
 ```
 
 If the node is not listening to `http://localhost:8545/`, please set the `RPC_URL` environment variable accordingly.
