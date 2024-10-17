@@ -6,6 +6,7 @@
 /dist
 /docs
 /export/artifacts
+/export/abi/localhost.json
 /node_modules
 /out
 /src/types
