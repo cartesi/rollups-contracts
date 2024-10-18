@@ -55,8 +55,8 @@ importers:
         specifier: ^2.22.4
         version: 2.22.4(ts-node@10.9.2(@types/node@20.12.12)(typescript@5.4.5))(typescript@5.4.5)
       hardhat-deploy:
-        specifier: ^0.13.0
-        version: 0.13.0
+        specifier: ^0.14.0
+        version: 0.14.0
       mocha:
         specifier: ^10.4.0
         version: 10.4.0
@@ -1505,8 +1505,8 @@ packages:
     resolution: {integrity: sha512-VIZB+ibDhx7ObhAe7OVtoEbuP4h/MuOTHJ+J8h/eBXotJYl0fBgR72xDFCKgIh22OJZIOVNxBMWuhAr10r8HdA==}
     engines: {node: '>=6'}
 
-  hardhat-deploy@0.13.0:
-    resolution: {integrity: sha512-tGT55vaGIijMYm2nin6ypSfFPLwqsPzKIRZ5yW7/PAyk5Rv0yIKEQNLk8zomMn0vNXR8ral3lf4ociA2u7uxSA==}
+  hardhat-deploy@0.14.0:
+    resolution: {integrity: sha512-jZm0bJGHeH7dEyCzz69hsS8HlNNLJLjXDQVlStczulf54vYJUfRvZ+t3x20QsdXQoXUe6Qujlp8cKbx6JjFpZw==}
 
   hardhat@2.22.4:
     resolution: {integrity: sha512-09qcXJFBHQUaraJkYNr7XlmwjOj27xBB0SL2rYS024hTj9tPMbp26AFjlf5quBMO9SR4AJFg+4qWahcYcvXBuQ==}
@@ -4982,7 +4982,7 @@ snapshots:
 
   hard-rejection@2.1.0: {}
 
-  hardhat-deploy@0.13.0:
+  hardhat-deploy@0.14.0:
     dependencies:
       '@ethersproject/abi': 5.7.0
       '@ethersproject/abstract-signer': 5.7.0
