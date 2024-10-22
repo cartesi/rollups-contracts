@@ -28,6 +28,8 @@ jobs:
           git config user.email 153998668+rollups-contracts-bot@users.noreply.github.com
 
       - uses: ./.github/workflows/setup
+        with:
+          foundry-version: nightly
 
       - name: Create release PR or publish packages to npmjs.com
         uses: changesets/action@3de3850952bec538fde60aac71731376e57b9b57
@@ -55,6 +57,8 @@ jobs:
           submodules: recursive
 
       - uses: ./.github/workflows/setup
+        with:
+          foundry-version: nightly
 
       - name: Install Python dependencies
         run: pip install yq

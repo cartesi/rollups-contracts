@@ -5,6 +5,9 @@ on:
     tags:
       - v*
 
+env:
+  FOUNDRY_VERSION: nightly-2044faec64f99a21f0e5f0094458a973612d0712
+
 jobs:
   upload:
     name: Upload contract artifacts to GitHub Releases
@@ -15,9 +18,14 @@ jobs:
           submodules: recursive
 
       - uses: ./.github/workflows/setup
+        with:
+          foundry-version: ${{ env.FOUNDRY_VERSION }}
 
       - name: Build contracts
         run: pnpm build
+
+      - name: Deploy contracts to local Anvil node
+        run: pnpm exec hardhat --network localhost deploy-anvil
 
       - name: Create upload folder
         run: mkdir -p upload
@@ -30,6 +38,11 @@ jobs:
         run: tar -czf "$FILEPATH" -C export/artifacts/contracts .
         env:
           FILEPATH: upload/rollups-contracts-${{ steps.extract_version.outputs.version }}-artifacts.tar.gz
+
+      - name: Compress Anvil deployment artifacts
+        run: tar -czf "$FILEPATH" state.json -C export/abi localhost.json
+        env:
+          FILEPATH: upload/rollups-contracts-${{ steps.extract_version.outputs.version }}-anvil-${{ env.FOUNDRY_VERSION }}.tar.gz
 
       - name: Upload files to GitHub Releases
         uses: softprops/action-gh-release@v2

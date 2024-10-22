@@ -2,6 +2,11 @@ name: Install dependencies
 
 on:
   workflow_call:
+    inputs:
+      foundry-version:
+        description: 'Foundry version'
+        required: true
+        type: string
 
 runs:
   using: 'composite'
@@ -20,3 +25,5 @@ runs:
       run: pnpm i
 
     - uses: foundry-rs/foundry-toolchain@v1
+      with:
+        version: ${{ inputs.foundry-version }}
