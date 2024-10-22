@@ -1,5 +1,11 @@
 # @cartesi/rollups
 
+## 1.4.3
+
+### Patch Changes
+
+-   4996b389: Update Etherscan verification configuration for OP Sepolia
+
 ## 1.4.2
 
 ### Patch Changes
