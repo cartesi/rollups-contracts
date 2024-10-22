@@ -5,8 +5,9 @@
 /deployments/localhost
 /dist
 /docs
-/export/artifacts
 /export/abi/localhost.json
+/export/artifacts
 /node_modules
 /out
 /src/types
+state.json

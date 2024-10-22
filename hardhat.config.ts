@@ -9,6 +9,7 @@ import { getSingletonFactoryInfo } from "@safe-global/safe-singleton-factory";
 import "@nomicfoundation/hardhat-verify";
 import "@typechain/hardhat";
 import "hardhat-deploy";
+import "./src/tasks/deploy-anvil";
 
 import {
     Chain,
@@ -22,13 +23,6 @@ import {
 
 // read MNEMONIC from env variable
 let mnemonic = process.env.MNEMONIC;
-
-const ppath = (packageName: string, pathname: string) => {
-    return path.join(
-        path.dirname(require.resolve(`${packageName}/package.json`)),
-        pathname,
-    );
-};
 
 const networkConfig = (chain: Chain): HttpNetworkUserConfig => {
     let url = process.env.RPC_URL || chain.rpcUrls.default.http.at(0);
