@@ -1,5 +1,187 @@
 # @cartesi/rollups
 
+## 2.0.0
+
+### Major Changes
+
+-   9e515d4: Make `IAuthorityFactory` functions return `IAuthority`
+-   8ba37d2: Modified the `OutputValidityProof` struct
+
+    -   Removed all fields
+    -   Added an `outputIndex` field
+    -   Added an `outputHashesSiblings` field
+
+-   8ba37d2: Modified the ERC-20 deposit input:
+
+    -   Removed the `success` field, because the ERC-20 portal now only adds inputs for successful deposits.
+
+-   8ba37d2: Modified the `CanonicalMachine` library:
+
+    -   Updated the value of the `INPUT_MAX_SIZE` constant to reflect a change in the off-chain machine.
+
+-   8ba37d2: Modified the `AbstractConsensus` contract:
+
+    -   Removed the `join` function
+    -   Implemented the `wasClaimAccepted` function
+    -   Added an internal `_acceptClaim` function
+
+-   8ba37d2: Inputs are now blockchain-agnostic and self-contained blobs.
+-   446d05a: Add the following fields as the input metadata:
+
+    -   The application contract address
+    -   The chain ID
+    -   The latest RANDAO mix of the post beacon state of the previous block
+
+-   8ba37d2: Modified the `IInputRelay` interface:
+
+    -   Renamed it as `IPortal`
+    -   Moved it to `contracts/portals`
+
+-   f8c25e9: Added a `lastProcessedBlockNumber` parameter to `IConsensus` functions and events.
+-   8ba37d2: Modified the `IEtherPortal` interface:
+
+    -   Added an `EtherTransferFailed` error.
+
+-   9e515d4: Made `ISelfHostedApplicationFactory` return `IApplication`
+-   3ef8cb5: Make `IQuorumFactory` functions return `IQuorum`
+-   8ba37d2: Bumped `@openzeppelin/contracts` from `4.9.2` to `5.0.2`.
+-   3d40890: Removed `authorityOwner` parameter from `AuthorityCreated` event.
+-   7f27379: Added an `epochLength` parameter to functions of:
+
+    -   `IAuthorityFactory`
+    -   `ISelfHostedApplicationFactory`
+    -   `IQuorumFactory`
+
+-   8ba37d2: Added a `value` field to vouchers.
+-   8ba37d2: Moved `OutputValidityProof` to a dedicated file in the `common` directory.
+-   8ba37d2: Modified the `ICartesiDAppFactory` interface:
+
+    -   Renamed it as `IApplicationFactory`.
+    -   Made it return `IApplication` instead of `Application`.
+
+-   8ba37d2: Modified the `CartesiDApp` contract:
+
+    -   Renamed it as `Application`.
+    -   Removed the `withdrawEther` function.
+    -   Removed the `OnlyApplication` error.
+    -   Removed the `EtherTransferFailed` error.
+
+-   8ba37d2: Removed:
+
+    -   the `History` contract.
+    -   the `IHistory` interface.
+    -   the `HistoryFactory` contract.
+    -   the `IHistoryFactory` interface.
+    -   the `AuthorityHistoryPairFactory` contract.
+    -   the `IAuthorityHistoryPairFactory` interface.
+    -   the `OutputEncoding` library.
+    -   the `LibInput` library.
+    -   the `DAppAddressRelay` contract.
+    -   the `IDAppAddressRelay` interface.
+
+-   8ba37d2: Modified the `ICartesiDApp` interface:
+
+    -   Renamed it as `IApplication`.
+    -   Made it inherit from `IOwnable`.
+    -   Modified the `executeVoucher` function:
+
+        -   Renamed it as `executeOutput`.
+        -   Errors raised by low-level calls are bubbled up.
+        -   Changed the type of the `proof` parameter to `OutputValidityProof`.
+        -   Removed the boolean return value.
+
+    -   Modified the `validateNotice` function:
+
+        -   Renamed it as `validateOutput`.
+        -   Changed type of the `proof` parameter to `OutputValidityProof`.
+        -   Removed the boolean return value.
+
+    -   Modified the `VoucherExecuted` event:
+
+        -   Renamed it as `OutputExecuted`.
+        -   Removed `voucherId` parameters.
+        -   Added an `outputIndex` parameter.
+        -   Added an `output` parameter.
+
+    -   Modified the `wasVoucherExecuted` function:
+
+        -   Renamed it as `wasOutputExecuted`.
+
+    -   Added a `validateOutputHash` function.
+    -   Added an `InputIndexOutOfRange` error.
+    -   Added an `OutputNotExecutable` error.
+    -   Added an `OutputNotReexecutable` error.
+    -   Added an `InvalidOutputHashesSiblingsArrayLength` error.
+    -   Added an `ClaimNotAccepted` error.
+
+-   8ba37d2: Modified the `IInputBox` interface:
+
+    -   Modified the `InputAdded` event:
+
+        -   Removed the `sender` parameter.
+        -   Changed the semantics of the `input` parameter.
+
+    -   Added an `InputTooLarge` error.
+
+-   8ba37d2: Modified the `CartesiDAppFactory` contract:
+
+    -   Renamed it as `ApplicationFactory`.
+
+-   8ba37d2: Modified the `InputRelay` contract:
+
+    -   Renamed it as `Portal`
+    -   Moved it to `contracts/portals`
+
+-   8ba37d2: Modified the `Authority` contract:
+
+    -   Removed the `AuthorityWithdrawalFailed` error
+    -   Removed the `NewHistory` event
+    -   Removed the `getClaim` function
+    -   Removed the `getHistory` function
+    -   Removed the `join` function
+    -   Removed the `migrateHistoryToConsensus` function
+    -   Removed the `setHistory` function
+    -   Removed the `submitClaim(bytes)` function
+    -   Removed the `withdrawERC20Tokens` function
+    -   Implemented the `submitClaim(address,bytes32)` function
+
+-   8ba37d2: Completely modified the `IConsensus` interface:
+
+    -   Removed the `join` function
+    -   Removed the `getClaim` function
+    -   Removed the `ApplicationJoined` event
+    -   Added a `submitClaim` function
+    -   Added a `wasClaimAccepted` function
+    -   Added a `ClaimSubmission` event
+    -   Added a `ClaimAcceptance` event
+
+-   8ba37d2: Bumped the Solidity compiler from `0.8.19` to `0.8.23`.
+-   8ba37d2: Modified the `IERC20Portal` interface:
+
+    -   Added an `ERC20TransferFailed` error.
+
+-   8ba37d2: Removed deployments to Goerli testnets (L1 and L2s).
+
+### Minor Changes
+
+-   8ba37d2: Added:
+
+    -   an `Outputs` interface
+    -   a `LibAddress` library
+    -   a `LibError` library
+    -   a `LibMerkle32` library
+    -   a `Quorum` contract (which implements the `IConsensus` interface)
+    -   a `QuorumFactory` contract
+    -   an `IQuorumFactory` interface
+
+-   b7d6477: Add `IOwnable` interface
+-   5559379: Add a contract for safe ERC20 transfers. This can be used by delegatecall vouchers.
+-   d425fe1: Add `IQuorum` interface
+-   d4c1164: Add self-hosted application factory contract
+-   7f27379: Added a `getEpochLength` function to `IConsensus` interface.
+-   8e958f2: Supported the execution of `DELEGATECALL` vouchers
+-   e1bcf0d: Add `IAuthority` interface
+
 ## 1.2.0
 
 ### Minor Changes
