@@ -1,0 +1,233 @@
+{
+  "address": "0x4C11C7F82D6D56a726f9B53dd99af031AFd86BB6",
+  "abi": [
+    {
+      "inputs": [
+        {
+          "internalType": "contract IAuthorityFactory",
+          "name": "authorityFactory",
+          "type": "address"
+        },
+        {
+          "internalType": "contract IApplicationFactory",
+          "name": "applicationFactory",
+          "type": "address"
+        }
+      ],
+      "stateMutability": "nonpayable",
+      "type": "constructor"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "address",
+          "name": "authorityOwner",
+          "type": "address"
+        },
+        {
+          "internalType": "uint256",
+          "name": "epochLength",
+          "type": "uint256"
+        },
+        {
+          "internalType": "address",
+          "name": "appOwner",
+          "type": "address"
+        },
+        {
+          "internalType": "bytes32",
+          "name": "templateHash",
+          "type": "bytes32"
+        },
+        {
+          "internalType": "bytes32",
+          "name": "salt",
+          "type": "bytes32"
+        }
+      ],
+      "name": "calculateAddresses",
+      "outputs": [
+        {
+          "internalType": "address",
+          "name": "application",
+          "type": "address"
+        },
+        {
+          "internalType": "address",
+          "name": "authority",
+          "type": "address"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "address",
+          "name": "authorityOwner",
+          "type": "address"
+        },
+        {
+          "internalType": "uint256",
+          "name": "epochLength",
+          "type": "uint256"
+        },
+        {
+          "internalType": "address",
+          "name": "appOwner",
+          "type": "address"
+        },
+        {
+          "internalType": "bytes32",
+          "name": "templateHash",
+          "type": "bytes32"
+        },
+        {
+          "internalType": "bytes32",
+          "name": "salt",
+          "type": "bytes32"
+        }
+      ],
+      "name": "deployContracts",
+      "outputs": [
+        {
+          "internalType": "contract IApplication",
+          "name": "application",
+          "type": "address"
+        },
+        {
+          "internalType": "contract IAuthority",
+          "name": "authority",
+          "type": "address"
+        }
+      ],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "getApplicationFactory",
+      "outputs": [
+        {
+          "internalType": "contract IApplicationFactory",
+          "name": "",
+          "type": "address"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "getAuthorityFactory",
+      "outputs": [
+        {
+          "internalType": "contract IAuthorityFactory",
+          "name": "",
+          "type": "address"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    }
+  ],
+  "transactionHash": "0x9a46afdf7549cb248fed75d2f94d657e6cc3b3daaf1948327d07600c999c53ef",
+  "receipt": {
+    "to": "0x914d7Fec6aaC8cd542e72Bca78B30650d45643d7",
+    "from": "0x18930e8a66a1DbE21D00581216789AAB7460Afd0",
+    "contractAddress": null,
+    "transactionIndex": 1,
+    "gasUsed": "288428",
+    "logsBloom": "0x00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000",
+    "blockHash": "0xb93137f2a5296c68d5d951293d983bf28fc611c1474ec97f2b985d4ac675ee57",
+    "transactionHash": "0x9a46afdf7549cb248fed75d2f94d657e6cc3b3daaf1948327d07600c999c53ef",
+    "logs": [],
+    "blockNumber": 91454091,
+    "cumulativeGasUsed": "288428",
+    "status": 1,
+    "byzantium": true
+  },
+  "args": [
+    "0xB897F7Fe78f220aE34B7FA9493092701a873Ed45",
+    "0x1d4CfBD2622d802A07CeB4C3401Bbb455c9dbdC3"
+  ],
+  "numDeployments": 1,
+  "solcInputHash": "3f90f7284d022e9cc827655f4d93f4f9",
+  "metadata": "{\"compiler\":{\"version\":\"0.8.23+commit.f704f362\"},\"language\":\"Solidity\",\"output\":{\"abi\":[{\"inputs\":[{\"internalType\":\"contract IAuthorityFactory\",\"name\":\"authorityFactory\",\"type\":\"address\"},{\"internalType\":\"contract IApplicationFactory\",\"name\":\"applicationFactory\",\"type\":\"address\"}],\"stateMutability\":\"nonpayable\",\"type\":\"constructor\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"authorityOwner\",\"type\":\"address\"},{\"internalType\":\"uint256\",\"name\":\"epochLength\",\"type\":\"uint256\"},{\"internalType\":\"address\",\"name\":\"appOwner\",\"type\":\"address\"},{\"internalType\":\"bytes32\",\"name\":\"templateHash\",\"type\":\"bytes32\"},{\"internalType\":\"bytes32\",\"name\":\"salt\",\"type\":\"bytes32\"}],\"name\":\"calculateAddresses\",\"outputs\":[{\"internalType\":\"address\",\"name\":\"application\",\"type\":\"address\"},{\"internalType\":\"address\",\"name\":\"authority\",\"type\":\"address\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"authorityOwner\",\"type\":\"address\"},{\"internalType\":\"uint256\",\"name\":\"epochLength\",\"type\":\"uint256\"},{\"internalType\":\"address\",\"name\":\"appOwner\",\"type\":\"address\"},{\"internalType\":\"bytes32\",\"name\":\"templateHash\",\"type\":\"bytes32\"},{\"internalType\":\"bytes32\",\"name\":\"salt\",\"type\":\"bytes32\"}],\"name\":\"deployContracts\",\"outputs\":[{\"internalType\":\"contract IApplication\",\"name\":\"application\",\"type\":\"address\"},{\"internalType\":\"contract IAuthority\",\"name\":\"authority\",\"type\":\"address\"}],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"getApplicationFactory\",\"outputs\":[{\"internalType\":\"contract IApplicationFactory\",\"name\":\"\",\"type\":\"address\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"getAuthorityFactory\",\"outputs\":[{\"internalType\":\"contract IAuthorityFactory\",\"name\":\"\",\"type\":\"address\"}],\"stateMutability\":\"view\",\"type\":\"function\"}],\"devdoc\":{\"kind\":\"dev\",\"methods\":{\"calculateAddresses(address,uint256,address,bytes32,bytes32)\":{\"params\":{\"appOwner\":\"The initial application owner\",\"authorityOwner\":\"The initial authority owner\",\"epochLength\":\"The epoch length\",\"salt\":\"The salt used to deterministically generate the addresses\",\"templateHash\":\"The initial machine state hash\"},\"returns\":{\"application\":\"The application address\",\"authority\":\"The authority address\"}},\"constructor\":{\"params\":{\"applicationFactory\":\"The application factory\",\"authorityFactory\":\"The authority factory\"}},\"deployContracts(address,uint256,address,bytes32,bytes32)\":{\"details\":\"Reverts if the authority owner address is zero.Reverts if the application owner address is zero.Reverts if the epoch length is zero.\",\"params\":{\"appOwner\":\"The initial application owner\",\"authorityOwner\":\"The initial authority owner\",\"epochLength\":\"The epoch length\",\"salt\":\"The salt used to deterministically generate the addresses\",\"templateHash\":\"The initial machine state hash\"},\"returns\":{\"application\":\"The application contract\",\"authority\":\"The authority contract\"}},\"getApplicationFactory()\":{\"returns\":{\"_0\":\"The application factory\"}},\"getAuthorityFactory()\":{\"returns\":{\"_0\":\"The authority factory\"}}},\"title\":\"Self-hosted Application Factory\",\"version\":1},\"userdoc\":{\"kind\":\"user\",\"methods\":{\"calculateAddresses(address,uint256,address,bytes32,bytes32)\":{\"notice\":\"Calculate the addresses of the application and authority contracts to be deployed deterministically.\"},\"deployContracts(address,uint256,address,bytes32,bytes32)\":{\"notice\":\"Deploy new application and authority contracts deterministically.\"},\"getApplicationFactory()\":{\"notice\":\"Get the factory used to deploy `IApplication` contracts\"},\"getAuthorityFactory()\":{\"notice\":\"Get the factory used to deploy `IAuthority` contracts\"}},\"notice\":\"Allows anyone to reliably deploy a new IAuthority contract, along with an IApplication contract already linked to it.\",\"version\":1}},\"settings\":{\"compilationTarget\":{\"contracts/dapp/SelfHostedApplicationFactory.sol\":\"SelfHostedApplicationFactory\"},\"evmVersion\":\"paris\",\"libraries\":{},\"metadata\":{\"bytecodeHash\":\"ipfs\",\"useLiteralContent\":true},\"optimizer\":{\"enabled\":true,\"runs\":200},\"remappings\":[]},\"sources\":{\"contracts/access/IOwnable.sol\":{\"content\":\"// (c) Cartesi and individual authors (see AUTHORS)\\n// SPDX-License-Identifier: Apache-2.0 (see LICENSE)\\n\\npragma solidity ^0.8.8;\\n\\n/// @notice The interface of OpenZeppelin's `Ownable` contract.\\ninterface IOwnable {\\n    function owner() external view returns (address);\\n    function renounceOwnership() external;\\n    function transferOwnership(address newOwner) external;\\n}\\n\",\"keccak256\":\"0x826f366603fe6fd715bd912d40e9b4e851c110aea5895522523d800015532f6d\",\"license\":\"Apache-2.0 (see LICENSE)\"},\"contracts/common/OutputValidityProof.sol\":{\"content\":\"// (c) Cartesi and individual authors (see AUTHORS)\\n// SPDX-License-Identifier: Apache-2.0 (see LICENSE)\\n\\npragma solidity ^0.8.8;\\n\\n/// @notice Proof of inclusion of an output in the output Merkle tree.\\n/// @param outputIndex Index of output in the Merkle tree\\n/// @param outputHashesSiblings Siblings of the output in the Merkle tree\\n/// @dev From the index and siblings, one can calculate the root of the Merkle tree.\\n/// @dev The siblings array should have size equal to the log2 of the maximum number of outputs.\\n/// @dev See the `CanonicalMachine` library for constants.\\nstruct OutputValidityProof {\\n    uint64 outputIndex;\\n    bytes32[] outputHashesSiblings;\\n}\\n\",\"keccak256\":\"0x3bd009e3b744e160f92a84624f8c325b5a6abc8f4e8e02e4a1b8a6de73779c1c\",\"license\":\"Apache-2.0 (see LICENSE)\"},\"contracts/consensus/IConsensus.sol\":{\"content\":\"// (c) Cartesi and individual authors (see AUTHORS)\\n// SPDX-License-Identifier: Apache-2.0 (see LICENSE)\\n\\npragma solidity ^0.8.8;\\n\\n/// @notice Each application has its own stream of inputs.\\n/// See the `IInputBox` interface for calldata-based on-chain data availability.\\n/// @notice When an input is fed to the application, it may yield several outputs.\\n/// @notice Since genesis, a Merkle tree of all outputs ever produced is maintained\\n/// both inside and outside the Cartesi Machine.\\n/// @notice The claim that validators may submit to the consensus contract\\n/// is the root of this Merkle tree after processing all base layer blocks until some height.\\n/// @notice A validator should be able to save transaction fees by not submitting a claim if it was...\\n/// - already submitted by the validator (see the `ClaimSubmission` event) or;\\n/// - already accepted by the consensus (see the `ClaimAcceptance` event).\\n/// @notice The acceptance criteria for claims may depend on the type of consensus, and is not specified by this interface.\\n/// For example, a claim may be accepted if it was...\\n/// - submitted by an authority or;\\n/// - submitted by the majority of a quorum or;\\n/// - submitted and not proven wrong after some period of time or;\\n/// - submitted and proven correct through an on-chain tournament.\\ninterface IConsensus {\\n    /// @notice MUST trigger when a claim is submitted.\\n    /// @param submitter The submitter address\\n    /// @param appContract The application contract address\\n    /// @param lastProcessedBlockNumber The number of the last processed block\\n    /// @param claim The root of the Merkle tree of outputs\\n    event ClaimSubmission(\\n        address indexed submitter,\\n        address indexed appContract,\\n        uint256 lastProcessedBlockNumber,\\n        bytes32 claim\\n    );\\n\\n    /// @notice MUST trigger when a claim is accepted.\\n    /// @param appContract The application contract address\\n    /// @param lastProcessedBlockNumber The number of the last processed block\\n    /// @param claim The root of the Merkle tree of outputs\\n    event ClaimAcceptance(\\n        address indexed appContract,\\n        uint256 lastProcessedBlockNumber,\\n        bytes32 claim\\n    );\\n\\n    /// @notice Submit a claim to the consensus.\\n    /// @param appContract The application contract address\\n    /// @param lastProcessedBlockNumber The number of the last processed block\\n    /// @param claim The root of the Merkle tree of outputs\\n    /// @dev MUST fire a `ClaimSubmission` event.\\n    /// @dev MAY fire a `ClaimAcceptance` event, if the acceptance criteria is met.\\n    function submitClaim(\\n        address appContract,\\n        uint256 lastProcessedBlockNumber,\\n        bytes32 claim\\n    ) external;\\n\\n    /// @notice Check if an output Merkle root hash was ever accepted by the consensus\\n    /// for a particular application.\\n    /// @param appContract The application contract address\\n    /// @param claim The root of the Merkle tree of outputs\\n    function wasClaimAccepted(\\n        address appContract,\\n        bytes32 claim\\n    ) external view returns (bool);\\n\\n    /// @notice Get the epoch length, in number of base layer blocks.\\n    /// @dev The epoch number of a block is defined as\\n    /// the integer division of the block number by the epoch length.\\n    function getEpochLength() external view returns (uint256);\\n}\\n\",\"keccak256\":\"0x33ef3c4e213b2a3489b37d5ef553dc1165c598c56beb0ed8290723a5c74d821c\",\"license\":\"Apache-2.0 (see LICENSE)\"},\"contracts/consensus/authority/IAuthority.sol\":{\"content\":\"// (c) Cartesi and individual authors (see AUTHORS)\\n// SPDX-License-Identifier: Apache-2.0 (see LICENSE)\\n\\npragma solidity ^0.8.8;\\n\\nimport {IOwnable} from \\\"../../access/IOwnable.sol\\\";\\nimport {IConsensus} from \\\"../IConsensus.sol\\\";\\n\\n/// @notice A consensus contract controlled by a single address, the owner.\\ninterface IAuthority is IConsensus, IOwnable {}\\n\",\"keccak256\":\"0x6b63b7eb9c7deac1184052e58a2fba6e45bc630f1a38225d35cafbd0d5b98b04\",\"license\":\"Apache-2.0 (see LICENSE)\"},\"contracts/consensus/authority/IAuthorityFactory.sol\":{\"content\":\"// (c) Cartesi and individual authors (see AUTHORS)\\n// SPDX-License-Identifier: Apache-2.0 (see LICENSE)\\n\\npragma solidity ^0.8.8;\\n\\nimport {IAuthority} from \\\"./IAuthority.sol\\\";\\n\\n/// @title Authority Factory interface\\ninterface IAuthorityFactory {\\n    // Events\\n\\n    /// @notice A new authority was deployed.\\n    /// @param authority The authority\\n    /// @dev MUST be triggered on a successful call to `newAuthority`.\\n    event AuthorityCreated(IAuthority authority);\\n\\n    // Permissionless functions\\n\\n    /// @notice Deploy a new authority.\\n    /// @param authorityOwner The initial authority owner\\n    /// @param epochLength The epoch length\\n    /// @return The authority\\n    /// @dev On success, MUST emit an `AuthorityCreated` event.\\n    /// @dev Reverts if the authority owner address is zero.\\n    /// @dev Reverts if the epoch length is zero.\\n    function newAuthority(\\n        address authorityOwner,\\n        uint256 epochLength\\n    ) external returns (IAuthority);\\n\\n    /// @notice Deploy a new authority deterministically.\\n    /// @param authorityOwner The initial authority owner\\n    /// @param epochLength The epoch length\\n    /// @param salt The salt used to deterministically generate the authority address\\n    /// @return The authority\\n    /// @dev On success, MUST emit an `AuthorityCreated` event.\\n    /// @dev Reverts if the authority owner address is zero.\\n    /// @dev Reverts if the epoch length is zero.\\n    function newAuthority(\\n        address authorityOwner,\\n        uint256 epochLength,\\n        bytes32 salt\\n    ) external returns (IAuthority);\\n\\n    /// @notice Calculate the address of an authority to be deployed deterministically.\\n    /// @param authorityOwner The initial authority owner\\n    /// @param epochLength The epoch length\\n    /// @param salt The salt used to deterministically generate the authority address\\n    /// @return The deterministic authority address\\n    /// @dev Beware that only the `newAuthority` function with the `salt` parameter\\n    ///      is able to deterministically deploy an authority.\\n    function calculateAuthorityAddress(\\n        address authorityOwner,\\n        uint256 epochLength,\\n        bytes32 salt\\n    ) external view returns (address);\\n}\\n\",\"keccak256\":\"0x05bde19d7cbd2bed92a9d81baa60b7e24b00b99f3656b67515b0903e5a920d46\",\"license\":\"Apache-2.0 (see LICENSE)\"},\"contracts/dapp/IApplication.sol\":{\"content\":\"// (c) Cartesi and individual authors (see AUTHORS)\\n// SPDX-License-Identifier: Apache-2.0 (see LICENSE)\\n\\npragma solidity ^0.8.8;\\n\\nimport {IOwnable} from \\\"../access/IOwnable.sol\\\";\\nimport {IConsensus} from \\\"../consensus/IConsensus.sol\\\";\\nimport {OutputValidityProof} from \\\"../common/OutputValidityProof.sol\\\";\\n\\n/// @notice The base layer incarnation of an application running on the execution layer.\\n/// @notice The state of the application advances through inputs sent to an `IInputBox` contract.\\n/// @notice These inputs can be sent either directly, or indirectly through portals.\\n/// @notice Reader nodes can retrieve inputs sent to the `IInputBox` contract through events, and feed them into the machine.\\n/// @notice Validator nodes can also submit claims to the `IConsensus` contract (see the `getConsensus` function).\\n/// @notice Once accepted, claims can be used to validate outputs generated by the machine.\\n/// @notice Some outputs are executable, which means they can have on-chain side effects.\\n/// @notice Every application is subscribed to some consensus, and may be governed by some owner.\\n/// The consensus has the power to accept claims, which, in turn, are used to validate outputs.\\n/// Meanwhile, the owner can replace the consensus at any time.\\n/// Therefore, the users of an application must trust both the consensus and the application owner.\\n/// @notice There are several ownership models to choose from:\\n/// - no owner (address zero)\\n/// - individual signer (externally-owned account)\\n/// - multiple signers (multi-sig)\\n/// - DAO (decentralized autonomous organization)\\n/// - self-owned application (off-chain governance logic)\\n/// @notice See `IConsensus` for examples of consensus models.\\ninterface IApplication is IOwnable {\\n    // Events\\n\\n    /// @notice MUST trigger when a new consensus is chosen.\\n    /// @param newConsensus The new consensus\\n    event NewConsensus(IConsensus newConsensus);\\n\\n    /// @notice MUST trigger when an output is executed.\\n    /// @param outputIndex The index of the output\\n    /// @param output The output\\n    event OutputExecuted(uint64 outputIndex, bytes output);\\n\\n    // Errors\\n\\n    /// @notice Could not execute an output, because the application contract doesn't know how to.\\n    /// @param output The output\\n    error OutputNotExecutable(bytes output);\\n\\n    /// @notice Could not execute an output, because it was already executed.\\n    /// @param output The output\\n    error OutputNotReexecutable(bytes output);\\n\\n    /// @notice Raised when the output hashes siblings array has an invalid size.\\n    /// @dev Please consult `CanonicalMachine` for the maximum number of outputs.\\n    error InvalidOutputHashesSiblingsArrayLength();\\n\\n    /// @notice Raised when the required claim was not accepted by the current consensus.\\n    error ClaimNotAccepted(bytes32 claim);\\n\\n    // Permissioned functions\\n\\n    /// @notice Migrate the application to a new consensus.\\n    /// @param newConsensus The new consensus\\n    /// @dev Can only be called by the application owner.\\n    function migrateToConsensus(IConsensus newConsensus) external;\\n\\n    // Permissionless functions\\n\\n    /// @notice Execute an output.\\n    /// @param output The output\\n    /// @param proof The proof used to validate the output against\\n    ///              a claim submitted to the current consensus contract\\n    /// @dev On a successful execution, emits a `OutputExecuted` event.\\n    /// @dev May raise any of the errors raised by `validateOutput`,\\n    /// as well as `OutputNotExecutable` and `OutputNotReexecutable`.\\n    function executeOutput(\\n        bytes calldata output,\\n        OutputValidityProof calldata proof\\n    ) external;\\n\\n    /// @notice Check whether an output has been executed.\\n    /// @param outputIndex The index of output\\n    /// @return Whether the output has been executed before\\n    function wasOutputExecuted(\\n        uint256 outputIndex\\n    ) external view returns (bool);\\n\\n    /// @notice Validate an output.\\n    /// @param output The output\\n    /// @param proof The proof used to validate the output against\\n    ///              a claim submitted to the current consensus contract\\n    /// @dev May raise any of the errors raised by `validateOutputHash`.\\n    function validateOutput(\\n        bytes calldata output,\\n        OutputValidityProof calldata proof\\n    ) external view;\\n\\n    /// @notice Validate an output hash.\\n    /// @param outputHash The output hash\\n    /// @param proof The proof used to validate the output against\\n    ///              a claim submitted to the current consensus contract\\n    /// @dev May raise `InvalidOutputHashesSiblingsArrayLength`\\n    /// or `ClaimNotAccepted`.\\n    function validateOutputHash(\\n        bytes32 outputHash,\\n        OutputValidityProof calldata proof\\n    ) external view;\\n\\n    /// @notice Get the application's template hash.\\n    /// @return The application's template hash\\n    function getTemplateHash() external view returns (bytes32);\\n\\n    /// @notice Get the current consensus.\\n    /// @return The current consensus\\n    function getConsensus() external view returns (IConsensus);\\n}\\n\",\"keccak256\":\"0x64ca7d1d00fe6eebb633ba07011bd73036360166bd8b75755f55e8f0f51c45ab\",\"license\":\"Apache-2.0 (see LICENSE)\"},\"contracts/dapp/IApplicationFactory.sol\":{\"content\":\"// (c) Cartesi and individual authors (see AUTHORS)\\n// SPDX-License-Identifier: Apache-2.0 (see LICENSE)\\n\\npragma solidity ^0.8.8;\\n\\nimport {IApplication} from \\\"./IApplication.sol\\\";\\nimport {IConsensus} from \\\"../consensus/IConsensus.sol\\\";\\n\\n/// @title Application Factory interface\\ninterface IApplicationFactory {\\n    // Events\\n\\n    /// @notice A new application was deployed.\\n    /// @param consensus The initial consensus contract\\n    /// @param appOwner The initial application owner\\n    /// @param templateHash The initial machine state hash\\n    /// @param appContract The application contract\\n    /// @dev MUST be triggered on a successful call to `newApplication`.\\n    event ApplicationCreated(\\n        IConsensus indexed consensus,\\n        address appOwner,\\n        bytes32 templateHash,\\n        IApplication appContract\\n    );\\n\\n    // Permissionless functions\\n\\n    /// @notice Deploy a new application.\\n    /// @param consensus The initial consensus contract\\n    /// @param appOwner The initial application owner\\n    /// @param templateHash The initial machine state hash\\n    /// @return The application\\n    /// @dev On success, MUST emit an `ApplicationCreated` event.\\n    /// @dev Reverts if the application owner address is zero.\\n    function newApplication(\\n        IConsensus consensus,\\n        address appOwner,\\n        bytes32 templateHash\\n    ) external returns (IApplication);\\n\\n    /// @notice Deploy a new application deterministically.\\n    /// @param consensus The initial consensus contract\\n    /// @param appOwner The initial application owner\\n    /// @param templateHash The initial machine state hash\\n    /// @param salt The salt used to deterministically generate the application contract address\\n    /// @return The application\\n    /// @dev On success, MUST emit an `ApplicationCreated` event.\\n    /// @dev Reverts if the application owner address is zero.\\n    function newApplication(\\n        IConsensus consensus,\\n        address appOwner,\\n        bytes32 templateHash,\\n        bytes32 salt\\n    ) external returns (IApplication);\\n\\n    /// @notice Calculate the address of an application contract to be deployed deterministically.\\n    /// @param consensus The initial consensus contract\\n    /// @param appOwner The initial application owner\\n    /// @param templateHash The initial machine state hash\\n    /// @param salt The salt used to deterministically generate the application contract address\\n    /// @return The deterministic application contract address\\n    /// @dev Beware that only the `newApplication` function with the `salt` parameter\\n    ///      is able to deterministically deploy an application.\\n    function calculateApplicationAddress(\\n        IConsensus consensus,\\n        address appOwner,\\n        bytes32 templateHash,\\n        bytes32 salt\\n    ) external view returns (address);\\n}\\n\",\"keccak256\":\"0x8b3aab57aebe723265d1b1cad7c5d4c8ad944850b8b7c92f3c9cfade75f27197\",\"license\":\"Apache-2.0 (see LICENSE)\"},\"contracts/dapp/ISelfHostedApplicationFactory.sol\":{\"content\":\"// (c) Cartesi and individual authors (see AUTHORS)\\n// SPDX-License-Identifier: Apache-2.0\\n\\npragma solidity ^0.8.8;\\n\\nimport {IAuthority} from \\\"../consensus/authority/IAuthority.sol\\\";\\nimport {IAuthorityFactory} from \\\"../consensus/authority/IAuthorityFactory.sol\\\";\\nimport {IApplication} from \\\"./IApplication.sol\\\";\\nimport {IApplicationFactory} from \\\"./IApplicationFactory.sol\\\";\\n\\n/// @title Self-hosted Application Factory interface\\ninterface ISelfHostedApplicationFactory {\\n    /// @notice Get the factory used to deploy `IAuthority` contracts\\n    /// @return The authority factory\\n    function getAuthorityFactory() external view returns (IAuthorityFactory);\\n\\n    /// @notice Get the factory used to deploy `IApplication` contracts\\n    /// @return The application factory\\n    function getApplicationFactory()\\n        external\\n        view\\n        returns (IApplicationFactory);\\n\\n    /// @notice Deploy new application and authority contracts deterministically.\\n    /// @param authorityOwner The initial authority owner\\n    /// @param epochLength The epoch length\\n    /// @param appOwner The initial application owner\\n    /// @param templateHash The initial machine state hash\\n    /// @param salt The salt used to deterministically generate the addresses\\n    /// @return The application contract\\n    /// @return The authority contract\\n    /// @dev Reverts if the authority owner address is zero.\\n    /// @dev Reverts if the application owner address is zero.\\n    /// @dev Reverts if the epoch length is zero.\\n    function deployContracts(\\n        address authorityOwner,\\n        uint256 epochLength,\\n        address appOwner,\\n        bytes32 templateHash,\\n        bytes32 salt\\n    ) external returns (IApplication, IAuthority);\\n\\n    /// @notice Calculate the addresses of the application and authority contracts\\n    /// to be deployed deterministically.\\n    /// @param authorityOwner The initial authority owner\\n    /// @param epochLength The epoch length\\n    /// @param appOwner The initial application owner\\n    /// @param templateHash The initial machine state hash\\n    /// @param salt The salt used to deterministically generate the addresses\\n    /// @return The application address\\n    /// @return The authority address\\n    function calculateAddresses(\\n        address authorityOwner,\\n        uint256 epochLength,\\n        address appOwner,\\n        bytes32 templateHash,\\n        bytes32 salt\\n    ) external view returns (address, address);\\n}\\n\",\"keccak256\":\"0xed3aa3524c211283565f8c33018a1483e6c49782312aa57ff4399f360855daca\",\"license\":\"Apache-2.0\"},\"contracts/dapp/SelfHostedApplicationFactory.sol\":{\"content\":\"// (c) Cartesi and individual authors (see AUTHORS)\\n// SPDX-License-Identifier: Apache-2.0\\n\\npragma solidity ^0.8.8;\\n\\nimport {IConsensus} from \\\"../consensus/IConsensus.sol\\\";\\nimport {IAuthority} from \\\"../consensus/authority/IAuthority.sol\\\";\\nimport {IAuthorityFactory} from \\\"../consensus/authority/IAuthorityFactory.sol\\\";\\nimport {IApplication} from \\\"./IApplication.sol\\\";\\nimport {IApplicationFactory} from \\\"./IApplicationFactory.sol\\\";\\nimport {ISelfHostedApplicationFactory} from \\\"./ISelfHostedApplicationFactory.sol\\\";\\n\\n/// @title Self-hosted Application Factory\\n/// @notice Allows anyone to reliably deploy a new IAuthority contract,\\n/// along with an IApplication contract already linked to it.\\ncontract SelfHostedApplicationFactory is ISelfHostedApplicationFactory {\\n    IAuthorityFactory immutable _authorityFactory;\\n    IApplicationFactory immutable _applicationFactory;\\n\\n    /// @param authorityFactory The authority factory\\n    /// @param applicationFactory The application factory\\n    constructor(\\n        IAuthorityFactory authorityFactory,\\n        IApplicationFactory applicationFactory\\n    ) {\\n        _authorityFactory = authorityFactory;\\n        _applicationFactory = applicationFactory;\\n    }\\n\\n    function getAuthorityFactory()\\n        external\\n        view\\n        override\\n        returns (IAuthorityFactory)\\n    {\\n        return _authorityFactory;\\n    }\\n\\n    function getApplicationFactory()\\n        external\\n        view\\n        override\\n        returns (IApplicationFactory)\\n    {\\n        return _applicationFactory;\\n    }\\n\\n    function deployContracts(\\n        address authorityOwner,\\n        uint256 epochLength,\\n        address appOwner,\\n        bytes32 templateHash,\\n        bytes32 salt\\n    ) external returns (IApplication application, IAuthority authority) {\\n        authority = _authorityFactory.newAuthority(\\n            authorityOwner,\\n            epochLength,\\n            salt\\n        );\\n\\n        application = _applicationFactory.newApplication(\\n            authority,\\n            appOwner,\\n            templateHash,\\n            salt\\n        );\\n    }\\n\\n    function calculateAddresses(\\n        address authorityOwner,\\n        uint256 epochLength,\\n        address appOwner,\\n        bytes32 templateHash,\\n        bytes32 salt\\n    ) external view returns (address application, address authority) {\\n        authority = _authorityFactory.calculateAuthorityAddress(\\n            authorityOwner,\\n            epochLength,\\n            salt\\n        );\\n\\n        application = _applicationFactory.calculateApplicationAddress(\\n            IConsensus(authority),\\n            appOwner,\\n            templateHash,\\n            salt\\n        );\\n    }\\n}\\n\",\"keccak256\":\"0x8db5a5c88c8141afebf0c8204410bede774d6f7616c4a18796bd365985ab00d9\",\"license\":\"Apache-2.0\"}},\"version\":1}",
+  "bytecode": "0x60c060405234801561001057600080fd5b5060405161050738038061050783398101604081905261002f9161005e565b6001600160a01b039182166080521660a052610098565b6001600160a01b038116811461005b57600080fd5b50565b6000806040838503121561007157600080fd5b825161007c81610046565b602084015190925061008d81610046565b809150509250929050565b60805160a0516104306100d76000396000818160c5015281816101d1015261032101526000818160530152818161012e015261027c01526104306000f3fe608060405234801561001057600080fd5b506004361061004c5760003560e01c806375689f8314610051578063de4d53fd14610090578063e63d50ff146100c3578063ffc643ca146100e9575b600080fd5b7f00000000000000000000000000000000000000000000000000000000000000005b6040516001600160a01b0390911681526020015b60405180910390f35b6100a361009e366004610384565b6100fc565b604080516001600160a01b03938416815292909116602083015201610087565b7f0000000000000000000000000000000000000000000000000000000000000000610073565b6100a36100f7366004610384565b61024a565b604051631442f7bb60e01b81526001600160a01b038681166004830152602482018690526044820183905260009182917f00000000000000000000000000000000000000000000000000000000000000001690631442f7bb90606401602060405180830381865afa158015610175573d6000803e3d6000fd5b505050506040513d601f19601f8201168201806040525081019061019991906103d6565b60405163bd4f121960e01b81526001600160a01b038083166004830152878116602483015260448201879052606482018690529192507f00000000000000000000000000000000000000000000000000000000000000009091169063bd4f121990608401602060405180830381865afa15801561021a573d6000803e3d6000fd5b505050506040513d601f19601f8201168201806040525081019061023e91906103d6565b91509550959350505050565b604051631d9324cd60e31b81526001600160a01b038681166004830152602482018690526044820183905260009182917f0000000000000000000000000000000000000000000000000000000000000000169063ec992668906064016020604051808303816000875af11580156102c5573d6000803e3d6000fd5b505050506040513d601f19601f820116820180604052508101906102e991906103d6565b604051630e1a07f560e01b81526001600160a01b038083166004830152878116602483015260448201879052606482018690529192507f000000000000000000000000000000000000000000000000000000000000000090911690630e1a07f5906084016020604051808303816000875af115801561021a573d6000803e3d6000fd5b6001600160a01b038116811461038157600080fd5b50565b600080600080600060a0868803121561039c57600080fd5b85356103a78161036c565b94506020860135935060408601356103be8161036c565b94979396509394606081013594506080013592915050565b6000602082840312156103e857600080fd5b81516103f38161036c565b939250505056fea264697066735822122020a143bc4274577e61018885b1497d3d548317895553ccc9ead215bc303b532364736f6c63430008170033",
+  "deployedBytecode": "0x608060405234801561001057600080fd5b506004361061004c5760003560e01c806375689f8314610051578063de4d53fd14610090578063e63d50ff146100c3578063ffc643ca146100e9575b600080fd5b7f00000000000000000000000000000000000000000000000000000000000000005b6040516001600160a01b0390911681526020015b60405180910390f35b6100a361009e366004610384565b6100fc565b604080516001600160a01b03938416815292909116602083015201610087565b7f0000000000000000000000000000000000000000000000000000000000000000610073565b6100a36100f7366004610384565b61024a565b604051631442f7bb60e01b81526001600160a01b038681166004830152602482018690526044820183905260009182917f00000000000000000000000000000000000000000000000000000000000000001690631442f7bb90606401602060405180830381865afa158015610175573d6000803e3d6000fd5b505050506040513d601f19601f8201168201806040525081019061019991906103d6565b60405163bd4f121960e01b81526001600160a01b038083166004830152878116602483015260448201879052606482018690529192507f00000000000000000000000000000000000000000000000000000000000000009091169063bd4f121990608401602060405180830381865afa15801561021a573d6000803e3d6000fd5b505050506040513d601f19601f8201168201806040525081019061023e91906103d6565b91509550959350505050565b604051631d9324cd60e31b81526001600160a01b038681166004830152602482018690526044820183905260009182917f0000000000000000000000000000000000000000000000000000000000000000169063ec992668906064016020604051808303816000875af11580156102c5573d6000803e3d6000fd5b505050506040513d601f19601f820116820180604052508101906102e991906103d6565b604051630e1a07f560e01b81526001600160a01b038083166004830152878116602483015260448201879052606482018690529192507f000000000000000000000000000000000000000000000000000000000000000090911690630e1a07f5906084016020604051808303816000875af115801561021a573d6000803e3d6000fd5b6001600160a01b038116811461038157600080fd5b50565b600080600080600060a0868803121561039c57600080fd5b85356103a78161036c565b94506020860135935060408601356103be8161036c565b94979396509394606081013594506080013592915050565b6000602082840312156103e857600080fd5b81516103f38161036c565b939250505056fea264697066735822122020a143bc4274577e61018885b1497d3d548317895553ccc9ead215bc303b532364736f6c63430008170033",
+  "devdoc": {
+    "kind": "dev",
+    "methods": {
+      "calculateAddresses(address,uint256,address,bytes32,bytes32)": {
+        "params": {
+          "appOwner": "The initial application owner",
+          "authorityOwner": "The initial authority owner",
+          "epochLength": "The epoch length",
+          "salt": "The salt used to deterministically generate the addresses",
+          "templateHash": "The initial machine state hash"
+        },
+        "returns": {
+          "application": "The application address",
+          "authority": "The authority address"
+        }
+      },
+      "constructor": {
+        "params": {
+          "applicationFactory": "The application factory",
+          "authorityFactory": "The authority factory"
+        }
+      },
+      "deployContracts(address,uint256,address,bytes32,bytes32)": {
+        "details": "Reverts if the authority owner address is zero.Reverts if the application owner address is zero.Reverts if the epoch length is zero.",
+        "params": {
+          "appOwner": "The initial application owner",
+          "authorityOwner": "The initial authority owner",
+          "epochLength": "The epoch length",
+          "salt": "The salt used to deterministically generate the addresses",
+          "templateHash": "The initial machine state hash"
+        },
+        "returns": {
+          "application": "The application contract",
+          "authority": "The authority contract"
+        }
+      },
+      "getApplicationFactory()": {
+        "returns": {
+          "_0": "The application factory"
+        }
+      },
+      "getAuthorityFactory()": {
+        "returns": {
+          "_0": "The authority factory"
+        }
+      }
+    },
+    "title": "Self-hosted Application Factory",
+    "version": 1
+  },
+  "userdoc": {
+    "kind": "user",
+    "methods": {
+      "calculateAddresses(address,uint256,address,bytes32,bytes32)": {
+        "notice": "Calculate the addresses of the application and authority contracts to be deployed deterministically."
+      },
+      "deployContracts(address,uint256,address,bytes32,bytes32)": {
+        "notice": "Deploy new application and authority contracts deterministically."
+      },
+      "getApplicationFactory()": {
+        "notice": "Get the factory used to deploy `IApplication` contracts"
+      },
+      "getAuthorityFactory()": {
+        "notice": "Get the factory used to deploy `IAuthority` contracts"
+      }
+    },
+    "notice": "Allows anyone to reliably deploy a new IAuthority contract, along with an IApplication contract already linked to it.",
+    "version": 1
+  },
+  "storageLayout": {
+    "storage": [],
+    "types": null
+  }
+}
