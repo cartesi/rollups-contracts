@@ -65,9 +65,9 @@ To have a glimpse of how to develop your DApp locally using your favorite IDE an
 
 ## 💬 Talk with us
 
-If you're interested in developing with Cartesi, working with the team, or hanging out in our community, don't forget to [join us on Discord and follow along](https://discordapp.com/invite/Pt2NrnS).
+If you're interested in developing with Cartesi, working with the team, or hanging out in our community, don't forget to [join us on Discord and follow along](https://discord.com/invite/cartesi).
 
-Want to stay up to date? Make sure to join our [announcements channel on Telegram](https://t.me/CartesiAnnouncements) or [follow our Twitter](https://twitter.com/cartesiproject).
+Want to stay up to date? Make sure to join our [announcements channel on Telegram](https://t.me/CartesiAnnouncements) or [follow our X (formerly Twitter)](https://x.com/cartesiproject).
 
 ## 🤝 Contributing
 
