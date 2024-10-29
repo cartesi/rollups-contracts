@@ -13,6 +13,7 @@ import {OutputValidityProof} from "contracts/common/OutputValidityProof.sol";
 import {Outputs} from "contracts/common/Outputs.sol";
 import {SafeERC20Transfer} from "contracts/delegatecall/SafeERC20Transfer.sol";
 import {IOwnable} from "contracts/access/IOwnable.sol";
+import {LibAddress} from "contracts/library/LibAddress.sol";
 
 import {IERC1155Receiver} from "@openzeppelin/contracts/token/ERC1155/IERC1155Receiver.sol";
 import {IERC1155} from "@openzeppelin/contracts/token/ERC1155/IERC1155.sol";
@@ -559,7 +560,14 @@ contract ApplicationTest is TestBase, OwnableTest {
             "Application contract does not have enough Ether"
         );
 
-        vm.expectRevert();
+        vm.expectRevert(
+            abi.encodeWithSelector(
+                LibAddress.InsufficientFunds.selector,
+                address(_appContract),
+                _transferAmount,
+                0
+            )
+        );
         _appContract.executeOutput(output, proof);
 
         vm.deal(address(_appContract), _transferAmount);
