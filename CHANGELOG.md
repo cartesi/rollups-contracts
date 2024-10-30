@@ -1,5 +1,11 @@
 # @cartesi/rollups
 
+## 2.0.0-rc.11
+
+### Major Changes
+
+-   32ee7d7: Raise an error if voucher has more value than the contract has balance
+
 ## 2.0.0-rc.10
 
 ### Major Changes
