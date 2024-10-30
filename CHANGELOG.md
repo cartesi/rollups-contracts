@@ -1,5 +1,11 @@
 # @cartesi/rollups
 
+## 2.0.0-rc.12
+
+### Patch Changes
+
+-   68673bd: Restore transaction receipts from Ethereum Sepolia deployment
+
 ## 2.0.0-rc.11
 
 ### Major Changes
