@@ -5,8 +5,9 @@
 /deployments/localhost
 /dist
 /docs
+/export/abi/localhost.json
 /export/artifacts
-/forge-cache
 /node_modules
 /out
 /src/types
+state.json

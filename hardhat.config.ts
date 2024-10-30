@@ -9,11 +9,14 @@ import { getSingletonFactoryInfo } from "@safe-global/safe-singleton-factory";
 import "@nomicfoundation/hardhat-verify";
 import "@typechain/hardhat";
 import "hardhat-deploy";
+import "./src/tasks/deploy-anvil";
 
 import {
     Chain,
     arbitrum,
     arbitrumSepolia,
+    base,
+    baseSepolia,
     mainnet,
     optimism,
     optimismSepolia,
@@ -22,13 +25,6 @@ import {
 
 // read MNEMONIC from env variable
 let mnemonic = process.env.MNEMONIC;
-
-const ppath = (packageName: string, pathname: string) => {
-    return path.join(
-        path.dirname(require.resolve(`${packageName}/package.json`)),
-        pathname,
-    );
-};
 
 const networkConfig = (chain: Chain): HttpNetworkUserConfig => {
     let url = process.env.RPC_URL || chain.rpcUrls.default.http.at(0);
@@ -56,6 +52,8 @@ const config: HardhatUserConfig = {
         },
         arbitrum: networkConfig(arbitrum),
         arbitrum_sepolia: networkConfig(arbitrumSepolia),
+        base: networkConfig(base),
+        base_sepolia: networkConfig(baseSepolia),
         mainnet: networkConfig(mainnet),
         sepolia: networkConfig(sepolia),
         optimism: networkConfig(optimism),
