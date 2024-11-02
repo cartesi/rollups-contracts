@@ -47,6 +47,11 @@ interface IApplication is IOwnable {
     /// @param output The output
     error OutputNotReexecutable(bytes output);
 
+    /// @notice Could not execute an output, because the application contract doesn't have enough Ether.
+    /// @param value The amount of Wei necessary for the execution of the output
+    /// @param balance The current application contract balance
+    error InsufficientFunds(uint256 value, uint256 balance);
+
     /// @notice Raised when the output hashes siblings array has an invalid size.
     /// @dev Please consult `CanonicalMachine` for the maximum number of outputs.
     error InvalidOutputHashesSiblingsArrayLength();
