@@ -27,7 +27,7 @@ jobs:
           git config user.name rollups-contracts-bot
           git config user.email 153998668+rollups-contracts-bot@users.noreply.github.com
 
-      - uses: ./.github/workflows/setup
+      - uses: ./.github/actions/setup
         with:
           foundry-version: nightly
 
@@ -56,7 +56,7 @@ jobs:
         with:
           submodules: recursive
 
-      - uses: ./.github/workflows/setup
+      - uses: ./.github/actions/setup
         with:
           foundry-version: nightly
 
