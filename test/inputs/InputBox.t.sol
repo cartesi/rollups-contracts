@@ -18,6 +18,12 @@ contract InputBoxTest is Test {
         _inputBox = new InputBox();
     }
 
+    function testDeploymentBlockNumber(uint256 blockNumber) public {
+        vm.roll(blockNumber);
+        _inputBox = new InputBox();
+        assertEq(_inputBox.getDeploymentBlockNumber(), blockNumber);
+    }
+
     function testNoInputs(address appContract) public view {
         assertEq(_inputBox.getNumberOfInputs(appContract), 0);
     }

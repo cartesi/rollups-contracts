@@ -16,15 +16,23 @@ contract ApplicationFactory is IApplicationFactory {
     function newApplication(
         IConsensus consensus,
         address appOwner,
-        bytes32 templateHash
+        bytes32 templateHash,
+        bytes calldata dataAvailability
     ) external override returns (IApplication) {
         IApplication appContract = new Application(
             consensus,
             appOwner,
-            templateHash
+            templateHash,
+            dataAvailability
         );
 
-        emit ApplicationCreated(consensus, appOwner, templateHash, appContract);
+        emit ApplicationCreated(
+            consensus,
+            appOwner,
+            templateHash,
+            dataAvailability,
+            appContract
+        );
 
         return appContract;
     }
@@ -33,15 +41,23 @@ contract ApplicationFactory is IApplicationFactory {
         IConsensus consensus,
         address appOwner,
         bytes32 templateHash,
+        bytes calldata dataAvailability,
         bytes32 salt
     ) external override returns (IApplication) {
         IApplication appContract = new Application{salt: salt}(
             consensus,
             appOwner,
-            templateHash
+            templateHash,
+            dataAvailability
         );
 
-        emit ApplicationCreated(consensus, appOwner, templateHash, appContract);
+        emit ApplicationCreated(
+            consensus,
+            appOwner,
+            templateHash,
+            dataAvailability,
+            appContract
+        );
 
         return appContract;
     }
@@ -50,6 +66,7 @@ contract ApplicationFactory is IApplicationFactory {
         IConsensus consensus,
         address appOwner,
         bytes32 templateHash,
+        bytes calldata dataAvailability,
         bytes32 salt
     ) external view override returns (address) {
         return
@@ -58,7 +75,12 @@ contract ApplicationFactory is IApplicationFactory {
                 keccak256(
                     abi.encodePacked(
                         type(Application).creationCode,
-                        abi.encode(consensus, appOwner, templateHash)
+                        abi.encode(
+                            consensus,
+                            appOwner,
+                            templateHash,
+                            dataAvailability
+                        )
                     )
                 )
             );

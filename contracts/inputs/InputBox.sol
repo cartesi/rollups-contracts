@@ -8,8 +8,15 @@ import {CanonicalMachine} from "../common/CanonicalMachine.sol";
 import {Inputs} from "../common/Inputs.sol";
 
 contract InputBox is IInputBox {
+    /// @notice Deployment block number
+    uint256 immutable _deploymentBlockNumber;
+
     /// @notice Mapping of application contract addresses to arrays of input hashes.
     mapping(address => bytes32[]) private _inputBoxes;
+
+    constructor() {
+        _deploymentBlockNumber = block.number;
+    }
 
     /// @inheritdoc IInputBox
     function addInput(
@@ -64,5 +71,15 @@ contract InputBox is IInputBox {
         uint256 index
     ) external view override returns (bytes32) {
         return _inputBoxes[appContract][index];
+    }
+
+    /// @inheritdoc IInputBox
+    function getDeploymentBlockNumber()
+        external
+        view
+        override
+        returns (uint256)
+    {
+        return _deploymentBlockNumber;
     }
 }

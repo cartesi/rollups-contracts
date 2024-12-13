@@ -20,6 +20,7 @@ interface IApplicationFactory {
         IConsensus indexed consensus,
         address appOwner,
         bytes32 templateHash,
+        bytes dataAvailability,
         IApplication appContract
     );
 
@@ -35,7 +36,8 @@ interface IApplicationFactory {
     function newApplication(
         IConsensus consensus,
         address appOwner,
-        bytes32 templateHash
+        bytes32 templateHash,
+        bytes calldata dataAvailability
     ) external returns (IApplication);
 
     /// @notice Deploy a new application deterministically.
@@ -50,6 +52,7 @@ interface IApplicationFactory {
         IConsensus consensus,
         address appOwner,
         bytes32 templateHash,
+        bytes calldata dataAvailability,
         bytes32 salt
     ) external returns (IApplication);
 
@@ -65,6 +68,7 @@ interface IApplicationFactory {
         IConsensus consensus,
         address appOwner,
         bytes32 templateHash,
+        bytes calldata dataAvailability,
         bytes32 salt
     ) external view returns (address);
 }

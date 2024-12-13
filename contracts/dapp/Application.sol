@@ -41,6 +41,10 @@ contract Application is
     /// @dev See the `getConsensus` and `migrateToConsensus` functions.
     IConsensus internal _consensus;
 
+    /// @notice The data availability solution.
+    /// @dev See the `getDataAvailability` function.
+    bytes internal _dataAvailability;
+
     /// @notice Creates an `Application` contract.
     /// @param consensus The initial consensus contract
     /// @param initialOwner The initial application owner
@@ -49,10 +53,12 @@ contract Application is
     constructor(
         IConsensus consensus,
         address initialOwner,
-        bytes32 templateHash
+        bytes32 templateHash,
+        bytes memory dataAvailability
     ) Ownable(initialOwner) {
         _templateHash = templateHash;
         _consensus = consensus;
+        _dataAvailability = dataAvailability;
     }
 
     /// @notice Accept Ether transfers.
@@ -134,6 +140,15 @@ contract Application is
 
     function getConsensus() external view override returns (IConsensus) {
         return _consensus;
+    }
+
+    function getDataAvailability()
+        external
+        view
+        override
+        returns (bytes memory)
+    {
+        return _dataAvailability;
     }
 
     function owner() public view override(IOwnable, Ownable) returns (address) {
