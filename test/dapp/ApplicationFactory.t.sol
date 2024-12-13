@@ -20,25 +20,29 @@ contract ApplicationFactoryTest is TestBase {
     function testNewApplication(
         IConsensus consensus,
         address appOwner,
-        bytes32 templateHash
+        bytes32 templateHash,
+        bytes calldata dataAvailability
     ) public {
         vm.assume(appOwner != address(0));
 
         IApplication appContract = _factory.newApplication(
             consensus,
             appOwner,
-            templateHash
+            templateHash,
+            dataAvailability
         );
 
         assertEq(address(appContract.getConsensus()), address(consensus));
         assertEq(appContract.owner(), appOwner);
         assertEq(appContract.getTemplateHash(), templateHash);
+        assertEq(appContract.getDataAvailability(), dataAvailability);
     }
 
     function testNewApplicationDeterministic(
         IConsensus consensus,
         address appOwner,
         bytes32 templateHash,
+        bytes calldata dataAvailability,
         bytes32 salt
     ) public {
         vm.assume(appOwner != address(0));
@@ -47,6 +51,7 @@ contract ApplicationFactoryTest is TestBase {
             consensus,
             appOwner,
             templateHash,
+            dataAvailability,
             salt
         );
 
@@ -54,6 +59,7 @@ contract ApplicationFactoryTest is TestBase {
             consensus,
             appOwner,
             templateHash,
+            dataAvailability,
             salt
         );
 
@@ -63,11 +69,13 @@ contract ApplicationFactoryTest is TestBase {
         assertEq(address(appContract.getConsensus()), address(consensus));
         assertEq(appContract.owner(), appOwner);
         assertEq(appContract.getTemplateHash(), templateHash);
+        assertEq(appContract.getDataAvailability(), dataAvailability);
 
         precalculatedAddress = _factory.calculateApplicationAddress(
             consensus,
             appOwner,
             templateHash,
+            dataAvailability,
             salt
         );
 
@@ -76,13 +84,20 @@ contract ApplicationFactoryTest is TestBase {
 
         // Cannot deploy an application with the same salt twice
         vm.expectRevert(bytes(""));
-        _factory.newApplication(consensus, appOwner, templateHash, salt);
+        _factory.newApplication(
+            consensus,
+            appOwner,
+            templateHash,
+            dataAvailability,
+            salt
+        );
     }
 
     function testApplicationCreatedEvent(
         IConsensus consensus,
         address appOwner,
-        bytes32 templateHash
+        bytes32 templateHash,
+        bytes calldata dataAvailability
     ) public {
         vm.assume(appOwner != address(0));
 
@@ -91,13 +106,15 @@ contract ApplicationFactoryTest is TestBase {
         IApplication appContract = _factory.newApplication(
             consensus,
             appOwner,
-            templateHash
+            templateHash,
+            dataAvailability
         );
 
         _testApplicationCreatedEventAux(
             consensus,
             appOwner,
             templateHash,
+            dataAvailability,
             appContract
         );
     }
@@ -106,6 +123,7 @@ contract ApplicationFactoryTest is TestBase {
         IConsensus consensus,
         address appOwner,
         bytes32 templateHash,
+        bytes calldata dataAvailability,
         bytes32 salt
     ) public {
         vm.assume(appOwner != address(0));
@@ -116,6 +134,7 @@ contract ApplicationFactoryTest is TestBase {
             consensus,
             appOwner,
             templateHash,
+            dataAvailability,
             salt
         );
 
@@ -123,6 +142,7 @@ contract ApplicationFactoryTest is TestBase {
             consensus,
             appOwner,
             templateHash,
+            dataAvailability,
             appContract
         );
     }
@@ -131,6 +151,7 @@ contract ApplicationFactoryTest is TestBase {
         IConsensus consensus,
         address appOwner,
         bytes32 templateHash,
+        bytes calldata dataAvailability,
         IApplication appContract
     ) internal {
         Vm.Log[] memory entries = vm.getRecordedLogs();
@@ -155,11 +176,16 @@ contract ApplicationFactoryTest is TestBase {
                 (
                     address appOwner_,
                     bytes32 templateHash_,
+                    bytes memory dataAvailability_,
                     IApplication app_
-                ) = abi.decode(entry.data, (address, bytes32, IApplication));
+                ) = abi.decode(
+                        entry.data,
+                        (address, bytes32, bytes, IApplication)
+                    );
 
                 assertEq(appOwner, appOwner_);
                 assertEq(templateHash, templateHash_);
+                assertEq(dataAvailability, dataAvailability_);
                 assertEq(address(appContract), address(app_));
             }
         }

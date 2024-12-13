@@ -49,6 +49,7 @@ contract SelfHostedApplicationFactoryTest is TestBase {
         uint256 epochLength,
         address appOwner,
         bytes32 templateHash,
+        bytes calldata dataAvailability,
         bytes32 salt
     ) external {
         vm.assume(appOwner != address(0));
@@ -65,6 +66,7 @@ contract SelfHostedApplicationFactoryTest is TestBase {
             epochLength,
             appOwner,
             templateHash,
+            dataAvailability,
             salt
         );
     }
@@ -73,6 +75,7 @@ contract SelfHostedApplicationFactoryTest is TestBase {
         address authorityOwner,
         address appOwner,
         bytes32 templateHash,
+        bytes calldata dataAvailability,
         bytes32 salt
     ) external {
         vm.assume(appOwner != address(0));
@@ -84,6 +87,7 @@ contract SelfHostedApplicationFactoryTest is TestBase {
             0,
             appOwner,
             templateHash,
+            dataAvailability,
             salt
         );
     }
@@ -92,6 +96,7 @@ contract SelfHostedApplicationFactoryTest is TestBase {
         address authorityOwner,
         uint256 epochLength,
         bytes32 templateHash,
+        bytes calldata dataAvailability,
         bytes32 salt
     ) external {
         vm.assume(authorityOwner != address(0));
@@ -108,6 +113,7 @@ contract SelfHostedApplicationFactoryTest is TestBase {
             epochLength,
             address(0),
             templateHash,
+            dataAvailability,
             salt
         );
     }
@@ -117,6 +123,7 @@ contract SelfHostedApplicationFactoryTest is TestBase {
         uint256 epochLength,
         address appOwner,
         bytes32 templateHash,
+        bytes calldata dataAvailability,
         bytes32 salt
     ) external {
         vm.assume(appOwner != address(0));
@@ -131,6 +138,7 @@ contract SelfHostedApplicationFactoryTest is TestBase {
             epochLength,
             appOwner,
             templateHash,
+            dataAvailability,
             salt
         );
 
@@ -142,6 +150,7 @@ contract SelfHostedApplicationFactoryTest is TestBase {
             epochLength,
             appOwner,
             templateHash,
+            dataAvailability,
             salt
         );
 
@@ -154,5 +163,6 @@ contract SelfHostedApplicationFactoryTest is TestBase {
         assertEq(address(application.getConsensus()), authorityAddr);
         assertEq(application.owner(), appOwner);
         assertEq(application.getTemplateHash(), templateHash);
+        assertEq(application.getDataAvailability(), dataAvailability);
     }
 }

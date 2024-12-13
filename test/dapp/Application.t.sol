@@ -14,6 +14,9 @@ import {Outputs} from "contracts/common/Outputs.sol";
 import {SafeERC20Transfer} from "contracts/delegatecall/SafeERC20Transfer.sol";
 import {IOwnable} from "contracts/access/IOwnable.sol";
 import {LibAddress} from "contracts/library/LibAddress.sol";
+import {InputBox} from "contracts/inputs/InputBox.sol";
+import {IInputBox} from "contracts/inputs/IInputBox.sol";
+import {DataAvailability} from "contracts/common/DataAvailability.sol";
 
 import {IERC1155Receiver} from "@openzeppelin/contracts/token/ERC1155/IERC1155Receiver.sol";
 import {IERC1155} from "@openzeppelin/contracts/token/ERC1155/IERC1155.sol";
@@ -45,12 +48,14 @@ contract ApplicationTest is TestBase, OwnableTest {
     IERC1155 _erc1155SingleToken;
     IERC1155 _erc1155BatchToken;
     SafeERC20Transfer _safeERC20Transfer;
+    IInputBox _inputBox;
 
     LibEmulator.State _emulator;
     address _appOwner;
     address _authorityOwner;
     address _recipient;
     address _tokenOwner;
+    bytes _dataAvailability;
     string[] _outputNames;
     bytes4[] _interfaceIds;
     uint256[] _tokenIds;
@@ -90,13 +95,14 @@ contract ApplicationTest is TestBase, OwnableTest {
                 address(0)
             )
         );
-        new Application(_consensus, address(0), _templateHash);
+        new Application(_consensus, address(0), _templateHash, new bytes(0));
     }
 
     function testConstructor(
         IConsensus consensus,
         address owner,
-        bytes32 templateHash
+        bytes32 templateHash,
+        bytes calldata dataAvailability
     ) external {
         vm.assume(owner != address(0));
 
@@ -106,12 +112,14 @@ contract ApplicationTest is TestBase, OwnableTest {
         IApplication appContract = new Application(
             consensus,
             owner,
-            templateHash
+            templateHash,
+            dataAvailability
         );
 
         assertEq(address(appContract.getConsensus()), address(consensus));
         assertEq(appContract.owner(), owner);
         assertEq(appContract.getTemplateHash(), templateHash);
+        assertEq(appContract.getDataAvailability(), dataAvailability);
     }
 
     // -------------------
@@ -338,8 +346,18 @@ contract ApplicationTest is TestBase, OwnableTest {
             _tokenIds,
             _initialSupplies
         );
+        _inputBox = new InputBox();
         _consensus = new Authority(_authorityOwner, _epochLength);
-        _appContract = new Application(_consensus, _appOwner, _templateHash);
+        _dataAvailability = abi.encodeCall(
+            DataAvailability.InputBox,
+            (_inputBox)
+        );
+        _appContract = new Application(
+            _consensus,
+            _appOwner,
+            _templateHash,
+            _dataAvailability
+        );
         _safeERC20Transfer = new SafeERC20Transfer();
     }
 
