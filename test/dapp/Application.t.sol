@@ -562,8 +562,7 @@ contract ApplicationTest is TestBase, OwnableTest {
 
         vm.expectRevert(
             abi.encodeWithSelector(
-                LibAddress.InsufficientFunds.selector,
-                address(_appContract),
+                IApplication.InsufficientFunds.selector,
                 _transferAmount,
                 0
             )

@@ -168,7 +168,14 @@ contract Application is
             (address, uint256, bytes)
         );
 
-        destination.safeCall(value, payload);
+        bool enoughFunds;
+        uint256 balance;
+
+        (enoughFunds, balance) = destination.safeCall(value, payload);
+
+        if (!enoughFunds) {
+            revert InsufficientFunds(value, balance);
+        }
     }
 
     /// @notice Executes a delegatecall voucher
