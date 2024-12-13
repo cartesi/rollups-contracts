@@ -115,4 +115,9 @@ interface IApplication is IOwnable {
     /// @notice Get the current consensus.
     /// @return The current consensus
     function getConsensus() external view returns (IConsensus);
+
+    /// @notice Get the data availability solution used by application.
+    /// @return Solidity ABI-encoded function call that describes
+    /// the source of inputs that should be fed to the application.
+    function getDataAvailability() external view returns (bytes memory);
 }
