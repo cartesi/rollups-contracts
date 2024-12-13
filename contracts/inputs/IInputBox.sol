@@ -53,4 +53,7 @@ interface IInputBox {
         address appContract,
         uint256 index
     ) external view returns (bytes32);
+
+    /// @notice Get number of block in which contract was deployed
+    function getDeploymentBlockNumber() external view returns (uint256);
 }
