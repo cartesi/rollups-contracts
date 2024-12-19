@@ -3,6 +3,8 @@
 
 pragma solidity ^0.8.8;
 
+import {IERC165} from "@openzeppelin/contracts/utils/introspection/IERC165.sol";
+
 import {IApplication} from "./IApplication.sol";
 import {IConsensus} from "../consensus/IConsensus.sol";
 
@@ -14,13 +16,14 @@ interface IApplicationFactory {
     /// @param consensus The initial consensus contract
     /// @param appOwner The initial application owner
     /// @param templateHash The initial machine state hash
+    /// @param dataAvailability The data availability solution
     /// @param appContract The application contract
     /// @dev MUST be triggered on a successful call to `newApplication`.
     event ApplicationCreated(
         IConsensus indexed consensus,
         address appOwner,
         bytes32 templateHash,
-        bytes dataAvailability,
+        IERC165 dataAvailability,
         IApplication appContract
     );
 
@@ -30,6 +33,7 @@ interface IApplicationFactory {
     /// @param consensus The initial consensus contract
     /// @param appOwner The initial application owner
     /// @param templateHash The initial machine state hash
+    /// @param dataAvailability The data availability solution
     /// @return The application
     /// @dev On success, MUST emit an `ApplicationCreated` event.
     /// @dev Reverts if the application owner address is zero.
@@ -37,13 +41,14 @@ interface IApplicationFactory {
         IConsensus consensus,
         address appOwner,
         bytes32 templateHash,
-        bytes calldata dataAvailability
+        IERC165 dataAvailability
     ) external returns (IApplication);
 
     /// @notice Deploy a new application deterministically.
     /// @param consensus The initial consensus contract
     /// @param appOwner The initial application owner
     /// @param templateHash The initial machine state hash
+    /// @param dataAvailability The data availability solution
     /// @param salt The salt used to deterministically generate the application contract address
     /// @return The application
     /// @dev On success, MUST emit an `ApplicationCreated` event.
@@ -52,7 +57,7 @@ interface IApplicationFactory {
         IConsensus consensus,
         address appOwner,
         bytes32 templateHash,
-        bytes calldata dataAvailability,
+        IERC165 dataAvailability,
         bytes32 salt
     ) external returns (IApplication);
 
@@ -60,6 +65,7 @@ interface IApplicationFactory {
     /// @param consensus The initial consensus contract
     /// @param appOwner The initial application owner
     /// @param templateHash The initial machine state hash
+    /// @param dataAvailability The data availability solution
     /// @param salt The salt used to deterministically generate the application contract address
     /// @return The deterministic application contract address
     /// @dev Beware that only the `newApplication` function with the `salt` parameter
@@ -68,7 +74,7 @@ interface IApplicationFactory {
         IConsensus consensus,
         address appOwner,
         bytes32 templateHash,
-        bytes calldata dataAvailability,
+        IERC165 dataAvailability,
         bytes32 salt
     ) external view returns (address);
 }

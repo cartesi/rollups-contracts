@@ -21,6 +21,7 @@ import {IERC1155Receiver} from "@openzeppelin/contracts/token/ERC1155/IERC1155Re
 import {IERC1155} from "@openzeppelin/contracts/token/ERC1155/IERC1155.sol";
 import {IERC20Errors, IERC721Errors, IERC1155Errors} from "@openzeppelin/contracts/interfaces/draft-IERC6093.sol";
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import {IERC165} from "@openzeppelin/contracts/utils/introspection/IERC165.sol";
 import {IERC721Receiver} from "@openzeppelin/contracts/token/ERC721/IERC721Receiver.sol";
 import {IERC721} from "@openzeppelin/contracts/token/ERC721/IERC721.sol";
 import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
@@ -54,7 +55,7 @@ contract ApplicationTest is TestBase, OwnableTest {
     address _authorityOwner;
     address _recipient;
     address _tokenOwner;
-    bytes _dataAvailability;
+    IERC165 _dataAvailability;
     string[] _outputNames;
     bytes4[] _interfaceIds;
     uint256[] _tokenIds;
@@ -94,14 +95,14 @@ contract ApplicationTest is TestBase, OwnableTest {
                 address(0)
             )
         );
-        new Application(_consensus, address(0), _templateHash, new bytes(0));
+        new Application(_consensus, address(0), _templateHash, IERC165(address(0)));
     }
 
     function testConstructor(
         IConsensus consensus,
         address owner,
         bytes32 templateHash,
-        bytes calldata dataAvailability
+        IERC165 dataAvailability
     ) external {
         vm.assume(owner != address(0));
 
@@ -118,7 +119,7 @@ contract ApplicationTest is TestBase, OwnableTest {
         assertEq(address(appContract.getConsensus()), address(consensus));
         assertEq(appContract.owner(), owner);
         assertEq(appContract.getTemplateHash(), templateHash);
-        assertEq(appContract.getDataAvailability(), dataAvailability);
+        assertEq(address(appContract.getDataAvailability()), address(dataAvailability));
     }
 
     // -------------------
@@ -347,7 +348,7 @@ contract ApplicationTest is TestBase, OwnableTest {
         );
         _inputBox = new InputBox();
         _consensus = new Authority(_authorityOwner, _epochLength);
-        _dataAvailability = new bytes(0);
+        _dataAvailability = IERC165(address(0));
         _appContract = new Application(
             _consensus,
             _appOwner,

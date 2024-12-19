@@ -3,6 +3,8 @@
 
 pragma solidity ^0.8.8;
 
+import {IERC165} from "@openzeppelin/contracts/utils/introspection/IERC165.sol";
+
 import {IAuthority} from "../consensus/authority/IAuthority.sol";
 import {IAuthorityFactory} from "../consensus/authority/IAuthorityFactory.sol";
 import {IApplication} from "./IApplication.sol";
@@ -26,6 +28,7 @@ interface ISelfHostedApplicationFactory {
     /// @param epochLength The epoch length
     /// @param appOwner The initial application owner
     /// @param templateHash The initial machine state hash
+    /// @param dataAvailability The data availability solution
     /// @param salt The salt used to deterministically generate the addresses
     /// @return The application contract
     /// @return The authority contract
@@ -37,7 +40,7 @@ interface ISelfHostedApplicationFactory {
         uint256 epochLength,
         address appOwner,
         bytes32 templateHash,
-        bytes calldata dataAvailability,
+        IERC165 dataAvailability,
         bytes32 salt
     ) external returns (IApplication, IAuthority);
 
@@ -47,6 +50,7 @@ interface ISelfHostedApplicationFactory {
     /// @param epochLength The epoch length
     /// @param appOwner The initial application owner
     /// @param templateHash The initial machine state hash
+    /// @param dataAvailability The data availability solution
     /// @param salt The salt used to deterministically generate the addresses
     /// @return The application address
     /// @return The authority address
@@ -55,7 +59,7 @@ interface ISelfHostedApplicationFactory {
         uint256 epochLength,
         address appOwner,
         bytes32 templateHash,
-        bytes calldata dataAvailability,
+        IERC165 dataAvailability,
         bytes32 salt
     ) external view returns (address, address);
 }

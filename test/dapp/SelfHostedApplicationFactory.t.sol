@@ -5,6 +5,7 @@
 pragma solidity ^0.8.22;
 
 import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
+import {IERC165} from "@openzeppelin/contracts/utils/introspection/IERC165.sol";
 
 import {IAuthorityFactory} from "contracts/consensus/authority/IAuthorityFactory.sol";
 import {AuthorityFactory} from "contracts/consensus/authority/AuthorityFactory.sol";
@@ -49,7 +50,7 @@ contract SelfHostedApplicationFactoryTest is TestBase {
         uint256 epochLength,
         address appOwner,
         bytes32 templateHash,
-        bytes calldata dataAvailability,
+        IERC165 dataAvailability,
         bytes32 salt
     ) external {
         vm.assume(appOwner != address(0));
@@ -75,7 +76,7 @@ contract SelfHostedApplicationFactoryTest is TestBase {
         address authorityOwner,
         address appOwner,
         bytes32 templateHash,
-        bytes calldata dataAvailability,
+        IERC165 dataAvailability,
         bytes32 salt
     ) external {
         vm.assume(appOwner != address(0));
@@ -96,7 +97,7 @@ contract SelfHostedApplicationFactoryTest is TestBase {
         address authorityOwner,
         uint256 epochLength,
         bytes32 templateHash,
-        bytes calldata dataAvailability,
+        IERC165 dataAvailability,
         bytes32 salt
     ) external {
         vm.assume(authorityOwner != address(0));
@@ -123,7 +124,7 @@ contract SelfHostedApplicationFactoryTest is TestBase {
         uint256 epochLength,
         address appOwner,
         bytes32 templateHash,
-        bytes calldata dataAvailability,
+        IERC165 dataAvailability,
         bytes32 salt
     ) external {
         vm.assume(appOwner != address(0));
@@ -163,6 +164,6 @@ contract SelfHostedApplicationFactoryTest is TestBase {
         assertEq(address(application.getConsensus()), authorityAddr);
         assertEq(application.owner(), appOwner);
         assertEq(application.getTemplateHash(), templateHash);
-        assertEq(application.getDataAvailability(), dataAvailability);
+        assertEq(address(application.getDataAvailability()), address(dataAvailability));
     }
 }

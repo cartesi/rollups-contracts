@@ -4,6 +4,8 @@
 /// @title Application Factory Test
 pragma solidity ^0.8.22;
 
+import {IERC165} from "@openzeppelin/contracts/utils/introspection/IERC165.sol";
+
 import {TestBase} from "../util/TestBase.sol";
 import {ApplicationFactory, IApplicationFactory} from "contracts/dapp/ApplicationFactory.sol";
 import {IApplication} from "contracts/dapp/IApplication.sol";
@@ -21,7 +23,7 @@ contract ApplicationFactoryTest is TestBase {
         IConsensus consensus,
         address appOwner,
         bytes32 templateHash,
-        bytes calldata dataAvailability
+        IERC165 dataAvailability
     ) public {
         vm.assume(appOwner != address(0));
 
@@ -35,14 +37,14 @@ contract ApplicationFactoryTest is TestBase {
         assertEq(address(appContract.getConsensus()), address(consensus));
         assertEq(appContract.owner(), appOwner);
         assertEq(appContract.getTemplateHash(), templateHash);
-        assertEq(appContract.getDataAvailability(), dataAvailability);
+        assertEq(address(appContract.getDataAvailability()), address(dataAvailability));
     }
 
     function testNewApplicationDeterministic(
         IConsensus consensus,
         address appOwner,
         bytes32 templateHash,
-        bytes calldata dataAvailability,
+        IERC165 dataAvailability,
         bytes32 salt
     ) public {
         vm.assume(appOwner != address(0));
@@ -69,7 +71,7 @@ contract ApplicationFactoryTest is TestBase {
         assertEq(address(appContract.getConsensus()), address(consensus));
         assertEq(appContract.owner(), appOwner);
         assertEq(appContract.getTemplateHash(), templateHash);
-        assertEq(appContract.getDataAvailability(), dataAvailability);
+        assertEq(address(appContract.getDataAvailability()), address(dataAvailability));
 
         precalculatedAddress = _factory.calculateApplicationAddress(
             consensus,
@@ -97,7 +99,7 @@ contract ApplicationFactoryTest is TestBase {
         IConsensus consensus,
         address appOwner,
         bytes32 templateHash,
-        bytes calldata dataAvailability
+        IERC165 dataAvailability
     ) public {
         vm.assume(appOwner != address(0));
 
@@ -123,7 +125,7 @@ contract ApplicationFactoryTest is TestBase {
         IConsensus consensus,
         address appOwner,
         bytes32 templateHash,
-        bytes calldata dataAvailability,
+        IERC165 dataAvailability,
         bytes32 salt
     ) public {
         vm.assume(appOwner != address(0));
@@ -151,7 +153,7 @@ contract ApplicationFactoryTest is TestBase {
         IConsensus consensus,
         address appOwner,
         bytes32 templateHash,
-        bytes calldata dataAvailability,
+        IERC165 dataAvailability,
         IApplication appContract
     ) internal {
         Vm.Log[] memory entries = vm.getRecordedLogs();
@@ -176,16 +178,16 @@ contract ApplicationFactoryTest is TestBase {
                 (
                     address appOwner_,
                     bytes32 templateHash_,
-                    bytes memory dataAvailability_,
+                    IERC165 dataAvailability_,
                     IApplication app_
                 ) = abi.decode(
                         entry.data,
-                        (address, bytes32, bytes, IApplication)
+                        (address, bytes32, IERC165, IApplication)
                     );
 
                 assertEq(appOwner, appOwner_);
                 assertEq(templateHash, templateHash_);
-                assertEq(dataAvailability, dataAvailability_);
+                assertEq(address(dataAvailability), address(dataAvailability_));
                 assertEq(address(appContract), address(app_));
             }
         }

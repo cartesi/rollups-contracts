@@ -3,6 +3,8 @@
 
 pragma solidity ^0.8.8;
 
+import {IERC165} from "@openzeppelin/contracts/utils/introspection/IERC165.sol";
+
 import {IOwnable} from "../access/IOwnable.sol";
 import {IConsensus} from "../consensus/IConsensus.sol";
 import {OutputValidityProof} from "../common/OutputValidityProof.sol";
@@ -117,7 +119,6 @@ interface IApplication is IOwnable {
     function getConsensus() external view returns (IConsensus);
 
     /// @notice Get the data availability solution used by application.
-    /// @return Solidity ABI-encoded function call that describes
-    /// the source of inputs that should be fed to the application.
-    function getDataAvailability() external view returns (bytes memory);
+    /// @return ERC-165 contract that describes the data availability solution
+    function getDataAvailability() external view returns (IERC165);
 }

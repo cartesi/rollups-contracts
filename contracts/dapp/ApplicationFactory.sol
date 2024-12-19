@@ -4,6 +4,7 @@
 pragma solidity ^0.8.8;
 
 import {Create2} from "@openzeppelin/contracts/utils/Create2.sol";
+import {IERC165} from "@openzeppelin/contracts/utils/introspection/IERC165.sol";
 
 import {IApplicationFactory} from "./IApplicationFactory.sol";
 import {IConsensus} from "../consensus/IConsensus.sol";
@@ -17,7 +18,7 @@ contract ApplicationFactory is IApplicationFactory {
         IConsensus consensus,
         address appOwner,
         bytes32 templateHash,
-        bytes calldata dataAvailability
+        IERC165 dataAvailability
     ) external override returns (IApplication) {
         IApplication appContract = new Application(
             consensus,
@@ -41,7 +42,7 @@ contract ApplicationFactory is IApplicationFactory {
         IConsensus consensus,
         address appOwner,
         bytes32 templateHash,
-        bytes calldata dataAvailability,
+        IERC165 dataAvailability,
         bytes32 salt
     ) external override returns (IApplication) {
         IApplication appContract = new Application{salt: salt}(
@@ -66,7 +67,7 @@ contract ApplicationFactory is IApplicationFactory {
         IConsensus consensus,
         address appOwner,
         bytes32 templateHash,
-        bytes calldata dataAvailability,
+        IERC165 dataAvailability,
         bytes32 salt
     ) external view override returns (address) {
         return

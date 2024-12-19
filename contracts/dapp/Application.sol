@@ -15,6 +15,7 @@ import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
 import {ERC721Holder} from "@openzeppelin/contracts/token/ERC721/utils/ERC721Holder.sol";
 import {ERC1155Holder} from "@openzeppelin/contracts/token/ERC1155/utils/ERC1155Holder.sol";
 import {ReentrancyGuard} from "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
+import {IERC165} from "@openzeppelin/contracts/utils/introspection/IERC165.sol";
 import {IERC721Receiver} from "@openzeppelin/contracts/token/ERC721/IERC721Receiver.sol";
 import {BitMaps} from "@openzeppelin/contracts/utils/structs/BitMaps.sol";
 
@@ -33,6 +34,10 @@ contract Application is
     /// @dev See the `getTemplateHash` function.
     bytes32 internal immutable _templateHash;
 
+    /// @notice The data availability solution.
+    /// @dev See the `getDataAvailability` function.
+    IERC165 internal immutable _dataAvailability;
+
     /// @notice Keeps track of which outputs have been executed.
     /// @dev See the `wasOutputExecuted` function.
     BitMaps.BitMap internal _executed;
@@ -40,10 +45,6 @@ contract Application is
     /// @notice The current consensus contract.
     /// @dev See the `getConsensus` and `migrateToConsensus` functions.
     IConsensus internal _consensus;
-
-    /// @notice The data availability solution.
-    /// @dev See the `getDataAvailability` function.
-    bytes internal _dataAvailability;
 
     /// @notice Creates an `Application` contract.
     /// @param consensus The initial consensus contract
@@ -54,11 +55,11 @@ contract Application is
         IConsensus consensus,
         address initialOwner,
         bytes32 templateHash,
-        bytes memory dataAvailability
+        IERC165 dataAvailability
     ) Ownable(initialOwner) {
         _templateHash = templateHash;
-        _consensus = consensus;
         _dataAvailability = dataAvailability;
+        _consensus = consensus;
     }
 
     /// @notice Accept Ether transfers.
@@ -146,7 +147,7 @@ contract Application is
         external
         view
         override
-        returns (bytes memory)
+        returns (IERC165)
     {
         return _dataAvailability;
     }

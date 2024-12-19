@@ -3,6 +3,8 @@
 
 pragma solidity ^0.8.8;
 
+import {IERC165} from "@openzeppelin/contracts/utils/introspection/IERC165.sol";
+
 import {IConsensus} from "../consensus/IConsensus.sol";
 import {IAuthority} from "../consensus/authority/IAuthority.sol";
 import {IAuthorityFactory} from "../consensus/authority/IAuthorityFactory.sol";
@@ -50,7 +52,7 @@ contract SelfHostedApplicationFactory is ISelfHostedApplicationFactory {
         uint256 epochLength,
         address appOwner,
         bytes32 templateHash,
-        bytes calldata dataAvailability,
+        IERC165 dataAvailability,
         bytes32 salt
     ) external returns (IApplication application, IAuthority authority) {
         authority = _authorityFactory.newAuthority(
@@ -73,7 +75,7 @@ contract SelfHostedApplicationFactory is ISelfHostedApplicationFactory {
         uint256 epochLength,
         address appOwner,
         bytes32 templateHash,
-        bytes calldata dataAvailability,
+        IERC165 dataAvailability,
         bytes32 salt
     ) external view returns (address application, address authority) {
         authority = _authorityFactory.calculateAuthorityAddress(
