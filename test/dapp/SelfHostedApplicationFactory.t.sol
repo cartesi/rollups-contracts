@@ -164,6 +164,9 @@ contract SelfHostedApplicationFactoryTest is TestBase {
         assertEq(address(application.getConsensus()), authorityAddr);
         assertEq(application.owner(), appOwner);
         assertEq(application.getTemplateHash(), templateHash);
-        assertEq(address(application.getDataAvailability()), address(dataAvailability));
+        assertEq(
+            address(application.getDataAvailability()),
+            address(dataAvailability)
+        );
     }
 }

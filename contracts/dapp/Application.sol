@@ -143,12 +143,7 @@ contract Application is
         return _consensus;
     }
 
-    function getDataAvailability()
-        external
-        view
-        override
-        returns (IERC165)
-    {
+    function getDataAvailability() external view override returns (IERC165) {
         return _dataAvailability;
     }
 

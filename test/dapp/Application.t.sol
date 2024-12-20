@@ -95,7 +95,12 @@ contract ApplicationTest is TestBase, OwnableTest {
                 address(0)
             )
         );
-        new Application(_consensus, address(0), _templateHash, IERC165(address(0)));
+        new Application(
+            _consensus,
+            address(0),
+            _templateHash,
+            IERC165(address(0))
+        );
     }
 
     function testConstructor(
@@ -119,7 +124,10 @@ contract ApplicationTest is TestBase, OwnableTest {
         assertEq(address(appContract.getConsensus()), address(consensus));
         assertEq(appContract.owner(), owner);
         assertEq(appContract.getTemplateHash(), templateHash);
-        assertEq(address(appContract.getDataAvailability()), address(dataAvailability));
+        assertEq(
+            address(appContract.getDataAvailability()),
+            address(dataAvailability)
+        );
     }
 
     // -------------------

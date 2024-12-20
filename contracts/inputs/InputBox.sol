@@ -3,11 +3,13 @@
 
 pragma solidity ^0.8.18;
 
+import {ERC165} from "@openzeppelin/contracts/utils/introspection/ERC165.sol";
+
 import {IInputBox} from "./IInputBox.sol";
 import {CanonicalMachine} from "../common/CanonicalMachine.sol";
 import {Inputs} from "../common/Inputs.sol";
 
-contract InputBox is IInputBox {
+contract InputBox is IInputBox, ERC165 {
     /// @notice Deployment block number
     uint256 immutable _deploymentBlockNumber;
 
@@ -81,5 +83,13 @@ contract InputBox is IInputBox {
         returns (uint256)
     {
         return _deploymentBlockNumber;
+    }
+
+    function supportsInterface(
+        bytes4 interfaceId
+    ) public view override returns (bool) {
+        return
+            interfaceId == type(IInputBox).interfaceId ||
+            super.supportsInterface(interfaceId);
     }
 }

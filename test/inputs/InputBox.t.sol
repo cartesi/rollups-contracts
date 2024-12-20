@@ -3,6 +3,8 @@
 
 pragma solidity ^0.8.22;
 
+import {IERC165} from "@openzeppelin/contracts/utils/introspection/IERC165.sol";
+
 import {Test} from "forge-std/Test.sol";
 import {InputBox} from "contracts/inputs/InputBox.sol";
 import {IInputBox} from "contracts/inputs/IInputBox.sol";
@@ -22,6 +24,21 @@ contract InputBoxTest is Test {
         vm.roll(blockNumber);
         _inputBox = new InputBox();
         assertEq(_inputBox.getDeploymentBlockNumber(), blockNumber);
+    }
+
+    function testSupportsInterface() external view {
+        assertEq(
+            _inputBox.supportsInterface(type(IInputBox).interfaceId),
+            true
+        );
+        assertEq(_inputBox.supportsInterface(type(IERC165).interfaceId), true);
+        assertEq(_inputBox.supportsInterface(bytes4(0xffffffff)), false);
+    }
+
+    function testSupportsInterface(bytes4 interfaceId) external view {
+        vm.assume(interfaceId != type(IInputBox).interfaceId);
+        vm.assume(interfaceId != type(IERC165).interfaceId);
+        assertEq(_inputBox.supportsInterface(interfaceId), false);
     }
 
     function testNoInputs(address appContract) public view {

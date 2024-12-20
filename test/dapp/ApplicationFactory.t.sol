@@ -37,7 +37,10 @@ contract ApplicationFactoryTest is TestBase {
         assertEq(address(appContract.getConsensus()), address(consensus));
         assertEq(appContract.owner(), appOwner);
         assertEq(appContract.getTemplateHash(), templateHash);
-        assertEq(address(appContract.getDataAvailability()), address(dataAvailability));
+        assertEq(
+            address(appContract.getDataAvailability()),
+            address(dataAvailability)
+        );
     }
 
     function testNewApplicationDeterministic(
@@ -71,7 +74,10 @@ contract ApplicationFactoryTest is TestBase {
         assertEq(address(appContract.getConsensus()), address(consensus));
         assertEq(appContract.owner(), appOwner);
         assertEq(appContract.getTemplateHash(), templateHash);
-        assertEq(address(appContract.getDataAvailability()), address(dataAvailability));
+        assertEq(
+            address(appContract.getDataAvailability()),
+            address(dataAvailability)
+        );
 
         precalculatedAddress = _factory.calculateApplicationAddress(
             consensus,
