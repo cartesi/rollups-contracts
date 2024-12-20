@@ -99,7 +99,7 @@ contract ApplicationTest is TestBase, OwnableTest {
             _consensus,
             address(0),
             _templateHash,
-            IERC165(address(0))
+            _dataAvailability
         );
     }
 
@@ -354,9 +354,10 @@ contract ApplicationTest is TestBase, OwnableTest {
             _tokenIds,
             _initialSupplies
         );
-        _inputBox = new InputBox();
+        InputBox inputBox = new InputBox();
+        _inputBox = inputBox;
+        _dataAvailability = inputBox;
         _consensus = new Authority(_authorityOwner, _epochLength);
-        _dataAvailability = IERC165(address(0));
         _appContract = new Application(
             _consensus,
             _appOwner,
