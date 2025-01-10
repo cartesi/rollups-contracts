@@ -11,6 +11,15 @@ contract InputBox is IInputBox {
     /// @notice Mapping of application contract addresses to arrays of input hashes.
     mapping(address => bytes32[]) private _inputBoxes;
 
+    /// @notice Snapshot of number of inputs
+    struct Snapshot {
+        uint256 blockNumber;
+        uint256 numberOfInputsBeforeBlock;
+    }
+
+    /// @notice Mapping of application contract addresses to snapshot.
+    mapping(address => Snapshot) private _snapshots;
+
     /// @inheritdoc IInputBox
     function addInput(
         address appContract,
@@ -19,6 +28,13 @@ contract InputBox is IInputBox {
         bytes32[] storage inputBox = _inputBoxes[appContract];
 
         uint256 index = inputBox.length;
+
+        // take snapshot if first input of block
+        Snapshot storage snapshot = _snapshots[appContract];
+        if (snapshot.blockNumber < block.number) {
+            snapshot.blockNumber = block.number;
+            snapshot.numberOfInputsBeforeBlock = index;
+        }
 
         bytes memory input = abi.encodeCall(
             Inputs.EvmAdvance,
@@ -54,8 +70,21 @@ contract InputBox is IInputBox {
     /// @inheritdoc IInputBox
     function getNumberOfInputs(
         address appContract
-    ) external view override returns (uint256) {
+    ) public view override returns (uint256) {
         return _inputBoxes[appContract].length;
+    }
+
+    /// @inheritdoc IInputBox
+    function getNumberOfInputsBeforeCurrentBlock(
+        address appContract
+    ) external view returns (uint256) {
+        Snapshot storage snapshot = _snapshots[appContract];
+        if (snapshot.blockNumber == block.number) {
+            return snapshot.numberOfInputsBeforeBlock;
+        } else {
+            // snapshot.blockNumber < block.number
+            return getNumberOfInputs(appContract);
+        }
     }
 
     /// @inheritdoc IInputBox

@@ -45,6 +45,14 @@ interface IInputBox {
         address appContract
     ) external view returns (uint256);
 
+    /// @notice Get the number of inputs sent to an application
+    /// before the current block. This can be useful for deriving
+    /// input ranges from block ranges.
+    /// @param appContract The application contract address
+    function getNumberOfInputsBeforeCurrentBlock(
+        address appContract
+    ) external view returns (uint256);
+
     /// @notice Get the hash of an input in an application's input box.
     /// @param appContract The application contract address
     /// @param index The input index
