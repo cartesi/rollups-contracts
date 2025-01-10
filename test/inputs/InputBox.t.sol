@@ -20,6 +20,7 @@ contract InputBoxTest is Test {
 
     function testNoInputs(address appContract) public view {
         assertEq(_inputBox.getNumberOfInputs(appContract), 0);
+        assertEq(_inputBox.getNumberOfInputsBeforeCurrentBlock(appContract), 0);
     }
 
     function testAddLargeInput() public {
@@ -102,6 +103,19 @@ contract InputBoxTest is Test {
             assertEq(inputHash, _inputBox.getInputHash(appContract, i));
             // test if input hash is the same as returned from calling addInput() function
             assertEq(inputHash, returnedValues[i]);
+        }
+    }
+
+    function testNumberOfInputsBeforeCurrentBlock() external {
+        address appContract = vm.addr(1);
+        for (uint256 j; j < 3; ++j) {
+            uint256 n = _inputBox.getNumberOfInputs(appContract);
+            for (uint256 i; i < 2; ++i) {
+                _inputBox.addInput(appContract, new bytes(0));
+                // prettier-ignore
+                assertEq(_inputBox.getNumberOfInputsBeforeCurrentBlock(appContract), n);
+            }
+            vm.roll(vm.getBlockNumber() + 1);
         }
     }
 
