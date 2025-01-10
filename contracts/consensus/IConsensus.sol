@@ -3,68 +3,144 @@
 
 pragma solidity ^0.8.8;
 
-/// @notice Each application has its own stream of inputs.
-/// See the `IInputBox` interface for calldata-based on-chain data availability.
-/// @notice When an input is fed to the application, it may yield several outputs.
-/// @notice Since genesis, a Merkle tree of all outputs ever produced is maintained
-/// both inside and outside the Cartesi Machine.
-/// @notice The claim that validators may submit to the consensus contract
-/// is the root of this Merkle tree after processing all base layer blocks until some height.
-/// @notice A validator should be able to save transaction fees by not submitting a claim if it was...
-/// - already submitted by the validator (see the `ClaimSubmission` event) or;
-/// - already accepted by the consensus (see the `ClaimAcceptance` event).
-/// @notice The acceptance criteria for claims may depend on the type of consensus, and is not specified by this interface.
-/// For example, a claim may be accepted if it was...
-/// - submitted by an authority or;
-/// - submitted by the majority of a quorum or;
-/// - submitted and not proven wrong after some period of time or;
-/// - submitted and proven correct through an on-chain tournament.
+import {IERC165} from "@openzeppelin/contracts/utils/introspection/IERC165.sol";
+
+/// @title Consensus interface
+///
+/// Authority (multi dapp):
+/// * initial state
+/// []
+/// * anyone (!!!) calls sealEpoch
+/// [waiting_claims]
+/// * the authority owner (!!!) calls submitClaim
+/// [settled]
+///
+/// Quorum (multi dapp):
+/// * initial state
+/// []
+/// * anyone (!!!) calls sealEpoch
+/// [waiting_claims]
+/// * validators submit claims but they doen't form
+/// an absolute majority of the quorum
+/// [waiting_claims]
+/// * the majority of validators submit the same claim
+/// [settled]
+///
+/// Dave PRT (single dapp):
+/// * initial state
+/// [waiting_dispute (PRT)]
+/// * dispute is resolved
+/// [settled]
+/// * someone calls sealEpoch
+/// [settled, waiting_dispute (PRT)]
+///
 interface IConsensus {
-    /// @notice MUST trigger when a claim is submitted.
-    /// @param submitter The submitter address
-    /// @param appContract The application contract address
-    /// @param lastProcessedBlockNumber The number of the last processed block
-    /// @param claim The root of the Merkle tree of outputs
+    /// @notice Epoch phases
+    enum Phase {
+        /// @notice Waiting for claims to be submitted.
+        WAITING_FOR_CLAIMS,
+        /// @notice Waiting for dispute to be resolved.
+        WAITING_FOR_DISPUTE_RESOLUTION,
+        /// @notice The result has been settled.
+        SETTLED
+    }
+
+    /// @notice Range of base layer blocks of the form [lower, upper)
+    struct BlockRange {
+        uint256 lowerBound;
+        uint256 upperBound;
+    }
+
+    /// @notice An epoch was sealed.
+    /// @dev This also means that an epoch was created
+    /// and is now accumulating inputs.
+    event SealedEpoch(
+        address indexed appContract,
+        uint256 indexed epochIndex,
+        BlockRange blockRange
+    );
+
+    /// @notice A claim was submitted.
     event ClaimSubmission(
+        address indexed appContract,
+        uint256 indexed epochIndex,
         address indexed submitter,
-        address indexed appContract,
-        uint256 lastProcessedBlockNumber,
         bytes32 claim
     );
 
-    /// @notice MUST trigger when a claim is accepted.
-    /// @param appContract The application contract address
-    /// @param lastProcessedBlockNumber The number of the last processed block
-    /// @param claim The root of the Merkle tree of outputs
-    event ClaimAcceptance(
+    /// @notice The epoch claim is under dispute.
+    /// @dev The interface of the dispute resolution module
+    /// can be inferred via ERC-165.
+    event DisputedEpoch(
         address indexed appContract,
-        uint256 lastProcessedBlockNumber,
+        uint256 indexed epochIndex,
+        IERC165 disputeResolutionModule
+    );
+
+    /// @notice The epoch claim is settled.
+    event SettledEpoch(
+        address indexed appContract,
+        uint256 indexed epochIndex,
         bytes32 claim
     );
 
-    /// @notice Submit a claim to the consensus.
-    /// @param appContract The application contract address
-    /// @param lastProcessedBlockNumber The number of the last processed block
-    /// @param claim The root of the Merkle tree of outputs
-    /// @dev MUST fire a `ClaimSubmission` event.
-    /// @dev MAY fire a `ClaimAcceptance` event, if the acceptance criteria is met.
+    /// @notice Cannot seal an epoch yet.
+    error CannotSealEpoch(address appContract);
+
+    /// @notice An invalid epoch index was provided.
+    error InvalidEpochIndex(address appContract, uint256 epochIndex);
+
+    /// @notice The epoch is an invalid phase.
+    error InvalidEpochPhase(address appContract, uint256 epochIndex);
+
+    /// @notice Get the number of sealed epochs of an application.
+    function getNumberOfSealedEpochs(
+        address appContract
+    ) external view returns (uint256);
+
+    /// @notice Given an application, check if can seal a new epoch.
+    function canSealEpoch(address appContract) external view returns (bool);
+
+    /// @notice Given an application, seal a new epoch.
+    function sealEpoch(address appContract) external;
+
+    /// @notice Given an application, get the phase of an epoch.
+    /// @dev If the epoch index is invalid, an InvalidEpochIndex error is raised.
+    function getEpochPhase(
+        address appContract,
+        uint256 epochIndex
+    ) external view returns (Phase);
+
+    /// @notice Given an application, get the block range of a sealed epoch.
+    /// @dev If the epoch index is invalid, an InvalidEpochIndex error is raised.
+    function getSealedEpochBlockRange(
+        address appContract,
+        uint256 epochIndex
+    ) external view returns (BlockRange memory);
+
+    /// @notice Given an application, submit an epoch claim.
+    /// @dev Should only be called for epochs in the WAITING_FOR_CLAIMS phase.
+    /// @dev If the epoch index is invalid, an InvalidEpochIndex error is raised.
+    /// @dev If the epoch phase is invalid, an InvalidEpochPhase error is raised.
     function submitClaim(
         address appContract,
-        uint256 lastProcessedBlockNumber,
+        uint256 epochIndex,
         bytes32 claim
     ) external;
 
-    /// @notice Check if an output Merkle root hash was ever accepted by the consensus
-    /// for a particular application.
-    /// @param appContract The application contract address
-    /// @param claim The root of the Merkle tree of outputs
-    function wasClaimAccepted(
+    /// @notice Given an application, get the dispute resolution module of an epoch.
+    /// @dev Should only be called for epochs in the WAITING_FOR_DISPUTE_RESOLUTION phase.
+    /// @dev One should be able to infer the interface of the dispute resolution module with ERC-165.
+    /// @dev If the epoch index is invalid, an InvalidEpochIndex error is raised.
+    /// @dev If the epoch phase is invalid, an InvalidEpochPhase error is raised.
+    function getDisputeResolutionModule(
+        address appContract,
+        uint256 epochIndex
+    ) external view returns (IERC165);
+
+    /// @notice Given an application, check if a claim was settled.
+    function wasClaimSettled(
         address appContract,
         bytes32 claim
     ) external view returns (bool);
-
-    /// @notice Get the epoch length, in number of base layer blocks.
-    /// @dev The epoch number of a block is defined as
-    /// the integer division of the block number by the epoch length.
-    function getEpochLength() external view returns (uint256);
 }

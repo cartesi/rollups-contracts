@@ -129,7 +129,7 @@ contract Application is
 
         bytes32 claim = proof.computeClaim(outputHash);
 
-        if (!_wasClaimAccepted(claim)) {
+        if (!_wasClaimSettled(claim)) {
             revert ClaimNotAccepted(claim);
         }
     }
@@ -167,8 +167,8 @@ contract Application is
 
     /// @notice Check if an output Merkle root hash was ever accepted by the current consensus.
     /// @param claim The output Merkle root hash
-    function _wasClaimAccepted(bytes32 claim) internal view returns (bool) {
-        return _consensus.wasClaimAccepted(address(this), claim);
+    function _wasClaimSettled(bytes32 claim) internal view returns (bool) {
+        return _consensus.wasClaimSettled(address(this), claim);
     }
 
     /// @notice Executes a voucher

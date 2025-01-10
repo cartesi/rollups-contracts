@@ -21,8 +21,10 @@ contract AuthorityTest is TestBase, OwnableTest {
 
     IAuthority _authority;
 
+    uint256 constant EPOCH_LENGTH = 4 * 60 * 24 * 7;
+
     function setUp() external {
-        _authority = new Authority(vm.addr(1), 1);
+        _authority = new Authority(vm.addr(1), EPOCH_LENGTH);
     }
 
     function _getOwnableContract() internal view override returns (IOwnable) {
@@ -31,7 +33,6 @@ contract AuthorityTest is TestBase, OwnableTest {
 
     function testConstructor(address owner, uint256 epochLength) public {
         vm.assume(owner != address(0));
-        vm.assume(epochLength > 0);
 
         vm.recordLogs();
 
@@ -59,12 +60,47 @@ contract AuthorityTest is TestBase, OwnableTest {
 
         assertEq(numOfOwnershipTransferred, 1);
         assertEq(authority.owner(), owner);
-        assertEq(authority.getEpochLength(), epochLength);
+    }
+
+    function testGetNumberOfSealedEpochs(address appContract) external view {
+        assertEq(_authority.getNumberOfSealedEpochs(appContract), 0);
+    }
+
+    function testSubmitClaims(
+        address appContract,
+        bytes32[] calldata claims
+    ) external {
+        for (uint256 i; i < claims.length; ++i) {
+            bytes32 claim = claims[i];
+            assertEq(_authority.getNumberOfSealedEpochs(appContract), i);
+            vm.roll(vm.getBlockNumber() + EPOCH_LENGTH);
+            assertTrue(_authority.canSealEpoch(appContract));
+            _authority.sealEpoch(appContract);
+            assertEq(
+                uint256(_authority.getEpochPhase(appContract, i)),
+                uint256(IConsensus.Phase.WAITING_FOR_CLAIMS)
+            );
+            vm.expectEmit(true, true, true, true, address(_authority));
+            emit IConsensus.ClaimSubmission(
+                appContract,
+                i,
+                _authority.owner(),
+                claim
+            );
+            vm.expectEmit(true, true, false, true, address(_authority));
+            emit IConsensus.SettledEpoch(appContract, i, claim);
+            vm.prank(_authority.owner());
+            _authority.submitClaim(appContract, i, claim);
+            assertFalse(_authority.canSealEpoch(appContract));
+            assertEq(
+                uint256(_authority.getEpochPhase(appContract, i)),
+                uint256(IConsensus.Phase.SETTLED)
+            );
+            assertTrue(_authority.wasClaimSettled(appContract, claim));
+        }
     }
 
     function testRevertsOwnerAddressZero(uint256 epochLength) public {
-        vm.assume(epochLength > 0);
-
         vm.expectRevert(
             abi.encodeWithSelector(
                 Ownable.OwnableInvalidOwner.selector,
@@ -74,26 +110,20 @@ contract AuthorityTest is TestBase, OwnableTest {
         new Authority(address(0), epochLength);
     }
 
-    function testRevertsEpochLengthZero(address owner) public {
-        vm.assume(owner != address(0));
-
-        vm.expectRevert("epoch length must not be zero");
-        new Authority(owner, 0);
-    }
-
     function testSubmitClaimRevertsCallerNotOwner(
         address owner,
         address notOwner,
-        uint256 epochLength,
         address appContract,
-        uint256 lastProcessedBlockNumber,
         bytes32 claim
     ) public {
         vm.assume(owner != address(0));
         vm.assume(owner != notOwner);
-        vm.assume(epochLength > 0);
 
-        IAuthority authority = new Authority(owner, epochLength);
+        IAuthority authority = new Authority(owner, EPOCH_LENGTH);
+
+        uint256 epochIndex = 0;
+
+        authority.sealEpoch(appContract);
 
         vm.expectRevert(
             abi.encodeWithSelector(
@@ -103,69 +133,44 @@ contract AuthorityTest is TestBase, OwnableTest {
         );
 
         vm.prank(notOwner);
-        authority.submitClaim(appContract, lastProcessedBlockNumber, claim);
+        authority.submitClaim(appContract, epochIndex, claim);
     }
 
-    function testSubmitClaim(
-        address owner,
-        uint256 epochLength,
+    function testWasClaimSettled(
         address appContract,
-        uint256 lastProcessedBlockNumber,
         bytes32 claim
-    ) public {
-        vm.assume(owner != address(0));
-        vm.assume(epochLength > 0);
-
-        IAuthority authority = new Authority(owner, epochLength);
-
-        _expectClaimEvents(
-            authority,
-            owner,
-            appContract,
-            lastProcessedBlockNumber,
-            claim
-        );
-
-        vm.prank(owner);
-        authority.submitClaim(appContract, lastProcessedBlockNumber, claim);
-
-        assertTrue(authority.wasClaimAccepted(appContract, claim));
+    ) external view {
+        assertFalse(_authority.wasClaimSettled(appContract, claim));
     }
 
-    function testWasClaimAccepted(
-        address owner,
-        uint256 epochLength,
+    function testGetDisputeResolutionModuleRevertsInvalidIndex(
         address appContract,
-        bytes32 claim
-    ) public {
-        vm.assume(owner != address(0));
-        vm.assume(epochLength > 0);
-
-        IAuthority authority = new Authority(owner, epochLength);
-
-        assertFalse(authority.wasClaimAccepted(appContract, claim));
+        uint256 epochIndex
+    ) external {
+        vm.expectRevert(
+            abi.encodeWithSelector(
+                IConsensus.InvalidEpochIndex.selector,
+                appContract,
+                epochIndex
+            )
+        );
+        _authority.getDisputeResolutionModule(appContract, epochIndex);
     }
 
-    function _expectClaimEvents(
-        IAuthority authority,
-        address owner,
-        address appContract,
-        uint256 lastProcessedBlockNumber,
-        bytes32 claim
-    ) internal {
-        vm.expectEmit(true, true, false, true, address(authority));
-        emit IConsensus.ClaimSubmission(
-            owner,
-            appContract,
-            lastProcessedBlockNumber,
-            claim
-        );
+    function testGetDisputeResolutionModuleRevertsInvalidPhase(
+        address appContract
+    ) external {
+        uint256 epochIndex = 0;
 
-        vm.expectEmit(true, false, false, true, address(authority));
-        emit IConsensus.ClaimAcceptance(
-            appContract,
-            lastProcessedBlockNumber,
-            claim
+        _authority.sealEpoch(appContract);
+
+        vm.expectRevert(
+            abi.encodeWithSelector(
+                IConsensus.InvalidEpochPhase.selector,
+                appContract,
+                epochIndex
+            )
         );
+        _authority.getDisputeResolutionModule(appContract, epochIndex);
     }
 }

@@ -63,7 +63,7 @@ contract ApplicationTest is TestBase, OwnableTest {
     uint256[] _transferAmounts;
     mapping(string => LibEmulator.OutputIndex) _outputIndexByName;
 
-    uint256 constant _epochLength = 1;
+    uint256 constant _epochLength = 4 * 60 * 24 * 7;
     bytes32 constant _templateHash = keccak256("templateHash");
     uint256 constant _initialSupply = 1000000000000000000000000000000000000;
     uint256 constant _tokenId = 88888888;
@@ -73,6 +73,7 @@ contract ApplicationTest is TestBase, OwnableTest {
         _initVariables();
         _deployContracts();
         _addOutputs();
+        _sealEpoch();
         _submitClaim();
     }
 
@@ -513,6 +514,10 @@ contract ApplicationTest is TestBase, OwnableTest {
         string memory name
     ) internal view returns (OutputValidityProof memory) {
         return _emulator.getOutputValidityProof(_outputIndexByName[name]);
+    }
+
+    function _sealEpoch() internal {
+        _consensus.sealEpoch(address(_appContract));
     }
 
     function _submitClaim() internal {

@@ -8,79 +8,25 @@ import {IQuorum} from "contracts/consensus/quorum/IQuorum.sol";
 import {IConsensus} from "contracts/consensus/IConsensus.sol";
 
 import {TestBase} from "../../util/TestBase.sol";
+import {LibAddressArray} from "../../util/LibAddressArray.sol";
 import {LibTopic} from "../../util/LibTopic.sol";
 
 import {Vm} from "forge-std/Vm.sol";
 
-struct Claim {
-    address appContract;
-    uint256 lastProcessedBlockNumber;
-    bytes32 outputHashesRootHash;
-}
-
-library LibQuorum {
-    function numOfValidatorsInFavorOf(
-        IQuorum quorum,
-        Claim calldata claim
-    ) internal view returns (uint256) {
-        return
-            quorum.numOfValidatorsInFavorOf(
-                claim.appContract,
-                claim.lastProcessedBlockNumber,
-                claim.outputHashesRootHash
-            );
-    }
-
-    function isValidatorInFavorOf(
-        IQuorum quorum,
-        Claim calldata claim,
-        uint256 id
-    ) internal view returns (bool) {
-        return
-            quorum.isValidatorInFavorOf(
-                claim.appContract,
-                claim.lastProcessedBlockNumber,
-                claim.outputHashesRootHash,
-                id
-            );
-    }
-
-    function submitClaim(IQuorum quorum, Claim calldata claim) internal {
-        quorum.submitClaim(
-            claim.appContract,
-            claim.lastProcessedBlockNumber,
-            claim.outputHashesRootHash
-        );
-    }
-
-    function wasClaimAccepted(
-        IQuorum quorum,
-        Claim calldata claim
-    ) internal view returns (bool) {
-        return
-            quorum.wasClaimAccepted(
-                claim.appContract,
-                claim.outputHashesRootHash
-            );
-    }
-}
-
 contract QuorumTest is TestBase {
-    using LibQuorum for IQuorum;
+    using LibAddressArray for address[];
     using LibTopic for address;
+    using LibTopic for uint256;
 
     function testConstructor(
         uint8 numOfValidators,
         uint256 epochLength
     ) external {
-        vm.assume(epochLength > 0);
-
         address[] memory validators = _generateAddresses(numOfValidators);
 
         IQuorum quorum = new Quorum(validators, epochLength);
 
         assertEq(quorum.numOfValidators(), numOfValidators);
-        assertEq(quorum.getEpochLength(), epochLength);
 
         for (uint256 i; i < numOfValidators; ++i) {
             address validator = validators[i];
@@ -90,14 +36,7 @@ contract QuorumTest is TestBase {
         }
     }
 
-    function testRevertsEpochLengthZero(uint8 numOfValidators) external {
-        vm.expectRevert("epoch length must not be zero");
-        new Quorum(_generateAddresses(numOfValidators), 0);
-    }
-
     function testConstructorIgnoresDuplicates(uint256 epochLength) external {
-        vm.assume(epochLength > 0);
-
         address[] memory validators = new address[](7);
 
         validators[0] = vm.addr(1);
@@ -123,15 +62,13 @@ contract QuorumTest is TestBase {
         address addr,
         uint256 epochLength
     ) external {
-        vm.assume(epochLength > 0);
-
         address[] memory validators = _generateAddresses(numOfValidators);
 
         IQuorum quorum = new Quorum(validators, epochLength);
 
         uint256 id = quorum.validatorId(addr);
 
-        if (_contains(validators, addr)) {
+        if (validators.contains(addr)) {
             assertLe(1, id);
             assertLe(id, numOfValidators);
         } else {
@@ -173,53 +110,85 @@ contract QuorumTest is TestBase {
         uint8 numOfValidators,
         uint256 epochLength,
         address caller,
-        Claim calldata claim
+        address appContract,
+        bytes32 claim
     ) external {
-        vm.assume(epochLength > 0);
-
         address[] memory validators = _generateAddresses(numOfValidators);
+        epochLength = bound(epochLength, 1, _maxEpochLength());
 
         IQuorum quorum = new Quorum(validators, epochLength);
 
-        vm.assume(!_contains(validators, caller));
+        vm.assume(!validators.contains(caller));
 
-        vm.expectRevert("Quorum: caller is not validator");
+        quorum.sealEpoch(appContract);
+
+        vm.expectRevert(IQuorum.CallerIsNotValidator.selector);
 
         vm.prank(caller);
-        quorum.submitClaim(claim);
+        quorum.submitClaim(appContract, 0, claim);
     }
 
     function testNumOfValidatorsInFavorOf(
         uint8 numOfValidators,
         uint256 epochLength,
-        Claim calldata claim
+        address appContract,
+        uint256 epochIndex,
+        bytes32 claim
     ) external {
         IQuorum quorum = _deployQuorum(numOfValidators, epochLength);
-        assertEq(quorum.numOfValidatorsInFavorOf(claim), 0);
+        assertEq(
+            quorum.numOfValidatorsInFavorOf(appContract, epochIndex, claim),
+            0
+        );
     }
 
     function testIsValidatorInFavorOf(
         uint8 numOfValidators,
         uint256 epochLength,
-        Claim calldata claim,
+        address appContract,
+        uint256 epochIndex,
+        bytes32 claim,
         uint256 id
     ) external {
         IQuorum quorum = _deployQuorum(numOfValidators, epochLength);
-        assertFalse(quorum.isValidatorInFavorOf(claim, id));
+        assertFalse(
+            quorum.isValidatorInFavorOf(appContract, epochIndex, claim, id)
+        );
     }
 
     function testSubmitClaim(
         uint8 numOfValidators,
         uint256 epochLength,
-        Claim calldata claim
+        address appContract,
+        bytes32 claim
     ) external {
         numOfValidators = uint8(bound(numOfValidators, 1, 7));
+        epochLength = bound(epochLength, 1, _maxEpochLength());
         IQuorum quorum = _deployQuorum(numOfValidators, epochLength);
+        uint256 epochIndex = 0;
+        _sealEpoch(quorum, appContract, epochIndex, 0);
         bool[] memory inFavorOf = new bool[](numOfValidators + 1);
-        for (uint256 id = 1; id <= numOfValidators; ++id) {
-            _submitClaimAs(quorum, claim, id);
+        uint256 majority = 1 + numOfValidators / 2;
+        for (uint256 id = 1; id <= majority; ++id) {
+            _submitClaimAs(quorum, appContract, epochIndex, claim, id);
             inFavorOf[id] = true;
-            _checkSubmitted(quorum, claim, inFavorOf);
+            _checkSubmitted(quorum, appContract, epochIndex, claim, inFavorOf);
+        }
+        assertEq(
+            uint256(quorum.getEpochPhase(appContract, epochIndex)),
+            uint256(IConsensus.Phase.SETTLED)
+        );
+        for (uint256 id = majority + 1; id <= numOfValidators; ++id) {
+            address validator = quorum.validatorById(id);
+            vm.expectRevert(
+                abi.encodeWithSelector(
+                    IConsensus.InvalidEpochPhase.selector,
+                    appContract,
+                    epochIndex
+                )
+            );
+            vm.prank(validator);
+            quorum.submitClaim(appContract, epochIndex, claim);
         }
     }
 
@@ -228,19 +197,28 @@ contract QuorumTest is TestBase {
     /// The first bit is skipped because validator IDs start from 1.
     /// Therefore, validator ID 256 is the first to use a new slot.
     function testSubmitClaim256(
-        Claim calldata claim,
-        uint256 epochLength
+        uint256 epochLength,
+        address appContract,
+        bytes32 claim
     ) external {
         uint256 numOfValidators = 256;
+        epochLength = bound(epochLength, 1, _maxEpochLength());
 
         IQuorum quorum = _deployQuorum(numOfValidators, epochLength);
 
         uint256 id = numOfValidators;
 
-        _submitClaimAs(quorum, claim, id);
+        uint256 epochIndex = 0;
+        _sealEpoch(quorum, appContract, epochIndex, 0);
+        _submitClaimAs(quorum, appContract, epochIndex, claim, id);
 
-        assertTrue(quorum.isValidatorInFavorOf(claim, id));
-        assertEq(quorum.numOfValidatorsInFavorOf(claim), 1);
+        assertTrue(
+            quorum.isValidatorInFavorOf(appContract, epochIndex, claim, id)
+        );
+        assertEq(
+            quorum.numOfValidatorsInFavorOf(appContract, epochIndex, claim),
+            1
+        );
     }
 
     // Internal functions
@@ -250,29 +228,78 @@ contract QuorumTest is TestBase {
         uint256 numOfValidators,
         uint256 epochLength
     ) internal returns (IQuorum) {
-        vm.assume(epochLength > 0);
         return new Quorum(_generateAddresses(numOfValidators), epochLength);
     }
 
     function _checkSubmitted(
         IQuorum quorum,
-        Claim calldata claim,
+        address appContract,
+        uint256 epochIndex,
+        bytes32 claim,
         bool[] memory inFavorOf
     ) internal view {
         uint256 inFavorCount;
         uint256 numOfValidators = quorum.numOfValidators();
 
         for (uint256 id = 1; id <= numOfValidators; ++id) {
-            assertEq(quorum.isValidatorInFavorOf(claim, id), inFavorOf[id]);
+            assertEq(
+                quorum.isValidatorInFavorOf(appContract, epochIndex, claim, id),
+                inFavorOf[id]
+            );
             if (inFavorOf[id]) ++inFavorCount;
         }
 
-        assertEq(quorum.numOfValidatorsInFavorOf(claim), inFavorCount);
+        assertEq(
+            quorum.numOfValidatorsInFavorOf(appContract, epochIndex, claim),
+            inFavorCount
+        );
+    }
+
+    function _sealEpoch(
+        IQuorum quorum,
+        address appContract,
+        uint256 epochIndex,
+        uint256 lowerBound
+    ) internal {
+        uint256 upperBound = vm.getBlockNumber();
+
+        vm.recordLogs();
+
+        quorum.sealEpoch(appContract);
+
+        Vm.Log[] memory entries = vm.getRecordedLogs();
+
+        uint256 numOfSealedEpochs;
+
+        for (uint256 i; i < entries.length; ++i) {
+            Vm.Log memory entry = entries[i];
+
+            if (
+                entry.emitter == address(quorum) &&
+                entry.topics[0] == IConsensus.SealedEpoch.selector
+            ) {
+                IConsensus.BlockRange memory blockRange = abi.decode(
+                    entry.data,
+                    (IConsensus.BlockRange)
+                );
+
+                assertEq(entry.topics[1], appContract.asTopic());
+                assertEq(entry.topics[2], epochIndex.asTopic());
+                assertEq(blockRange.lowerBound, lowerBound);
+                assertEq(blockRange.upperBound, upperBound);
+
+                ++numOfSealedEpochs;
+            }
+        }
+
+        assertEq(numOfSealedEpochs, 1);
     }
 
     function _submitClaimAs(
         IQuorum quorum,
-        Claim calldata claim,
+        address appContract,
+        uint256 epochIndex,
+        bytes32 claim,
         uint256 id
     ) internal {
         address validator = quorum.validatorById(id);
@@ -280,12 +307,12 @@ contract QuorumTest is TestBase {
         vm.recordLogs();
 
         vm.prank(validator);
-        quorum.submitClaim(claim);
+        quorum.submitClaim(appContract, epochIndex, claim);
 
         Vm.Log[] memory entries = vm.getRecordedLogs();
 
-        uint256 numOfSubmissions;
-        uint256 numOfAcceptances;
+        uint256 numOfSubmittedClaims;
+        uint256 numOfSettledEpochs;
 
         for (uint256 i; i < entries.length; ++i) {
             Vm.Log memory entry = entries[i];
@@ -294,56 +321,58 @@ contract QuorumTest is TestBase {
                 entry.emitter == address(quorum) &&
                 entry.topics[0] == IConsensus.ClaimSubmission.selector
             ) {
-                (
-                    uint256 lastProcessedBlockNumber,
-                    bytes32 outputHashesRootHash
-                ) = abi.decode(entry.data, (uint256, bytes32));
+                bytes32 eventClaim = abi.decode(entry.data, (bytes32));
 
-                assertEq(entry.topics[1], validator.asTopic());
-                assertEq(entry.topics[2], claim.appContract.asTopic());
-                assertEq(
-                    lastProcessedBlockNumber,
-                    claim.lastProcessedBlockNumber
-                );
-                assertEq(outputHashesRootHash, claim.outputHashesRootHash);
+                assertEq(entry.topics[1], appContract.asTopic());
+                assertEq(entry.topics[2], epochIndex.asTopic());
+                assertEq(entry.topics[3], validator.asTopic());
+                assertEq(eventClaim, claim);
 
-                ++numOfSubmissions;
+                ++numOfSubmittedClaims;
             }
 
             if (
                 entry.emitter == address(quorum) &&
-                entry.topics[0] == IConsensus.ClaimAcceptance.selector
+                entry.topics[0] == IConsensus.SettledEpoch.selector
             ) {
-                (
-                    uint256 lastProcessedBlockNumber,
-                    bytes32 outputHashesRootHash
-                ) = abi.decode(entry.data, (uint256, bytes32));
+                bytes32 eventClaim = abi.decode(entry.data, (bytes32));
 
-                assertEq(entry.topics[1], claim.appContract.asTopic());
-                assertEq(
-                    lastProcessedBlockNumber,
-                    claim.lastProcessedBlockNumber
-                );
-                assertEq(outputHashesRootHash, claim.outputHashesRootHash);
+                assertEq(entry.topics[1], appContract.asTopic());
+                assertEq(entry.topics[2], epochIndex.asTopic());
+                assertEq(eventClaim, claim);
 
-                ++numOfAcceptances;
+                ++numOfSettledEpochs;
             }
         }
 
-        assertEq(numOfSubmissions, 1);
+        assertEq(numOfSubmittedClaims, 1);
 
-        uint256 inFavorCount = quorum.numOfValidatorsInFavorOf(claim);
+        uint256 inFavorCount = quorum.numOfValidatorsInFavorOf(
+            appContract,
+            epochIndex,
+            claim
+        );
         uint256 numOfValidators = quorum.numOfValidators();
 
         if (inFavorCount == 1 + (numOfValidators / 2)) {
-            assertEq(numOfAcceptances, 1);
+            assertEq(numOfSettledEpochs, 1);
         } else {
-            assertEq(numOfAcceptances, 0);
+            assertEq(numOfSettledEpochs, 0);
         }
 
         assertEq(
-            quorum.wasClaimAccepted(claim),
+            quorum.wasClaimSettled(appContract, claim),
             inFavorCount > (numOfValidators / 2)
         );
+    }
+
+    function _generateAddresses(
+        uint256 n
+    ) internal pure returns (address[] memory) {
+        return LibAddressArray.generate(vm, n);
+    }
+
+    function _maxEpochLength() internal view returns (uint256) {
+        return type(uint256).max - vm.getBlockNumber();
     }
 }

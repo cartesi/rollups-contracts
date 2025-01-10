@@ -53,7 +53,6 @@ contract SelfHostedApplicationFactoryTest is TestBase {
         bytes32 salt
     ) external {
         vm.assume(appOwner != address(0));
-        vm.assume(epochLength > 0);
 
         vm.expectRevert(
             abi.encodeWithSelector(
@@ -71,27 +70,6 @@ contract SelfHostedApplicationFactoryTest is TestBase {
         );
     }
 
-    function testRevertsEpochLengthZero(
-        address authorityOwner,
-        address appOwner,
-        bytes32 templateHash,
-        bytes calldata dataAvailability,
-        bytes32 salt
-    ) external {
-        vm.assume(appOwner != address(0));
-        vm.assume(authorityOwner != address(0));
-
-        vm.expectRevert("epoch length must not be zero");
-        factory.deployContracts(
-            authorityOwner,
-            0,
-            appOwner,
-            templateHash,
-            dataAvailability,
-            salt
-        );
-    }
-
     function testRevertsApplicationOwnerAddressZero(
         address authorityOwner,
         uint256 epochLength,
@@ -100,7 +78,6 @@ contract SelfHostedApplicationFactoryTest is TestBase {
         bytes32 salt
     ) external {
         vm.assume(authorityOwner != address(0));
-        vm.assume(epochLength > 0);
 
         vm.expectRevert(
             abi.encodeWithSelector(
@@ -128,7 +105,6 @@ contract SelfHostedApplicationFactoryTest is TestBase {
     ) external {
         vm.assume(appOwner != address(0));
         vm.assume(authorityOwner != address(0));
-        vm.assume(epochLength > 0);
 
         address appAddr;
         address authorityAddr;
@@ -158,7 +134,6 @@ contract SelfHostedApplicationFactoryTest is TestBase {
         assertEq(authorityAddr, address(authority));
 
         assertEq(authority.owner(), authorityOwner);
-        assertEq(authority.getEpochLength(), epochLength);
 
         assertEq(address(application.getConsensus()), authorityAddr);
         assertEq(application.owner(), appOwner);

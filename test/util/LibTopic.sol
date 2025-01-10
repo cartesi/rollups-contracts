@@ -10,4 +10,11 @@ library LibTopic {
     function asTopic(address addr) internal pure returns (bytes32) {
         return bytes32(uint256(uint160(addr)));
     }
+
+    /// @notice Convert uint256 value to log topic
+    /// @param n The uint256 value
+    /// @return The value encoded as a log topic
+    function asTopic(uint256 n) internal pure returns (bytes32) {
+        return bytes32(n);
+    }
 }

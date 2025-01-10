@@ -9,8 +9,11 @@ import {IQuorum} from "contracts/consensus/quorum/IQuorum.sol";
 import {Vm} from "forge-std/Vm.sol";
 
 import {TestBase} from "../../util/TestBase.sol";
+import {LibAddressArray} from "../../util/LibAddressArray.sol";
 
 contract QuorumFactoryTest is TestBase {
+    using LibAddressArray for address[];
+
     uint256 constant _QUORUM_MAX_SIZE = 50;
     QuorumFactory _factory;
 
@@ -18,20 +21,7 @@ contract QuorumFactoryTest is TestBase {
         _factory = new QuorumFactory();
     }
 
-    function testRevertsEpochLengthZero(uint256 seed, bytes32 salt) public {
-        uint256 numOfValidators = bound(seed, 1, _QUORUM_MAX_SIZE);
-        address[] memory validators = _generateAddresses(numOfValidators);
-
-        vm.expectRevert("epoch length must not be zero");
-        _factory.newQuorum(validators, 0);
-
-        vm.expectRevert("epoch length must not be zero");
-        _factory.newQuorum(validators, 0, salt);
-    }
-
     function testNewQuorum(uint256 seed, uint256 epochLength) public {
-        vm.assume(epochLength > 0);
-
         uint256 numOfValidators = bound(seed, 1, _QUORUM_MAX_SIZE);
         address[] memory validators = _generateAddresses(numOfValidators);
 
@@ -39,7 +29,7 @@ contract QuorumFactoryTest is TestBase {
 
         IQuorum quorum = _factory.newQuorum(validators, epochLength);
 
-        _testNewQuorumAux(validators, epochLength, quorum);
+        _testNewQuorumAux(validators, quorum);
     }
 
     function testNewQuorumDeterministic(
@@ -47,8 +37,6 @@ contract QuorumFactoryTest is TestBase {
         uint256 epochLength,
         bytes32 salt
     ) public {
-        vm.assume(epochLength > 0);
-
         uint256 numOfValidators = bound(seed, 1, _QUORUM_MAX_SIZE);
         address[] memory validators = _generateAddresses(numOfValidators);
 
@@ -62,7 +50,7 @@ contract QuorumFactoryTest is TestBase {
 
         IQuorum quorum = _factory.newQuorum(validators, epochLength, salt);
 
-        _testNewQuorumAux(validators, epochLength, quorum);
+        _testNewQuorumAux(validators, quorum);
 
         // Precalculated address must match actual address
         assertEq(precalculatedAddress, address(quorum));
@@ -83,7 +71,6 @@ contract QuorumFactoryTest is TestBase {
 
     function _testNewQuorumAux(
         address[] memory validators,
-        uint256 epochLength,
         IQuorum quorum
     ) internal {
         Vm.Log[] memory entries = vm.getRecordedLogs();
@@ -108,7 +95,11 @@ contract QuorumFactoryTest is TestBase {
         for (uint256 i; i < numOfValidators; ++i) {
             assertEq(validators[i], quorum.validatorById(i + 1));
         }
+    }
 
-        assertEq(epochLength, quorum.getEpochLength());
+    function _generateAddresses(
+        uint256 n
+    ) internal pure returns (address[] memory) {
+        return LibAddressArray.generate(vm, n);
     }
 }

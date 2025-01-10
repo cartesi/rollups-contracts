@@ -8,7 +8,8 @@ import {Vm} from "forge-std/Vm.sol";
 import {Test} from "forge-std/Test.sol";
 import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
 
-import {AuthorityFactory, IAuthorityFactory} from "contracts/consensus/authority/AuthorityFactory.sol";
+import {AuthorityFactory} from "contracts/consensus/authority/AuthorityFactory.sol";
+import {IAuthorityFactory} from "contracts/consensus/authority/IAuthorityFactory.sol";
 import {IAuthority} from "contracts/consensus/authority/IAuthority.sol";
 
 contract AuthorityFactoryTest is Test {
@@ -22,8 +23,6 @@ contract AuthorityFactoryTest is Test {
         uint256 epochLength,
         bytes32 salt
     ) public {
-        vm.assume(epochLength > 0);
-
         vm.expectRevert(
             abi.encodeWithSelector(
                 Ownable.OwnableInvalidOwner.selector,
@@ -41,25 +40,11 @@ contract AuthorityFactoryTest is Test {
         _factory.newAuthority(address(0), epochLength, salt);
     }
 
-    function testRevertsEpochLengthZero(
-        address authorityOwner,
-        bytes32 salt
-    ) public {
-        vm.assume(authorityOwner != address(0));
-
-        vm.expectRevert("epoch length must not be zero");
-        _factory.newAuthority(authorityOwner, 0);
-
-        vm.expectRevert("epoch length must not be zero");
-        _factory.newAuthority(authorityOwner, 0, salt);
-    }
-
     function testNewAuthority(
         address authorityOwner,
         uint256 epochLength
     ) public {
         vm.assume(authorityOwner != address(0));
-        vm.assume(epochLength > 0);
 
         vm.recordLogs();
 
@@ -68,7 +53,7 @@ contract AuthorityFactoryTest is Test {
             epochLength
         );
 
-        _testNewAuthorityAux(authorityOwner, epochLength, authority);
+        _testNewAuthorityAux(authorityOwner, authority);
     }
 
     function testNewAuthorityDeterministic(
@@ -77,7 +62,6 @@ contract AuthorityFactoryTest is Test {
         bytes32 salt
     ) public {
         vm.assume(authorityOwner != address(0));
-        vm.assume(epochLength > 0);
 
         address precalculatedAddress = _factory.calculateAuthorityAddress(
             authorityOwner,
@@ -93,7 +77,7 @@ contract AuthorityFactoryTest is Test {
             salt
         );
 
-        _testNewAuthorityAux(authorityOwner, epochLength, authority);
+        _testNewAuthorityAux(authorityOwner, authority);
 
         // Precalculated address must match actual address
         assertEq(precalculatedAddress, address(authority));
@@ -114,7 +98,6 @@ contract AuthorityFactoryTest is Test {
 
     function _testNewAuthorityAux(
         address authorityOwner,
-        uint256 epochLength,
         IAuthority authority
     ) internal {
         Vm.Log[] memory entries = vm.getRecordedLogs();
@@ -138,6 +121,5 @@ contract AuthorityFactoryTest is Test {
 
         assertEq(numOfAuthorityCreated, 1);
         assertEq(authority.owner(), authorityOwner);
-        assertEq(authority.getEpochLength(), epochLength);
     }
 }
