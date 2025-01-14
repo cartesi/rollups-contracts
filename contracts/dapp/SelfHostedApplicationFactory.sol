@@ -50,6 +50,7 @@ contract SelfHostedApplicationFactory is ISelfHostedApplicationFactory {
         uint256 epochLength,
         address appOwner,
         bytes32 templateHash,
+        bytes calldata dataAvailability,
         bytes32 salt
     ) external returns (IApplication application, IAuthority authority) {
         authority = _authorityFactory.newAuthority(
@@ -62,6 +63,7 @@ contract SelfHostedApplicationFactory is ISelfHostedApplicationFactory {
             authority,
             appOwner,
             templateHash,
+            dataAvailability,
             salt
         );
     }
@@ -71,6 +73,7 @@ contract SelfHostedApplicationFactory is ISelfHostedApplicationFactory {
         uint256 epochLength,
         address appOwner,
         bytes32 templateHash,
+        bytes calldata dataAvailability,
         bytes32 salt
     ) external view returns (address application, address authority) {
         authority = _authorityFactory.calculateAuthorityAddress(
@@ -83,6 +86,7 @@ contract SelfHostedApplicationFactory is ISelfHostedApplicationFactory {
             IConsensus(authority),
             appOwner,
             templateHash,
+            dataAvailability,
             salt
         );
     }

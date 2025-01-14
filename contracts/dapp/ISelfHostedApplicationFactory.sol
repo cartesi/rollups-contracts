@@ -37,6 +37,7 @@ interface ISelfHostedApplicationFactory {
         uint256 epochLength,
         address appOwner,
         bytes32 templateHash,
+        bytes calldata dataAvailability,
         bytes32 salt
     ) external returns (IApplication, IAuthority);
 
@@ -54,6 +55,7 @@ interface ISelfHostedApplicationFactory {
         uint256 epochLength,
         address appOwner,
         bytes32 templateHash,
+        bytes calldata dataAvailability,
         bytes32 salt
     ) external view returns (address, address);
 }

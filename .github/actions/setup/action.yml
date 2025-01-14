@@ -1,12 +1,10 @@
-name: Install dependencies
-
-on:
-  workflow_call:
-    inputs:
-      foundry-version:
-        description: 'Foundry version'
-        required: true
-        type: string
+name: 'Install dependencies'
+description: 'Installs pnpm, node, Node packages, and foundry'
+inputs:
+  foundry-version:
+    description: 'Foundry version'
+    type: string
+    default: 'nightly'
 
 runs:
   using: 'composite'
