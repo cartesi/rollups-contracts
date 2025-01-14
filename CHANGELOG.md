@@ -1,5 +1,11 @@
 # @cartesi/rollups
 
+## 2.0.0-rc.14
+
+### Minor Changes
+
+- 9f940da: Add data availability configuration to application contract
+
 ## 2.0.0-rc.13
 
 ### Patch Changes
