@@ -22,8 +22,6 @@ jobs:
           submodules: recursive
 
       - uses: ./.github/actions/setup
-        with:
-          foundry-version: nightly
 
       - name: Generate documentation
         run: forge doc -b
