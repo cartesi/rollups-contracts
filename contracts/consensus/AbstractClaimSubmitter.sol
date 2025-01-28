@@ -17,7 +17,8 @@ abstract contract AbstractClaimSubmitter is IClaimSubmitter, ERC165 {
     uint256 private immutable _epochLength;
 
     /// @notice Indexes accepted claims by application contract address.
-    mapping(address => mapping(bytes32 => bool)) private _acceptedClaims;
+    mapping(address => mapping(bytes32 => bool))
+        private _validOutputsMerkleRoots;
 
     /// @param epochLength The epoch length
     /// @dev Reverts if the epoch length is zero.
@@ -27,11 +28,11 @@ abstract contract AbstractClaimSubmitter is IClaimSubmitter, ERC165 {
     }
 
     /// @inheritdoc IConsensus
-    function wasClaimAccepted(
+    function isOutputsMerkleRootValid(
         address appContract,
-        bytes32 claim
+        bytes32 outputsMerkleRoot
     ) public view override returns (bool) {
-        return _acceptedClaims[appContract][claim];
+        return _validOutputsMerkleRoots[appContract][outputsMerkleRoot];
     }
 
     /// @inheritdoc IClaimSubmitter
@@ -51,14 +52,18 @@ abstract contract AbstractClaimSubmitter is IClaimSubmitter, ERC165 {
     /// @notice Accept a claim.
     /// @param appContract The application contract address
     /// @param lastProcessedBlockNumber The number of the last processed block
-    /// @param claim The output Merkle root hash
+    /// @param outputsMerkleRoot The output Merkle root hash
     /// @dev Emits a `ClaimAcceptance` event.
     function _acceptClaim(
         address appContract,
         uint256 lastProcessedBlockNumber,
-        bytes32 claim
+        bytes32 outputsMerkleRoot
     ) internal {
-        _acceptedClaims[appContract][claim] = true;
-        emit ClaimAcceptance(appContract, lastProcessedBlockNumber, claim);
+        _validOutputsMerkleRoots[appContract][outputsMerkleRoot] = true;
+        emit ClaimAcceptance(
+            appContract,
+            lastProcessedBlockNumber,
+            outputsMerkleRoot
+        );
     }
 }

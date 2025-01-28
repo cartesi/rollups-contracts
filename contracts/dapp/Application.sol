@@ -127,10 +127,10 @@ contract Application is
             revert InvalidOutputHashesSiblingsArrayLength();
         }
 
-        bytes32 claim = proof.computeClaim(outputHash);
+        bytes32 outputsMerkleRoot = proof.computeOutputsMerkleRoot(outputHash);
 
-        if (!_wasClaimAccepted(claim)) {
-            revert ClaimNotAccepted(claim);
+        if (!_isOutputsMerkleRootValid(outputsMerkleRoot)) {
+            revert InvalidOutputsMerkleRoot(outputsMerkleRoot);
         }
     }
 
@@ -165,10 +165,17 @@ contract Application is
         super.transferOwnership(newOwner);
     }
 
-    /// @notice Check if an output Merkle root hash was ever accepted by the current consensus.
-    /// @param claim The output Merkle root hash
-    function _wasClaimAccepted(bytes32 claim) internal view returns (bool) {
-        return _consensus.wasClaimAccepted(address(this), claim);
+    /// @notice Check if an outputs Merkle root is valid,
+    /// according to the current consensus.
+    /// @param outputsMerkleRoot The output Merkle root
+    function _isOutputsMerkleRootValid(
+        bytes32 outputsMerkleRoot
+    ) internal view returns (bool) {
+        return
+            _consensus.isOutputsMerkleRootValid(
+                address(this),
+                outputsMerkleRoot
+            );
     }
 
     /// @notice Executes a voucher

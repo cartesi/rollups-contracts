@@ -129,10 +129,10 @@ contract AuthorityTest is TestBase, OwnableTest {
         vm.prank(owner);
         authority.submitClaim(appContract, lastProcessedBlockNumber, claim);
 
-        assertTrue(authority.wasClaimAccepted(appContract, claim));
+        assertTrue(authority.isOutputsMerkleRootValid(appContract, claim));
     }
 
-    function testWasClaimAccepted(
+    function testIsOutputsMerkleRootValid(
         address owner,
         uint256 epochLength,
         address appContract,
@@ -143,7 +143,7 @@ contract AuthorityTest is TestBase, OwnableTest {
 
         IAuthority authority = new Authority(owner, epochLength);
 
-        assertFalse(authority.wasClaimAccepted(appContract, claim));
+        assertFalse(authority.isOutputsMerkleRootValid(appContract, claim));
     }
 
     function _expectClaimEvents(

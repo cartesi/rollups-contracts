@@ -11,12 +11,11 @@ import {IERC165} from "@openzeppelin/contracts/utils/introspection/IERC165.sol";
 /// @notice Since genesis, a Merkle tree of all outputs ever produced is maintained
 /// both inside and outside the Cartesi Machine.
 interface IConsensus is IERC165 {
-    /// @notice Check if an output Merkle root hash was ever accepted by the consensus
-    /// for a particular application.
+    /// @notice Check whether an outputs Merkle root is valid.
     /// @param appContract The application contract address
-    /// @param claim The root of the Merkle tree of outputs
-    function wasClaimAccepted(
+    /// @param outputsMerkleRoot The outputs Merkle root
+    function isOutputsMerkleRootValid(
         address appContract,
-        bytes32 claim
+        bytes32 outputsMerkleRoot
     ) external view returns (bool);
 }

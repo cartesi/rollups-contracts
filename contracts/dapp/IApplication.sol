@@ -55,8 +55,8 @@ interface IApplication is IOwnable {
     /// @dev Please consult `CanonicalMachine` for the maximum number of outputs.
     error InvalidOutputHashesSiblingsArrayLength();
 
-    /// @notice Raised when the required claim was not accepted by the current consensus.
-    error ClaimNotAccepted(bytes32 claim);
+    /// @notice Raised when the computed outputs Merkle root is invalid, according to the current consensus.
+    error InvalidOutputsMerkleRoot(bytes32 outputsMerkleRoot);
 
     // Permissioned functions
 
@@ -101,7 +101,7 @@ interface IApplication is IOwnable {
     /// @param proof The proof used to validate the output against
     ///              a claim submitted to the current consensus contract
     /// @dev May raise `InvalidOutputHashesSiblingsArrayLength`
-    /// or `ClaimNotAccepted`.
+    /// or `InvalidOutputsMerkleRoot`.
     function validateOutputHash(
         bytes32 outputHash,
         OutputValidityProof calldata proof
