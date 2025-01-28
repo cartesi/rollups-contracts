@@ -70,7 +70,7 @@ interface IApplication is IOwnable {
     /// @notice Execute an output.
     /// @param output The output
     /// @param proof The proof used to validate the output against
-    ///              a claim submitted to the current consensus contract
+    ///              a claim accepted to the current consensus contract
     /// @dev On a successful execution, emits a `OutputExecuted` event.
     /// @dev May raise any of the errors raised by `validateOutput`,
     /// as well as `OutputNotExecutable` and `OutputNotReexecutable`.
@@ -89,7 +89,7 @@ interface IApplication is IOwnable {
     /// @notice Validate an output.
     /// @param output The output
     /// @param proof The proof used to validate the output against
-    ///              a claim submitted to the current consensus contract
+    ///              a claim accepted to the current consensus contract
     /// @dev May raise any of the errors raised by `validateOutputHash`.
     function validateOutput(
         bytes calldata output,
@@ -99,7 +99,7 @@ interface IApplication is IOwnable {
     /// @notice Validate an output hash.
     /// @param outputHash The output hash
     /// @param proof The proof used to validate the output against
-    ///              a claim submitted to the current consensus contract
+    ///              a claim accepted to the current consensus contract
     /// @dev May raise `InvalidOutputHashesSiblingsArrayLength`
     /// or `InvalidOutputsMerkleRoot`.
     function validateOutputHash(

@@ -38,14 +38,17 @@ contract Authority is IAuthority, AbstractClaimSubmitter, Ownable {
         _acceptClaim(appContract, lastProcessedBlockNumber, outputsMerkleRoot);
     }
 
+    /// @inheritdoc Ownable
     function owner() public view override(IOwnable, Ownable) returns (address) {
         return super.owner();
     }
 
+    /// @inheritdoc Ownable
     function renounceOwnership() public override(IOwnable, Ownable) {
         super.renounceOwnership();
     }
 
+    /// @inheritdoc Ownable
     function transferOwnership(
         address newOwner
     ) public override(IOwnable, Ownable) {
