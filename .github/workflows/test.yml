@@ -21,8 +21,6 @@ jobs:
           submodules: recursive
 
       - uses: ./.github/actions/setup
-        with:
-          foundry-version: nightly
 
       - name: Run tests
         run: forge test -vvv
