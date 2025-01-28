@@ -23,24 +23,19 @@ contract Authority is IAuthority, AbstractClaimSubmitter, Ownable {
         uint256 epochLength
     ) AbstractClaimSubmitter(epochLength) Ownable(initialOwner) {}
 
-    /// @notice Submit a claim.
-    /// @param appContract The application contract address
-    /// @param lastProcessedBlockNumber The number of the last processed block
-    /// @param claim The output Merkle root hash
-    /// @dev Fires a `ClaimSubmission` event and a `ClaimAcceptance` event.
-    /// @dev Can only be called by the owner.
+    /// @inheritdoc IClaimSubmitter
     function submitClaim(
         address appContract,
         uint256 lastProcessedBlockNumber,
-        bytes32 claim
+        bytes32 outputsMerkleRoot
     ) external override onlyOwner {
         emit ClaimSubmission(
             msg.sender,
             appContract,
             lastProcessedBlockNumber,
-            claim
+            outputsMerkleRoot
         );
-        _acceptClaim(appContract, lastProcessedBlockNumber, claim);
+        _acceptClaim(appContract, lastProcessedBlockNumber, outputsMerkleRoot);
     }
 
     function owner() public view override(IOwnable, Ownable) returns (address) {

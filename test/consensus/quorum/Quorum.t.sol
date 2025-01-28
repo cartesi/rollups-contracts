@@ -53,12 +53,12 @@ library LibQuorum {
         );
     }
 
-    function wasClaimAccepted(
+    function isOutputsMerkleRootValid(
         IQuorum quorum,
         Claim calldata claim
     ) internal view returns (bool) {
         return
-            quorum.wasClaimAccepted(
+            quorum.isOutputsMerkleRootValid(
                 claim.appContract,
                 claim.outputHashesRootHash
             );
@@ -342,7 +342,7 @@ contract QuorumTest is TestBase {
         }
 
         assertEq(
-            quorum.wasClaimAccepted(claim),
+            quorum.isOutputsMerkleRootValid(claim),
             inFavorCount > (numOfValidators / 2)
         );
     }

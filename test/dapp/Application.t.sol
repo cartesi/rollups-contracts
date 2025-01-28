@@ -516,9 +516,9 @@ contract ApplicationTest is TestBase, OwnableTest {
     }
 
     function _submitClaim() internal {
-        bytes32 claim = _emulator.getClaim();
+        bytes32 outputsMerkleRoot = _emulator.getOutputsMerkleRoot();
         vm.prank(_authorityOwner);
-        _authority.submitClaim(address(_appContract), 0, claim);
+        _authority.submitClaim(address(_appContract), 0, outputsMerkleRoot);
     }
 
     function _expectEmitOutputExecuted(
@@ -553,11 +553,11 @@ contract ApplicationTest is TestBase, OwnableTest {
         );
     }
 
-    function _expectRevertClaimNotAccepted(bytes32 claim) internal {
+    function _expectRevertClaimNotAccepted(bytes32 outputsMerkleRoot) internal {
         vm.expectRevert(
             abi.encodeWithSelector(
-                IApplication.ClaimNotAccepted.selector,
-                claim
+                IApplication.InvalidOutputsMerkleRoot.selector,
+                outputsMerkleRoot
             )
         );
     }
