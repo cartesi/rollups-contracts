@@ -24,7 +24,6 @@ import {OutputValidityProof} from "../common/OutputValidityProof.sol";
 /// - multiple signers (multi-sig)
 /// - DAO (decentralized autonomous organization)
 /// - self-owned application (off-chain governance logic)
-/// @notice See `IConsensus` for examples of consensus models.
 interface IApplication is IOwnable {
     // Events
 

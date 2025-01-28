@@ -42,7 +42,7 @@ contract ApplicationTest is TestBase, OwnableTest {
 
     IApplication _appContract;
     EtherReceiver _etherReceiver;
-    IConsensus _consensus;
+    Authority _authority;
     IERC20 _erc20Token;
     IERC721 _erc721Token;
     IERC1155 _erc1155SingleToken;
@@ -95,7 +95,7 @@ contract ApplicationTest is TestBase, OwnableTest {
                 address(0)
             )
         );
-        new Application(_consensus, address(0), _templateHash, new bytes(0));
+        new Application(_authority, address(0), _templateHash, new bytes(0));
     }
 
     function testConstructor(
@@ -347,13 +347,13 @@ contract ApplicationTest is TestBase, OwnableTest {
             _initialSupplies
         );
         _inputBox = new InputBox();
-        _consensus = new Authority(_authorityOwner, _epochLength);
+        _authority = new Authority(_authorityOwner, _epochLength);
         _dataAvailability = abi.encodeCall(
             DataAvailability.InputBox,
             (_inputBox)
         );
         _appContract = new Application(
-            _consensus,
+            _authority,
             _appOwner,
             _templateHash,
             _dataAvailability
@@ -518,7 +518,7 @@ contract ApplicationTest is TestBase, OwnableTest {
     function _submitClaim() internal {
         bytes32 claim = _emulator.getClaim();
         vm.prank(_authorityOwner);
-        _consensus.submitClaim(address(_appContract), 0, claim);
+        _authority.submitClaim(address(_appContract), 0, claim);
     }
 
     function _expectEmitOutputExecuted(
