@@ -5,7 +5,7 @@ pragma solidity ^0.8.22;
 
 import {Quorum} from "contracts/consensus/quorum/Quorum.sol";
 import {IQuorum} from "contracts/consensus/quorum/IQuorum.sol";
-import {IConsensus} from "contracts/consensus/IConsensus.sol";
+import {IClaimSubmitter} from "contracts/consensus/IClaimSubmitter.sol";
 
 import {TestBase} from "../../util/TestBase.sol";
 import {LibTopic} from "../../util/LibTopic.sol";
@@ -292,7 +292,7 @@ contract QuorumTest is TestBase {
 
             if (
                 entry.emitter == address(quorum) &&
-                entry.topics[0] == IConsensus.ClaimSubmission.selector
+                entry.topics[0] == IClaimSubmitter.ClaimSubmission.selector
             ) {
                 (
                     uint256 lastProcessedBlockNumber,
@@ -312,7 +312,7 @@ contract QuorumTest is TestBase {
 
             if (
                 entry.emitter == address(quorum) &&
-                entry.topics[0] == IConsensus.ClaimAcceptance.selector
+                entry.topics[0] == IClaimSubmitter.ClaimAcceptance.selector
             ) {
                 (
                     uint256 lastProcessedBlockNumber,

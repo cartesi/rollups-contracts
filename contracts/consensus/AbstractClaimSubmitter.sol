@@ -3,12 +3,16 @@
 
 pragma solidity ^0.8.8;
 
+import {ERC165} from "@openzeppelin/contracts/utils/introspection/ERC165.sol";
+import {IERC165} from "@openzeppelin/contracts/utils/introspection/IERC165.sol";
+
 import {IConsensus} from "./IConsensus.sol";
+import {IClaimSubmitter} from "./IClaimSubmitter.sol";
 
 /// @notice Stores accepted claims for several applications.
-/// @dev This contract was designed to be inherited by implementations of the `IConsensus` interface
+/// @dev This contract was designed to be inherited by implementations of the `IClaimSubmitter` interface
 /// that only need a simple mechanism of storage and retrieval of accepted claims.
-abstract contract AbstractConsensus is IConsensus {
+abstract contract AbstractClaimSubmitter is IClaimSubmitter, ERC165 {
     /// @notice The epoch length
     uint256 private immutable _epochLength;
 
@@ -30,9 +34,18 @@ abstract contract AbstractConsensus is IConsensus {
         return _acceptedClaims[appContract][claim];
     }
 
-    /// @inheritdoc IConsensus
+    /// @inheritdoc IClaimSubmitter
     function getEpochLength() public view override returns (uint256) {
         return _epochLength;
+    }
+
+    /// @inheritdoc ERC165
+    function supportsInterface(
+        bytes4 interfaceId
+    ) public view virtual override(IERC165, ERC165) returns (bool) {
+        return
+            interfaceId == type(IClaimSubmitter).interfaceId ||
+            super.supportsInterface(interfaceId);
     }
 
     /// @notice Accept a claim.

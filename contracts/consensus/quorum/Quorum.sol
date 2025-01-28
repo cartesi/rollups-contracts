@@ -4,11 +4,12 @@
 pragma solidity ^0.8.8;
 
 import {BitMaps} from "@openzeppelin/contracts/utils/structs/BitMaps.sol";
+import {IERC165} from "@openzeppelin/contracts/utils/introspection/IERC165.sol";
 
 import {IQuorum} from "./IQuorum.sol";
-import {AbstractConsensus} from "../AbstractConsensus.sol";
+import {AbstractClaimSubmitter} from "../AbstractClaimSubmitter.sol";
 
-contract Quorum is IQuorum, AbstractConsensus {
+contract Quorum is IQuorum, AbstractClaimSubmitter {
     using BitMaps for BitMaps.BitMap;
 
     /// @notice The total number of validators.
@@ -48,7 +49,7 @@ contract Quorum is IQuorum, AbstractConsensus {
     constructor(
         address[] memory validators,
         uint256 epochLength
-    ) AbstractConsensus(epochLength) {
+    ) AbstractClaimSubmitter(epochLength) {
         uint256 n;
         for (uint256 i; i < validators.length; ++i) {
             address validator = validators[i];
@@ -139,5 +140,14 @@ contract Quorum is IQuorum, AbstractConsensus {
         bytes32 claim
     ) internal view returns (Votes storage) {
         return _votes[appContract][lastProcessedBlockNumber][claim];
+    }
+
+    /// @inheritdoc AbstractClaimSubmitter
+    function supportsInterface(
+        bytes4 interfaceId
+    ) public view override(IERC165, AbstractClaimSubmitter) returns (bool) {
+        return
+            interfaceId == type(IQuorum).interfaceId ||
+            super.supportsInterface(interfaceId);
     }
 }

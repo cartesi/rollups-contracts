@@ -3,24 +3,25 @@
 
 pragma solidity ^0.8.8;
 
+import {IERC165} from "@openzeppelin/contracts/utils/introspection/IERC165.sol";
 import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
 
 import {IAuthority} from "./IAuthority.sol";
-import {IConsensus} from "../IConsensus.sol";
-import {AbstractConsensus} from "../AbstractConsensus.sol";
+import {IClaimSubmitter} from "../IClaimSubmitter.sol";
+import {AbstractClaimSubmitter} from "../AbstractClaimSubmitter.sol";
 import {IOwnable} from "../../access/IOwnable.sol";
 
 /// @notice A consensus contract controlled by a single address, the owner.
 /// @dev This contract inherits from OpenZeppelin's `Ownable` contract.
 ///      For more information on `Ownable`, please consult OpenZeppelin's official documentation.
-contract Authority is IAuthority, AbstractConsensus, Ownable {
+contract Authority is IAuthority, AbstractClaimSubmitter, Ownable {
     /// @param initialOwner The initial contract owner
     /// @param epochLength The epoch length
     /// @dev Reverts if the epoch length is zero.
     constructor(
         address initialOwner,
         uint256 epochLength
-    ) AbstractConsensus(epochLength) Ownable(initialOwner) {}
+    ) AbstractClaimSubmitter(epochLength) Ownable(initialOwner) {}
 
     /// @notice Submit a claim.
     /// @param appContract The application contract address
@@ -54,5 +55,14 @@ contract Authority is IAuthority, AbstractConsensus, Ownable {
         address newOwner
     ) public override(IOwnable, Ownable) {
         super.transferOwnership(newOwner);
+    }
+
+    /// @inheritdoc AbstractClaimSubmitter
+    function supportsInterface(
+        bytes4 interfaceId
+    ) public view override(IERC165, AbstractClaimSubmitter) returns (bool) {
+        return
+            interfaceId == type(IAuthority).interfaceId ||
+            super.supportsInterface(interfaceId);
     }
 }
