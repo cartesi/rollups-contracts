@@ -9,9 +9,7 @@ import {IERC165} from "@openzeppelin/contracts/utils/introspection/IERC165.sol";
 import {IConsensus} from "./IConsensus.sol";
 import {IClaimSubmitter} from "./IClaimSubmitter.sol";
 
-/// @notice Stores accepted claims for several applications.
-/// @dev This contract was designed to be inherited by implementations of the `IClaimSubmitter` interface
-/// that only need a simple mechanism of storage and retrieval of accepted claims.
+/// @notice Abstract implementation of IClaimSubmitter
 abstract contract AbstractClaimSubmitter is IClaimSubmitter, ERC165 {
     /// @notice The epoch length
     uint256 private immutable _epochLength;
