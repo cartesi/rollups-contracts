@@ -1,6 +1,6 @@
 {
     "name": "@cartesi/rollups",
-    "version": "1.2.0",
+    "version": "2.0.0",
     "scripts": {
         "build": "run-s compile export",
         "clean": "run-s clean:hardhat clean:ignored",
