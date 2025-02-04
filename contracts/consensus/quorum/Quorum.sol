@@ -4,11 +4,12 @@
 pragma solidity ^0.8.8;
 
 import {BitMaps} from "@openzeppelin/contracts/utils/structs/BitMaps.sol";
+import {IERC165} from "@openzeppelin/contracts/utils/introspection/IERC165.sol";
 
 import {IQuorum} from "./IQuorum.sol";
-import {AbstractConsensus} from "../AbstractConsensus.sol";
+import {AbstractClaimSubmitter} from "../AbstractClaimSubmitter.sol";
 
-contract Quorum is IQuorum, AbstractConsensus {
+contract Quorum is IQuorum, AbstractClaimSubmitter {
     using BitMaps for BitMaps.BitMap;
 
     /// @notice The total number of validators.
@@ -36,7 +37,7 @@ contract Quorum is IQuorum, AbstractConsensus {
     }
 
     /// @notice Votes indexed by application contract address,
-    /// last processed block number and claim.
+    /// last processed block number and outputs Merkle root.
     /// @dev See the `numOfValidatorsInFavorOf` and `isValidatorInFavorOf` functions.
     mapping(address => mapping(uint256 => mapping(bytes32 => Votes)))
         private _votes;
@@ -48,7 +49,7 @@ contract Quorum is IQuorum, AbstractConsensus {
     constructor(
         address[] memory validators,
         uint256 epochLength
-    ) AbstractConsensus(epochLength) {
+    ) AbstractClaimSubmitter(epochLength) {
         uint256 n;
         for (uint256 i; i < validators.length; ++i) {
             address validator = validators[i];
@@ -64,7 +65,7 @@ contract Quorum is IQuorum, AbstractConsensus {
     function submitClaim(
         address appContract,
         uint256 lastProcessedBlockNumber,
-        bytes32 claim
+        bytes32 outputsMerkleRoot
     ) external override {
         uint256 id = _validatorId[msg.sender];
         require(id > 0, "Quorum: caller is not validator");
@@ -73,19 +74,23 @@ contract Quorum is IQuorum, AbstractConsensus {
             msg.sender,
             appContract,
             lastProcessedBlockNumber,
-            claim
+            outputsMerkleRoot
         );
 
         Votes storage votes = _getVotes(
             appContract,
             lastProcessedBlockNumber,
-            claim
+            outputsMerkleRoot
         );
 
         if (!votes.inFavorById.get(id)) {
             votes.inFavorById.set(id);
             if (++votes.inFavorCount == 1 + _numOfValidators / 2) {
-                _acceptClaim(appContract, lastProcessedBlockNumber, claim);
+                _acceptClaim(
+                    appContract,
+                    lastProcessedBlockNumber,
+                    outputsMerkleRoot
+                );
             }
         }
     }
@@ -109,21 +114,21 @@ contract Quorum is IQuorum, AbstractConsensus {
     function numOfValidatorsInFavorOf(
         address appContract,
         uint256 lastProcessedBlockNumber,
-        bytes32 claim
+        bytes32 outputsMerkleRoot
     ) external view override returns (uint256) {
         return
-            _getVotes(appContract, lastProcessedBlockNumber, claim)
+            _getVotes(appContract, lastProcessedBlockNumber, outputsMerkleRoot)
                 .inFavorCount;
     }
 
     function isValidatorInFavorOf(
         address appContract,
         uint256 lastProcessedBlockNumber,
-        bytes32 claim,
+        bytes32 outputsMerkleRoot,
         uint256 id
     ) external view override returns (bool) {
         return
-            _getVotes(appContract, lastProcessedBlockNumber, claim)
+            _getVotes(appContract, lastProcessedBlockNumber, outputsMerkleRoot)
                 .inFavorById
                 .get(id);
     }
@@ -131,13 +136,22 @@ contract Quorum is IQuorum, AbstractConsensus {
     /// @notice Get a `Votes` structure from storage from a given claim.
     /// @param appContract The application contract address
     /// @param lastProcessedBlockNumber The number of the last processed block
-    /// @param claim The output Merkle root hash
+    /// @param outputsMerkleRoot The outputs Merkle root
     /// @return The `Votes` structure related to a given claim
     function _getVotes(
         address appContract,
         uint256 lastProcessedBlockNumber,
-        bytes32 claim
+        bytes32 outputsMerkleRoot
     ) internal view returns (Votes storage) {
-        return _votes[appContract][lastProcessedBlockNumber][claim];
+        return _votes[appContract][lastProcessedBlockNumber][outputsMerkleRoot];
+    }
+
+    /// @inheritdoc AbstractClaimSubmitter
+    function supportsInterface(
+        bytes4 interfaceId
+    ) public view override(IERC165, AbstractClaimSubmitter) returns (bool) {
+        return
+            interfaceId == type(IQuorum).interfaceId ||
+            super.supportsInterface(interfaceId);
     }
 }

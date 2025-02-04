@@ -18,7 +18,7 @@ library LibOutputValidityProof {
             v.outputHashesSiblings.length == CanonicalMachine.LOG2_MAX_OUTPUTS;
     }
 
-    function computeClaim(
+    function computeOutputsMerkleRoot(
         OutputValidityProof calldata v,
         bytes32 outputHash
     ) internal pure returns (bytes32) {

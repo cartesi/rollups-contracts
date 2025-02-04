@@ -54,32 +54,31 @@ library LibEmulator {
         return
             OutputValidityProof(
                 OutputIndex.unwrap(outputIndex),
-                getOutputHashesSiblings(
-                    outputHashes,
-                    OutputIndex.unwrap(outputIndex)
-                )
+                getOutputSiblings(outputHashes, OutputIndex.unwrap(outputIndex))
             );
     }
 
-    function getClaim(State storage state) internal view returns (bytes32) {
+    function getOutputsMerkleRoot(
+        State storage state
+    ) internal view returns (bytes32) {
         bytes32[] memory outputHashes;
 
         outputHashes = getOutputHashes(state.outputs);
 
-        return getOutputHashesRootHash(outputHashes);
+        return getOutputsMerkleRoot(outputHashes);
     }
 
     // -----------------
     // Merkle operations
     // -----------------
 
-    function getOutputHashesRootHash(
+    function getOutputsMerkleRoot(
         bytes32[] memory outputHashes
     ) internal pure returns (bytes32) {
         return outputHashes.merkleRoot(CanonicalMachine.LOG2_MAX_OUTPUTS);
     }
 
-    function getOutputHashesSiblings(
+    function getOutputSiblings(
         bytes32[] memory outputHashes,
         uint64 outputIndex
     ) internal pure returns (bytes32[] memory) {

@@ -9,7 +9,7 @@ import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
 
 import {Authority} from "contracts/consensus/authority/Authority.sol";
 import {IAuthority} from "contracts/consensus/authority/IAuthority.sol";
-import {IConsensus} from "contracts/consensus/IConsensus.sol";
+import {IClaimSubmitter} from "contracts/consensus/IClaimSubmitter.sol";
 import {IOwnable} from "contracts/access/IOwnable.sol";
 
 import {TestBase} from "../../util/TestBase.sol";
@@ -129,10 +129,10 @@ contract AuthorityTest is TestBase, OwnableTest {
         vm.prank(owner);
         authority.submitClaim(appContract, lastProcessedBlockNumber, claim);
 
-        assertTrue(authority.wasClaimAccepted(appContract, claim));
+        assertTrue(authority.isOutputsMerkleRootValid(appContract, claim));
     }
 
-    function testWasClaimAccepted(
+    function testIsOutputsMerkleRootValid(
         address owner,
         uint256 epochLength,
         address appContract,
@@ -143,7 +143,7 @@ contract AuthorityTest is TestBase, OwnableTest {
 
         IAuthority authority = new Authority(owner, epochLength);
 
-        assertFalse(authority.wasClaimAccepted(appContract, claim));
+        assertFalse(authority.isOutputsMerkleRootValid(appContract, claim));
     }
 
     function _expectClaimEvents(
@@ -154,7 +154,7 @@ contract AuthorityTest is TestBase, OwnableTest {
         bytes32 claim
     ) internal {
         vm.expectEmit(true, true, false, true, address(authority));
-        emit IConsensus.ClaimSubmission(
+        emit IClaimSubmitter.ClaimSubmission(
             owner,
             appContract,
             lastProcessedBlockNumber,
@@ -162,7 +162,7 @@ contract AuthorityTest is TestBase, OwnableTest {
         );
 
         vm.expectEmit(true, false, false, true, address(authority));
-        emit IConsensus.ClaimAcceptance(
+        emit IClaimSubmitter.ClaimAcceptance(
             appContract,
             lastProcessedBlockNumber,
             claim

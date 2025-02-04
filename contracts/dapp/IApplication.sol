@@ -24,7 +24,6 @@ import {OutputValidityProof} from "../common/OutputValidityProof.sol";
 /// - multiple signers (multi-sig)
 /// - DAO (decentralized autonomous organization)
 /// - self-owned application (off-chain governance logic)
-/// @notice See `IConsensus` for examples of consensus models.
 interface IApplication is IOwnable {
     // Events
 
@@ -56,8 +55,8 @@ interface IApplication is IOwnable {
     /// @dev Please consult `CanonicalMachine` for the maximum number of outputs.
     error InvalidOutputHashesSiblingsArrayLength();
 
-    /// @notice Raised when the required claim was not accepted by the current consensus.
-    error ClaimNotAccepted(bytes32 claim);
+    /// @notice Raised when the computed outputs Merkle root is invalid, according to the current consensus.
+    error InvalidOutputsMerkleRoot(bytes32 outputsMerkleRoot);
 
     // Permissioned functions
 
@@ -71,7 +70,7 @@ interface IApplication is IOwnable {
     /// @notice Execute an output.
     /// @param output The output
     /// @param proof The proof used to validate the output against
-    ///              a claim submitted to the current consensus contract
+    ///              a claim accepted to the current consensus contract
     /// @dev On a successful execution, emits a `OutputExecuted` event.
     /// @dev May raise any of the errors raised by `validateOutput`,
     /// as well as `OutputNotExecutable` and `OutputNotReexecutable`.
@@ -90,7 +89,7 @@ interface IApplication is IOwnable {
     /// @notice Validate an output.
     /// @param output The output
     /// @param proof The proof used to validate the output against
-    ///              a claim submitted to the current consensus contract
+    ///              a claim accepted to the current consensus contract
     /// @dev May raise any of the errors raised by `validateOutputHash`.
     function validateOutput(
         bytes calldata output,
@@ -100,9 +99,9 @@ interface IApplication is IOwnable {
     /// @notice Validate an output hash.
     /// @param outputHash The output hash
     /// @param proof The proof used to validate the output against
-    ///              a claim submitted to the current consensus contract
+    ///              a claim accepted to the current consensus contract
     /// @dev May raise `InvalidOutputHashesSiblingsArrayLength`
-    /// or `ClaimNotAccepted`.
+    /// or `InvalidOutputsMerkleRoot`.
     function validateOutputHash(
         bytes32 outputHash,
         OutputValidityProof calldata proof

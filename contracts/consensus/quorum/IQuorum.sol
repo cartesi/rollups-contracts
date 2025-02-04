@@ -3,7 +3,7 @@
 
 pragma solidity ^0.8.8;
 
-import {IConsensus} from "../IConsensus.sol";
+import {IClaimSubmitter} from "../IClaimSubmitter.sol";
 
 /// @notice A consensus model controlled by a small, immutable set of `n` validators.
 /// @notice You can know the value of `n` by calling the `numOfValidators` function.
@@ -11,7 +11,7 @@ import {IConsensus} from "../IConsensus.sol";
 /// These numbers are used internally instead of addresses for gas optimization reasons.
 /// @notice You can list the validators in the quorum by calling the `validatorById`
 /// function for each ID from 1 to `n`.
-interface IQuorum is IConsensus {
+interface IQuorum is IClaimSubmitter {
     /// @notice Get the number of validators.
     function numOfValidators() external view returns (uint256);
 
@@ -30,25 +30,25 @@ interface IQuorum is IConsensus {
     /// @notice Get the number of validators in favor of a claim.
     /// @param appContract The application contract address
     /// @param lastProcessedBlockNumber The number of the last processed block
-    /// @param claim The output Merkle root hash
+    /// @param outputsMerkleRoot The outputs Merkle root
     /// @return Number of validators in favor of claim
     function numOfValidatorsInFavorOf(
         address appContract,
         uint256 lastProcessedBlockNumber,
-        bytes32 claim
+        bytes32 outputsMerkleRoot
     ) external view returns (uint256);
 
     /// @notice Check whether a validator is in favor of a claim.
     /// @param appContract The application contract address
     /// @param lastProcessedBlockNumber The number of the last processed block
-    /// @param claim The output Merkle root hash
+    /// @param outputsMerkleRoot The outputs Merkle root
     /// @param id The ID of the validator
     /// @return Whether validator is in favor of claim
     /// @dev Assumes the provided ID is valid.
     function isValidatorInFavorOf(
         address appContract,
         uint256 lastProcessedBlockNumber,
-        bytes32 claim,
+        bytes32 outputsMerkleRoot,
         uint256 id
     ) external view returns (bool);
 }
