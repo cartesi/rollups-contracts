@@ -1,5 +1,15 @@
 # @cartesi/rollups
 
+## 2.0.0-rc.15
+
+### Major Changes
+
+- c265308: Make `IConsensus` implement ERC-165
+
+### Patch Changes
+
+- c265308: Use stable release of Foundry
+
 ## 2.0.0-rc.14
 
 ### Minor Changes
