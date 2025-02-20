@@ -1,0 +1,78 @@
+name = "cartesi-rollups"
+version = "2.0.0"
+description = "Cartesi Rollups"
+
+[deploy.InputBox]
+artifact = "InputBox"
+create2 = true
+salt = "<%= zeroHash %>"
+ifExists = "continue"
+
+[deploy.EtherPortal]
+artifact = "EtherPortal"
+args = ["<%= contracts.InputBox.address %>"]
+create2 = true
+salt = "<%= zeroHash %>"
+ifExists = "continue"
+
+[deploy.ERC20Portal]
+artifact = "ERC20Portal"
+args = ["<%= contracts.InputBox.address %>"]
+create2 = true
+salt = "<%= zeroHash %>"
+ifExists = "continue"
+
+[deploy.ERC721Portal]
+artifact = "ERC721Portal"
+args = ["<%= contracts.InputBox.address %>"]
+create2 = true
+salt = "<%= zeroHash %>"
+ifExists = "continue"
+
+[deploy.ERC1155SinglePortal]
+artifact = "ERC1155SinglePortal"
+args = ["<%= contracts.InputBox.address %>"]
+create2 = true
+salt = "<%= zeroHash %>"
+ifExists = "continue"
+
+[deploy.ERC1155BatchPortal]
+artifact = "ERC1155BatchPortal"
+args = ["<%= contracts.InputBox.address %>"]
+create2 = true
+salt = "<%= zeroHash %>"
+ifExists = "continue"
+
+[deploy.AuthorityFactory]
+artifact = "AuthorityFactory"
+create2 = true
+salt = "<%= zeroHash %>"
+ifExists = "continue"
+
+[deploy.QuorumFactory]
+artifact = "QuorumFactory"
+create2 = true
+salt = "<%= zeroHash %>"
+ifExists = "continue"
+
+[deploy.ApplicationFactory]
+artifact = "ApplicationFactory"
+create2 = true
+salt = "<%= zeroHash %>"
+ifExists = "continue"
+
+[deploy.SelfHostedApplicationFactory]
+artifact = "SelfHostedApplicationFactory"
+args = [
+    "<%= contracts.AuthorityFactory.address %>",
+    "<%= contracts.ApplicationFactory.address %>",
+]
+create2 = true
+salt = "<%= zeroHash %>"
+ifExists = "continue"
+
+[deploy.SafeERC20Transfer]
+artifact = "SafeERC20Transfer"
+create2 = true
+salt = "<%= zeroHash %>"
+ifExists = "continue"
