@@ -38,7 +38,7 @@ jobs:
       - name: Compress Anvil deployment artifacts
         run: tar -czf "$FILEPATH" state.json -C export/abi localhost.json
         env:
-          FILEPATH: upload/rollups-contracts-${{ steps.extract_version.outputs.version }}-anvil-${{ steps.setup.outptus.foundry-version }}.tar.gz
+          FILEPATH: upload/rollups-contracts-${{ steps.extract_version.outputs.version }}-anvil-${{ steps.setup.outputs.foundry-version }}.tar.gz
 
       - name: Upload files to GitHub Releases
         uses: softprops/action-gh-release@v2
