@@ -23,7 +23,7 @@ runs:
     - name: Set Foundry version
       id: set-foundry-version
       shell: bash
-      run: echo "foundry-version=v0.3.0" >> $GITHUB_OUTPUT
+      run: echo "foundry-version=v1.0.0" >> $GITHUB_OUTPUT
 
     - uses: foundry-rs/foundry-toolchain@v1
       with:
