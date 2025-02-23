@@ -5,6 +5,9 @@
 pragma solidity ^0.8.22;
 
 import {Vm} from "forge-std/Vm.sol";
+import {Test} from "forge-std/Test.sol";
+
+import {IERC165} from "@openzeppelin/contracts/utils/introspection/IERC165.sol";
 import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
 
 import {Authority} from "contracts/consensus/authority/Authority.sol";
@@ -12,11 +15,11 @@ import {IAuthority} from "contracts/consensus/authority/IAuthority.sol";
 import {IClaimSubmitter} from "contracts/consensus/IClaimSubmitter.sol";
 import {IOwnable} from "contracts/access/IOwnable.sol";
 
-import {TestBase} from "../../util/TestBase.sol";
+import {ERC165Test} from "../../util/ERC165Test.sol";
 import {LibTopic} from "../../util/LibTopic.sol";
 import {OwnableTest} from "../../util/OwnableTest.sol";
 
-contract AuthorityTest is TestBase, OwnableTest {
+contract AuthorityTest is Test, ERC165Test, OwnableTest {
     using LibTopic for address;
 
     IAuthority _authority;
@@ -25,6 +28,26 @@ contract AuthorityTest is TestBase, OwnableTest {
         _authority = new Authority(vm.addr(1), 1);
     }
 
+    /// @inheritdoc ERC165Test
+    function _getERC165Contract() internal view override returns (IERC165) {
+        return _authority;
+    }
+
+    /// @inheritdoc ERC165Test
+    function _getSupportedInterfaces()
+        internal
+        pure
+        override
+        returns (bytes4[] memory)
+    {
+        bytes4[] memory ifaces = new bytes4[](3);
+        ifaces[0] = type(IERC165).interfaceId;
+        ifaces[1] = type(IClaimSubmitter).interfaceId;
+        ifaces[2] = type(IAuthority).interfaceId;
+        return ifaces;
+    }
+
+    /// @inheritdoc OwnableTest
     function _getOwnableContract() internal view override returns (IOwnable) {
         return _authority;
     }

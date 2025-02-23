@@ -3,13 +3,17 @@
 
 pragma solidity ^0.8.22;
 
+import {IERC165} from "@openzeppelin/contracts/utils/introspection/IERC165.sol";
+
 import {Quorum} from "contracts/consensus/quorum/Quorum.sol";
 import {IQuorum} from "contracts/consensus/quorum/IQuorum.sol";
 import {IClaimSubmitter} from "contracts/consensus/IClaimSubmitter.sol";
 
-import {TestBase} from "../../util/TestBase.sol";
+import {ERC165Test} from "../../util/ERC165Test.sol";
+import {LibAddressArray} from "../../util/LibAddressArray.sol";
 import {LibTopic} from "../../util/LibTopic.sol";
 
+import {Test} from "forge-std/Test.sol";
 import {Vm} from "forge-std/Vm.sol";
 
 struct Claim {
@@ -65,9 +69,36 @@ library LibQuorum {
     }
 }
 
-contract QuorumTest is TestBase {
+contract QuorumTest is Test, ERC165Test {
     using LibQuorum for IQuorum;
+    using LibAddressArray for address[];
+    using LibAddressArray for Vm;
     using LibTopic for address;
+
+    IQuorum _quorum;
+
+    function setUp() external {
+        _quorum = new Quorum(vm.addrs(3), 1);
+    }
+
+    /// @inheritdoc ERC165Test
+    function _getERC165Contract() internal view override returns (IERC165) {
+        return _quorum;
+    }
+
+    /// @inheritdoc ERC165Test
+    function _getSupportedInterfaces()
+        internal
+        pure
+        override
+        returns (bytes4[] memory)
+    {
+        bytes4[] memory ifaces = new bytes4[](3);
+        ifaces[0] = type(IERC165).interfaceId;
+        ifaces[1] = type(IClaimSubmitter).interfaceId;
+        ifaces[2] = type(IQuorum).interfaceId;
+        return ifaces;
+    }
 
     function testConstructor(
         uint8 numOfValidators,
@@ -75,7 +106,7 @@ contract QuorumTest is TestBase {
     ) external {
         vm.assume(epochLength > 0);
 
-        address[] memory validators = _generateAddresses(numOfValidators);
+        address[] memory validators = vm.addrs(numOfValidators);
 
         IQuorum quorum = new Quorum(validators, epochLength);
 
@@ -92,7 +123,7 @@ contract QuorumTest is TestBase {
 
     function testRevertsEpochLengthZero(uint8 numOfValidators) external {
         vm.expectRevert("epoch length must not be zero");
-        new Quorum(_generateAddresses(numOfValidators), 0);
+        new Quorum(vm.addrs(numOfValidators), 0);
     }
 
     function testConstructorIgnoresDuplicates(uint256 epochLength) external {
@@ -125,13 +156,13 @@ contract QuorumTest is TestBase {
     ) external {
         vm.assume(epochLength > 0);
 
-        address[] memory validators = _generateAddresses(numOfValidators);
+        address[] memory validators = vm.addrs(numOfValidators);
 
         IQuorum quorum = new Quorum(validators, epochLength);
 
         uint256 id = quorum.validatorId(addr);
 
-        if (_contains(validators, addr)) {
+        if (validators.contains(addr)) {
             assertLe(1, id);
             assertLe(id, numOfValidators);
         } else {
@@ -177,11 +208,11 @@ contract QuorumTest is TestBase {
     ) external {
         vm.assume(epochLength > 0);
 
-        address[] memory validators = _generateAddresses(numOfValidators);
+        address[] memory validators = vm.addrs(numOfValidators);
 
         IQuorum quorum = new Quorum(validators, epochLength);
 
-        vm.assume(!_contains(validators, caller));
+        vm.assume(!validators.contains(caller));
 
         vm.expectRevert("Quorum: caller is not validator");
 
@@ -251,7 +282,7 @@ contract QuorumTest is TestBase {
         uint256 epochLength
     ) internal returns (IQuorum) {
         vm.assume(epochLength > 0);
-        return new Quorum(_generateAddresses(numOfValidators), epochLength);
+        return new Quorum(vm.addrs(numOfValidators), epochLength);
     }
 
     function _checkSubmitted(

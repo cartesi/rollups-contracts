@@ -6,11 +6,15 @@ pragma solidity ^0.8.22;
 
 import {QuorumFactory, IQuorumFactory} from "contracts/consensus/quorum/QuorumFactory.sol";
 import {IQuorum} from "contracts/consensus/quorum/IQuorum.sol";
+
 import {Vm} from "forge-std/Vm.sol";
+import {Test} from "forge-std/Test.sol";
 
-import {TestBase} from "../../util/TestBase.sol";
+import {LibAddressArray} from "../../util/LibAddressArray.sol";
 
-contract QuorumFactoryTest is TestBase {
+contract QuorumFactoryTest is Test {
+    using LibAddressArray for Vm;
+
     uint256 constant _QUORUM_MAX_SIZE = 50;
     QuorumFactory _factory;
 
@@ -20,7 +24,7 @@ contract QuorumFactoryTest is TestBase {
 
     function testRevertsEpochLengthZero(uint256 seed, bytes32 salt) public {
         uint256 numOfValidators = bound(seed, 1, _QUORUM_MAX_SIZE);
-        address[] memory validators = _generateAddresses(numOfValidators);
+        address[] memory validators = vm.addrs(numOfValidators);
 
         vm.expectRevert("epoch length must not be zero");
         _factory.newQuorum(validators, 0);
@@ -33,7 +37,7 @@ contract QuorumFactoryTest is TestBase {
         vm.assume(epochLength > 0);
 
         uint256 numOfValidators = bound(seed, 1, _QUORUM_MAX_SIZE);
-        address[] memory validators = _generateAddresses(numOfValidators);
+        address[] memory validators = vm.addrs(numOfValidators);
 
         vm.recordLogs();
 
@@ -50,7 +54,7 @@ contract QuorumFactoryTest is TestBase {
         vm.assume(epochLength > 0);
 
         uint256 numOfValidators = bound(seed, 1, _QUORUM_MAX_SIZE);
-        address[] memory validators = _generateAddresses(numOfValidators);
+        address[] memory validators = vm.addrs(numOfValidators);
 
         address precalculatedAddress = _factory.calculateQuorumAddress(
             validators,

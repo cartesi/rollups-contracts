@@ -15,9 +15,9 @@ import {IApplication} from "contracts/dapp/IApplication.sol";
 import {ISelfHostedApplicationFactory} from "contracts/dapp/ISelfHostedApplicationFactory.sol";
 import {SelfHostedApplicationFactory} from "contracts/dapp/SelfHostedApplicationFactory.sol";
 
-import {TestBase} from "../util/TestBase.sol";
+import {Test} from "forge-std/Test.sol";
 
-contract SelfHostedApplicationFactoryTest is TestBase {
+contract SelfHostedApplicationFactoryTest is Test {
     IAuthorityFactory authorityFactory;
     IApplicationFactory applicationFactory;
     ISelfHostedApplicationFactory factory;

@@ -9,9 +9,9 @@ import {IInputBox} from "contracts/inputs/IInputBox.sol";
 import {IPortal} from "contracts/portals/IPortal.sol";
 import {InputEncoding} from "contracts/common/InputEncoding.sol";
 
-import {TestBase} from "../util/TestBase.sol";
+import {Test} from "forge-std/Test.sol";
 
-contract EtherPortalTest is TestBase {
+contract EtherPortalTest is Test {
     address _alice;
     address _appContract;
     IInputBox _inputBox;

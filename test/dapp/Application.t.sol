@@ -27,18 +27,22 @@ import {IERC721} from "@openzeppelin/contracts/token/ERC721/IERC721.sol";
 import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
 import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 
-import {TestBase} from "../util/TestBase.sol";
+import {Vm} from "forge-std/Vm.sol";
+import {Test} from "forge-std/Test.sol";
+
 import {OwnableTest} from "../util/OwnableTest.sol";
 import {EtherReceiver} from "../util/EtherReceiver.sol";
 import {ExternalLibMerkle32} from "../library/LibMerkle32.t.sol";
+import {LibAddressArray} from "../util/LibAddressArray.sol";
 import {LibEmulator} from "../util/LibEmulator.sol";
 import {SimpleERC20} from "../util/SimpleERC20.sol";
 import {SimpleERC721} from "../util/SimpleERC721.sol";
 import {SimpleSingleERC1155, SimpleBatchERC1155} from "../util/SimpleERC1155.sol";
 
-contract ApplicationTest is TestBase, OwnableTest {
+contract ApplicationTest is Test, OwnableTest {
     using LibEmulator for LibEmulator.State;
     using ExternalLibMerkle32 for bytes32[];
+    using LibAddressArray for Vm;
 
     IApplication _appContract;
     EtherReceiver _etherReceiver;
@@ -316,10 +320,11 @@ contract ApplicationTest is TestBase, OwnableTest {
     // ------------------
 
     function _initVariables() internal {
-        _authorityOwner = _newAddr();
-        _appOwner = _newAddr();
-        _recipient = _newAddr();
-        _tokenOwner = _newAddr();
+        address[] memory addresses = vm.addrs(4);
+        _authorityOwner = addresses[0];
+        _appOwner = addresses[1];
+        _recipient = addresses[2];
+        _tokenOwner = addresses[3];
         _interfaceIds.push(type(IApplication).interfaceId);
         _interfaceIds.push(type(IERC721Receiver).interfaceId);
         _interfaceIds.push(type(IERC1155Receiver).interfaceId);
