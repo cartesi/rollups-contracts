@@ -4,13 +4,14 @@
 /// @title Application Factory Test
 pragma solidity ^0.8.22;
 
-import {TestBase} from "../util/TestBase.sol";
 import {ApplicationFactory, IApplicationFactory} from "contracts/dapp/ApplicationFactory.sol";
 import {IApplication} from "contracts/dapp/IApplication.sol";
 import {IConsensus} from "contracts/consensus/IConsensus.sol";
+
+import {Test} from "forge-std/Test.sol";
 import {Vm} from "forge-std/Vm.sol";
 
-contract ApplicationFactoryTest is TestBase {
+contract ApplicationFactoryTest is Test {
     ApplicationFactory _factory;
 
     function setUp() public {

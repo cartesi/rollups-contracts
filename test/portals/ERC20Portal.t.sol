@@ -11,10 +11,11 @@ import {IInputBox} from "contracts/inputs/IInputBox.sol";
 import {IPortal} from "contracts/portals/IPortal.sol";
 import {InputEncoding} from "contracts/common/InputEncoding.sol";
 
-import {TestBase} from "../util/TestBase.sol";
+import {Test} from "forge-std/Test.sol";
+
 import {SimpleERC20} from "../util/SimpleERC20.sol";
 
-contract ERC20PortalTest is TestBase {
+contract ERC20PortalTest is Test {
     address _alice;
     address _appContract;
     IInputBox _inputBox;

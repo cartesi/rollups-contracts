@@ -35,13 +35,6 @@ library ExternalLibMerkle32 {
         return sibs.merkleRootAfterReplacement(index, leaf);
     }
 
-    function parent(
-        bytes32 leftNode,
-        bytes32 rightNode
-    ) external pure returns (bytes32 parentNode) {
-        return LibMerkle32.parent(leftNode, rightNode);
-    }
-
     function at(
         bytes32[] memory nodes,
         uint256 index,
