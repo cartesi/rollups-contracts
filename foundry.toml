@@ -4,6 +4,7 @@ out = 'out'
 libs = ['node_modules', 'lib']
 solc_version = '0.8.23'
 via_ir = true
+optimizer = true
 
 [invariant]
 runs = 32
