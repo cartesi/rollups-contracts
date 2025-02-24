@@ -1,5 +1,5 @@
 name: 'Install dependencies'
-description: 'Installs pnpm, node, Node packages, and foundry'
+description: 'Installs pnpm, node, Node packages, foundry, and soldeer packages'
 
 outputs:
   foundry-version:
@@ -18,7 +18,7 @@ runs:
 
     - name: Install Node packages
       shell: bash
-      run: pnpm i
+      run: pnpm install
 
     - name: Set Foundry version
       id: set-foundry-version
@@ -28,3 +28,7 @@ runs:
     - uses: foundry-rs/foundry-toolchain@v1
       with:
         version: ${{ steps.set-foundry-version.outputs.foundry-version }}
+
+    - name: Install Solidity packages
+      shell: bash
+      run: forge soldeer install
