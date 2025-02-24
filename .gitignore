@@ -1,14 +1,6 @@
-/artifacts
 /cache
-/coverage*
-/deployments/*/solcInputs/*.json
-/deployments/localhost
-/dist
+/coverage
 /docs
-/export/abi/localhost.json
-/export/artifacts
 /node_modules
 /out
-/src/types
-state.json
 lcov.info
