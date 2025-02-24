@@ -11,35 +11,28 @@ If you are interested in taking a look at the off-chain part, please, head over 
 
 ## 💡 Basic setup
 
-This repository contains [git submodules](https://git-scm.com/book/en/v2/Git-Tools-Submodules).
-In order to properly initialize them, please, run the following command.
-
-```sh
-git submodule update --init --recursive
-```
-
 This repository uses [pnpm](https://pnpm.io/installation) to manage JavaScript dependencies.
 In order to install them, please, run the following command.
 
 ```sh
-pnpm i
+pnpm install
 ```
 
-## 🚀 Local deployment
-
-If you want to run a [Hardhat](https://hardhat.org/) node and deploy the contracts, please run the following command.
+This repository uses [Soldeer](https://soldeer.xyz/) to manage Solidity dependencies.
+In order to install them, please, run the following command.
 
 ```sh
-pnpm start
+forge soldeer install
 ```
 
-If, instead, you wish to deploy the contracts to an already running node (e.g. [Anvil](https://book.getfoundry.sh/anvil/)), you can do so by running the following command.
+## 🚀 Deployment
+
+This repository uses [Cannon](https://usecannon.com/) to manage smart contract deployment.
+In order to build the Cannon package, please, run the following command.
 
 ```sh
-pnpm deploy:localhost
+pnpm cannon build
 ```
-
-If the node is not listening to `http://localhost:8545/`, please set the `RPC_URL` environment variable accordingly.
 
 ## 🧪 Tests
 
