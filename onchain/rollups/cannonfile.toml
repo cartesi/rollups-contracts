@@ -1,0 +1,75 @@
+name = 'cartesi-rollups'
+version = '1.4.3'
+description = 'Cartesi Rollups'
+
+[deploy.InputBox]
+artifact = "InputBox"
+create2 = "0xE1CB04A0fA36DdD16a06ea828007E35e1a3cBC37"
+salt = "0x0000000000000000000000000000000000000000000000000000000000000000"
+
+[deploy.EtherPortal]
+artifact = "EtherPortal"
+args = ["<%= contracts.InputBox.address %>"]
+create2 = "0xE1CB04A0fA36DdD16a06ea828007E35e1a3cBC37"
+salt = "0x0000000000000000000000000000000000000000000000000000000000000000"
+
+[deploy.ERC20Portal]
+artifact = "ERC20Portal"
+args = ["<%= contracts.InputBox.address %>"]
+create2 = "0xE1CB04A0fA36DdD16a06ea828007E35e1a3cBC37"
+salt = "0x0000000000000000000000000000000000000000000000000000000000000000"
+
+[deploy.ERC721Portal]
+artifact = "ERC721Portal"
+args = ["<%= contracts.InputBox.address %>"]
+create2 = "0xE1CB04A0fA36DdD16a06ea828007E35e1a3cBC37"
+salt = "0x0000000000000000000000000000000000000000000000000000000000000000"
+
+[deploy.ERC1155SinglePortal]
+artifact = "ERC1155SinglePortal"
+args = ["<%= contracts.InputBox.address %>"]
+create2 = "0xE1CB04A0fA36DdD16a06ea828007E35e1a3cBC37"
+salt = "0x0000000000000000000000000000000000000000000000000000000000000000"
+
+[deploy.ERC1155BatchPortal]
+artifact = "ERC1155BatchPortal"
+args = ["<%= contracts.InputBox.address %>"]
+create2 = "0xE1CB04A0fA36DdD16a06ea828007E35e1a3cBC37"
+salt = "0x0000000000000000000000000000000000000000000000000000000000000000"
+
+[deploy.DAppAddressRelay]
+artifact = "DAppAddressRelay"
+args = ["<%= contracts.InputBox.address %>"]
+create2 = "0xE1CB04A0fA36DdD16a06ea828007E35e1a3cBC37"
+salt = "0x0000000000000000000000000000000000000000000000000000000000000000"
+
+[deploy.AuthorityFactory]
+artifact = "AuthorityFactory"
+create2 = "0xE1CB04A0fA36DdD16a06ea828007E35e1a3cBC37"
+salt = "0x0000000000000000000000000000000000000000000000000000000000000000"
+
+[deploy.HistoryFactory]
+artifact = "HistoryFactory"
+create2 = "0xE1CB04A0fA36DdD16a06ea828007E35e1a3cBC37"
+salt = "0x0000000000000000000000000000000000000000000000000000000000000000"
+
+[deploy.AuthorityHistoryPairFactory]
+artifact = "AuthorityHistoryPairFactory"
+args = ["<%= contracts.AuthorityFactory.address %>", "<%= contracts.HistoryFactory.address %>"]
+create2 = "0xE1CB04A0fA36DdD16a06ea828007E35e1a3cBC37"
+salt = "0x0000000000000000000000000000000000000000000000000000000000000000"
+
+[pull.cartesiUtil]
+source = "cartesi-util:6.4.0@main"
+
+[deploy.CartesiDAppFactory]
+artifact = "CartesiDAppFactory"
+libraries = { Bitmask = "<%= cartesiUtil.Bitmask.address %>", MerkleV2 = "<%= cartesiUtil.MerkleV2.address %>" }
+create2 = "0xE1CB04A0fA36DdD16a06ea828007E35e1a3cBC37"
+salt = "0x0000000000000000000000000000000000000000000000000000000000000000"
+
+[deploy.SelfHostedApplicationFactory]
+artifact = "SelfHostedApplicationFactory"
+args = ["<%= contracts.AuthorityHistoryPairFactory.address %>", "<%= contracts.CartesiDAppFactory.address %>"]
+create2 = "0xE1CB04A0fA36DdD16a06ea828007E35e1a3cBC37"
+salt = "0x0000000000000000000000000000000000000000000000000000000000000000"
