@@ -3,9 +3,10 @@
     "version": "1.4.3",
     "scripts": {
         "build": "run-s compile export",
-        "clean:ignored": "rimraf artifacts cache coverage deployments/localhost dist generated-src src/types/*",
+        "clean:ignored": "rimraf artifacts cache coverage deployments/localhost dist generated-src src",
         "clean:hardhat": "hardhat clean",
-        "clean": "run-s clean:hardhat clean:ignored",
+        "clean:symlinks": "rimraf @cartesi @openzeppelin forge-std",
+        "clean": "run-s clean:hardhat clean:ignored clean:symlinks",
         "copy-dts": "copyfiles -u 1 \"src/**/*.d.ts\" dist/src",
         "compile": "hardhat compile",
         "deploy": "run-s deploy:development",
@@ -28,6 +29,10 @@
         "proofs:setup": "./test/foundry/dapp/helper/update-proofs.sh --setup",
         "prepack": "run-s build tsc:prod copy-dts",
         "start": "hardhat node",
+        "symlink": "run-s clean:symlinks symlink:@cartesi symlink:@openzeppelin symlink:forge-std",
+        "symlink:@cartesi": "ln -s node_modules/@cartesi @cartesi",
+        "symlink:@openzeppelin": "ln -s node_modules/@openzeppelin @openzeppelin",
+        "symlink:forge-std": "ln -s lib/forge-std/src forge-std",
         "test": "forge test -vvv",
         "tsc": "tsc",
         "tsc:prod": "tsc -p tsconfig.prod.json"

@@ -37,6 +37,9 @@ jobs:
       - name: Install dependencies
         run: yarn install
 
+      - name: Create symlinks
+        run: yarn symlink
+
       - name: Create release PR or publish to npm
         uses: changesets/action@v1
         id: changeset
@@ -75,6 +78,9 @@ jobs:
 
       - name: Install dependencies
         run: yarn install
+
+      - name: Create symlinks
+        run: yarn symlink
 
       - name: Install Python dependencies
         run: pip install yq

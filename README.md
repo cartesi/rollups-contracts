@@ -41,10 +41,12 @@ yarn install
 ## Tests
 
 If you plan to run the [Forge](https://book.getfoundry.sh/getting-started/installation) tests, there still some setup left to do.
-Assuming you are on the `onchain/rollups` directory, and that [Docker Engine](https://docs.docker.com/get-docker/) is running on the background, you may run the following command.
-This command will build the Cartesi Machine image necessary to build the proofs.
+Assuming you are on the `onchain/rollups` directory, and that [Docker Engine](https://docs.docker.com/get-docker/) is running on the background, you may run the following commands.
+The `symlink` script will create symbolic links to dependencies so that Forge and Hardhat yield the same resulting bytecode.
+Meanwhile, the `proof:setup` script will build the Cartesi Machine image necessary to build the proofs.
 
 ```sh
+yarn symlink
 yarn proofs:setup
 ```
 
@@ -58,6 +60,12 @@ From this point on, after any change in the source code, you can update the proo
 
 ```sh
 yarn proofs:update
+```
+
+If you later want to use Hardhat, make sure to clean the symbolic links!
+
+```sh
+yarn clean:symlinks
 ```
 
 ## Documentation

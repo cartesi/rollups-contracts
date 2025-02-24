@@ -2,6 +2,8 @@
 .env
 .node*
 .vscode
+/@cartesi
+/@openzeppelin
 /abi
 /artifacts
 /cache
@@ -12,6 +14,7 @@
 /dist
 /export/artifacts
 /forge-cache
+/forge-std
 /node_modules
 /out
 /src/types
