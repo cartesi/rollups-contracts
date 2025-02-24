@@ -1,3 +1,0 @@
-forge-std/=lib/forge-std/src/
-@cartesi/=node_modules/@cartesi/
-@openzeppelin/=node_modules/@openzeppelin/
