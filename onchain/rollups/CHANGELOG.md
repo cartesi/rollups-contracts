@@ -1,5 +1,13 @@
 # @cartesi/rollups
 
+## 1.4.4
+
+### Patch Changes
+
+-   08f17de: Add Cannonfile
+-   08f17de: Turn on optimizer for forge v1
+-   08f17de: Make forge and hardhat yield the same bytecode
+
 ## 1.4.3
 
 ### Patch Changes
