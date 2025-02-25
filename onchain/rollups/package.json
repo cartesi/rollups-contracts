@@ -54,6 +54,7 @@
         "@types/chai": "^4",
         "@types/mocha": "^10",
         "@types/node": "^20",
+        "@usecannon/cli": "^2.21.3",
         "chai": "^4.2",
         "copyfiles": "^2",
         "ethers": "^5",
