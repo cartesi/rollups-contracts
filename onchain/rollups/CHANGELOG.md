@@ -1,5 +1,11 @@
 # @cartesi/rollups
 
+## 1.4.5
+
+### Patch Changes
+
+-   da6feb3: Fix Rust bindings build on CI
+
 ## 1.4.4
 
 ### Patch Changes
