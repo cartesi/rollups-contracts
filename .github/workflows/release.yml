@@ -88,9 +88,9 @@ jobs:
             --crate-name cartesi-rollups-contracts \
             --crate-version "$VERSION" \
             --skip test \
-            --libraries node_modules/@cartesi/util/contracts/CartesiMathV2.sol:CartesiMathV2:0xB634F716BEd5Dd5A2b9a91C92474C499e50Cb27D \
-            --libraries node_modules/@cartesi/util/contracts/MerkleV2.sol:MerkleV2:0x33436035441927Df1a73FE3AAC5906854632e53d \
-            --libraries node_modules/@cartesi/util/contracts/Bitmask.sol:Bitmask:0xF5B2d8c81cDE4D6238bBf20D3D77DB37df13f735 \
+            --libraries @cartesi/util/contracts/CartesiMathV2.sol:CartesiMathV2:0xB634F716BEd5Dd5A2b9a91C92474C499e50Cb27D \
+            --libraries @cartesi/util/contracts/MerkleV2.sol:MerkleV2:0x33436035441927Df1a73FE3AAC5906854632e53d \
+            --libraries @cartesi/util/contracts/Bitmask.sol:Bitmask:0xF5B2d8c81cDE4D6238bBf20D3D77DB37df13f735 \
             --alloy
         env:
           VERSION: ${{ needs.version_or_publish.outputs.version }}
