@@ -6,7 +6,6 @@ pragma solidity ^0.8.22;
 import {EtherPortal} from "contracts/portals/EtherPortal.sol";
 import {IEtherPortal} from "contracts/portals/IEtherPortal.sol";
 import {IInputBox} from "contracts/inputs/IInputBox.sol";
-import {IPortal} from "contracts/portals/IPortal.sol";
 import {InputEncoding} from "contracts/common/InputEncoding.sol";
 
 import {Test} from "forge-std/Test.sol";
@@ -16,15 +15,12 @@ contract EtherPortalTest is Test {
     address _appContract;
     IInputBox _inputBox;
     IEtherPortal _portal;
-    bytes4[] _interfaceIds;
 
     function setUp() public {
         _alice = vm.addr(1);
         _appContract = vm.addr(2);
         _inputBox = IInputBox(vm.addr(3));
         _portal = new EtherPortal(_inputBox);
-        _interfaceIds.push(type(IEtherPortal).interfaceId);
-        _interfaceIds.push(type(IPortal).interfaceId);
     }
 
     function testGetInputBox() public view {

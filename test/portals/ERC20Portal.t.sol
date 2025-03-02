@@ -8,7 +8,6 @@ import {IERC20, ERC20} from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import {ERC20Portal} from "contracts/portals/ERC20Portal.sol";
 import {IERC20Portal} from "contracts/portals/IERC20Portal.sol";
 import {IInputBox} from "contracts/inputs/IInputBox.sol";
-import {IPortal} from "contracts/portals/IPortal.sol";
 import {InputEncoding} from "contracts/common/InputEncoding.sol";
 
 import {Test} from "forge-std/Test.sol";
@@ -21,7 +20,6 @@ contract ERC20PortalTest is Test {
     IInputBox _inputBox;
     IERC20 _token;
     IERC20Portal _portal;
-    bytes4[] _interfaceIds;
 
     function setUp() public {
         _alice = vm.addr(1);
@@ -29,8 +27,6 @@ contract ERC20PortalTest is Test {
         _inputBox = IInputBox(vm.addr(3));
         _token = IERC20(vm.addr(4));
         _portal = new ERC20Portal(_inputBox);
-        _interfaceIds.push(type(IERC20Portal).interfaceId);
-        _interfaceIds.push(type(IPortal).interfaceId);
     }
 
     function testGetInputBox() public view {

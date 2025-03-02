@@ -8,7 +8,6 @@ import {IERC1155, ERC1155} from "@openzeppelin/contracts/token/ERC1155/ERC1155.s
 import {ERC1155SinglePortal} from "contracts/portals/ERC1155SinglePortal.sol";
 import {IERC1155SinglePortal} from "contracts/portals/IERC1155SinglePortal.sol";
 import {IInputBox} from "contracts/inputs/IInputBox.sol";
-import {IPortal} from "contracts/portals/IPortal.sol";
 import {InputEncoding} from "contracts/common/InputEncoding.sol";
 
 import {Test} from "forge-std/Test.sol";
@@ -21,7 +20,6 @@ contract ERC1155SinglePortalTest is Test {
     IERC1155 _token;
     IInputBox _inputBox;
     IERC1155SinglePortal _portal;
-    bytes4[] _interfaceIds;
 
     function setUp() public {
         _alice = vm.addr(1);
@@ -29,8 +27,6 @@ contract ERC1155SinglePortalTest is Test {
         _token = IERC1155(vm.addr(3));
         _inputBox = IInputBox(vm.addr(4));
         _portal = new ERC1155SinglePortal(_inputBox);
-        _interfaceIds.push(type(IERC1155SinglePortal).interfaceId);
-        _interfaceIds.push(type(IPortal).interfaceId);
     }
 
     function testGetInputBox() public view {
