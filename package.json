@@ -3,7 +3,8 @@
     "version": "1.2.0",
     "scripts": {
         "fmt:check": "prettier --check '**/*.sol'",
-        "fmt:write": "prettier --check --write '**/*.sol'"
+        "fmt:write": "prettier --check --write '**/*.sol'",
+        "prepack": "forge clean && forge build contracts"
     },
     "devDependencies": {
         "@changesets/cli": "^2.27.1",
@@ -11,7 +12,7 @@
         "prettier": "^3.2.5",
         "prettier-plugin-solidity": "^1.3.1"
     },
-    "files": ["cannonfile.toml", "contracts", "foundry.toml"],
+    "files": ["out"],
     "license": "Apache-2.0",
     "packageManager": "pnpm@10.6.1"
 }
