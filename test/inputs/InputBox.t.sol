@@ -35,9 +35,10 @@ contract InputBoxTest is Test {
         _inputBox.addInput(appContract, new bytes(max));
 
         bytes memory largePayload = new bytes(max + 1);
-        uint256 largeLength = EvmAdvanceEncoder
-            .encode(1, appContract, address(this), 1, largePayload)
-            .length;
+        bytes memory largeInput = EvmAdvanceEncoder.encode(
+            1, appContract, address(this), 1, largePayload
+        );
+        uint256 largeLength = largeInput.length;
         vm.expectRevert(
             abi.encodeWithSelector(
                 IInputBox.InputTooLarge.selector,
@@ -74,11 +75,7 @@ contract InputBoxTest is Test {
 
             vm.expectEmit(true, true, false, true, address(_inputBox));
             bytes memory input = EvmAdvanceEncoder.encode(
-                chainId,
-                appContract,
-                address(this),
-                i,
-                payloads[i]
+                chainId, appContract, address(this), i, payloads[i]
             );
             emit IInputBox.InputAdded(appContract, i, input);
 

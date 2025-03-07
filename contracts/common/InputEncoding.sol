@@ -22,12 +22,11 @@ library InputEncoding {
         uint256 value,
         bytes calldata execLayerData
     ) internal pure returns (bytes memory) {
-        return
-            abi.encodePacked(
-                sender, //              20B
-                value, //               32B
-                execLayerData //        arbitrary size
-            );
+        return abi.encodePacked(
+            sender, //              20B
+            value, //               32B
+            execLayerData //        arbitrary size
+        );
     }
 
     /// @notice Encode an ERC-20 token deposit.
@@ -42,13 +41,12 @@ library InputEncoding {
         uint256 value,
         bytes calldata execLayerData
     ) internal pure returns (bytes memory) {
-        return
-            abi.encodePacked(
-                token, //               20B
-                sender, //              20B
-                value, //               32B
-                execLayerData //        arbitrary size
-            );
+        return abi.encodePacked(
+            token, //               20B
+            sender, //              20B
+            value, //               32B
+            execLayerData //        arbitrary size
+        );
     }
 
     /// @notice Encode an ERC-721 token deposit.
@@ -67,13 +65,12 @@ library InputEncoding {
         bytes calldata execLayerData
     ) internal pure returns (bytes memory) {
         bytes memory data = abi.encode(baseLayerData, execLayerData);
-        return
-            abi.encodePacked(
-                token, //               20B
-                sender, //              20B
-                tokenId, //             32B
-                data //                 arbitrary size
-            );
+        return abi.encodePacked(
+            token, //               20B
+            sender, //              20B
+            tokenId, //             32B
+            data //                 arbitrary size
+        );
     }
 
     /// @notice Encode an ERC-1155 single token deposit.
@@ -94,14 +91,13 @@ library InputEncoding {
         bytes calldata execLayerData
     ) internal pure returns (bytes memory) {
         bytes memory data = abi.encode(baseLayerData, execLayerData);
-        return
-            abi.encodePacked(
-                token, //               20B
-                sender, //              20B
-                tokenId, //             32B
-                value, //               32B
-                data //                 arbitrary size
-            );
+        return abi.encodePacked(
+            token, //               20B
+            sender, //              20B
+            tokenId, //             32B
+            value, //               32B
+            data //                 arbitrary size
+        );
     }
 
     /// @notice Encode an ERC-1155 batch token deposit.
@@ -121,17 +117,12 @@ library InputEncoding {
         bytes calldata baseLayerData,
         bytes calldata execLayerData
     ) internal pure returns (bytes memory) {
-        bytes memory data = abi.encode(
-            tokenIds,
-            values,
-            baseLayerData,
-            execLayerData
+        bytes memory data =
+            abi.encode(tokenIds, values, baseLayerData, execLayerData);
+        return abi.encodePacked(
+            token, //                   20B
+            sender, //                  20B
+            data //                     arbitrary size
         );
-        return
-            abi.encodePacked(
-                token, //                   20B
-                sender, //                  20B
-                data //                     arbitrary size
-            );
     }
 }

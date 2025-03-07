@@ -28,20 +28,11 @@ contract ERC1155BatchPortal is IERC1155BatchPortal, Portal {
         bytes calldata execLayerData
     ) external override {
         token.safeBatchTransferFrom(
-            msg.sender,
-            appContract,
-            tokenIds,
-            values,
-            baseLayerData
+            msg.sender, appContract, tokenIds, values, baseLayerData
         );
 
         bytes memory payload = InputEncoding.encodeBatchERC1155Deposit(
-            token,
-            msg.sender,
-            tokenIds,
-            values,
-            baseLayerData,
-            execLayerData
+            token, msg.sender, tokenIds, values, baseLayerData, execLayerData
         );
 
         _inputBox.addInput(appContract, payload);

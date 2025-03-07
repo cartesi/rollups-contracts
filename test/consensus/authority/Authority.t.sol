@@ -68,8 +68,8 @@ contract AuthorityTest is Test, ERC165Test, OwnableTest {
             Vm.Log memory entry = entries[i];
 
             if (
-                entry.emitter == address(authority) &&
-                entry.topics[0] == Ownable.OwnershipTransferred.selector
+                entry.emitter == address(authority)
+                    && entry.topics[0] == Ownable.OwnershipTransferred.selector
             ) {
                 ++numOfOwnershipTransferred;
 
@@ -90,8 +90,7 @@ contract AuthorityTest is Test, ERC165Test, OwnableTest {
 
         vm.expectRevert(
             abi.encodeWithSelector(
-                Ownable.OwnableInvalidOwner.selector,
-                address(0)
+                Ownable.OwnableInvalidOwner.selector, address(0)
             )
         );
         new Authority(address(0), epochLength);
@@ -120,8 +119,7 @@ contract AuthorityTest is Test, ERC165Test, OwnableTest {
 
         vm.expectRevert(
             abi.encodeWithSelector(
-                Ownable.OwnableUnauthorizedAccount.selector,
-                notOwner
+                Ownable.OwnableUnauthorizedAccount.selector, notOwner
             )
         );
 
@@ -142,11 +140,7 @@ contract AuthorityTest is Test, ERC165Test, OwnableTest {
         IAuthority authority = new Authority(owner, epochLength);
 
         _expectClaimEvents(
-            authority,
-            owner,
-            appContract,
-            lastProcessedBlockNumber,
-            claim
+            authority, owner, appContract, lastProcessedBlockNumber, claim
         );
 
         vm.prank(owner);
@@ -178,17 +172,12 @@ contract AuthorityTest is Test, ERC165Test, OwnableTest {
     ) internal {
         vm.expectEmit(true, true, false, true, address(authority));
         emit IClaimSubmitter.ClaimSubmission(
-            owner,
-            appContract,
-            lastProcessedBlockNumber,
-            claim
+            owner, appContract, lastProcessedBlockNumber, claim
         );
 
         vm.expectEmit(true, false, false, true, address(authority));
         emit IClaimSubmitter.ClaimAcceptance(
-            appContract,
-            lastProcessedBlockNumber,
-            claim
+            appContract, lastProcessedBlockNumber, claim
         );
     }
 }

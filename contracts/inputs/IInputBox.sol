@@ -14,9 +14,7 @@ interface IInputBox {
     /// @param index The input index
     /// @param input The input blob
     event InputAdded(
-        address indexed appContract,
-        uint256 indexed index,
-        bytes input
+        address indexed appContract, uint256 indexed index, bytes input
     );
 
     /// @notice Input is too large.
@@ -24,9 +22,7 @@ interface IInputBox {
     /// @param inputLength The input length
     /// @param maxInputLength The maximum input length
     error InputTooLarge(
-        address appContract,
-        uint256 inputLength,
-        uint256 maxInputLength
+        address appContract, uint256 inputLength, uint256 maxInputLength
     );
 
     /// @notice Send an input to an application.
@@ -34,25 +30,25 @@ interface IInputBox {
     /// @param payload The input payload
     /// @return The hash of the input blob
     /// @dev MUST fire an `InputAdded` event.
-    function addInput(
-        address appContract,
-        bytes calldata payload
-    ) external returns (bytes32);
+    function addInput(address appContract, bytes calldata payload)
+        external
+        returns (bytes32);
 
     /// @notice Get the number of inputs sent to an application.
     /// @param appContract The application contract address
-    function getNumberOfInputs(
-        address appContract
-    ) external view returns (uint256);
+    function getNumberOfInputs(address appContract)
+        external
+        view
+        returns (uint256);
 
     /// @notice Get the hash of an input in an application's input box.
     /// @param appContract The application contract address
     /// @param index The input index
     /// @dev The provided index must be valid.
-    function getInputHash(
-        address appContract,
-        uint256 index
-    ) external view returns (bytes32);
+    function getInputHash(address appContract, uint256 index)
+        external
+        view
+        returns (bytes32);
 
     /// @notice Get number of block in which contract was deployed
     function getDeploymentBlockNumber() external view returns (uint256);

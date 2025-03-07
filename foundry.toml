@@ -10,6 +10,9 @@ remappings = [
     "forge-std/=dependencies/forge-std-1.9.6/src/",
 ]
 
+[fmt]
+line_length = 80
+
 [invariant]
 runs = 32
 depth = 100

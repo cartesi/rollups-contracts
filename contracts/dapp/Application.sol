@@ -12,10 +12,14 @@ import {LibAddress} from "../library/LibAddress.sol";
 import {IOwnable} from "../access/IOwnable.sol";
 
 import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
-import {ERC721Holder} from "@openzeppelin/contracts/token/ERC721/utils/ERC721Holder.sol";
-import {ERC1155Holder} from "@openzeppelin/contracts/token/ERC1155/utils/ERC1155Holder.sol";
-import {ReentrancyGuard} from "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
-import {IERC721Receiver} from "@openzeppelin/contracts/token/ERC721/IERC721Receiver.sol";
+import {ERC721Holder} from
+    "@openzeppelin/contracts/token/ERC721/utils/ERC721Holder.sol";
+import {ERC1155Holder} from
+    "@openzeppelin/contracts/token/ERC1155/utils/ERC1155Holder.sol";
+import {ReentrancyGuard} from
+    "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
+import {IERC721Receiver} from
+    "@openzeppelin/contracts/token/ERC721/IERC721Receiver.sol";
 import {BitMaps} from "@openzeppelin/contracts/utils/structs/BitMaps.sol";
 
 contract Application is
@@ -99,16 +103,21 @@ contract Application is
         emit OutputExecuted(outputIndex, output);
     }
 
-    function migrateToConsensus(
-        IConsensus newConsensus
-    ) external override onlyOwner {
+    function migrateToConsensus(IConsensus newConsensus)
+        external
+        override
+        onlyOwner
+    {
         _consensus = newConsensus;
         emit NewConsensus(newConsensus);
     }
 
-    function wasOutputExecuted(
-        uint256 outputIndex
-    ) external view override returns (bool) {
+    function wasOutputExecuted(uint256 outputIndex)
+        external
+        view
+        override
+        returns (bool)
+    {
         return _executed.get(outputIndex);
     }
 
@@ -151,7 +160,12 @@ contract Application is
         return _dataAvailability;
     }
 
-    function owner() public view override(IOwnable, Ownable) returns (address) {
+    function owner()
+        public
+        view
+        override(IOwnable, Ownable)
+        returns (address)
+    {
         return super.owner();
     }
 
@@ -159,23 +173,24 @@ contract Application is
         super.renounceOwnership();
     }
 
-    function transferOwnership(
-        address newOwner
-    ) public override(IOwnable, Ownable) {
+    function transferOwnership(address newOwner)
+        public
+        override(IOwnable, Ownable)
+    {
         super.transferOwnership(newOwner);
     }
 
     /// @notice Check if an outputs Merkle root is valid,
     /// according to the current consensus.
     /// @param outputsMerkleRoot The output Merkle root
-    function _isOutputsMerkleRootValid(
-        bytes32 outputsMerkleRoot
-    ) internal view returns (bool) {
-        return
-            _consensus.isOutputsMerkleRootValid(
-                address(this),
-                outputsMerkleRoot
-            );
+    function _isOutputsMerkleRootValid(bytes32 outputsMerkleRoot)
+        internal
+        view
+        returns (bool)
+    {
+        return _consensus.isOutputsMerkleRootValid(
+            address(this), outputsMerkleRoot
+        );
     }
 
     /// @notice Executes a voucher
@@ -185,10 +200,8 @@ contract Application is
         uint256 value;
         bytes memory payload;
 
-        (destination, value, payload) = abi.decode(
-            arguments,
-            (address, uint256, bytes)
-        );
+        (destination, value, payload) =
+            abi.decode(arguments, (address, uint256, bytes));
 
         bool enoughFunds;
         uint256 balance;

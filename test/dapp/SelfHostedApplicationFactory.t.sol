@@ -6,14 +6,18 @@ pragma solidity ^0.8.22;
 
 import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
 
-import {IAuthorityFactory} from "contracts/consensus/authority/IAuthorityFactory.sol";
-import {AuthorityFactory} from "contracts/consensus/authority/AuthorityFactory.sol";
+import {IAuthorityFactory} from
+    "contracts/consensus/authority/IAuthorityFactory.sol";
+import {AuthorityFactory} from
+    "contracts/consensus/authority/AuthorityFactory.sol";
 import {IAuthority} from "contracts/consensus/authority/IAuthority.sol";
 import {IApplicationFactory} from "contracts/dapp/IApplicationFactory.sol";
 import {ApplicationFactory} from "contracts/dapp/ApplicationFactory.sol";
 import {IApplication} from "contracts/dapp/IApplication.sol";
-import {ISelfHostedApplicationFactory} from "contracts/dapp/ISelfHostedApplicationFactory.sol";
-import {SelfHostedApplicationFactory} from "contracts/dapp/SelfHostedApplicationFactory.sol";
+import {ISelfHostedApplicationFactory} from
+    "contracts/dapp/ISelfHostedApplicationFactory.sol";
+import {SelfHostedApplicationFactory} from
+    "contracts/dapp/SelfHostedApplicationFactory.sol";
 
 import {Test} from "forge-std/Test.sol";
 
@@ -26,8 +30,7 @@ contract SelfHostedApplicationFactoryTest is Test {
         authorityFactory = new AuthorityFactory();
         applicationFactory = new ApplicationFactory();
         factory = new SelfHostedApplicationFactory(
-            authorityFactory,
-            applicationFactory
+            authorityFactory, applicationFactory
         );
     }
 
@@ -40,8 +43,7 @@ contract SelfHostedApplicationFactoryTest is Test {
 
     function testGetAuthorityFactory() external view {
         assertEq(
-            address(factory.getAuthorityFactory()),
-            address(authorityFactory)
+            address(factory.getAuthorityFactory()), address(authorityFactory)
         );
     }
 
@@ -57,8 +59,7 @@ contract SelfHostedApplicationFactoryTest is Test {
 
         vm.expectRevert(
             abi.encodeWithSelector(
-                Ownable.OwnableInvalidOwner.selector,
-                address(0)
+                Ownable.OwnableInvalidOwner.selector, address(0)
             )
         );
         factory.deployContracts(
@@ -83,12 +84,7 @@ contract SelfHostedApplicationFactoryTest is Test {
 
         vm.expectRevert("epoch length must not be zero");
         factory.deployContracts(
-            authorityOwner,
-            0,
-            appOwner,
-            templateHash,
-            dataAvailability,
-            salt
+            authorityOwner, 0, appOwner, templateHash, dataAvailability, salt
         );
     }
 
@@ -104,8 +100,7 @@ contract SelfHostedApplicationFactoryTest is Test {
 
         vm.expectRevert(
             abi.encodeWithSelector(
-                Ownable.OwnableInvalidOwner.selector,
-                address(0)
+                Ownable.OwnableInvalidOwner.selector, address(0)
             )
         );
         factory.deployContracts(

@@ -8,7 +8,10 @@ import {Vm} from "forge-std/Vm.sol";
 import {Test} from "forge-std/Test.sol";
 import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
 
-import {AuthorityFactory, IAuthorityFactory} from "contracts/consensus/authority/AuthorityFactory.sol";
+import {AuthorityFactory} from
+    "contracts/consensus/authority/AuthorityFactory.sol";
+import {IAuthorityFactory} from
+    "contracts/consensus/authority/IAuthorityFactory.sol";
 import {IAuthority} from "contracts/consensus/authority/IAuthority.sol";
 
 contract AuthorityFactoryTest is Test {
@@ -18,33 +21,29 @@ contract AuthorityFactoryTest is Test {
         _factory = new AuthorityFactory();
     }
 
-    function testRevertsOwnerAddressZero(
-        uint256 epochLength,
-        bytes32 salt
-    ) public {
+    function testRevertsOwnerAddressZero(uint256 epochLength, bytes32 salt)
+        public
+    {
         vm.assume(epochLength > 0);
 
         vm.expectRevert(
             abi.encodeWithSelector(
-                Ownable.OwnableInvalidOwner.selector,
-                address(0)
+                Ownable.OwnableInvalidOwner.selector, address(0)
             )
         );
         _factory.newAuthority(address(0), epochLength);
 
         vm.expectRevert(
             abi.encodeWithSelector(
-                Ownable.OwnableInvalidOwner.selector,
-                address(0)
+                Ownable.OwnableInvalidOwner.selector, address(0)
             )
         );
         _factory.newAuthority(address(0), epochLength, salt);
     }
 
-    function testRevertsEpochLengthZero(
-        address authorityOwner,
-        bytes32 salt
-    ) public {
+    function testRevertsEpochLengthZero(address authorityOwner, bytes32 salt)
+        public
+    {
         vm.assume(authorityOwner != address(0));
 
         vm.expectRevert("epoch length must not be zero");
@@ -54,19 +53,16 @@ contract AuthorityFactoryTest is Test {
         _factory.newAuthority(authorityOwner, 0, salt);
     }
 
-    function testNewAuthority(
-        address authorityOwner,
-        uint256 epochLength
-    ) public {
+    function testNewAuthority(address authorityOwner, uint256 epochLength)
+        public
+    {
         vm.assume(authorityOwner != address(0));
         vm.assume(epochLength > 0);
 
         vm.recordLogs();
 
-        IAuthority authority = _factory.newAuthority(
-            authorityOwner,
-            epochLength
-        );
+        IAuthority authority =
+            _factory.newAuthority(authorityOwner, epochLength);
 
         _testNewAuthorityAux(authorityOwner, epochLength, authority);
     }
@@ -80,18 +76,13 @@ contract AuthorityFactoryTest is Test {
         vm.assume(epochLength > 0);
 
         address precalculatedAddress = _factory.calculateAuthorityAddress(
-            authorityOwner,
-            epochLength,
-            salt
+            authorityOwner, epochLength, salt
         );
 
         vm.recordLogs();
 
-        IAuthority authority = _factory.newAuthority(
-            authorityOwner,
-            epochLength,
-            salt
-        );
+        IAuthority authority =
+            _factory.newAuthority(authorityOwner, epochLength, salt);
 
         _testNewAuthorityAux(authorityOwner, epochLength, authority);
 
@@ -99,9 +90,7 @@ contract AuthorityFactoryTest is Test {
         assertEq(precalculatedAddress, address(authority));
 
         precalculatedAddress = _factory.calculateAuthorityAddress(
-            authorityOwner,
-            epochLength,
-            salt
+            authorityOwner, epochLength, salt
         );
 
         // Precalculated address must STILL match actual address
@@ -125,8 +114,9 @@ contract AuthorityFactoryTest is Test {
             Vm.Log memory entry = entries[i];
 
             if (
-                entry.emitter == address(_factory) &&
-                entry.topics[0] == IAuthorityFactory.AuthorityCreated.selector
+                entry.emitter == address(_factory)
+                    && entry.topics[0]
+                        == IAuthorityFactory.AuthorityCreated.selector
             ) {
                 ++numOfAuthorityCreated;
 

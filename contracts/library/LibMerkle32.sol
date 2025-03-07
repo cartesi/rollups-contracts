@@ -16,10 +16,11 @@ library LibMerkle32 {
     /// @param height The height of the Merkle tree
     /// @return The root hash of the Merkle tree
     /// @dev Raises an error if more than `2^height` leaves are provided.
-    function merkleRoot(
-        bytes32[] memory leaves,
-        uint256 height
-    ) internal pure returns (bytes32) {
+    function merkleRoot(bytes32[] memory leaves, uint256 height)
+        internal
+        pure
+        returns (bytes32)
+    {
         bytes32 defaultNode;
         for (uint256 i; i < height; ++i) {
             leaves = leaves.parentLevel(defaultNode);
@@ -36,11 +37,11 @@ library LibMerkle32 {
     /// @return The siblings of the ancestors of the leaf in bottom-up order
     /// @dev Raises an error if the provided index is out of bounds.
     /// @dev Raises an error if more than `2^height` leaves are provided.
-    function siblings(
-        bytes32[] memory leaves,
-        uint256 index,
-        uint256 height
-    ) internal pure returns (bytes32[] memory) {
+    function siblings(bytes32[] memory leaves, uint256 index, uint256 height)
+        internal
+        pure
+        returns (bytes32[] memory)
+    {
         bytes32[] memory sibs = new bytes32[](height);
         bytes32 defaultNode;
         for (uint256 i; i < height; ++i) {
@@ -84,10 +85,11 @@ library LibMerkle32 {
     /// @param rightNode The right node
     /// @return parentNode The parent node
     /// @dev Uses assembly for extra performance
-    function parent(
-        bytes32 leftNode,
-        bytes32 rightNode
-    ) internal pure returns (bytes32 parentNode) {
+    function parent(bytes32 leftNode, bytes32 rightNode)
+        internal
+        pure
+        returns (bytes32 parentNode)
+    {
         /// @solidity memory-safe-assembly
         assembly {
             mstore(0x00, leftNode)
@@ -102,10 +104,11 @@ library LibMerkle32 {
     /// @return The left-most nodes of the parent level
     /// @dev The default node of a parent level is
     /// the parent node of two default nodes.
-    function parentLevel(
-        bytes32[] memory nodes,
-        bytes32 defaultNode
-    ) internal pure returns (bytes32[] memory) {
+    function parentLevel(bytes32[] memory nodes, bytes32 defaultNode)
+        internal
+        pure
+        returns (bytes32[] memory)
+    {
         uint256 n = (nodes.length + 1) / 2; // ceil(#nodes / 2)
         bytes32[] memory level = new bytes32[](n);
         for (uint256 i; i < n; ++i) {
@@ -120,11 +123,11 @@ library LibMerkle32 {
     /// @param nodes The array of left-most nodes
     /// @param index The index of the node
     /// @param defaultNode The default node after the array
-    function at(
-        bytes32[] memory nodes,
-        uint256 index,
-        bytes32 defaultNode
-    ) internal pure returns (bytes32) {
+    function at(bytes32[] memory nodes, uint256 index, bytes32 defaultNode)
+        internal
+        pure
+        returns (bytes32)
+    {
         if (index < nodes.length) {
             return nodes[index];
         } else {

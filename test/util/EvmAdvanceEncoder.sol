@@ -14,19 +14,18 @@ library EvmAdvanceEncoder {
         uint256 index,
         bytes memory payload
     ) internal view returns (bytes memory) {
-        return
-            abi.encodeCall(
-                Inputs.EvmAdvance,
-                (
-                    chainId,
-                    appContract,
-                    sender,
-                    block.number,
-                    block.timestamp,
-                    block.prevrandao,
-                    index,
-                    payload
-                )
-            );
+        return abi.encodeCall(
+            Inputs.EvmAdvance,
+            (
+                chainId,
+                appContract,
+                sender,
+                block.number,
+                block.timestamp,
+                block.prevrandao,
+                index,
+                payload
+            )
+        );
     }
 }

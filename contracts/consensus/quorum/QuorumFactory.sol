@@ -12,10 +12,11 @@ import {Quorum} from "./Quorum.sol";
 /// @title Quorum Factory
 /// @notice Allows anyone to reliably deploy a new `IQuorum` contract.
 contract QuorumFactory is IQuorumFactory {
-    function newQuorum(
-        address[] calldata validators,
-        uint256 epochLength
-    ) external override returns (IQuorum) {
+    function newQuorum(address[] calldata validators, uint256 epochLength)
+        external
+        override
+        returns (IQuorum)
+    {
         IQuorum quorum = new Quorum(validators, epochLength);
 
         emit QuorumCreated(quorum);
@@ -40,15 +41,14 @@ contract QuorumFactory is IQuorumFactory {
         uint256 epochLength,
         bytes32 salt
     ) external view override returns (address) {
-        return
-            Create2.computeAddress(
-                salt,
-                keccak256(
-                    abi.encodePacked(
-                        type(Quorum).creationCode,
-                        abi.encode(validators, epochLength)
-                    )
+        return Create2.computeAddress(
+            salt,
+            keccak256(
+                abi.encodePacked(
+                    type(Quorum).creationCode,
+                    abi.encode(validators, epochLength)
                 )
-            );
+            )
+        );
     }
 }

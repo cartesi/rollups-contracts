@@ -22,8 +22,7 @@ interface IEtherPortal is IPortal {
     ///
     /// @dev Any Ether sent through this function will be forwarded to the application contract.
     ///      If the transfer fails, an `EtherTransferFailed` error will be raised.
-    function depositEther(
-        address appContract,
-        bytes calldata execLayerData
-    ) external payable;
+    function depositEther(address appContract, bytes calldata execLayerData)
+        external
+        payable;
 }

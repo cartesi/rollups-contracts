@@ -23,10 +23,10 @@ library LibEmulator {
     // state changes
     // -------------
 
-    function addOutput(
-        State storage state,
-        bytes memory output
-    ) internal returns (OutputIndex outputIndex) {
+    function addOutput(State storage state, bytes memory output)
+        internal
+        returns (OutputIndex outputIndex)
+    {
         bytes[] storage outputs = state.outputs;
         outputIndex = OutputIndex.wrap(outputs.length.toUint64());
         outputs.push(output);
@@ -36,10 +36,11 @@ library LibEmulator {
     // state queries
     // -------------
 
-    function getOutput(
-        State storage state,
-        OutputIndex outputIndex
-    ) internal view returns (bytes storage) {
+    function getOutput(State storage state, OutputIndex outputIndex)
+        internal
+        view
+        returns (bytes storage)
+    {
         return state.outputs[OutputIndex.unwrap(outputIndex)];
     }
 
@@ -51,16 +52,17 @@ library LibEmulator {
 
         outputHashes = getOutputHashes(state.outputs);
 
-        return
-            OutputValidityProof(
-                OutputIndex.unwrap(outputIndex),
-                getOutputSiblings(outputHashes, OutputIndex.unwrap(outputIndex))
-            );
+        return OutputValidityProof(
+            OutputIndex.unwrap(outputIndex),
+            getOutputSiblings(outputHashes, OutputIndex.unwrap(outputIndex))
+        );
     }
 
-    function getOutputsMerkleRoot(
-        State storage state
-    ) internal view returns (bytes32) {
+    function getOutputsMerkleRoot(State storage state)
+        internal
+        view
+        returns (bytes32)
+    {
         bytes32[] memory outputHashes;
 
         outputHashes = getOutputHashes(state.outputs);
@@ -72,9 +74,11 @@ library LibEmulator {
     // Merkle operations
     // -----------------
 
-    function getOutputsMerkleRoot(
-        bytes32[] memory outputHashes
-    ) internal pure returns (bytes32) {
+    function getOutputsMerkleRoot(bytes32[] memory outputHashes)
+        internal
+        pure
+        returns (bytes32)
+    {
         return outputHashes.merkleRoot(CanonicalMachine.LOG2_MAX_OUTPUTS);
     }
 
@@ -82,20 +86,20 @@ library LibEmulator {
         bytes32[] memory outputHashes,
         uint64 outputIndex
     ) internal pure returns (bytes32[] memory) {
-        return
-            outputHashes.siblings(
-                outputIndex,
-                CanonicalMachine.LOG2_MAX_OUTPUTS
-            );
+        return outputHashes.siblings(
+            outputIndex, CanonicalMachine.LOG2_MAX_OUTPUTS
+        );
     }
 
     // ---------------
     // Hash operations
     // ---------------
 
-    function getOutputHashes(
-        bytes[] memory outputs
-    ) internal pure returns (bytes32[] memory leaves) {
+    function getOutputHashes(bytes[] memory outputs)
+        internal
+        pure
+        returns (bytes32[] memory leaves)
+    {
         leaves = new bytes32[](outputs.length);
         for (uint256 i; i < leaves.length; ++i) {
             leaves[i] = keccak256(outputs[i]);

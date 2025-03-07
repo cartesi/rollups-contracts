@@ -19,19 +19,11 @@ contract ApplicationFactory is IApplicationFactory {
         bytes32 templateHash,
         bytes calldata dataAvailability
     ) external override returns (IApplication) {
-        IApplication appContract = new Application(
-            consensus,
-            appOwner,
-            templateHash,
-            dataAvailability
-        );
+        IApplication appContract =
+            new Application(consensus, appOwner, templateHash, dataAvailability);
 
         emit ApplicationCreated(
-            consensus,
-            appOwner,
-            templateHash,
-            dataAvailability,
-            appContract
+            consensus, appOwner, templateHash, dataAvailability, appContract
         );
 
         return appContract;
@@ -45,18 +37,11 @@ contract ApplicationFactory is IApplicationFactory {
         bytes32 salt
     ) external override returns (IApplication) {
         IApplication appContract = new Application{salt: salt}(
-            consensus,
-            appOwner,
-            templateHash,
-            dataAvailability
+            consensus, appOwner, templateHash, dataAvailability
         );
 
         emit ApplicationCreated(
-            consensus,
-            appOwner,
-            templateHash,
-            dataAvailability,
-            appContract
+            consensus, appOwner, templateHash, dataAvailability, appContract
         );
 
         return appContract;
@@ -69,20 +54,16 @@ contract ApplicationFactory is IApplicationFactory {
         bytes calldata dataAvailability,
         bytes32 salt
     ) external view override returns (address) {
-        return
-            Create2.computeAddress(
-                salt,
-                keccak256(
-                    abi.encodePacked(
-                        type(Application).creationCode,
-                        abi.encode(
-                            consensus,
-                            appOwner,
-                            templateHash,
-                            dataAvailability
-                        )
+        return Create2.computeAddress(
+            salt,
+            keccak256(
+                abi.encodePacked(
+                    type(Application).creationCode,
+                    abi.encode(
+                        consensus, appOwner, templateHash, dataAvailability
                     )
                 )
-            );
+            )
+        );
     }
 }

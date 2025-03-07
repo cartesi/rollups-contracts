@@ -13,10 +13,9 @@ abstract contract OwnableTest is Test {
     /// @notice Get ownable contract to be tested
     function _getOwnableContract() internal view virtual returns (IOwnable);
 
-    function testRenounceOwnership(
-        address caller,
-        address randomOwner
-    ) external {
+    function testRenounceOwnership(address caller, address randomOwner)
+        external
+    {
         vm.assume(caller != address(0));
         vm.assume(randomOwner != address(0));
 
@@ -35,18 +34,16 @@ abstract contract OwnableTest is Test {
         vm.startPrank(caller);
         vm.expectRevert(
             abi.encodeWithSelector(
-                Ownable.OwnableUnauthorizedAccount.selector,
-                caller
+                Ownable.OwnableUnauthorizedAccount.selector, caller
             )
         );
         ownable.transferOwnership(randomOwner);
         vm.stopPrank();
     }
 
-    function testUnauthorizedAccount(
-        address caller,
-        address randomOwner
-    ) external {
+    function testUnauthorizedAccount(address caller, address randomOwner)
+        external
+    {
         vm.assume(randomOwner != address(0));
 
         IOwnable ownable = _getOwnableContract();
@@ -57,8 +54,7 @@ abstract contract OwnableTest is Test {
         vm.startPrank(caller);
         vm.expectRevert(
             abi.encodeWithSelector(
-                Ownable.OwnableUnauthorizedAccount.selector,
-                caller
+                Ownable.OwnableUnauthorizedAccount.selector, caller
             )
         );
         ownable.transferOwnership(randomOwner);
@@ -72,8 +68,7 @@ abstract contract OwnableTest is Test {
         vm.startPrank(owner);
         vm.expectRevert(
             abi.encodeWithSelector(
-                Ownable.OwnableInvalidOwner.selector,
-                address(0)
+                Ownable.OwnableInvalidOwner.selector, address(0)
             )
         );
         ownable.transferOwnership(address(0));
@@ -104,8 +99,7 @@ abstract contract OwnableTest is Test {
         vm.startPrank(caller);
         vm.expectRevert(
             abi.encodeWithSelector(
-                Ownable.OwnableUnauthorizedAccount.selector,
-                caller
+                Ownable.OwnableUnauthorizedAccount.selector, caller
             )
         );
         ownable.transferOwnership(randomOwner);

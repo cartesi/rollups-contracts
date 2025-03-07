@@ -2,15 +2,13 @@
     "name": "@cartesi/rollups",
     "version": "1.2.0",
     "scripts": {
-        "fmt:check": "prettier --check '**/*.sol'",
-        "fmt:write": "prettier --check --write '**/*.sol'",
+        "fmt:check": "forge fmt --check",
+        "fmt:write": "forge fmt",
         "prepack": "forge clean && forge build contracts"
     },
     "devDependencies": {
         "@changesets/cli": "^2.27.1",
-        "@usecannon/cli": "^2.21.5",
-        "prettier": "^3.2.5",
-        "prettier-plugin-solidity": "^1.3.1"
+        "@usecannon/cli": "^2.21.5"
     },
     "files": ["out"],
     "license": "Apache-2.0",
