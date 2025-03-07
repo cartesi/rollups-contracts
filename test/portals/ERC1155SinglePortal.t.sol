@@ -3,7 +3,8 @@
 
 pragma solidity ^0.8.22;
 
-import {IERC1155, ERC1155} from "@openzeppelin/contracts/token/ERC1155/ERC1155.sol";
+import {ERC1155} from "@openzeppelin/contracts/token/ERC1155/ERC1155.sol";
+import {IERC1155} from "@openzeppelin/contracts/token/ERC1155/IERC1155.sol";
 
 import {ERC1155SinglePortal} from "contracts/portals/ERC1155SinglePortal.sol";
 import {IERC1155SinglePortal} from "contracts/portals/IERC1155SinglePortal.sol";
@@ -39,21 +40,14 @@ contract ERC1155SinglePortalTest is Test {
         bytes calldata baseLayerData,
         bytes calldata execLayerData
     ) public {
-        bytes memory safeTransferFrom = _encodeSafeTransferFrom(
-            tokenId,
-            value,
-            baseLayerData
-        );
+        bytes memory safeTransferFrom =
+            _encodeSafeTransferFrom(tokenId, value, baseLayerData);
 
         vm.mockCall(address(_token), safeTransferFrom, abi.encode());
         vm.expectCall(address(_token), safeTransferFrom, 1);
 
-        bytes memory payload = _encodePayload(
-            tokenId,
-            value,
-            baseLayerData,
-            execLayerData
-        );
+        bytes memory payload =
+            _encodePayload(tokenId, value, baseLayerData, execLayerData);
 
         bytes memory addInput = _encodeAddInput(payload);
 
@@ -62,12 +56,7 @@ contract ERC1155SinglePortalTest is Test {
 
         vm.prank(_alice);
         _portal.depositSingleERC1155Token(
-            _token,
-            _appContract,
-            tokenId,
-            value,
-            baseLayerData,
-            execLayerData
+            _token, _appContract, tokenId, value, baseLayerData, execLayerData
         );
     }
 
@@ -78,21 +67,14 @@ contract ERC1155SinglePortalTest is Test {
         bytes calldata execLayerData,
         bytes memory errorData
     ) public {
-        bytes memory safeTransferFrom = _encodeSafeTransferFrom(
-            tokenId,
-            value,
-            baseLayerData
-        );
+        bytes memory safeTransferFrom =
+            _encodeSafeTransferFrom(tokenId, value, baseLayerData);
 
         vm.mockCall(address(_token), safeTransferFrom, abi.encode());
         vm.mockCallRevert(address(_token), safeTransferFrom, errorData);
 
-        bytes memory payload = _encodePayload(
-            tokenId,
-            value,
-            baseLayerData,
-            execLayerData
-        );
+        bytes memory payload =
+            _encodePayload(tokenId, value, baseLayerData, execLayerData);
 
         bytes memory addInput = _encodeAddInput(payload);
 
@@ -102,12 +84,7 @@ contract ERC1155SinglePortalTest is Test {
 
         vm.prank(_alice);
         _portal.depositSingleERC1155Token(
-            _token,
-            _appContract,
-            tokenId,
-            value,
-            baseLayerData,
-            execLayerData
+            _token, _appContract, tokenId, value, baseLayerData, execLayerData
         );
     }
 
@@ -126,12 +103,8 @@ contract ERC1155SinglePortalTest is Test {
         // Allow the portal to withdraw tokens from Alice
         _token.setApprovalForAll(address(_portal), true);
 
-        bytes memory payload = _encodePayload(
-            tokenId,
-            value,
-            baseLayerData,
-            execLayerData
-        );
+        bytes memory payload =
+            _encodePayload(tokenId, value, baseLayerData, execLayerData);
 
         bytes memory addInput = _encodeAddInput(payload);
 
@@ -146,20 +119,11 @@ contract ERC1155SinglePortalTest is Test {
 
         vm.expectEmit(true, true, true, true, address(_token));
         emit IERC1155.TransferSingle(
-            address(_portal),
-            _alice,
-            _appContract,
-            tokenId,
-            value
+            address(_portal), _alice, _appContract, tokenId, value
         );
 
         _portal.depositSingleERC1155Token(
-            _token,
-            _appContract,
-            tokenId,
-            value,
-            baseLayerData,
-            execLayerData
+            _token, _appContract, tokenId, value, baseLayerData, execLayerData
         );
         vm.stopPrank();
 
@@ -175,20 +139,16 @@ contract ERC1155SinglePortalTest is Test {
         bytes calldata baseLayerData,
         bytes calldata execLayerData
     ) internal view returns (bytes memory) {
-        return
-            InputEncoding.encodeSingleERC1155Deposit(
-                _token,
-                _alice,
-                tokenId,
-                value,
-                baseLayerData,
-                execLayerData
-            );
+        return InputEncoding.encodeSingleERC1155Deposit(
+            _token, _alice, tokenId, value, baseLayerData, execLayerData
+        );
     }
 
-    function _encodeAddInput(
-        bytes memory payload
-    ) internal view returns (bytes memory) {
+    function _encodeAddInput(bytes memory payload)
+        internal
+        view
+        returns (bytes memory)
+    {
         return abi.encodeCall(IInputBox.addInput, (_appContract, payload));
     }
 
@@ -197,10 +157,9 @@ contract ERC1155SinglePortalTest is Test {
         uint256 value,
         bytes calldata baseLayerData
     ) internal view returns (bytes memory) {
-        return
-            abi.encodeCall(
-                IERC1155.safeTransferFrom,
-                (_alice, _appContract, tokenId, value, baseLayerData)
-            );
+        return abi.encodeCall(
+            IERC1155.safeTransferFrom,
+            (_alice, _appContract, tokenId, value, baseLayerData)
+        );
     }
 }

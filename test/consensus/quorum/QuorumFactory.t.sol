@@ -4,7 +4,8 @@
 /// @title Quorum Factory Test
 pragma solidity ^0.8.22;
 
-import {QuorumFactory, IQuorumFactory} from "contracts/consensus/quorum/QuorumFactory.sol";
+import {QuorumFactory} from "contracts/consensus/quorum/QuorumFactory.sol";
+import {IQuorumFactory} from "contracts/consensus/quorum/IQuorumFactory.sol";
 import {IQuorum} from "contracts/consensus/quorum/IQuorum.sol";
 
 import {Vm} from "forge-std/Vm.sol";
@@ -56,11 +57,8 @@ contract QuorumFactoryTest is Test {
         uint256 numOfValidators = bound(seed, 1, _QUORUM_MAX_SIZE);
         address[] memory validators = vm.addrs(numOfValidators);
 
-        address precalculatedAddress = _factory.calculateQuorumAddress(
-            validators,
-            epochLength,
-            salt
-        );
+        address precalculatedAddress =
+            _factory.calculateQuorumAddress(validators, epochLength, salt);
 
         vm.recordLogs();
 
@@ -71,11 +69,8 @@ contract QuorumFactoryTest is Test {
         // Precalculated address must match actual address
         assertEq(precalculatedAddress, address(quorum));
 
-        precalculatedAddress = _factory.calculateQuorumAddress(
-            validators,
-            epochLength,
-            salt
-        );
+        precalculatedAddress =
+            _factory.calculateQuorumAddress(validators, epochLength, salt);
 
         // Precalculated address must STILL match actual address
         assertEq(precalculatedAddress, address(quorum));
@@ -97,8 +92,8 @@ contract QuorumFactoryTest is Test {
             Vm.Log memory entry = entries[i];
 
             if (
-                entry.emitter == address(_factory) &&
-                entry.topics[0] == IQuorumFactory.QuorumCreated.selector
+                entry.emitter == address(_factory)
+                    && entry.topics[0] == IQuorumFactory.QuorumCreated.selector
             ) {
                 ++numQuorumCreated;
                 IQuorum eventQuorum = abi.decode(entry.data, (IQuorum));

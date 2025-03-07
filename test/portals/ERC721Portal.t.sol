@@ -3,7 +3,8 @@
 
 pragma solidity ^0.8.22;
 
-import {IERC721, ERC721} from "@openzeppelin/contracts/token/ERC721/ERC721.sol";
+import {ERC721} from "@openzeppelin/contracts/token/ERC721/ERC721.sol";
+import {IERC721} from "@openzeppelin/contracts/token/ERC721/IERC721.sol";
 
 import {ERC721Portal} from "contracts/portals/ERC721Portal.sol";
 import {IERC721Portal} from "contracts/portals/IERC721Portal.sol";
@@ -38,20 +39,14 @@ contract ERC721PortalTest is Test {
         bytes calldata baseLayerData,
         bytes calldata execLayerData
     ) public {
-        bytes memory safeTransferFrom = _encodeSafeTransferFrom(
-            tokenId,
-            baseLayerData
-        );
+        bytes memory safeTransferFrom =
+            _encodeSafeTransferFrom(tokenId, baseLayerData);
 
         vm.mockCall(address(_token), safeTransferFrom, abi.encode());
         vm.expectCall(address(_token), safeTransferFrom, 1);
 
-        bytes memory payload = _encodePayload(
-            _token,
-            tokenId,
-            baseLayerData,
-            execLayerData
-        );
+        bytes memory payload =
+            _encodePayload(_token, tokenId, baseLayerData, execLayerData);
 
         bytes memory addInput = _encodeAddInput(payload);
 
@@ -60,11 +55,7 @@ contract ERC721PortalTest is Test {
 
         vm.prank(_alice);
         _portal.depositERC721Token(
-            _token,
-            _appContract,
-            tokenId,
-            baseLayerData,
-            execLayerData
+            _token, _appContract, tokenId, baseLayerData, execLayerData
         );
     }
 
@@ -74,20 +65,14 @@ contract ERC721PortalTest is Test {
         bytes calldata execLayerData,
         bytes memory errorData
     ) public {
-        bytes memory safeTransferFrom = _encodeSafeTransferFrom(
-            tokenId,
-            baseLayerData
-        );
+        bytes memory safeTransferFrom =
+            _encodeSafeTransferFrom(tokenId, baseLayerData);
 
         vm.mockCall(address(_token), safeTransferFrom, abi.encode());
         vm.mockCallRevert(address(_token), safeTransferFrom, errorData);
 
-        bytes memory payload = _encodePayload(
-            _token,
-            tokenId,
-            baseLayerData,
-            execLayerData
-        );
+        bytes memory payload =
+            _encodePayload(_token, tokenId, baseLayerData, execLayerData);
 
         bytes memory addInput = _encodeAddInput(payload);
 
@@ -97,11 +82,7 @@ contract ERC721PortalTest is Test {
 
         vm.prank(_alice);
         _portal.depositERC721Token(
-            _token,
-            _appContract,
-            tokenId,
-            baseLayerData,
-            execLayerData
+            _token, _appContract, tokenId, baseLayerData, execLayerData
         );
     }
 
@@ -119,12 +100,8 @@ contract ERC721PortalTest is Test {
         // token owner before
         assertEq(token.ownerOf(tokenId), _alice);
 
-        bytes memory payload = _encodePayload(
-            token,
-            tokenId,
-            baseLayerData,
-            execLayerData
-        );
+        bytes memory payload =
+            _encodePayload(token, tokenId, baseLayerData, execLayerData);
 
         bytes memory addInput = _encodeAddInput(payload);
 
@@ -136,11 +113,7 @@ contract ERC721PortalTest is Test {
         emit IERC721.Transfer(_alice, _appContract, tokenId);
 
         _portal.depositERC721Token(
-            token,
-            _appContract,
-            tokenId,
-            baseLayerData,
-            execLayerData
+            token, _appContract, tokenId, baseLayerData, execLayerData
         );
 
         vm.stopPrank();
@@ -155,19 +128,16 @@ contract ERC721PortalTest is Test {
         bytes calldata baseLayerData,
         bytes calldata execLayerData
     ) internal view returns (bytes memory) {
-        return
-            InputEncoding.encodeERC721Deposit(
-                token,
-                _alice,
-                tokenId,
-                baseLayerData,
-                execLayerData
-            );
+        return InputEncoding.encodeERC721Deposit(
+            token, _alice, tokenId, baseLayerData, execLayerData
+        );
     }
 
-    function _encodeAddInput(
-        bytes memory payload
-    ) internal view returns (bytes memory) {
+    function _encodeAddInput(bytes memory payload)
+        internal
+        view
+        returns (bytes memory)
+    {
         return abi.encodeCall(IInputBox.addInput, (_appContract, payload));
     }
 
@@ -175,13 +145,12 @@ contract ERC721PortalTest is Test {
         uint256 tokenId,
         bytes calldata baseLayerData
     ) internal view returns (bytes memory) {
-        return
-            abi.encodeWithSignature(
-                "safeTransferFrom(address,address,uint256,bytes)",
-                _alice,
-                _appContract,
-                tokenId,
-                baseLayerData
-            );
+        return abi.encodeWithSignature(
+            "safeTransferFrom(address,address,uint256,bytes)",
+            _alice,
+            _appContract,
+            tokenId,
+            baseLayerData
+        );
     }
 }

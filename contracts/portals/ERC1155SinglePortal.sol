@@ -28,20 +28,11 @@ contract ERC1155SinglePortal is IERC1155SinglePortal, Portal {
         bytes calldata execLayerData
     ) external override {
         token.safeTransferFrom(
-            msg.sender,
-            appContract,
-            tokenId,
-            value,
-            baseLayerData
+            msg.sender, appContract, tokenId, value, baseLayerData
         );
 
         bytes memory payload = InputEncoding.encodeSingleERC1155Deposit(
-            token,
-            msg.sender,
-            tokenId,
-            value,
-            baseLayerData,
-            execLayerData
+            token, msg.sender, tokenId, value, baseLayerData, execLayerData
         );
 
         _inputBox.addInput(appContract, payload);

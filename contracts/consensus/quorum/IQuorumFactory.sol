@@ -23,10 +23,9 @@ interface IQuorumFactory {
     /// @dev On success, MUST emit a `QuorumCreated` event.
     /// @dev Duplicates in the `validators` array are ignored.
     /// @dev Reverts if the epoch length is zero.
-    function newQuorum(
-        address[] calldata validators,
-        uint256 epochLength
-    ) external returns (IQuorum);
+    function newQuorum(address[] calldata validators, uint256 epochLength)
+        external
+        returns (IQuorum);
 
     /// @notice Deploy a new quorum deterministically.
     /// @param validators the list of validators

@@ -39,17 +39,16 @@ contract Quorum is IQuorum, AbstractClaimSubmitter {
     /// @notice Votes indexed by application contract address,
     /// last processed block number and outputs Merkle root.
     /// @dev See the `numOfValidatorsInFavorOf` and `isValidatorInFavorOf` functions.
-    mapping(address => mapping(uint256 => mapping(bytes32 => Votes)))
-        private _votes;
+    mapping(address => mapping(uint256 => mapping(bytes32 => Votes))) private
+        _votes;
 
     /// @param validators The array of validator addresses
     /// @param epochLength The epoch length
     /// @dev Duplicates in the `validators` array are ignored.
     /// @dev Reverts if the epoch length is zero.
-    constructor(
-        address[] memory validators,
-        uint256 epochLength
-    ) AbstractClaimSubmitter(epochLength) {
+    constructor(address[] memory validators, uint256 epochLength)
+        AbstractClaimSubmitter(epochLength)
+    {
         uint256 n;
         for (uint256 i; i < validators.length; ++i) {
             address validator = validators[i];
@@ -71,25 +70,17 @@ contract Quorum is IQuorum, AbstractClaimSubmitter {
         require(id > 0, "Quorum: caller is not validator");
 
         emit ClaimSubmission(
-            msg.sender,
-            appContract,
-            lastProcessedBlockNumber,
-            outputsMerkleRoot
+            msg.sender, appContract, lastProcessedBlockNumber, outputsMerkleRoot
         );
 
-        Votes storage votes = _getVotes(
-            appContract,
-            lastProcessedBlockNumber,
-            outputsMerkleRoot
-        );
+        Votes storage votes =
+            _getVotes(appContract, lastProcessedBlockNumber, outputsMerkleRoot);
 
         if (!votes.inFavorById.get(id)) {
             votes.inFavorById.set(id);
             if (++votes.inFavorCount == 1 + _numOfValidators / 2) {
                 _acceptClaim(
-                    appContract,
-                    lastProcessedBlockNumber,
-                    outputsMerkleRoot
+                    appContract, lastProcessedBlockNumber, outputsMerkleRoot
                 );
             }
         }
@@ -99,15 +90,21 @@ contract Quorum is IQuorum, AbstractClaimSubmitter {
         return _numOfValidators;
     }
 
-    function validatorId(
-        address validator
-    ) external view override returns (uint256) {
+    function validatorId(address validator)
+        external
+        view
+        override
+        returns (uint256)
+    {
         return _validatorId[validator];
     }
 
-    function validatorById(
-        uint256 id
-    ) external view override returns (address) {
+    function validatorById(uint256 id)
+        external
+        view
+        override
+        returns (address)
+    {
         return _validatorById[id];
     }
 
@@ -116,9 +113,9 @@ contract Quorum is IQuorum, AbstractClaimSubmitter {
         uint256 lastProcessedBlockNumber,
         bytes32 outputsMerkleRoot
     ) external view override returns (uint256) {
-        return
-            _getVotes(appContract, lastProcessedBlockNumber, outputsMerkleRoot)
-                .inFavorCount;
+        return _getVotes(
+            appContract, lastProcessedBlockNumber, outputsMerkleRoot
+        ).inFavorCount;
     }
 
     function isValidatorInFavorOf(
@@ -127,10 +124,9 @@ contract Quorum is IQuorum, AbstractClaimSubmitter {
         bytes32 outputsMerkleRoot,
         uint256 id
     ) external view override returns (bool) {
-        return
-            _getVotes(appContract, lastProcessedBlockNumber, outputsMerkleRoot)
-                .inFavorById
-                .get(id);
+        return _getVotes(
+            appContract, lastProcessedBlockNumber, outputsMerkleRoot
+        ).inFavorById.get(id);
     }
 
     /// @notice Get a `Votes` structure from storage from a given claim.
@@ -147,11 +143,13 @@ contract Quorum is IQuorum, AbstractClaimSubmitter {
     }
 
     /// @inheritdoc AbstractClaimSubmitter
-    function supportsInterface(
-        bytes4 interfaceId
-    ) public view override(IERC165, AbstractClaimSubmitter) returns (bool) {
-        return
-            interfaceId == type(IQuorum).interfaceId ||
-            super.supportsInterface(interfaceId);
+    function supportsInterface(bytes4 interfaceId)
+        public
+        view
+        override(IERC165, AbstractClaimSubmitter)
+        returns (bool)
+    {
+        return interfaceId == type(IQuorum).interfaceId
+            || super.supportsInterface(interfaceId);
     }
 }

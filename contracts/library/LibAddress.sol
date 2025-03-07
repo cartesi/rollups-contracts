@@ -15,11 +15,10 @@ library LibAddress {
     /// contracts—encodes a function call
     /// @return Whether the caller had enough Ether to make the call,
     /// and the balance before the call
-    function safeCall(
-        address destination,
-        uint256 value,
-        bytes memory payload
-    ) internal returns (bool, uint256) {
+    function safeCall(address destination, uint256 value, bytes memory payload)
+        internal
+        returns (bool, uint256)
+    {
         address caller = address(this);
         uint256 balance = caller.balance;
 
@@ -43,10 +42,9 @@ library LibAddress {
     /// @param destination The address that will be called
     /// @param payload The payload, which—in the case of Solidity
     /// libraries—encodes a function call
-    function safeDelegateCall(
-        address destination,
-        bytes memory payload
-    ) internal {
+    function safeDelegateCall(address destination, bytes memory payload)
+        internal
+    {
         bool success;
         bytes memory returndata;
 

@@ -82,9 +82,10 @@ interface IApplication is IOwnable {
     /// @notice Check whether an output has been executed.
     /// @param outputIndex The index of output
     /// @return Whether the output has been executed before
-    function wasOutputExecuted(
-        uint256 outputIndex
-    ) external view returns (bool);
+    function wasOutputExecuted(uint256 outputIndex)
+        external
+        view
+        returns (bool);
 
     /// @notice Validate an output.
     /// @param output The output
