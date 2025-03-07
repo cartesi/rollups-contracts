@@ -17,20 +17,19 @@ contract EtherPortal is IEtherPortal, Portal {
     /// @param inputBox The input box used by the portal
     constructor(IInputBox inputBox) Portal(inputBox) {}
 
-    function depositEther(
-        address appContract,
-        bytes calldata execLayerData
-    ) external payable override {
-        (bool success, ) = appContract.call{value: msg.value}("");
+    function depositEther(address appContract, bytes calldata execLayerData)
+        external
+        payable
+        override
+    {
+        (bool success,) = appContract.call{value: msg.value}("");
 
         if (!success) {
             revert EtherTransferFailed();
         }
 
         bytes memory payload = InputEncoding.encodeEtherDeposit(
-            msg.sender,
-            msg.value,
-            execLayerData
+            msg.sender, msg.value, execLayerData
         );
 
         _inputBox.addInput(appContract, payload);

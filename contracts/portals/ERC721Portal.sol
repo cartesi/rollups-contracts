@@ -29,11 +29,7 @@ contract ERC721Portal is IERC721Portal, Portal {
         token.safeTransferFrom(msg.sender, appContract, tokenId, baseLayerData);
 
         bytes memory payload = InputEncoding.encodeERC721Deposit(
-            token,
-            msg.sender,
-            tokenId,
-            baseLayerData,
-            execLayerData
+            token, msg.sender, tokenId, baseLayerData, execLayerData
         );
 
         _inputBox.addInput(appContract, payload);

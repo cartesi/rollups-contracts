@@ -3,7 +3,8 @@
 
 pragma solidity ^0.8.22;
 
-import {IERC1155, ERC1155} from "@openzeppelin/contracts/token/ERC1155/ERC1155.sol";
+import {ERC1155} from "@openzeppelin/contracts/token/ERC1155/ERC1155.sol";
+import {IERC1155} from "@openzeppelin/contracts/token/ERC1155/IERC1155.sol";
 
 import {ERC1155BatchPortal} from "contracts/portals/ERC1155BatchPortal.sol";
 import {IERC1155BatchPortal} from "contracts/portals/IERC1155BatchPortal.sol";
@@ -35,21 +36,14 @@ contract ERC1155BatchPortalTest is Test {
         bytes calldata baseLayerData,
         bytes calldata execLayerData
     ) public {
-        bytes memory safeBatchTransferFrom = _encodeSafeBatchTransferFrom(
-            tokenIds,
-            values,
-            baseLayerData
-        );
+        bytes memory safeBatchTransferFrom =
+            _encodeSafeBatchTransferFrom(tokenIds, values, baseLayerData);
 
         vm.mockCall(address(_token), safeBatchTransferFrom, abi.encode());
         vm.expectCall(address(_token), safeBatchTransferFrom, 1);
 
-        bytes memory payload = encodePayload(
-            tokenIds,
-            values,
-            baseLayerData,
-            execLayerData
-        );
+        bytes memory payload =
+            encodePayload(tokenIds, values, baseLayerData, execLayerData);
 
         bytes memory addInput = _encodeAddInput(payload);
 
@@ -58,12 +52,7 @@ contract ERC1155BatchPortalTest is Test {
 
         vm.prank(_alice);
         _portal.depositBatchERC1155Token(
-            _token,
-            _appContract,
-            tokenIds,
-            values,
-            baseLayerData,
-            execLayerData
+            _token, _appContract, tokenIds, values, baseLayerData, execLayerData
         );
     }
 
@@ -74,21 +63,14 @@ contract ERC1155BatchPortalTest is Test {
         bytes calldata execLayerData,
         bytes memory errorData
     ) public {
-        bytes memory safeBatchTransferFrom = _encodeSafeBatchTransferFrom(
-            tokenIds,
-            values,
-            baseLayerData
-        );
+        bytes memory safeBatchTransferFrom =
+            _encodeSafeBatchTransferFrom(tokenIds, values, baseLayerData);
 
         vm.mockCall(address(_token), safeBatchTransferFrom, abi.encode());
         vm.mockCallRevert(address(_token), safeBatchTransferFrom, errorData);
 
-        bytes memory payload = encodePayload(
-            tokenIds,
-            values,
-            baseLayerData,
-            execLayerData
-        );
+        bytes memory payload =
+            encodePayload(tokenIds, values, baseLayerData, execLayerData);
 
         bytes memory addInput = _encodeAddInput(payload);
 
@@ -98,12 +80,7 @@ contract ERC1155BatchPortalTest is Test {
 
         vm.prank(_alice);
         _portal.depositBatchERC1155Token(
-            _token,
-            _appContract,
-            tokenIds,
-            values,
-            baseLayerData,
-            execLayerData
+            _token, _appContract, tokenIds, values, baseLayerData, execLayerData
         );
     }
 
@@ -129,12 +106,8 @@ contract ERC1155BatchPortalTest is Test {
         // Allow the portal to withdraw tokens from Alice
         _token.setApprovalForAll(address(_portal), true);
 
-        bytes memory payload = this.encodePayload(
-            tokenIds,
-            values,
-            baseLayerData,
-            execLayerData
-        );
+        bytes memory payload =
+            this.encodePayload(tokenIds, values, baseLayerData, execLayerData);
 
         bytes memory addInput = _encodeAddInput(payload);
 
@@ -153,20 +126,11 @@ contract ERC1155BatchPortalTest is Test {
 
         vm.expectEmit(true, true, true, true, address(_token));
         emit IERC1155.TransferBatch(
-            address(_portal),
-            _alice,
-            _appContract,
-            tokenIds,
-            values
+            address(_portal), _alice, _appContract, tokenIds, values
         );
 
         _portal.depositBatchERC1155Token(
-            _token,
-            _appContract,
-            tokenIds,
-            values,
-            baseLayerData,
-            execLayerData
+            _token, _appContract, tokenIds, values, baseLayerData, execLayerData
         );
         vm.stopPrank();
 
@@ -187,20 +151,16 @@ contract ERC1155BatchPortalTest is Test {
         bytes calldata baseLayerData,
         bytes calldata execLayerData
     ) public view returns (bytes memory) {
-        return
-            InputEncoding.encodeBatchERC1155Deposit(
-                _token,
-                _alice,
-                tokenIds,
-                values,
-                baseLayerData,
-                execLayerData
-            );
+        return InputEncoding.encodeBatchERC1155Deposit(
+            _token, _alice, tokenIds, values, baseLayerData, execLayerData
+        );
     }
 
-    function _encodeAddInput(
-        bytes memory payload
-    ) internal view returns (bytes memory) {
+    function _encodeAddInput(bytes memory payload)
+        internal
+        view
+        returns (bytes memory)
+    {
         return abi.encodeCall(IInputBox.addInput, (_appContract, payload));
     }
 
@@ -209,10 +169,9 @@ contract ERC1155BatchPortalTest is Test {
         uint256[] calldata values,
         bytes calldata baseLayerData
     ) internal view returns (bytes memory) {
-        return
-            abi.encodeCall(
-                IERC1155.safeBatchTransferFrom,
-                (_alice, _appContract, tokenIds, values, baseLayerData)
-            );
+        return abi.encodeCall(
+            IERC1155.safeBatchTransferFrom,
+            (_alice, _appContract, tokenIds, values, baseLayerData)
+        );
     }
 }

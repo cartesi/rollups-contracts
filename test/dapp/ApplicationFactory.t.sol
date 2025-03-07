@@ -4,7 +4,8 @@
 /// @title Application Factory Test
 pragma solidity ^0.8.22;
 
-import {ApplicationFactory, IApplicationFactory} from "contracts/dapp/ApplicationFactory.sol";
+import {ApplicationFactory} from "contracts/dapp/ApplicationFactory.sol";
+import {IApplicationFactory} from "contracts/dapp/IApplicationFactory.sol";
 import {IApplication} from "contracts/dapp/IApplication.sol";
 import {IConsensus} from "contracts/consensus/IConsensus.sol";
 
@@ -27,10 +28,7 @@ contract ApplicationFactoryTest is Test {
         vm.assume(appOwner != address(0));
 
         IApplication appContract = _factory.newApplication(
-            consensus,
-            appOwner,
-            templateHash,
-            dataAvailability
+            consensus, appOwner, templateHash, dataAvailability
         );
 
         assertEq(address(appContract.getConsensus()), address(consensus));
@@ -49,19 +47,11 @@ contract ApplicationFactoryTest is Test {
         vm.assume(appOwner != address(0));
 
         address precalculatedAddress = _factory.calculateApplicationAddress(
-            consensus,
-            appOwner,
-            templateHash,
-            dataAvailability,
-            salt
+            consensus, appOwner, templateHash, dataAvailability, salt
         );
 
         IApplication appContract = _factory.newApplication(
-            consensus,
-            appOwner,
-            templateHash,
-            dataAvailability,
-            salt
+            consensus, appOwner, templateHash, dataAvailability, salt
         );
 
         // Precalculated address must match actual address
@@ -73,11 +63,7 @@ contract ApplicationFactoryTest is Test {
         assertEq(appContract.getDataAvailability(), dataAvailability);
 
         precalculatedAddress = _factory.calculateApplicationAddress(
-            consensus,
-            appOwner,
-            templateHash,
-            dataAvailability,
-            salt
+            consensus, appOwner, templateHash, dataAvailability, salt
         );
 
         // Precalculated address must STILL match actual address
@@ -86,11 +72,7 @@ contract ApplicationFactoryTest is Test {
         // Cannot deploy an application with the same salt twice
         vm.expectRevert(bytes(""));
         _factory.newApplication(
-            consensus,
-            appOwner,
-            templateHash,
-            dataAvailability,
-            salt
+            consensus, appOwner, templateHash, dataAvailability, salt
         );
     }
 
@@ -105,18 +87,11 @@ contract ApplicationFactoryTest is Test {
         vm.recordLogs();
 
         IApplication appContract = _factory.newApplication(
-            consensus,
-            appOwner,
-            templateHash,
-            dataAvailability
+            consensus, appOwner, templateHash, dataAvailability
         );
 
         _testApplicationCreatedEventAux(
-            consensus,
-            appOwner,
-            templateHash,
-            dataAvailability,
-            appContract
+            consensus, appOwner, templateHash, dataAvailability, appContract
         );
     }
 
@@ -132,19 +107,11 @@ contract ApplicationFactoryTest is Test {
         vm.recordLogs();
 
         IApplication appContract = _factory.newApplication(
-            consensus,
-            appOwner,
-            templateHash,
-            dataAvailability,
-            salt
+            consensus, appOwner, templateHash, dataAvailability, salt
         );
 
         _testApplicationCreatedEventAux(
-            consensus,
-            appOwner,
-            templateHash,
-            dataAvailability,
-            appContract
+            consensus, appOwner, templateHash, dataAvailability, appContract
         );
     }
 
@@ -163,9 +130,9 @@ contract ApplicationFactoryTest is Test {
             Vm.Log memory entry = entries[i];
 
             if (
-                entry.emitter == address(_factory) &&
-                entry.topics[0] ==
-                IApplicationFactory.ApplicationCreated.selector
+                entry.emitter == address(_factory)
+                    && entry.topics[0]
+                        == IApplicationFactory.ApplicationCreated.selector
             ) {
                 ++numOfApplicationsCreated;
 
@@ -180,9 +147,8 @@ contract ApplicationFactoryTest is Test {
                     bytes memory dataAvailability_,
                     IApplication app_
                 ) = abi.decode(
-                        entry.data,
-                        (address, bytes32, bytes, IApplication)
-                    );
+                    entry.data, (address, bytes32, bytes, IApplication)
+                );
 
                 assertEq(appOwner, appOwner_);
                 assertEq(templateHash, templateHash_);

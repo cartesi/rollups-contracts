@@ -19,10 +19,11 @@ contract InputBox is IInputBox {
     }
 
     /// @inheritdoc IInputBox
-    function addInput(
-        address appContract,
-        bytes calldata payload
-    ) external override returns (bytes32) {
+    function addInput(address appContract, bytes calldata payload)
+        external
+        override
+        returns (bytes32)
+    {
         bytes32[] storage inputBox = _inputBoxes[appContract];
 
         uint256 index = inputBox.length;
@@ -43,9 +44,7 @@ contract InputBox is IInputBox {
 
         if (input.length > CanonicalMachine.INPUT_MAX_SIZE) {
             revert InputTooLarge(
-                appContract,
-                input.length,
-                CanonicalMachine.INPUT_MAX_SIZE
+                appContract, input.length, CanonicalMachine.INPUT_MAX_SIZE
             );
         }
 
@@ -59,17 +58,22 @@ contract InputBox is IInputBox {
     }
 
     /// @inheritdoc IInputBox
-    function getNumberOfInputs(
-        address appContract
-    ) external view override returns (uint256) {
+    function getNumberOfInputs(address appContract)
+        external
+        view
+        override
+        returns (uint256)
+    {
         return _inputBoxes[appContract].length;
     }
 
     /// @inheritdoc IInputBox
-    function getInputHash(
-        address appContract,
-        uint256 index
-    ) external view override returns (bytes32) {
+    function getInputHash(address appContract, uint256 index)
+        external
+        view
+        override
+        returns (bytes32)
+    {
         return _inputBoxes[appContract][index];
     }
 

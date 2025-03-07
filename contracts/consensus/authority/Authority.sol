@@ -18,10 +18,10 @@ contract Authority is IAuthority, AbstractClaimSubmitter, Ownable {
     /// @param initialOwner The initial contract owner
     /// @param epochLength The epoch length
     /// @dev Reverts if the epoch length is zero.
-    constructor(
-        address initialOwner,
-        uint256 epochLength
-    ) AbstractClaimSubmitter(epochLength) Ownable(initialOwner) {}
+    constructor(address initialOwner, uint256 epochLength)
+        AbstractClaimSubmitter(epochLength)
+        Ownable(initialOwner)
+    {}
 
     /// @inheritdoc IClaimSubmitter
     function submitClaim(
@@ -30,16 +30,18 @@ contract Authority is IAuthority, AbstractClaimSubmitter, Ownable {
         bytes32 outputsMerkleRoot
     ) external override onlyOwner {
         emit ClaimSubmission(
-            msg.sender,
-            appContract,
-            lastProcessedBlockNumber,
-            outputsMerkleRoot
+            msg.sender, appContract, lastProcessedBlockNumber, outputsMerkleRoot
         );
         _acceptClaim(appContract, lastProcessedBlockNumber, outputsMerkleRoot);
     }
 
     /// @inheritdoc Ownable
-    function owner() public view override(IOwnable, Ownable) returns (address) {
+    function owner()
+        public
+        view
+        override(IOwnable, Ownable)
+        returns (address)
+    {
         return super.owner();
     }
 
@@ -49,18 +51,21 @@ contract Authority is IAuthority, AbstractClaimSubmitter, Ownable {
     }
 
     /// @inheritdoc Ownable
-    function transferOwnership(
-        address newOwner
-    ) public override(IOwnable, Ownable) {
+    function transferOwnership(address newOwner)
+        public
+        override(IOwnable, Ownable)
+    {
         super.transferOwnership(newOwner);
     }
 
     /// @inheritdoc AbstractClaimSubmitter
-    function supportsInterface(
-        bytes4 interfaceId
-    ) public view override(IERC165, AbstractClaimSubmitter) returns (bool) {
-        return
-            interfaceId == type(IAuthority).interfaceId ||
-            super.supportsInterface(interfaceId);
+    function supportsInterface(bytes4 interfaceId)
+        public
+        view
+        override(IERC165, AbstractClaimSubmitter)
+        returns (bool)
+    {
+        return interfaceId == type(IAuthority).interfaceId
+            || super.supportsInterface(interfaceId);
     }
 }
