@@ -7,6 +7,9 @@ optimizer = true
 [fmt]
 line_length = 90
 
+[doc]
+out = "forge-docs"
+
 [invariant]
 runs = 32
 depth = 100
