@@ -1,5 +1,56 @@
 # @cartesi/rollups
 
+## 1.4.5
+
+### Patch Changes
+
+-   da6feb3: Fix Rust bindings build on CI
+
+## 1.4.4
+
+### Patch Changes
+
+-   08f17de: Add Cannonfile
+-   08f17de: Turn on optimizer for forge v1
+-   08f17de: Make forge and hardhat yield the same bytecode
+
+## 1.4.3
+
+### Patch Changes
+
+-   4996b389: Update Etherscan verification configuration for OP Sepolia
+
+## 1.4.2
+
+### Patch Changes
+
+-   20733325: Fix paths in CI that publishes Rust bindings
+
+## 1.4.1
+
+### Patch Changes
+
+-   f0393282: Push bindings to crates.io
+
+## 1.4.0
+
+### Minor Changes
+
+-   fe973472: Remove arbitrum goerli and optimism goerli configuration
+-   c2c239e9: Add self-hosted application factory contract
+
+## 1.3.1
+
+### Patch Changes
+
+-   78f25b1: support base sepolia
+
+## 1.3.0
+
+### Minor Changes
+
+-   705bfa5: Support deployment to `base` network.
+
 ## 1.2.0
 
 ### Minor Changes
