@@ -66,7 +66,7 @@ Want to stay up to date? Make sure to join our [announcements channel on Telegra
 
 Thank you for your interest in Cartesi! Head over to our [Contributing Guidelines](docs/contributing.md) for instructions on how to sign our Contributors Agreement and get started with Cartesi!
 
-Please note we have a [Code of Conduct](CODE_OF_CONDUCT.md), please follow it in all your interactions with the project.
+Please note we have a [Code of Conduct](docs/code-of-conduct.md), please follow it in all your interactions with the project.
 
 ## 📜 License
 

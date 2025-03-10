@@ -15,7 +15,7 @@ We highly appreciate even the smallest of fixes or additions to our project.
 ## <a name="coc" />Code of Conduct
 
 Help us keep Cartesi an open space for development.
-Please read and follow our [Code of Conduct](./CODE_OF_CONDUCT.md).
+Please read and follow our [Code of Conduct](./code-of-conduct.md).
 
 ## <a name="basic" />Basic Contributing Guidelines
 
