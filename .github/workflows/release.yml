@@ -64,7 +64,7 @@ jobs:
           forge bind \
             --crate-name cartesi-rollups-contracts \
             --crate-version "$VERSION" \
-            --alloy
+            --alloy-version v0.12.4
         env:
           VERSION: ${{ needs.version_or_publish.outputs.version }}
 
@@ -73,8 +73,6 @@ jobs:
         run: |
           tomlq -ti '.package.license = "Apache-2.0"' Cargo.toml
           tomlq -ti '.package.description = "Rust bindings for Cartesi Rollups smart contracts"' Cargo.toml
-          tomlq -ti 'del(.dependencies.alloy.git)' Cargo.toml
-          tomlq -ti '.dependencies.alloy.version = "0.8.0"' Cargo.toml
 
       - name: Publish Rust package to crates.io
         working-directory: out/bindings
