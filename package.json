@@ -2,9 +2,12 @@
     "name": "@cartesi/rollups",
     "version": "1.2.0",
     "scripts": {
+        "build:contracts": "forge build contracts",
+        "build:devnet": "cannon build --write-deployments deployments --anvil.dump-state state.json",
+        "clean": "forge clean",
         "fmt:check": "forge fmt --check",
         "fmt:write": "forge fmt",
-        "prepack": "forge clean && forge build contracts"
+        "prepack": "pnpm clean && pnpm build:contracts"
     },
     "devDependencies": {
         "@changesets/cli": "^2.27.1",

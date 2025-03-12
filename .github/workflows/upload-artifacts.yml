@@ -17,12 +17,6 @@ jobs:
       - uses: ./.github/actions/setup
         id: setup
 
-      - name: Build contracts
-        run: pnpm build
-
-      - name: Deploy contracts to local Anvil node
-        run: pnpm exec hardhat --network localhost deploy-anvil
-
       - name: Create upload folder
         run: mkdir -p upload
 
@@ -30,13 +24,22 @@ jobs:
         id: extract_version
         run: echo "version=${GITHUB_REF#refs/tags/v}" >> $GITHUB_OUTPUT
 
+      - name: Clean artifacts
+        run: pnpm clean
+
+      - name: Build contracts
+        run: pnpm build:contracts
+
       - name: Compress contract artifacts
-        run: tar -czf "$FILEPATH" -C export/artifacts/contracts .
+        run: tar -czf "$FILEPATH" -C out .
         env:
           FILEPATH: upload/rollups-contracts-${{ steps.extract_version.outputs.version }}-artifacts.tar.gz
 
-      - name: Compress Anvil deployment artifacts
-        run: tar -czf "$FILEPATH" state.json -C export/abi localhost.json
+      - name: Build devnet
+        run: pnpm build:devnet
+
+      - name: Compress devnet artifacts
+        run: tar -czf "$FILEPATH" deployments state.json
         env:
           FILEPATH: upload/rollups-contracts-${{ steps.extract_version.outputs.version }}-anvil-${{ steps.setup.outputs.foundry-version }}.tar.gz
 
