@@ -3,10 +3,10 @@
 
 pragma solidity ^0.8.22;
 
-import {EtherPortal} from "contracts/portals/EtherPortal.sol";
-import {IEtherPortal} from "contracts/portals/IEtherPortal.sol";
-import {IInputBox} from "contracts/inputs/IInputBox.sol";
-import {InputEncoding} from "contracts/common/InputEncoding.sol";
+import {EtherPortal} from "src/portals/EtherPortal.sol";
+import {IEtherPortal} from "src/portals/IEtherPortal.sol";
+import {IInputBox} from "src/inputs/IInputBox.sol";
+import {InputEncoding} from "src/common/InputEncoding.sol";
 
 import {Test} from "forge-std/Test.sol";
 

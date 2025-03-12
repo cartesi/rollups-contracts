@@ -5,10 +5,10 @@ pragma solidity ^0.8.22;
 
 import {IERC20, ERC20} from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 
-import {ERC20Portal} from "contracts/portals/ERC20Portal.sol";
-import {IERC20Portal} from "contracts/portals/IERC20Portal.sol";
-import {IInputBox} from "contracts/inputs/IInputBox.sol";
-import {InputEncoding} from "contracts/common/InputEncoding.sol";
+import {ERC20Portal} from "src/portals/ERC20Portal.sol";
+import {IERC20Portal} from "src/portals/IERC20Portal.sol";
+import {IInputBox} from "src/inputs/IInputBox.sol";
+import {InputEncoding} from "src/common/InputEncoding.sol";
 
 import {Test} from "forge-std/Test.sol";
 

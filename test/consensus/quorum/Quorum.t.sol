@@ -5,9 +5,9 @@ pragma solidity ^0.8.22;
 
 import {IERC165} from "@openzeppelin/contracts/utils/introspection/IERC165.sol";
 
-import {Quorum} from "contracts/consensus/quorum/Quorum.sol";
-import {IQuorum} from "contracts/consensus/quorum/IQuorum.sol";
-import {IClaimSubmitter} from "contracts/consensus/IClaimSubmitter.sol";
+import {Quorum} from "src/consensus/quorum/Quorum.sol";
+import {IQuorum} from "src/consensus/quorum/IQuorum.sol";
+import {IClaimSubmitter} from "src/consensus/IClaimSubmitter.sol";
 
 import {ERC165Test} from "../../util/ERC165Test.sol";
 import {LibAddressArray} from "../../util/LibAddressArray.sol";

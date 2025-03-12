@@ -3,19 +3,19 @@
 
 pragma solidity ^0.8.22;
 
-import {Application} from "contracts/dapp/Application.sol";
-import {Authority} from "contracts/consensus/authority/Authority.sol";
-import {CanonicalMachine} from "contracts/common/CanonicalMachine.sol";
-import {IApplication} from "contracts/dapp/IApplication.sol";
-import {IConsensus} from "contracts/consensus/IConsensus.sol";
-import {OutputValidityProof} from "contracts/common/OutputValidityProof.sol";
-import {Outputs} from "contracts/common/Outputs.sol";
-import {SafeERC20Transfer} from "contracts/delegatecall/SafeERC20Transfer.sol";
-import {IOwnable} from "contracts/access/IOwnable.sol";
-import {LibAddress} from "contracts/library/LibAddress.sol";
-import {InputBox} from "contracts/inputs/InputBox.sol";
-import {IInputBox} from "contracts/inputs/IInputBox.sol";
-import {DataAvailability} from "contracts/common/DataAvailability.sol";
+import {Application} from "src/dapp/Application.sol";
+import {Authority} from "src/consensus/authority/Authority.sol";
+import {CanonicalMachine} from "src/common/CanonicalMachine.sol";
+import {IApplication} from "src/dapp/IApplication.sol";
+import {IConsensus} from "src/consensus/IConsensus.sol";
+import {OutputValidityProof} from "src/common/OutputValidityProof.sol";
+import {Outputs} from "src/common/Outputs.sol";
+import {SafeERC20Transfer} from "src/delegatecall/SafeERC20Transfer.sol";
+import {IOwnable} from "src/access/IOwnable.sol";
+import {LibAddress} from "src/library/LibAddress.sol";
+import {InputBox} from "src/inputs/InputBox.sol";
+import {IInputBox} from "src/inputs/IInputBox.sol";
+import {DataAvailability} from "src/common/DataAvailability.sol";
 
 import {IERC1155} from "@openzeppelin/contracts/token/ERC1155/IERC1155.sol";
 import {

@@ -5,7 +5,7 @@ pragma solidity ^0.8.22;
 
 import {Test} from "forge-std/Test.sol";
 
-import {LibMerkle32} from "contracts/library/LibMerkle32.sol";
+import {LibMerkle32} from "src/library/LibMerkle32.sol";
 
 import "forge-std/console.sol";
 
