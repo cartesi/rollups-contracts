@@ -1,7 +1,9 @@
 /cache
 /coverage
 /dependencies
+/deployments
 /docs
 /node_modules
 /out
 lcov.info
+state.json
