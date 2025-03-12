@@ -1,75 +1,120 @@
-# Smart Contracts for Cartesi Rollups
+# Cartesi Rollups Contracts
 
-This repository contains the on-chain part of Cartesi Rollups.
+The Cartesi Rollups Contracts are a set of Solidity smart contracts
+that provide Data Availability, Consensus and Settlement to Cartesi Rollups applications.
+They are completely permissionless, and can be deployed by anyone to any EVM-compatible chain.
+Nevertheless, the Cartesi Foundation, as a form of public good, kindly deploys them
+to Ethereum, Arbitrum, Optimism, Base, and their respective testnets.
 
-If you are interested in taking a look at the off-chain part, please, head over to [`cartesi/rollups-node`](https://github.com/cartesi/rollups-node).
+Data Availability of user transactions and Consensus over their order is provided by the `InputBox` contract,
+while Settlement is provided by the `Application` contract in conjunction with a settlement module.
+Currently, we have implemented an authority-based module (`Authority`) and a quorum-based module (`Quorum`).
+In the near future, we plan to support our very own fraud proof system, [Dave].
 
-## 🧩 Dependencies
+The Cartesi Rollups Contracts are an integral part of the Cartesi Rollups SDK,
+and are used by the [Cartesi Rollups Node], the [Cartesi Rollups Explorer],
+and, of course, by Cartesi Rollups applications.
+Through simple Solidity interfaces, one can easily send and list user transactions,
+deposit assets, submit claims, execute asset withdrawal orders, and more.
 
-- [pnpm](https://pnpm.io/installation)
-- [Forge](https://book.getfoundry.sh/getting-started/installation)
+## Features
 
-## 💡 Basic setup
+- Supports deposits and withdrawals of several types of assets:
+  - [ETH]: the native token of the chain
+  - [ERC-20]: regular, fungible tokens
+  - [ERC-721]: non-fungible tokens (NFTs)
+  - [ERC-1155]: Multi-tokens, both single and batch transfers
+- Supports the validation of outputs and output hashes
+- Supports the execution of [`CALL`] and [`DELEGATECALL`] vouchers
+- Supports Quorum and Authority-based settlement models
+- Includes factory contracts for easy deployment
 
-This repository uses [pnpm](https://pnpm.io/installation) to manage JavaScript dependencies.
-In order to install them, please, run the following command.
+## Getting started
+
+First, please ensure the following dependencies are installed:
+
+- [corepack]
+- [foundry] 1.0.0
+
+Then, you may clone the repository...
+
+```sh
+git clone https://github.com/cartesi/rollups-contracts.git
+```
+
+... and install the Node.js and Solidity packages.
 
 ```sh
 pnpm install
-```
-
-This repository uses [Soldeer](https://soldeer.xyz/) to manage Solidity dependencies.
-In order to install them, please, run the following command.
-
-```sh
 forge soldeer install
 ```
 
-## 🚀 Deployment
-
-This repository uses [Cannon](https://usecannon.com/) to manage smart contract deployment.
-In order to build the Cannon package, please, run the following command.
+Having done that, you can run a local devnet with Cannon.
+It will be listening to `127.0.0.1:8545`.
 
 ```sh
-pnpm cannon build
+pnpm start
 ```
 
-## 🧪 Tests
-
-If you want to run the tests, please run the following command.
+You can interact with the contracts by
+pressing `i` on the terminal running Cannon,
+or by running `cast` commands on another terminal.
+The following command, for example,
+calls the `getDeploymentBlockNumber` function
+of the `InputBox` contract
+deployed to the local devnet.
 
 ```sh
-forge test -vvv
+cast call $(jq -r .address deployments/InputBox.json) 'getDeploymentBlockNumber()(uint256)'
 ```
 
-## 📚 Documentation
+## Documentation
 
-🚀 Smart contract documentation is kept up-to-date and deployed [**here**](https://cartesi.github.io/rollups-contracts).
+A more in-depth documentation on the contracts can be found [here](./docs/contracts.md).
 
-ℹ️ You may also want to check the [official Cartesi Rollups documentation website](https://docs.cartesi.io/cartesi-rollups/overview/).
+## Use cases
 
-🔎 For an in-depth view of the on-chain architecture, we invite you to take a look at the [`CONTRACTS.md`](https://github.com/cartesi/rollups-contracts/blob/main/CONTRACTS.md) file.
+The Cartesi Rollups Contracts are used by the Cartesi Rollups SDK.
+They offer an extensible framework for input relays and output execution.
+Here are some examples of use cases:
 
-## 🎨 Experimenting
+- Trustless relaying of on-chain information
+- Trustless locking of on-chain assets
+- Withdrawal of on-chain assets
+- Minting of on-chain assets
+- Scheduling of on-chain actions
+- Liquidity for on-chain assets
 
-To get a taste of how to use Cartesi to develop your DApp, check the following resources:
-See Cartesi Rollups in action with the Simple Echo Examples in [C++](https://github.com/cartesi/rollups-examples/tree/main/echo-cpp), [JavaScript](https://github.com/cartesi/rollups-examples/tree/main/echo-js), [Lua](https://github.com/cartesi/rollups-examples/tree/main/echo-lua), [Rust](https://github.com/cartesi/rollups-examples/tree/main/echo-rust) and [Python](https://github.com/cartesi/rollups-examples/tree/main/echo-python).
-To have a glimpse of how to develop your DApp locally using your favorite IDE and tools check our Host Environment in the [Rollups Examples](https://github.com/cartesi/rollups-examples) repository.
+## Related projects
 
-## 💬 Talk with us
+The contracts are used by several other projects in the Cartesi ecossystem:
 
-If you're interested in developing with Cartesi, working with the team, or hanging out in our community, don't forget to [join us on Discord and follow along](https://discord.com/invite/cartesi).
+- [Cartesi CLI]
+- [Cartesi Rollups Node]
+- [Cartesi Rollups Explorer]
 
-Want to stay up to date? Make sure to join our [announcements channel on Telegram](https://t.me/CartesiAnnouncements) or [follow our X (formerly Twitter)](https://x.com/cartesiproject).
+## Authors
 
-## 🤝 Contributing
+- Guilherme Dantas ([guidanoli])
+- Pedro Argento ([pedroargento])
+- Zehui Zheng ([ZzzzHui])
 
-Thank you for your interest in Cartesi! Head over to our [Contributing Guidelines](docs/contributing.md) for instructions on how to sign our Contributors Agreement and get started with Cartesi!
+## License
 
-Please note we have a [Code of Conduct](docs/code-of-conduct.md), please follow it in all your interactions with the project.
+The project is licensed under Apache-2.0.
 
-## 📜 License
-
-Note: This component currently has dependencies that are licensed under the GNU GPL, version 3, and so you should treat this component as a whole as being under the GPL version 3. But all Cartesi-written code in this component is licensed under the Apache License, version 2, or a compatible permissive license, and can be used independently under the Apache v2 license. After this component is rewritten, the entire component will be released under the Apache v2 license.
-The arbitration d-lib repository and all contributions are licensed under
-[GPL 3](https://www.gnu.org/licenses/gpl-3.0.en.html). Please review our [COPYING](COPYING) file.
+[Cartesi CLI]: https://github.com/cartesi/cli
+[Cartesi Rollups Explorer]: https://github.com/cartesi/rollups-explorer
+[Cartesi Rollups Node]: https://github.com/cartesi/rollups-node
+[Dave]: https://github.com/cartesi/dave
+[ERC-1155]: https://eips.ethereum.org/EIPS/eip-1155
+[ERC-20]: https://eips.ethereum.org/EIPS/eip-20
+[ERC-721]: https://eips.ethereum.org/EIPS/eip-721
+[ETH]: https://ethereum.org/en/eth/
+[ZzzzHui]: https://github.com/ZzzzHui
+[`CALL`]: https://www.evm.codes/?fork=cancun#f1
+[`DELEGATECALL`]: https://www.evm.codes/?fork=cancun#f4
+[corepack]: https://nodejs.org/api/corepack.html
+[foundry]: https://book.getfoundry.sh/getting-started/installation
+[guidanoli]: https://github.com/guidanoli
+[pedroargento]: https://github.com/pedroargento
