@@ -6,18 +6,16 @@ pragma solidity ^0.8.22;
 
 import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
 
-import {IAuthorityFactory} from
-    "contracts/consensus/authority/IAuthorityFactory.sol";
-import {AuthorityFactory} from
-    "contracts/consensus/authority/AuthorityFactory.sol";
-import {IAuthority} from "contracts/consensus/authority/IAuthority.sol";
-import {IApplicationFactory} from "contracts/dapp/IApplicationFactory.sol";
-import {ApplicationFactory} from "contracts/dapp/ApplicationFactory.sol";
-import {IApplication} from "contracts/dapp/IApplication.sol";
+import {IAuthorityFactory} from "src/consensus/authority/IAuthorityFactory.sol";
+import {AuthorityFactory} from "src/consensus/authority/AuthorityFactory.sol";
+import {IAuthority} from "src/consensus/authority/IAuthority.sol";
+import {IApplicationFactory} from "src/dapp/IApplicationFactory.sol";
+import {ApplicationFactory} from "src/dapp/ApplicationFactory.sol";
+import {IApplication} from "src/dapp/IApplication.sol";
 import {ISelfHostedApplicationFactory} from
-    "contracts/dapp/ISelfHostedApplicationFactory.sol";
+    "src/dapp/ISelfHostedApplicationFactory.sol";
 import {SelfHostedApplicationFactory} from
-    "contracts/dapp/SelfHostedApplicationFactory.sol";
+    "src/dapp/SelfHostedApplicationFactory.sol";
 
 import {Test} from "forge-std/Test.sol";
 

@@ -5,9 +5,9 @@ pragma solidity ^0.8.22;
 
 import {SafeCast} from "@openzeppelin/contracts/utils/math/SafeCast.sol";
 
-import {CanonicalMachine} from "contracts/common/CanonicalMachine.sol";
-import {OutputValidityProof} from "contracts/common/OutputValidityProof.sol";
-import {LibMerkle32} from "contracts/library/LibMerkle32.sol";
+import {CanonicalMachine} from "src/common/CanonicalMachine.sol";
+import {OutputValidityProof} from "src/common/OutputValidityProof.sol";
+import {LibMerkle32} from "src/library/LibMerkle32.sol";
 
 library LibEmulator {
     using SafeCast for uint256;

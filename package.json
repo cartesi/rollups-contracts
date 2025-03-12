@@ -2,7 +2,7 @@
     "name": "@cartesi/rollups",
     "version": "1.2.0",
     "scripts": {
-        "build:contracts": "forge build contracts",
+        "build:contracts": "forge build src",
         "build:devnet": "cannon build --write-deployments deployments --anvil.dump-state state.json",
         "clean": "forge clean",
         "fmt:check": "forge fmt --check",

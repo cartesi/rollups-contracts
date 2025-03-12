@@ -8,11 +8,9 @@ import {Vm} from "forge-std/Vm.sol";
 import {Test} from "forge-std/Test.sol";
 import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
 
-import {AuthorityFactory} from
-    "contracts/consensus/authority/AuthorityFactory.sol";
-import {IAuthorityFactory} from
-    "contracts/consensus/authority/IAuthorityFactory.sol";
-import {IAuthority} from "contracts/consensus/authority/IAuthority.sol";
+import {AuthorityFactory} from "src/consensus/authority/AuthorityFactory.sol";
+import {IAuthorityFactory} from "src/consensus/authority/IAuthorityFactory.sol";
+import {IAuthority} from "src/consensus/authority/IAuthority.sol";
 
 contract AuthorityFactoryTest is Test {
     AuthorityFactory _factory;

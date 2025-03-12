@@ -10,10 +10,10 @@ import {Test} from "forge-std/Test.sol";
 import {IERC165} from "@openzeppelin/contracts/utils/introspection/IERC165.sol";
 import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
 
-import {Authority} from "contracts/consensus/authority/Authority.sol";
-import {IAuthority} from "contracts/consensus/authority/IAuthority.sol";
-import {IClaimSubmitter} from "contracts/consensus/IClaimSubmitter.sol";
-import {IOwnable} from "contracts/access/IOwnable.sol";
+import {Authority} from "src/consensus/authority/Authority.sol";
+import {IAuthority} from "src/consensus/authority/IAuthority.sol";
+import {IClaimSubmitter} from "src/consensus/IClaimSubmitter.sol";
+import {IOwnable} from "src/access/IOwnable.sol";
 
 import {ERC165Test} from "../../util/ERC165Test.sol";
 import {LibTopic} from "../../util/LibTopic.sol";

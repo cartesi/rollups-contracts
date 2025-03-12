@@ -4,7 +4,7 @@
 /// @title EVM Advance Encoder
 pragma solidity ^0.8.22;
 
-import {Inputs} from "contracts/common/Inputs.sol";
+import {Inputs} from "src/common/Inputs.sol";
 
 library EvmAdvanceEncoder {
     function encode(

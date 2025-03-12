@@ -4,10 +4,10 @@
 /// @title Application Factory Test
 pragma solidity ^0.8.22;
 
-import {ApplicationFactory} from "contracts/dapp/ApplicationFactory.sol";
-import {IApplicationFactory} from "contracts/dapp/IApplicationFactory.sol";
-import {IApplication} from "contracts/dapp/IApplication.sol";
-import {IConsensus} from "contracts/consensus/IConsensus.sol";
+import {ApplicationFactory} from "src/dapp/ApplicationFactory.sol";
+import {IApplicationFactory} from "src/dapp/IApplicationFactory.sol";
+import {IApplication} from "src/dapp/IApplication.sol";
+import {IConsensus} from "src/consensus/IConsensus.sol";
 
 import {Test} from "forge-std/Test.sol";
 import {Vm} from "forge-std/Vm.sol";
