@@ -4,7 +4,7 @@
 pragma solidity ^0.8.8;
 
 import {IPortal} from "./IPortal.sol";
-import {IERC721} from "@openzeppelin/contracts/token/ERC721/IERC721.sol";
+import {IERC721} from "@openzeppelin-contracts-5.2.0/token/ERC721/IERC721.sol";
 
 /// @title ERC-721 Portal interface
 interface IERC721Portal is IPortal {

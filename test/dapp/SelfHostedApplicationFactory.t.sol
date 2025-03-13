@@ -4,7 +4,7 @@
 /// @title Self-hosted Application Factory Test
 pragma solidity ^0.8.22;
 
-import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
+import {Ownable} from "@openzeppelin-contracts-5.2.0/access/Ownable.sol";
 
 import {IAuthorityFactory} from "src/consensus/authority/IAuthorityFactory.sol";
 import {AuthorityFactory} from "src/consensus/authority/AuthorityFactory.sol";
@@ -15,7 +15,7 @@ import {IApplication} from "src/dapp/IApplication.sol";
 import {ISelfHostedApplicationFactory} from "src/dapp/ISelfHostedApplicationFactory.sol";
 import {SelfHostedApplicationFactory} from "src/dapp/SelfHostedApplicationFactory.sol";
 
-import {Test} from "forge-std/Test.sol";
+import {Test} from "forge-std-1.9.6/Test.sol";
 
 contract SelfHostedApplicationFactoryTest is Test {
     IAuthorityFactory authorityFactory;

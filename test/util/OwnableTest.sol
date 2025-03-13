@@ -5,9 +5,9 @@ pragma solidity ^0.8.22;
 
 import {IOwnable} from "src/access/IOwnable.sol";
 
-import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
+import {Ownable} from "@openzeppelin-contracts-5.2.0/access/Ownable.sol";
 
-import {Test} from "forge-std/Test.sol";
+import {Test} from "forge-std-1.9.6/Test.sol";
 
 abstract contract OwnableTest is Test {
     /// @notice Get ownable contract to be tested

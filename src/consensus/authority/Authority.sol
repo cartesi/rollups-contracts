@@ -3,8 +3,8 @@
 
 pragma solidity ^0.8.8;
 
-import {IERC165} from "@openzeppelin/contracts/utils/introspection/IERC165.sol";
-import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
+import {IERC165} from "@openzeppelin-contracts-5.2.0/utils/introspection/IERC165.sol";
+import {Ownable} from "@openzeppelin-contracts-5.2.0/access/Ownable.sol";
 
 import {IAuthority} from "./IAuthority.sol";
 import {IClaimSubmitter} from "../IClaimSubmitter.sol";

@@ -3,8 +3,8 @@
 
 pragma solidity ^0.8.8;
 
-import {BitMaps} from "@openzeppelin/contracts/utils/structs/BitMaps.sol";
-import {IERC165} from "@openzeppelin/contracts/utils/introspection/IERC165.sol";
+import {BitMaps} from "@openzeppelin-contracts-5.2.0/utils/structs/BitMaps.sol";
+import {IERC165} from "@openzeppelin-contracts-5.2.0/utils/introspection/IERC165.sol";
 
 import {IQuorum} from "./IQuorum.sol";
 import {AbstractClaimSubmitter} from "../AbstractClaimSubmitter.sol";

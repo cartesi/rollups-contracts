@@ -4,7 +4,7 @@
 /// @title A Simple ERC-20 Contract
 pragma solidity ^0.8.22;
 
-import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
+import {ERC20} from "@openzeppelin-contracts-5.2.0/token/ERC20/ERC20.sol";
 
 contract SimpleERC20 is ERC20 {
     constructor(address minter, uint256 initialSupply) ERC20("SimpleERC20", "SIM20") {

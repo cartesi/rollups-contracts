@@ -3,7 +3,7 @@
 
 pragma solidity ^0.8.22;
 
-import {Test} from "forge-std/Test.sol";
+import {Test} from "forge-std-1.9.6/Test.sol";
 import {InputBox} from "src/inputs/InputBox.sol";
 import {IInputBox} from "src/inputs/IInputBox.sol";
 import {CanonicalMachine} from "src/common/CanonicalMachine.sol";

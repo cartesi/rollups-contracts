@@ -9,8 +9,8 @@ import {IApplicationFactory} from "src/dapp/IApplicationFactory.sol";
 import {IApplication} from "src/dapp/IApplication.sol";
 import {IConsensus} from "src/consensus/IConsensus.sol";
 
-import {Test} from "forge-std/Test.sol";
-import {Vm} from "forge-std/Vm.sol";
+import {Test} from "forge-std-1.9.6/Test.sol";
+import {Vm} from "forge-std-1.9.6/Vm.sol";
 
 contract ApplicationFactoryTest is Test {
     ApplicationFactory _factory;

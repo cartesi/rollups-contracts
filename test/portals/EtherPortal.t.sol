@@ -8,7 +8,7 @@ import {IEtherPortal} from "src/portals/IEtherPortal.sol";
 import {IInputBox} from "src/inputs/IInputBox.sol";
 import {InputEncoding} from "src/common/InputEncoding.sol";
 
-import {Test} from "forge-std/Test.sol";
+import {Test} from "forge-std-1.9.6/Test.sol";
 
 contract EtherPortalTest is Test {
     address _alice;

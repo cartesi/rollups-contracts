@@ -3,7 +3,7 @@
 
 pragma solidity ^0.8.8;
 
-import {IERC165} from "@openzeppelin/contracts/utils/introspection/IERC165.sol";
+import {IERC165} from "@openzeppelin-contracts-5.2.0/utils/introspection/IERC165.sol";
 
 /// @notice Provides valid outputs Merkle roots for validation.
 /// @dev ERC-165 can be used to determine whether this contract also

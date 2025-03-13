@@ -4,7 +4,7 @@
 /// @title A Simple ERC-721 Contract
 pragma solidity ^0.8.22;
 
-import {ERC721} from "@openzeppelin/contracts/token/ERC721/ERC721.sol";
+import {ERC721} from "@openzeppelin-contracts-5.2.0/token/ERC721/ERC721.sol";
 
 contract SimpleERC721 is ERC721 {
     constructor(address minter, uint256 tokenId) ERC721("SimpleERC721", "SIM721") {
