@@ -4,7 +4,9 @@
     "scripts": {
         "build:contracts": "forge build src",
         "build:devnet": "cannon build --write-deployments deployments --anvil.dump-state state.json",
-        "clean": "forge clean",
+        "clean": "pnpm clean:forge && pnpm clean:cannon",
+        "clean:forge": "forge clean",
+        "clean:cannon": "rm -rf deployments state.json",
         "fmt:check": "forge fmt --check",
         "fmt:write": "forge fmt",
         "prepack": "pnpm clean && pnpm build:contracts"
