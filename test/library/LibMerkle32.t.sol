@@ -3,11 +3,11 @@
 
 pragma solidity ^0.8.22;
 
-import {Test} from "forge-std/Test.sol";
+import {Test} from "forge-std-1.9.6/Test.sol";
 
 import {LibMerkle32} from "src/library/LibMerkle32.sol";
 
-import "forge-std/console.sol";
+import {console} from "forge-std-1.9.6/console.sol";
 
 library ExternalLibMerkle32 {
     using LibMerkle32 for bytes32[];

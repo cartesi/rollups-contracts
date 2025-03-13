@@ -4,9 +4,9 @@
 /// @title Authority Factory Test
 pragma solidity ^0.8.22;
 
-import {Vm} from "forge-std/Vm.sol";
-import {Test} from "forge-std/Test.sol";
-import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
+import {Vm} from "forge-std-1.9.6/Vm.sol";
+import {Test} from "forge-std-1.9.6/Test.sol";
+import {Ownable} from "@openzeppelin-contracts-5.2.0/access/Ownable.sol";
 
 import {AuthorityFactory} from "src/consensus/authority/AuthorityFactory.sol";
 import {IAuthorityFactory} from "src/consensus/authority/IAuthorityFactory.sol";

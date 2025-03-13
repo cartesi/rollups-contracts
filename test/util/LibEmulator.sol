@@ -3,7 +3,7 @@
 
 pragma solidity ^0.8.22;
 
-import {SafeCast} from "@openzeppelin/contracts/utils/math/SafeCast.sol";
+import {SafeCast} from "@openzeppelin-contracts-5.2.0/utils/math/SafeCast.sol";
 
 import {CanonicalMachine} from "src/common/CanonicalMachine.sol";
 import {OutputValidityProof} from "src/common/OutputValidityProof.sol";

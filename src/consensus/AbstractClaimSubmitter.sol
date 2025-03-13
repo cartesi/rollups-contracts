@@ -3,8 +3,8 @@
 
 pragma solidity ^0.8.8;
 
-import {ERC165} from "@openzeppelin/contracts/utils/introspection/ERC165.sol";
-import {IERC165} from "@openzeppelin/contracts/utils/introspection/IERC165.sol";
+import {ERC165} from "@openzeppelin-contracts-5.2.0/utils/introspection/ERC165.sol";
+import {IERC165} from "@openzeppelin-contracts-5.2.0/utils/introspection/IERC165.sol";
 
 import {IConsensus} from "./IConsensus.sol";
 import {IClaimSubmitter} from "./IClaimSubmitter.sol";
