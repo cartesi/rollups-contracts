@@ -16,16 +16,15 @@ library LibOutputValidityProof {
         pure
         returns (bool)
     {
-        return
-            v.outputHashesSiblings.length == CanonicalMachine.LOG2_MAX_OUTPUTS;
+        return v.outputHashesSiblings.length == CanonicalMachine.LOG2_MAX_OUTPUTS;
     }
 
-    function computeOutputsMerkleRoot(
-        OutputValidityProof calldata v,
-        bytes32 outputHash
-    ) internal pure returns (bytes32) {
-        return v.outputHashesSiblings.merkleRootAfterReplacement(
-            v.outputIndex, outputHash
-        );
+    function computeOutputsMerkleRoot(OutputValidityProof calldata v, bytes32 outputHash)
+        internal
+        pure
+        returns (bytes32)
+    {
+        return
+            v.outputHashesSiblings.merkleRootAfterReplacement(v.outputIndex, outputHash);
     }
 }

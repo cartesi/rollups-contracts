@@ -78,12 +78,7 @@ contract InputBox is IInputBox {
     }
 
     /// @inheritdoc IInputBox
-    function getDeploymentBlockNumber()
-        external
-        view
-        override
-        returns (uint256)
-    {
+    function getDeploymentBlockNumber() external view override returns (uint256) {
         return _deploymentBlockNumber;
     }
 }

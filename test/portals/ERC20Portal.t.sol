@@ -69,11 +69,9 @@ contract ERC20PortalTest is Test {
         _portal.depositERC20Tokens(_token, _appContract, value, data);
     }
 
-    function testTokenReverts(
-        uint256 value,
-        bytes calldata data,
-        bytes memory errorData
-    ) public {
+    function testTokenReverts(uint256 value, bytes calldata data, bytes memory errorData)
+        public
+    {
         bytes memory transferFrom = _encodeTransferFrom(value);
 
         vm.mockCallRevert(address(_token), transferFrom, errorData);
@@ -90,9 +88,7 @@ contract ERC20PortalTest is Test {
         _portal.depositERC20Tokens(_token, _appContract, value, data);
     }
 
-    function testSimpleERC20(uint256 supply, uint256 value, bytes calldata data)
-        public
-    {
+    function testSimpleERC20(uint256 supply, uint256 value, bytes calldata data) public {
         value = bound(value, 0, supply);
 
         SimpleERC20 token = new SimpleERC20(_alice, supply);
@@ -136,20 +132,11 @@ contract ERC20PortalTest is Test {
         return InputEncoding.encodeERC20Deposit(token, _alice, value, data);
     }
 
-    function _encodeTransferFrom(uint256 value)
-        internal
-        view
-        returns (bytes memory)
-    {
-        return
-            abi.encodeCall(IERC20.transferFrom, (_alice, _appContract, value));
+    function _encodeTransferFrom(uint256 value) internal view returns (bytes memory) {
+        return abi.encodeCall(IERC20.transferFrom, (_alice, _appContract, value));
     }
 
-    function _encodeAddInput(bytes memory payload)
-        internal
-        view
-        returns (bytes memory)
-    {
+    function _encodeAddInput(bytes memory payload) internal view returns (bytes memory) {
         return abi.encodeCall(IInputBox.addInput, (_appContract, payload));
     }
 }

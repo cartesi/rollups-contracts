@@ -36,12 +36,7 @@ contract Authority is IAuthority, AbstractClaimSubmitter, Ownable {
     }
 
     /// @inheritdoc Ownable
-    function owner()
-        public
-        view
-        override(IOwnable, Ownable)
-        returns (address)
-    {
+    function owner() public view override(IOwnable, Ownable) returns (address) {
         return super.owner();
     }
 
@@ -51,10 +46,7 @@ contract Authority is IAuthority, AbstractClaimSubmitter, Ownable {
     }
 
     /// @inheritdoc Ownable
-    function transferOwnership(address newOwner)
-        public
-        override(IOwnable, Ownable)
-    {
+    function transferOwnership(address newOwner) public override(IOwnable, Ownable) {
         super.transferOwnership(newOwner);
     }
 

@@ -11,7 +11,7 @@ remappings = [
 ]
 
 [fmt]
-line_length = 80
+line_length = 90
 
 [invariant]
 runs = 32

@@ -79,11 +79,7 @@ contract EtherPortalTest is Test {
         return InputEncoding.encodeEtherDeposit(_alice, value, data);
     }
 
-    function _encodeAddInput(bytes memory payload)
-        internal
-        view
-        returns (bytes memory)
-    {
+    function _encodeAddInput(bytes memory payload) internal view returns (bytes memory) {
         return abi.encodeCall(IInputBox.addInput, (_appContract, payload));
     }
 

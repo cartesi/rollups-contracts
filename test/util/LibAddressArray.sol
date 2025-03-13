@@ -19,11 +19,7 @@ library LibAddressArray {
         return false;
     }
 
-    function addrs(Vm vm, uint256 n)
-        internal
-        pure
-        returns (address[] memory array)
-    {
+    function addrs(Vm vm, uint256 n) internal pure returns (address[] memory array) {
         array = new address[](n);
         for (uint256 i; i < n; ++i) {
             array[i] = vm.addr(i + 1);

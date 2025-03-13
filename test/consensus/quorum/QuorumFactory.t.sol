@@ -47,11 +47,9 @@ contract QuorumFactoryTest is Test {
         _testNewQuorumAux(validators, epochLength, quorum);
     }
 
-    function testNewQuorumDeterministic(
-        uint256 seed,
-        uint256 epochLength,
-        bytes32 salt
-    ) public {
+    function testNewQuorumDeterministic(uint256 seed, uint256 epochLength, bytes32 salt)
+        public
+    {
         vm.assume(epochLength > 0);
 
         uint256 numOfValidators = bound(seed, 1, _QUORUM_MAX_SIZE);

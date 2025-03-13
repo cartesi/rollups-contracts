@@ -13,9 +13,7 @@ abstract contract OwnableTest is Test {
     /// @notice Get ownable contract to be tested
     function _getOwnableContract() internal view virtual returns (IOwnable);
 
-    function testRenounceOwnership(address caller, address randomOwner)
-        external
-    {
+    function testRenounceOwnership(address caller, address randomOwner) external {
         vm.assume(caller != address(0));
         vm.assume(randomOwner != address(0));
 
@@ -33,17 +31,13 @@ abstract contract OwnableTest is Test {
 
         vm.startPrank(caller);
         vm.expectRevert(
-            abi.encodeWithSelector(
-                Ownable.OwnableUnauthorizedAccount.selector, caller
-            )
+            abi.encodeWithSelector(Ownable.OwnableUnauthorizedAccount.selector, caller)
         );
         ownable.transferOwnership(randomOwner);
         vm.stopPrank();
     }
 
-    function testUnauthorizedAccount(address caller, address randomOwner)
-        external
-    {
+    function testUnauthorizedAccount(address caller, address randomOwner) external {
         vm.assume(randomOwner != address(0));
 
         IOwnable ownable = _getOwnableContract();
@@ -53,9 +47,7 @@ abstract contract OwnableTest is Test {
 
         vm.startPrank(caller);
         vm.expectRevert(
-            abi.encodeWithSelector(
-                Ownable.OwnableUnauthorizedAccount.selector, caller
-            )
+            abi.encodeWithSelector(Ownable.OwnableUnauthorizedAccount.selector, caller)
         );
         ownable.transferOwnership(randomOwner);
         vm.stopPrank();
@@ -67,19 +59,15 @@ abstract contract OwnableTest is Test {
 
         vm.startPrank(owner);
         vm.expectRevert(
-            abi.encodeWithSelector(
-                Ownable.OwnableInvalidOwner.selector, address(0)
-            )
+            abi.encodeWithSelector(Ownable.OwnableInvalidOwner.selector, address(0))
         );
         ownable.transferOwnership(address(0));
         vm.stopPrank();
     }
 
-    function testTransferOwnership(
-        address newOwner,
-        address caller,
-        address randomOwner
-    ) external {
+    function testTransferOwnership(address newOwner, address caller, address randomOwner)
+        external
+    {
         vm.assume(newOwner != address(0));
         vm.assume(caller != newOwner);
         vm.assume(randomOwner != address(0));
@@ -98,9 +86,7 @@ abstract contract OwnableTest is Test {
 
         vm.startPrank(caller);
         vm.expectRevert(
-            abi.encodeWithSelector(
-                Ownable.OwnableUnauthorizedAccount.selector, caller
-            )
+            abi.encodeWithSelector(Ownable.OwnableUnauthorizedAccount.selector, caller)
         );
         ownable.transferOwnership(randomOwner);
         vm.stopPrank();

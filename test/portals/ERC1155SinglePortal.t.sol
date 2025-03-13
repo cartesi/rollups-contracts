@@ -144,11 +144,7 @@ contract ERC1155SinglePortalTest is Test {
         );
     }
 
-    function _encodeAddInput(bytes memory payload)
-        internal
-        view
-        returns (bytes memory)
-    {
+    function _encodeAddInput(bytes memory payload) internal view returns (bytes memory) {
         return abi.encodeCall(IInputBox.addInput, (_appContract, payload));
     }
 

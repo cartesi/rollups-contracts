@@ -12,10 +12,8 @@ import {IAuthority} from "src/consensus/authority/IAuthority.sol";
 import {IApplicationFactory} from "src/dapp/IApplicationFactory.sol";
 import {ApplicationFactory} from "src/dapp/ApplicationFactory.sol";
 import {IApplication} from "src/dapp/IApplication.sol";
-import {ISelfHostedApplicationFactory} from
-    "src/dapp/ISelfHostedApplicationFactory.sol";
-import {SelfHostedApplicationFactory} from
-    "src/dapp/SelfHostedApplicationFactory.sol";
+import {ISelfHostedApplicationFactory} from "src/dapp/ISelfHostedApplicationFactory.sol";
+import {SelfHostedApplicationFactory} from "src/dapp/SelfHostedApplicationFactory.sol";
 
 import {Test} from "forge-std/Test.sol";
 
@@ -27,22 +25,15 @@ contract SelfHostedApplicationFactoryTest is Test {
     function setUp() external {
         authorityFactory = new AuthorityFactory();
         applicationFactory = new ApplicationFactory();
-        factory = new SelfHostedApplicationFactory(
-            authorityFactory, applicationFactory
-        );
+        factory = new SelfHostedApplicationFactory(authorityFactory, applicationFactory);
     }
 
     function testGetApplicationContract() external view {
-        assertEq(
-            address(factory.getApplicationFactory()),
-            address(applicationFactory)
-        );
+        assertEq(address(factory.getApplicationFactory()), address(applicationFactory));
     }
 
     function testGetAuthorityFactory() external view {
-        assertEq(
-            address(factory.getAuthorityFactory()), address(authorityFactory)
-        );
+        assertEq(address(factory.getAuthorityFactory()), address(authorityFactory));
     }
 
     function testRevertsAuthorityOwnerAddressZero(
@@ -56,17 +47,10 @@ contract SelfHostedApplicationFactoryTest is Test {
         vm.assume(epochLength > 0);
 
         vm.expectRevert(
-            abi.encodeWithSelector(
-                Ownable.OwnableInvalidOwner.selector, address(0)
-            )
+            abi.encodeWithSelector(Ownable.OwnableInvalidOwner.selector, address(0))
         );
         factory.deployContracts(
-            address(0),
-            epochLength,
-            appOwner,
-            templateHash,
-            dataAvailability,
-            salt
+            address(0), epochLength, appOwner, templateHash, dataAvailability, salt
         );
     }
 
@@ -97,17 +81,10 @@ contract SelfHostedApplicationFactoryTest is Test {
         vm.assume(epochLength > 0);
 
         vm.expectRevert(
-            abi.encodeWithSelector(
-                Ownable.OwnableInvalidOwner.selector, address(0)
-            )
+            abi.encodeWithSelector(Ownable.OwnableInvalidOwner.selector, address(0))
         );
         factory.deployContracts(
-            authorityOwner,
-            epochLength,
-            address(0),
-            templateHash,
-            dataAvailability,
-            salt
+            authorityOwner, epochLength, address(0), templateHash, dataAvailability, salt
         );
     }
 
@@ -127,24 +104,14 @@ contract SelfHostedApplicationFactoryTest is Test {
         address authorityAddr;
 
         (appAddr, authorityAddr) = factory.calculateAddresses(
-            authorityOwner,
-            epochLength,
-            appOwner,
-            templateHash,
-            dataAvailability,
-            salt
+            authorityOwner, epochLength, appOwner, templateHash, dataAvailability, salt
         );
 
         IApplication application;
         IAuthority authority;
 
         (application, authority) = factory.deployContracts(
-            authorityOwner,
-            epochLength,
-            appOwner,
-            templateHash,
-            dataAvailability,
-            salt
+            authorityOwner, epochLength, appOwner, templateHash, dataAvailability, salt
         );
 
         assertEq(appAddr, address(application));

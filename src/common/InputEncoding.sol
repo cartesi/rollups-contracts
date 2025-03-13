@@ -117,8 +117,7 @@ library InputEncoding {
         bytes calldata baseLayerData,
         bytes calldata execLayerData
     ) internal pure returns (bytes memory) {
-        bytes memory data =
-            abi.encode(tokenIds, values, baseLayerData, execLayerData);
+        bytes memory data = abi.encode(tokenIds, values, baseLayerData, execLayerData);
         return abi.encodePacked(
             token, //                   20B
             sender, //                  20B

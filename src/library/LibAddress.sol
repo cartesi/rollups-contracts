@@ -42,9 +42,7 @@ library LibAddress {
     /// @param destination The address that will be called
     /// @param payload The payload, which—in the case of Solidity
     /// libraries—encodes a function call
-    function safeDelegateCall(address destination, bytes memory payload)
-        internal
-    {
+    function safeDelegateCall(address destination, bytes memory payload) internal {
         bool success;
         bytes memory returndata;
 

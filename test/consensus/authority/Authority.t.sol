@@ -34,12 +34,7 @@ contract AuthorityTest is Test, ERC165Test, OwnableTest {
     }
 
     /// @inheritdoc ERC165Test
-    function _getSupportedInterfaces()
-        internal
-        pure
-        override
-        returns (bytes4[] memory)
-    {
+    function _getSupportedInterfaces() internal pure override returns (bytes4[] memory) {
         bytes4[] memory ifaces = new bytes4[](3);
         ifaces[0] = type(IERC165).interfaceId;
         ifaces[1] = type(IClaimSubmitter).interfaceId;
@@ -89,9 +84,7 @@ contract AuthorityTest is Test, ERC165Test, OwnableTest {
         vm.assume(epochLength > 0);
 
         vm.expectRevert(
-            abi.encodeWithSelector(
-                Ownable.OwnableInvalidOwner.selector, address(0)
-            )
+            abi.encodeWithSelector(Ownable.OwnableInvalidOwner.selector, address(0))
         );
         new Authority(address(0), epochLength);
     }
@@ -118,9 +111,7 @@ contract AuthorityTest is Test, ERC165Test, OwnableTest {
         IAuthority authority = new Authority(owner, epochLength);
 
         vm.expectRevert(
-            abi.encodeWithSelector(
-                Ownable.OwnableUnauthorizedAccount.selector, notOwner
-            )
+            abi.encodeWithSelector(Ownable.OwnableUnauthorizedAccount.selector, notOwner)
         );
 
         vm.prank(notOwner);
@@ -139,9 +130,7 @@ contract AuthorityTest is Test, ERC165Test, OwnableTest {
 
         IAuthority authority = new Authority(owner, epochLength);
 
-        _expectClaimEvents(
-            authority, owner, appContract, lastProcessedBlockNumber, claim
-        );
+        _expectClaimEvents(authority, owner, appContract, lastProcessedBlockNumber, claim);
 
         vm.prank(owner);
         authority.submitClaim(appContract, lastProcessedBlockNumber, claim);
@@ -176,8 +165,6 @@ contract AuthorityTest is Test, ERC165Test, OwnableTest {
         );
 
         vm.expectEmit(true, false, false, true, address(authority));
-        emit IClaimSubmitter.ClaimAcceptance(
-            appContract, lastProcessedBlockNumber, claim
-        );
+        emit IClaimSubmitter.ClaimAcceptance(appContract, lastProcessedBlockNumber, claim);
     }
 }

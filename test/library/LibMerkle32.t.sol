@@ -102,10 +102,9 @@ contract LibMerkle32Test is Test {
         assertEq(leaves.at(2, defaultNode), defaultNode);
     }
 
-    function testMerkleRootZeroLeavesZeroHeight(
-        bytes32 leftLeaf,
-        bytes32 rightLeaf
-    ) external {
+    function testMerkleRootZeroLeavesZeroHeight(bytes32 leftLeaf, bytes32 rightLeaf)
+        external
+    {
         bytes32[] memory leaves;
 
         leaves = new bytes32[](0);
@@ -171,9 +170,7 @@ contract LibMerkle32Test is Test {
 
         assertEq(
             leaves.merkleRoot(2),
-            _parent(
-                _parent(bytes32(0), bytes32(0)), _parent(bytes32(0), bytes32(0))
-            )
+            _parent(_parent(bytes32(0), bytes32(0)), _parent(bytes32(0), bytes32(0)))
         );
 
         leaves = new bytes32[](1);
@@ -181,9 +178,7 @@ contract LibMerkle32Test is Test {
 
         assertEq(
             leaves.merkleRoot(2),
-            _parent(
-                _parent(firstLeaf, bytes32(0)), _parent(bytes32(0), bytes32(0))
-            )
+            _parent(_parent(firstLeaf, bytes32(0)), _parent(bytes32(0), bytes32(0)))
         );
 
         leaves = new bytes32[](2);
@@ -192,9 +187,7 @@ contract LibMerkle32Test is Test {
 
         assertEq(
             leaves.merkleRoot(2),
-            _parent(
-                _parent(firstLeaf, secondLeaf), _parent(bytes32(0), bytes32(0))
-            )
+            _parent(_parent(firstLeaf, secondLeaf), _parent(bytes32(0), bytes32(0)))
         );
 
         leaves = new bytes32[](3);
@@ -204,9 +197,7 @@ contract LibMerkle32Test is Test {
 
         assertEq(
             leaves.merkleRoot(2),
-            _parent(
-                _parent(firstLeaf, secondLeaf), _parent(thirdLeaf, bytes32(0))
-            )
+            _parent(_parent(firstLeaf, secondLeaf), _parent(thirdLeaf, bytes32(0)))
         );
 
         leaves = new bytes32[](4);
@@ -217,9 +208,7 @@ contract LibMerkle32Test is Test {
 
         assertEq(
             leaves.merkleRoot(2),
-            _parent(
-                _parent(firstLeaf, secondLeaf), _parent(thirdLeaf, fourthLeaf)
-            )
+            _parent(_parent(firstLeaf, secondLeaf), _parent(thirdLeaf, fourthLeaf))
         );
 
         leaves = new bytes32[](5);
@@ -233,9 +222,7 @@ contract LibMerkle32Test is Test {
         leaves.merkleRoot(2);
     }
 
-    function testSiblingsHeightZero(bytes32 leftLeaf, bytes32 rightLeaf)
-        external
-    {
+    function testSiblingsHeightZero(bytes32 leftLeaf, bytes32 rightLeaf) external {
         bytes32[] memory siblings;
         bytes32[] memory leaves;
 
@@ -268,11 +255,9 @@ contract LibMerkle32Test is Test {
         leaves.siblings(1, 0);
     }
 
-    function testSiblingsHeightOne(
-        bytes32 leftLeaf,
-        bytes32 rightLeaf,
-        bytes32 extraLeaf
-    ) external {
+    function testSiblingsHeightOne(bytes32 leftLeaf, bytes32 rightLeaf, bytes32 extraLeaf)
+        external
+    {
         bytes32[] memory siblings;
         bytes32[] memory leaves;
 
@@ -471,22 +456,17 @@ contract LibMerkle32Test is Test {
         siblings.merkleRootAfterReplacement(1, leaf);
     }
 
-    function testMerkleRootAfterReplacementHeightOne(
-        bytes32 sibling,
-        bytes32 leaf
-    ) external {
+    function testMerkleRootAfterReplacementHeightOne(bytes32 sibling, bytes32 leaf)
+        external
+    {
         bytes32[] memory siblings;
 
         siblings = new bytes32[](1);
         siblings[0] = sibling;
 
-        assertEq(
-            siblings.merkleRootAfterReplacement(0, leaf), _parent(leaf, sibling)
-        );
+        assertEq(siblings.merkleRootAfterReplacement(0, leaf), _parent(leaf, sibling));
 
-        assertEq(
-            siblings.merkleRootAfterReplacement(1, leaf), _parent(sibling, leaf)
-        );
+        assertEq(siblings.merkleRootAfterReplacement(1, leaf), _parent(sibling, leaf));
 
         vm.expectRevert("LibMerkle32: index out of bounds");
         siblings.merkleRootAfterReplacement(2, leaf);
@@ -546,11 +526,7 @@ contract LibMerkle32Test is Test {
         assertEq(root, newRoot);
     }
 
-    function _parent(bytes32 left, bytes32 right)
-        internal
-        pure
-        returns (bytes32)
-    {
+    function _parent(bytes32 left, bytes32 right) internal pure returns (bytes32) {
         return keccak256(abi.encode(left, right));
     }
 
@@ -563,19 +539,11 @@ contract LibMerkle32Test is Test {
         return 256;
     }
 
-    function _boundHeight(uint256 height, uint256 n)
-        internal
-        pure
-        returns (uint256)
-    {
+    function _boundHeight(uint256 height, uint256 n) internal pure returns (uint256) {
         return bound(height, _minHeight(n), 256);
     }
 
-    function _boundBits(uint256 x, uint256 nbits)
-        internal
-        pure
-        returns (uint256)
-    {
+    function _boundBits(uint256 x, uint256 nbits) internal pure returns (uint256) {
         if (nbits < 256) {
             return x >> (256 - nbits);
         } else {

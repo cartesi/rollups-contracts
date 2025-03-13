@@ -39,8 +39,7 @@ contract ERC721PortalTest is Test {
         bytes calldata baseLayerData,
         bytes calldata execLayerData
     ) public {
-        bytes memory safeTransferFrom =
-            _encodeSafeTransferFrom(tokenId, baseLayerData);
+        bytes memory safeTransferFrom = _encodeSafeTransferFrom(tokenId, baseLayerData);
 
         vm.mockCall(address(_token), safeTransferFrom, abi.encode());
         vm.expectCall(address(_token), safeTransferFrom, 1);
@@ -65,8 +64,7 @@ contract ERC721PortalTest is Test {
         bytes calldata execLayerData,
         bytes memory errorData
     ) public {
-        bytes memory safeTransferFrom =
-            _encodeSafeTransferFrom(tokenId, baseLayerData);
+        bytes memory safeTransferFrom = _encodeSafeTransferFrom(tokenId, baseLayerData);
 
         vm.mockCall(address(_token), safeTransferFrom, abi.encode());
         vm.mockCallRevert(address(_token), safeTransferFrom, errorData);
@@ -133,18 +131,15 @@ contract ERC721PortalTest is Test {
         );
     }
 
-    function _encodeAddInput(bytes memory payload)
+    function _encodeAddInput(bytes memory payload) internal view returns (bytes memory) {
+        return abi.encodeCall(IInputBox.addInput, (_appContract, payload));
+    }
+
+    function _encodeSafeTransferFrom(uint256 tokenId, bytes calldata baseLayerData)
         internal
         view
         returns (bytes memory)
     {
-        return abi.encodeCall(IInputBox.addInput, (_appContract, payload));
-    }
-
-    function _encodeSafeTransferFrom(
-        uint256 tokenId,
-        bytes calldata baseLayerData
-    ) internal view returns (bytes memory) {
         return abi.encodeWithSignature(
             "safeTransferFrom(address,address,uint256,bytes)",
             _alice,

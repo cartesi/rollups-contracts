@@ -24,13 +24,12 @@ contract AuthorityFactory is IAuthorityFactory {
         return authority;
     }
 
-    function newAuthority(
-        address authorityOwner,
-        uint256 epochLength,
-        bytes32 salt
-    ) external override returns (IAuthority) {
-        IAuthority authority =
-            new Authority{salt: salt}(authorityOwner, epochLength);
+    function newAuthority(address authorityOwner, uint256 epochLength, bytes32 salt)
+        external
+        override
+        returns (IAuthority)
+    {
+        IAuthority authority = new Authority{salt: salt}(authorityOwner, epochLength);
 
         emit AuthorityCreated(authority);
 
@@ -46,8 +45,7 @@ contract AuthorityFactory is IAuthorityFactory {
             salt,
             keccak256(
                 abi.encodePacked(
-                    type(Authority).creationCode,
-                    abi.encode(authorityOwner, epochLength)
+                    type(Authority).creationCode, abi.encode(authorityOwner, epochLength)
                 )
             )
         );

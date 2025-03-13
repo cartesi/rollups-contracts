@@ -16,10 +16,7 @@ interface ISelfHostedApplicationFactory {
 
     /// @notice Get the factory used to deploy `IApplication` contracts
     /// @return The application factory
-    function getApplicationFactory()
-        external
-        view
-        returns (IApplicationFactory);
+    function getApplicationFactory() external view returns (IApplicationFactory);
 
     /// @notice Deploy new application and authority contracts deterministically.
     /// @param authorityOwner The initial authority owner
