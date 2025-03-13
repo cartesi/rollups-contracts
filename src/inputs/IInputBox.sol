@@ -13,17 +13,13 @@ interface IInputBox {
     /// @param appContract The application contract address
     /// @param index The input index
     /// @param input The input blob
-    event InputAdded(
-        address indexed appContract, uint256 indexed index, bytes input
-    );
+    event InputAdded(address indexed appContract, uint256 indexed index, bytes input);
 
     /// @notice Input is too large.
     /// @param appContract The application contract address
     /// @param inputLength The input length
     /// @param maxInputLength The maximum input length
-    error InputTooLarge(
-        address appContract, uint256 inputLength, uint256 maxInputLength
-    );
+    error InputTooLarge(address appContract, uint256 inputLength, uint256 maxInputLength);
 
     /// @notice Send an input to an application.
     /// @param appContract The application contract address
@@ -36,10 +32,7 @@ interface IInputBox {
 
     /// @notice Get the number of inputs sent to an application.
     /// @param appContract The application contract address
-    function getNumberOfInputs(address appContract)
-        external
-        view
-        returns (uint256);
+    function getNumberOfInputs(address appContract) external view returns (uint256);
 
     /// @notice Get the hash of an input in an application's input box.
     /// @param appContract The application contract address

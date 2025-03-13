@@ -27,9 +27,8 @@ contract ApplicationFactoryTest is Test {
     ) public {
         vm.assume(appOwner != address(0));
 
-        IApplication appContract = _factory.newApplication(
-            consensus, appOwner, templateHash, dataAvailability
-        );
+        IApplication appContract =
+            _factory.newApplication(consensus, appOwner, templateHash, dataAvailability);
 
         assertEq(address(appContract.getConsensus()), address(consensus));
         assertEq(appContract.owner(), appOwner);
@@ -71,9 +70,7 @@ contract ApplicationFactoryTest is Test {
 
         // Cannot deploy an application with the same salt twice
         vm.expectRevert(bytes(""));
-        _factory.newApplication(
-            consensus, appOwner, templateHash, dataAvailability, salt
-        );
+        _factory.newApplication(consensus, appOwner, templateHash, dataAvailability, salt);
     }
 
     function testApplicationCreatedEvent(
@@ -86,9 +83,8 @@ contract ApplicationFactoryTest is Test {
 
         vm.recordLogs();
 
-        IApplication appContract = _factory.newApplication(
-            consensus, appOwner, templateHash, dataAvailability
-        );
+        IApplication appContract =
+            _factory.newApplication(consensus, appOwner, templateHash, dataAvailability);
 
         _testApplicationCreatedEventAux(
             consensus, appOwner, templateHash, dataAvailability, appContract
@@ -131,24 +127,18 @@ contract ApplicationFactoryTest is Test {
 
             if (
                 entry.emitter == address(_factory)
-                    && entry.topics[0]
-                        == IApplicationFactory.ApplicationCreated.selector
+                    && entry.topics[0] == IApplicationFactory.ApplicationCreated.selector
             ) {
                 ++numOfApplicationsCreated;
 
-                assertEq(
-                    entry.topics[1],
-                    bytes32(uint256(uint160(address(consensus))))
-                );
+                assertEq(entry.topics[1], bytes32(uint256(uint160(address(consensus)))));
 
                 (
                     address appOwner_,
                     bytes32 templateHash_,
                     bytes memory dataAvailability_,
                     IApplication app_
-                ) = abi.decode(
-                    entry.data, (address, bytes32, bytes, IApplication)
-                );
+                ) = abi.decode(entry.data, (address, bytes32, bytes, IApplication));
 
                 assertEq(appOwner, appOwner_);
                 assertEq(templateHash, templateHash_);

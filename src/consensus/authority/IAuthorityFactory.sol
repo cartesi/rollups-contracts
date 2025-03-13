@@ -35,11 +35,9 @@ interface IAuthorityFactory {
     /// @dev On success, MUST emit an `AuthorityCreated` event.
     /// @dev Reverts if the authority owner address is zero.
     /// @dev Reverts if the epoch length is zero.
-    function newAuthority(
-        address authorityOwner,
-        uint256 epochLength,
-        bytes32 salt
-    ) external returns (IAuthority);
+    function newAuthority(address authorityOwner, uint256 epochLength, bytes32 salt)
+        external
+        returns (IAuthority);
 
     /// @notice Calculate the address of an authority to be deployed deterministically.
     /// @param authorityOwner The initial authority owner

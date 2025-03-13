@@ -59,9 +59,7 @@ contract ApplicationFactory is IApplicationFactory {
             keccak256(
                 abi.encodePacked(
                     type(Application).creationCode,
-                    abi.encode(
-                        consensus, appOwner, templateHash, dataAvailability
-                    )
+                    abi.encode(consensus, appOwner, templateHash, dataAvailability)
                 )
             )
         );

@@ -29,17 +29,15 @@ library LibQuorum {
         returns (uint256)
     {
         return quorum.numOfValidatorsInFavorOf(
-            claim.appContract,
-            claim.lastProcessedBlockNumber,
-            claim.outputHashesRootHash
+            claim.appContract, claim.lastProcessedBlockNumber, claim.outputHashesRootHash
         );
     }
 
-    function isValidatorInFavorOf(
-        IQuorum quorum,
-        Claim calldata claim,
-        uint256 id
-    ) internal view returns (bool) {
+    function isValidatorInFavorOf(IQuorum quorum, Claim calldata claim, uint256 id)
+        internal
+        view
+        returns (bool)
+    {
         return quorum.isValidatorInFavorOf(
             claim.appContract,
             claim.lastProcessedBlockNumber,
@@ -50,9 +48,7 @@ library LibQuorum {
 
     function submitClaim(IQuorum quorum, Claim calldata claim) internal {
         quorum.submitClaim(
-            claim.appContract,
-            claim.lastProcessedBlockNumber,
-            claim.outputHashesRootHash
+            claim.appContract, claim.lastProcessedBlockNumber, claim.outputHashesRootHash
         );
     }
 
@@ -61,9 +57,8 @@ library LibQuorum {
         view
         returns (bool)
     {
-        return quorum.isOutputsMerkleRootValid(
-            claim.appContract, claim.outputHashesRootHash
-        );
+        return
+            quorum.isOutputsMerkleRootValid(claim.appContract, claim.outputHashesRootHash);
     }
 }
 
@@ -85,12 +80,7 @@ contract QuorumTest is Test, ERC165Test {
     }
 
     /// @inheritdoc ERC165Test
-    function _getSupportedInterfaces()
-        internal
-        pure
-        override
-        returns (bytes4[] memory)
-    {
+    function _getSupportedInterfaces() internal pure override returns (bytes4[] memory) {
         bytes4[] memory ifaces = new bytes4[](3);
         ifaces[0] = type(IERC165).interfaceId;
         ifaces[1] = type(IClaimSubmitter).interfaceId;
@@ -98,9 +88,7 @@ contract QuorumTest is Test, ERC165Test {
         return ifaces;
     }
 
-    function testConstructor(uint8 numOfValidators, uint256 epochLength)
-        external
-    {
+    function testConstructor(uint8 numOfValidators, uint256 epochLength) external {
         vm.assume(epochLength > 0);
 
         address[] memory validators = vm.addrs(numOfValidators);
@@ -146,11 +134,9 @@ contract QuorumTest is Test, ERC165Test {
         }
     }
 
-    function testValidatorId(
-        uint8 numOfValidators,
-        address addr,
-        uint256 epochLength
-    ) external {
+    function testValidatorId(uint8 numOfValidators, address addr, uint256 epochLength)
+        external
+    {
         vm.assume(epochLength > 0);
 
         address[] memory validators = vm.addrs(numOfValidators);
@@ -167,9 +153,7 @@ contract QuorumTest is Test, ERC165Test {
         }
     }
 
-    function testValidatorByIdZero(uint8 numOfValidators, uint256 epochLength)
-        external
-    {
+    function testValidatorByIdZero(uint8 numOfValidators, uint256 epochLength) external {
         IQuorum quorum = _deployQuorum(numOfValidators, epochLength);
         assertEq(quorum.validatorById(0), address(0));
     }
@@ -254,9 +238,7 @@ contract QuorumTest is Test, ERC165Test {
     /// @dev Each slot has 256 bits, one for each validator ID.
     /// The first bit is skipped because validator IDs start from 1.
     /// Therefore, validator ID 256 is the first to use a new slot.
-    function testSubmitClaim256(Claim calldata claim, uint256 epochLength)
-        external
-    {
+    function testSubmitClaim256(Claim calldata claim, uint256 epochLength) external {
         uint256 numOfValidators = 256;
 
         IQuorum quorum = _deployQuorum(numOfValidators, epochLength);
@@ -296,9 +278,7 @@ contract QuorumTest is Test, ERC165Test {
         assertEq(quorum.numOfValidatorsInFavorOf(claim), inFavorCount);
     }
 
-    function _submitClaimAs(IQuorum quorum, Claim calldata claim, uint256 id)
-        internal
-    {
+    function _submitClaimAs(IQuorum quorum, Claim calldata claim, uint256 id) internal {
         address validator = quorum.validatorById(id);
 
         vm.recordLogs();
@@ -318,14 +298,12 @@ contract QuorumTest is Test, ERC165Test {
                 entry.emitter == address(quorum)
                     && entry.topics[0] == IClaimSubmitter.ClaimSubmission.selector
             ) {
-                (uint256 lastProcessedBlockNumber, bytes32 outputHashesRootHash)
-                = abi.decode(entry.data, (uint256, bytes32));
+                (uint256 lastProcessedBlockNumber, bytes32 outputHashesRootHash) =
+                    abi.decode(entry.data, (uint256, bytes32));
 
                 assertEq(entry.topics[1], validator.asTopic());
                 assertEq(entry.topics[2], claim.appContract.asTopic());
-                assertEq(
-                    lastProcessedBlockNumber, claim.lastProcessedBlockNumber
-                );
+                assertEq(lastProcessedBlockNumber, claim.lastProcessedBlockNumber);
                 assertEq(outputHashesRootHash, claim.outputHashesRootHash);
 
                 ++numOfSubmissions;
@@ -335,13 +313,11 @@ contract QuorumTest is Test, ERC165Test {
                 entry.emitter == address(quorum)
                     && entry.topics[0] == IClaimSubmitter.ClaimAcceptance.selector
             ) {
-                (uint256 lastProcessedBlockNumber, bytes32 outputHashesRootHash)
-                = abi.decode(entry.data, (uint256, bytes32));
+                (uint256 lastProcessedBlockNumber, bytes32 outputHashesRootHash) =
+                    abi.decode(entry.data, (uint256, bytes32));
 
                 assertEq(entry.topics[1], claim.appContract.asTopic());
-                assertEq(
-                    lastProcessedBlockNumber, claim.lastProcessedBlockNumber
-                );
+                assertEq(lastProcessedBlockNumber, claim.lastProcessedBlockNumber);
                 assertEq(outputHashesRootHash, claim.outputHashesRootHash);
 
                 ++numOfAcceptances;
@@ -360,8 +336,7 @@ contract QuorumTest is Test, ERC165Test {
         }
 
         assertEq(
-            quorum.isOutputsMerkleRootValid(claim),
-            inFavorCount > (numOfValidators / 2)
+            quorum.isOutputsMerkleRootValid(claim), inFavorCount > (numOfValidators / 2)
         );
     }
 }

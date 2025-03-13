@@ -15,11 +15,9 @@ contract SimpleSingleERC1155 is ERC1155 {
 }
 
 contract SimpleBatchERC1155 is ERC1155 {
-    constructor(
-        address tokenOwner,
-        uint256[] memory tokenIds,
-        uint256[] memory supplies
-    ) ERC1155("SimpleBatchERC1155") {
+    constructor(address tokenOwner, uint256[] memory tokenIds, uint256[] memory supplies)
+        ERC1155("SimpleBatchERC1155")
+    {
         _mintBatch(tokenOwner, tokenIds, supplies, "");
     }
 }

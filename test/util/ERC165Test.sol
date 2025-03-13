@@ -13,10 +13,7 @@ abstract contract ERC165Test is Test {
     function _getERC165Contract() internal virtual returns (IERC165);
 
     /// @notice Get array of IDs of supported interfaces
-    function _getSupportedInterfaces()
-        internal
-        virtual
-        returns (bytes4[] memory);
+    function _getSupportedInterfaces() internal virtual returns (bytes4[] memory);
 
     function testSupportsInterface() external {
         IERC165 erc165 = _getERC165Contract();

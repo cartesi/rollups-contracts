@@ -26,8 +26,7 @@ import {
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {IERC721} from "@openzeppelin/contracts/token/ERC721/IERC721.sol";
 import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
-import {SafeERC20} from
-    "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
+import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 
 import {Vm} from "forge-std/Vm.sol";
 import {Test} from "forge-std/Test.sol";
@@ -39,9 +38,7 @@ import {LibAddressArray} from "../util/LibAddressArray.sol";
 import {LibEmulator} from "../util/LibEmulator.sol";
 import {SimpleERC20} from "../util/SimpleERC20.sol";
 import {SimpleERC721} from "../util/SimpleERC721.sol";
-import {
-    SimpleSingleERC1155, SimpleBatchERC1155
-} from "../util/SimpleERC1155.sol";
+import {SimpleSingleERC1155, SimpleBatchERC1155} from "../util/SimpleERC1155.sol";
 
 contract ApplicationTest is Test, OwnableTest {
     using LibEmulator for LibEmulator.State;
@@ -97,9 +94,7 @@ contract ApplicationTest is Test, OwnableTest {
 
     function testConstructorRevertsInvalidOwner() external {
         vm.expectRevert(
-            abi.encodeWithSelector(
-                Ownable.OwnableInvalidOwner.selector, address(0)
-            )
+            abi.encodeWithSelector(Ownable.OwnableInvalidOwner.selector, address(0))
         );
         new Application(_authority, address(0), _templateHash, new bytes(0));
     }
@@ -135,9 +130,7 @@ contract ApplicationTest is Test, OwnableTest {
         vm.assume(caller != _appOwner);
         vm.startPrank(caller);
         vm.expectRevert(
-            abi.encodeWithSelector(
-                Ownable.OwnableUnauthorizedAccount.selector, caller
-            )
+            abi.encodeWithSelector(Ownable.OwnableUnauthorizedAccount.selector, caller)
         );
         _appContract.migrateToConsensus(newConsensus);
     }
@@ -183,9 +176,9 @@ contract ApplicationTest is Test, OwnableTest {
         OutputValidityProof memory proof = _getProof(name);
 
         bytes memory fakeOutput = _encodeNotice("Goodbye, World!");
-        bytes32 fakeClaim = proof
-            .outputHashesSiblings
-            .merkleRootAfterReplacement(proof.outputIndex, keccak256(fakeOutput));
+        bytes32 fakeClaim = proof.outputHashesSiblings.merkleRootAfterReplacement(
+            proof.outputIndex, keccak256(fakeOutput)
+        );
 
         _expectRevertClaimNotAccepted(fakeClaim);
         _appContract.validateOutput(fakeOutput, proof);
@@ -338,27 +331,19 @@ contract ApplicationTest is Test, OwnableTest {
             new SimpleBatchERC1155(_tokenOwner, _tokenIds, _initialSupplies);
         _inputBox = new InputBox();
         _authority = new Authority(_authorityOwner, _epochLength);
-        _dataAvailability =
-            abi.encodeCall(DataAvailability.InputBox, (_inputBox));
-        _appContract = new Application(
-            _authority, _appOwner, _templateHash, _dataAvailability
-        );
+        _dataAvailability = abi.encodeCall(DataAvailability.InputBox, (_inputBox));
+        _appContract =
+            new Application(_authority, _appOwner, _templateHash, _dataAvailability);
         _safeERC20Transfer = new SafeERC20Transfer();
     }
 
     function _addOutputs() internal {
         _nameOutput("EmptyOutput", _addOutput(abi.encode()));
-        _nameOutput(
-            "HelloWorldNotice", _addOutput(_encodeNotice("Hello, world!"))
-        );
-        _nameOutput(
-            "MyOutput", _addOutput(abi.encodeWithSignature("MyOutput()"))
-        );
+        _nameOutput("HelloWorldNotice", _addOutput(_encodeNotice("Hello, world!")));
+        _nameOutput("MyOutput", _addOutput(abi.encodeWithSignature("MyOutput()")));
         _nameOutput(
             "EtherTransferVoucher",
-            _addOutput(
-                _encodeVoucher(_recipient, _transferAmount, abi.encode())
-            )
+            _addOutput(_encodeVoucher(_recipient, _transferAmount, abi.encode()))
         );
         _nameOutput(
             "EtherMintVoucher",
@@ -376,9 +361,7 @@ contract ApplicationTest is Test, OwnableTest {
                 _encodeVoucher(
                     address(_erc20Token),
                     0,
-                    abi.encodeCall(
-                        IERC20.transfer, (_recipient, _transferAmount)
-                    )
+                    abi.encodeCall(IERC20.transfer, (_recipient, _transferAmount))
                 )
             )
         );
@@ -405,13 +388,7 @@ contract ApplicationTest is Test, OwnableTest {
                     0,
                     abi.encodeCall(
                         IERC1155.safeTransferFrom,
-                        (
-                            address(_appContract),
-                            _recipient,
-                            _tokenId,
-                            _transferAmount,
-                            ""
-                        )
+                        (address(_appContract), _recipient, _tokenId, _transferAmount, "")
                     )
                 )
             )
@@ -449,50 +426,38 @@ contract ApplicationTest is Test, OwnableTest {
         );
     }
 
-    function _encodeNotice(bytes memory payload)
+    function _encodeNotice(bytes memory payload) internal pure returns (bytes memory) {
+        return abi.encodeCall(Outputs.Notice, (payload));
+    }
+
+    function _encodeVoucher(address destination, uint256 value, bytes memory payload)
         internal
         pure
         returns (bytes memory)
     {
-        return abi.encodeCall(Outputs.Notice, (payload));
-    }
-
-    function _encodeVoucher(
-        address destination,
-        uint256 value,
-        bytes memory payload
-    ) internal pure returns (bytes memory) {
         return abi.encodeCall(Outputs.Voucher, (destination, value, payload));
     }
 
-    function _encodeDelegateCallVoucher(
-        address destination,
-        bytes memory payload
-    ) internal pure returns (bytes memory) {
-        return
-            abi.encodeCall(Outputs.DelegateCallVoucher, (destination, payload));
+    function _encodeDelegateCallVoucher(address destination, bytes memory payload)
+        internal
+        pure
+        returns (bytes memory)
+    {
+        return abi.encodeCall(Outputs.DelegateCallVoucher, (destination, payload));
     }
 
-    function _addOutput(bytes memory output)
-        internal
-        returns (LibEmulator.OutputIndex)
-    {
+    function _addOutput(bytes memory output) internal returns (LibEmulator.OutputIndex) {
         return _emulator.addOutput(output);
     }
 
-    function _nameOutput(
-        string memory name,
-        LibEmulator.OutputIndex outputIndex
-    ) internal {
+    function _nameOutput(string memory name, LibEmulator.OutputIndex outputIndex)
+        internal
+    {
         _outputIndexByName[name] = outputIndex;
         _outputNames.push(name);
     }
 
-    function _getOutput(string memory name)
-        internal
-        view
-        returns (bytes storage)
-    {
+    function _getOutput(string memory name) internal view returns (bytes storage) {
         return _emulator.getOutput(_outputIndexByName[name]);
     }
 
@@ -520,33 +485,24 @@ contract ApplicationTest is Test, OwnableTest {
 
     function _expectRevertOutputNotExecutable(bytes memory output) internal {
         vm.expectRevert(
-            abi.encodeWithSelector(
-                IApplication.OutputNotExecutable.selector, output
-            )
+            abi.encodeWithSelector(IApplication.OutputNotExecutable.selector, output)
         );
     }
 
     function _expectRevertOutputNotReexecutable(bytes memory output) internal {
         vm.expectRevert(
-            abi.encodeWithSelector(
-                IApplication.OutputNotReexecutable.selector, output
-            )
+            abi.encodeWithSelector(IApplication.OutputNotReexecutable.selector, output)
         );
     }
 
     function _expectRevertInvalidOutputHashesSiblingsArrayLength() internal {
-        vm.expectRevert(
-            IApplication.InvalidOutputHashesSiblingsArrayLength.selector
-        );
+        vm.expectRevert(IApplication.InvalidOutputHashesSiblingsArrayLength.selector);
     }
 
-    function _expectRevertClaimNotAccepted(bytes32 outputsMerkleRoot)
-        internal
-    {
+    function _expectRevertClaimNotAccepted(bytes32 outputsMerkleRoot) internal {
         vm.expectRevert(
             abi.encodeWithSelector(
-                IApplication.InvalidOutputsMerkleRoot.selector,
-                outputsMerkleRoot
+                IApplication.InvalidOutputsMerkleRoot.selector, outputsMerkleRoot
             )
         );
     }
@@ -559,10 +515,9 @@ contract ApplicationTest is Test, OwnableTest {
         return _appContract.wasOutputExecuted(proof.outputIndex);
     }
 
-    function _testEtherTransfer(
-        bytes memory output,
-        OutputValidityProof memory proof
-    ) internal {
+    function _testEtherTransfer(bytes memory output, OutputValidityProof memory proof)
+        internal
+    {
         assertLt(
             address(_appContract).balance,
             _transferAmount,
@@ -597,18 +552,15 @@ contract ApplicationTest is Test, OwnableTest {
             "Application contract should have the transfer amount deducted"
         );
 
-        assertTrue(
-            _wasOutputExecuted(proof), "Output should be marked as executed"
-        );
+        assertTrue(_wasOutputExecuted(proof), "Output should be marked as executed");
 
         _expectRevertOutputNotReexecutable(output);
         _appContract.executeOutput(output, proof);
     }
 
-    function _testEtherMint(
-        bytes memory output,
-        OutputValidityProof memory proof
-    ) internal {
+    function _testEtherMint(bytes memory output, OutputValidityProof memory proof)
+        internal
+    {
         assertLt(
             address(_appContract).balance,
             _transferAmount,
@@ -645,18 +597,15 @@ contract ApplicationTest is Test, OwnableTest {
             "Application contract should have the transfer amount minted"
         );
 
-        assertTrue(
-            _wasOutputExecuted(proof), "Output should be marked as executed"
-        );
+        assertTrue(_wasOutputExecuted(proof), "Output should be marked as executed");
 
         _expectRevertOutputNotReexecutable(output);
         _appContract.executeOutput(output, proof);
     }
 
-    function _testERC721Transfer(
-        bytes memory output,
-        OutputValidityProof memory proof
-    ) internal {
+    function _testERC721Transfer(bytes memory output, OutputValidityProof memory proof)
+        internal
+    {
         assertEq(
             _erc721Token.ownerOf(_tokenId),
             _tokenOwner,
@@ -673,9 +622,7 @@ contract ApplicationTest is Test, OwnableTest {
         _appContract.executeOutput(output, proof);
 
         vm.prank(_tokenOwner);
-        _erc721Token.safeTransferFrom(
-            _tokenOwner, address(_appContract), _tokenId
-        );
+        _erc721Token.safeTransferFrom(_tokenOwner, address(_appContract), _tokenId);
 
         _expectEmitOutputExecuted(output, proof);
         _appContract.executeOutput(output, proof);
@@ -686,18 +633,15 @@ contract ApplicationTest is Test, OwnableTest {
             "The NFT is then transferred to the recipient"
         );
 
-        assertTrue(
-            _wasOutputExecuted(proof), "Output should be marked as executed"
-        );
+        assertTrue(_wasOutputExecuted(proof), "Output should be marked as executed");
 
         _expectRevertOutputNotReexecutable(output);
         _appContract.executeOutput(output, proof);
     }
 
-    function _testERC20Fail(
-        bytes memory output,
-        OutputValidityProof memory proof
-    ) internal {
+    function _testERC20Fail(bytes memory output, OutputValidityProof memory proof)
+        internal
+    {
         // test revert
 
         assertLt(
@@ -725,18 +669,16 @@ contract ApplicationTest is Test, OwnableTest {
         );
         vm.expectRevert(
             abi.encodeWithSelector(
-                SafeERC20.SafeERC20FailedOperation.selector,
-                address(_erc20Token)
+                SafeERC20.SafeERC20FailedOperation.selector, address(_erc20Token)
             )
         );
         _appContract.executeOutput(output, proof);
         vm.clearMockedCalls();
     }
 
-    function _testERC20Success(
-        bytes memory output,
-        OutputValidityProof memory proof
-    ) internal {
+    function _testERC20Success(bytes memory output, OutputValidityProof memory proof)
+        internal
+    {
         vm.prank(_tokenOwner);
         _erc20Token.transfer(address(_appContract), _transferAmount);
 
@@ -758,9 +700,7 @@ contract ApplicationTest is Test, OwnableTest {
             "Application contract should have the transfer amount deducted"
         );
 
-        assertTrue(
-            _wasOutputExecuted(proof), "Output should be marked as executed"
-        );
+        assertTrue(_wasOutputExecuted(proof), "Output should be marked as executed");
 
         _expectRevertOutputNotReexecutable(output);
         _appContract.executeOutput(output, proof);
@@ -786,8 +726,7 @@ contract ApplicationTest is Test, OwnableTest {
             _tokenOwner, address(_appContract), _tokenId, _initialSupply, ""
         );
 
-        uint256 recipientBalance =
-            _erc1155SingleToken.balanceOf(_recipient, _tokenId);
+        uint256 recipientBalance = _erc1155SingleToken.balanceOf(_recipient, _tokenId);
         uint256 appBalance =
             _erc1155SingleToken.balanceOf(address(_appContract), _tokenId);
 
@@ -805,9 +744,7 @@ contract ApplicationTest is Test, OwnableTest {
             "Recipient should have received the transfer amount"
         );
 
-        assertTrue(
-            _wasOutputExecuted(proof), "Output should be marked as executed"
-        );
+        assertTrue(_wasOutputExecuted(proof), "Output should be marked as executed");
 
         _expectRevertOutputNotReexecutable(output);
         _appContract.executeOutput(output, proof);
@@ -837,11 +774,9 @@ contract ApplicationTest is Test, OwnableTest {
         uint256[] memory appBalances = new uint256[](batchLength);
         uint256[] memory recipientBalances = new uint256[](batchLength);
         for (uint256 i; i < batchLength; ++i) {
-            appBalances[i] = _erc1155BatchToken.balanceOf(
-                address(_appContract), _tokenIds[i]
-            );
-            recipientBalances[i] =
-                _erc1155BatchToken.balanceOf(_recipient, _tokenIds[i]);
+            appBalances[i] =
+                _erc1155BatchToken.balanceOf(address(_appContract), _tokenIds[i]);
+            recipientBalances[i] = _erc1155BatchToken.balanceOf(_recipient, _tokenIds[i]);
         }
 
         _expectEmitOutputExecuted(output, proof);
@@ -849,9 +784,7 @@ contract ApplicationTest is Test, OwnableTest {
 
         for (uint256 i; i < _tokenIds.length; ++i) {
             assertEq(
-                _erc1155BatchToken.balanceOf(
-                    address(_appContract), _tokenIds[i]
-                ),
+                _erc1155BatchToken.balanceOf(address(_appContract), _tokenIds[i]),
                 appBalances[i] - _transferAmounts[i],
                 "Application contract should have the transfer amount deducted"
             );
@@ -862,9 +795,7 @@ contract ApplicationTest is Test, OwnableTest {
             );
         }
 
-        assertTrue(
-            _wasOutputExecuted(proof), "Output should be marked as executed"
-        );
+        assertTrue(_wasOutputExecuted(proof), "Output should be marked as executed");
 
         _expectRevertOutputNotReexecutable(output);
         _appContract.executeOutput(output, proof);

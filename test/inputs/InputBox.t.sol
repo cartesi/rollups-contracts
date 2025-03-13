@@ -35,9 +35,8 @@ contract InputBoxTest is Test {
         _inputBox.addInput(appContract, new bytes(max));
 
         bytes memory largePayload = new bytes(max + 1);
-        bytes memory largeInput = EvmAdvanceEncoder.encode(
-            1, appContract, address(this), 1, largePayload
-        );
+        bytes memory largeInput =
+            EvmAdvanceEncoder.encode(1, appContract, address(this), 1, largePayload);
         uint256 largeLength = largeInput.length;
         vm.expectRevert(
             abi.encodeWithSelector(
@@ -50,11 +49,9 @@ contract InputBoxTest is Test {
         _inputBox.addInput(appContract, largePayload);
     }
 
-    function testAddInput(
-        uint64 chainId,
-        address appContract,
-        bytes[] calldata payloads
-    ) public {
+    function testAddInput(uint64 chainId, address appContract, bytes[] calldata payloads)
+        public
+    {
         vm.chainId(chainId); // foundry limits chain id to be less than 2^64 - 1
 
         uint256 numPayloads = payloads.length;
@@ -114,8 +111,7 @@ contract InputBoxTest is Test {
 
     function _getMaxInputPayloadLength() internal pure returns (uint256) {
         bytes memory blob = abi.encodeCall(
-            Inputs.EvmAdvance,
-            (0, address(0), address(0), 0, 0, 0, 0, new bytes(32))
+            Inputs.EvmAdvance, (0, address(0), address(0), 0, 0, 0, 0, new bytes(32))
         );
         // number of bytes in input blob excluding input payload
         uint256 extraBytes = blob.length - 32;

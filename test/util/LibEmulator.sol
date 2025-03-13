@@ -44,10 +44,11 @@ library LibEmulator {
         return state.outputs[OutputIndex.unwrap(outputIndex)];
     }
 
-    function getOutputValidityProof(
-        State storage state,
-        OutputIndex outputIndex
-    ) internal view returns (OutputValidityProof memory) {
+    function getOutputValidityProof(State storage state, OutputIndex outputIndex)
+        internal
+        view
+        returns (OutputValidityProof memory)
+    {
         bytes32[] memory outputHashes;
 
         outputHashes = getOutputHashes(state.outputs);
@@ -58,11 +59,7 @@ library LibEmulator {
         );
     }
 
-    function getOutputsMerkleRoot(State storage state)
-        internal
-        view
-        returns (bytes32)
-    {
+    function getOutputsMerkleRoot(State storage state) internal view returns (bytes32) {
         bytes32[] memory outputHashes;
 
         outputHashes = getOutputHashes(state.outputs);
@@ -82,13 +79,12 @@ library LibEmulator {
         return outputHashes.merkleRoot(CanonicalMachine.LOG2_MAX_OUTPUTS);
     }
 
-    function getOutputSiblings(
-        bytes32[] memory outputHashes,
-        uint64 outputIndex
-    ) internal pure returns (bytes32[] memory) {
-        return outputHashes.siblings(
-            outputIndex, CanonicalMachine.LOG2_MAX_OUTPUTS
-        );
+    function getOutputSiblings(bytes32[] memory outputHashes, uint64 outputIndex)
+        internal
+        pure
+        returns (bytes32[] memory)
+    {
+        return outputHashes.siblings(outputIndex, CanonicalMachine.LOG2_MAX_OUTPUTS);
     }
 
     // ---------------

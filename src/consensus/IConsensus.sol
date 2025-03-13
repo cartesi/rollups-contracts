@@ -12,8 +12,8 @@ interface IConsensus is IERC165 {
     /// @notice Check whether an outputs Merkle root is valid.
     /// @param appContract The application contract address
     /// @param outputsMerkleRoot The outputs Merkle root
-    function isOutputsMerkleRootValid(
-        address appContract,
-        bytes32 outputsMerkleRoot
-    ) external view returns (bool);
+    function isOutputsMerkleRootValid(address appContract, bytes32 outputsMerkleRoot)
+        external
+        view
+        returns (bool);
 }

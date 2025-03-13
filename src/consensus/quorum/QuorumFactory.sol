@@ -24,11 +24,11 @@ contract QuorumFactory is IQuorumFactory {
         return quorum;
     }
 
-    function newQuorum(
-        address[] calldata validators,
-        uint256 epochLength,
-        bytes32 salt
-    ) external override returns (IQuorum) {
+    function newQuorum(address[] calldata validators, uint256 epochLength, bytes32 salt)
+        external
+        override
+        returns (IQuorum)
+    {
         IQuorum quorum = new Quorum{salt: salt}(validators, epochLength);
 
         emit QuorumCreated(quorum);
@@ -45,8 +45,7 @@ contract QuorumFactory is IQuorumFactory {
             salt,
             keccak256(
                 abi.encodePacked(
-                    type(Quorum).creationCode,
-                    abi.encode(validators, epochLength)
+                    type(Quorum).creationCode, abi.encode(validators, epochLength)
                 )
             )
         );

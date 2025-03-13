@@ -74,28 +74,22 @@ interface IApplication is IOwnable {
     /// @dev On a successful execution, emits a `OutputExecuted` event.
     /// @dev May raise any of the errors raised by `validateOutput`,
     /// as well as `OutputNotExecutable` and `OutputNotReexecutable`.
-    function executeOutput(
-        bytes calldata output,
-        OutputValidityProof calldata proof
-    ) external;
+    function executeOutput(bytes calldata output, OutputValidityProof calldata proof)
+        external;
 
     /// @notice Check whether an output has been executed.
     /// @param outputIndex The index of output
     /// @return Whether the output has been executed before
-    function wasOutputExecuted(uint256 outputIndex)
-        external
-        view
-        returns (bool);
+    function wasOutputExecuted(uint256 outputIndex) external view returns (bool);
 
     /// @notice Validate an output.
     /// @param output The output
     /// @param proof The proof used to validate the output against
     ///              a claim accepted to the current consensus contract
     /// @dev May raise any of the errors raised by `validateOutputHash`.
-    function validateOutput(
-        bytes calldata output,
-        OutputValidityProof calldata proof
-    ) external view;
+    function validateOutput(bytes calldata output, OutputValidityProof calldata proof)
+        external
+        view;
 
     /// @notice Validate an output hash.
     /// @param outputHash The output hash
@@ -103,10 +97,9 @@ interface IApplication is IOwnable {
     ///              a claim accepted to the current consensus contract
     /// @dev May raise `InvalidOutputHashesSiblingsArrayLength`
     /// or `InvalidOutputsMerkleRoot`.
-    function validateOutputHash(
-        bytes32 outputHash,
-        OutputValidityProof calldata proof
-    ) external view;
+    function validateOutputHash(bytes32 outputHash, OutputValidityProof calldata proof)
+        external
+        view;
 
     /// @notice Get the application's template hash.
     /// @return The application's template hash

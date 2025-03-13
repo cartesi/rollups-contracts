@@ -15,8 +15,7 @@ abstract contract AbstractClaimSubmitter is IClaimSubmitter, ERC165 {
     uint256 private immutable _epochLength;
 
     /// @notice Indexes accepted claims by application contract address.
-    mapping(address => mapping(bytes32 => bool)) private
-        _validOutputsMerkleRoots;
+    mapping(address => mapping(bytes32 => bool)) private _validOutputsMerkleRoots;
 
     /// @param epochLength The epoch length
     /// @dev Reverts if the epoch length is zero.
@@ -26,10 +25,12 @@ abstract contract AbstractClaimSubmitter is IClaimSubmitter, ERC165 {
     }
 
     /// @inheritdoc IConsensus
-    function isOutputsMerkleRootValid(
-        address appContract,
-        bytes32 outputsMerkleRoot
-    ) public view override returns (bool) {
+    function isOutputsMerkleRootValid(address appContract, bytes32 outputsMerkleRoot)
+        public
+        view
+        override
+        returns (bool)
+    {
         return _validOutputsMerkleRoots[appContract][outputsMerkleRoot];
     }
 
@@ -61,8 +62,6 @@ abstract contract AbstractClaimSubmitter is IClaimSubmitter, ERC165 {
         bytes32 outputsMerkleRoot
     ) internal {
         _validOutputsMerkleRoots[appContract][outputsMerkleRoot] = true;
-        emit ClaimAcceptance(
-            appContract, lastProcessedBlockNumber, outputsMerkleRoot
-        );
+        emit ClaimAcceptance(appContract, lastProcessedBlockNumber, outputsMerkleRoot);
     }
 }

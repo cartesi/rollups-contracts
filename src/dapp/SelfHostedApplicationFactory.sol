@@ -8,8 +8,7 @@ import {IAuthority} from "../consensus/authority/IAuthority.sol";
 import {IAuthorityFactory} from "../consensus/authority/IAuthorityFactory.sol";
 import {IApplication} from "./IApplication.sol";
 import {IApplicationFactory} from "./IApplicationFactory.sol";
-import {ISelfHostedApplicationFactory} from
-    "./ISelfHostedApplicationFactory.sol";
+import {ISelfHostedApplicationFactory} from "./ISelfHostedApplicationFactory.sol";
 
 /// @title Self-hosted Application Factory
 /// @notice Allows anyone to reliably deploy a new IAuthority contract,
@@ -28,12 +27,7 @@ contract SelfHostedApplicationFactory is ISelfHostedApplicationFactory {
         _applicationFactory = applicationFactory;
     }
 
-    function getAuthorityFactory()
-        external
-        view
-        override
-        returns (IAuthorityFactory)
-    {
+    function getAuthorityFactory() external view override returns (IAuthorityFactory) {
         return _authorityFactory;
     }
 
@@ -54,8 +48,7 @@ contract SelfHostedApplicationFactory is ISelfHostedApplicationFactory {
         bytes calldata dataAvailability,
         bytes32 salt
     ) external returns (IApplication application, IAuthority authority) {
-        authority =
-            _authorityFactory.newAuthority(authorityOwner, epochLength, salt);
+        authority = _authorityFactory.newAuthority(authorityOwner, epochLength, salt);
 
         application = _applicationFactory.newApplication(
             authority, appOwner, templateHash, dataAvailability, salt
@@ -70,16 +63,11 @@ contract SelfHostedApplicationFactory is ISelfHostedApplicationFactory {
         bytes calldata dataAvailability,
         bytes32 salt
     ) external view returns (address application, address authority) {
-        authority = _authorityFactory.calculateAuthorityAddress(
-            authorityOwner, epochLength, salt
-        );
+        authority =
+            _authorityFactory.calculateAuthorityAddress(authorityOwner, epochLength, salt);
 
         application = _applicationFactory.calculateApplicationAddress(
-            IConsensus(authority),
-            appOwner,
-            templateHash,
-            dataAvailability,
-            salt
+            IConsensus(authority), appOwner, templateHash, dataAvailability, salt
         );
     }
 }
