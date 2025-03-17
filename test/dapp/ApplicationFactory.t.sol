@@ -7,7 +7,7 @@ pragma solidity ^0.8.22;
 import {ApplicationFactory} from "src/dapp/ApplicationFactory.sol";
 import {IApplicationFactory} from "src/dapp/IApplicationFactory.sol";
 import {IApplication} from "src/dapp/IApplication.sol";
-import {IConsensus} from "src/consensus/IConsensus.sol";
+import {IOutputsMerkleRootValidator} from "src/consensus/IOutputsMerkleRootValidator.sol";
 
 import {Test} from "forge-std-1.9.6/Test.sol";
 import {Vm} from "forge-std-1.9.6/Vm.sol";
@@ -20,24 +20,28 @@ contract ApplicationFactoryTest is Test {
     }
 
     function testNewApplication(
-        IConsensus consensus,
+        IOutputsMerkleRootValidator outputsMerkleRootValidator,
         address appOwner,
         bytes32 templateHash,
         bytes calldata dataAvailability
     ) public {
         vm.assume(appOwner != address(0));
 
-        IApplication appContract =
-            _factory.newApplication(consensus, appOwner, templateHash, dataAvailability);
+        IApplication appContract = _factory.newApplication(
+            outputsMerkleRootValidator, appOwner, templateHash, dataAvailability
+        );
 
-        assertEq(address(appContract.getConsensus()), address(consensus));
+        assertEq(
+            address(appContract.getOutputsMerkleRootValidator()),
+            address(outputsMerkleRootValidator)
+        );
         assertEq(appContract.owner(), appOwner);
         assertEq(appContract.getTemplateHash(), templateHash);
         assertEq(appContract.getDataAvailability(), dataAvailability);
     }
 
     function testNewApplicationDeterministic(
-        IConsensus consensus,
+        IOutputsMerkleRootValidator outputsMerkleRootValidator,
         address appOwner,
         bytes32 templateHash,
         bytes calldata dataAvailability,
@@ -46,23 +50,26 @@ contract ApplicationFactoryTest is Test {
         vm.assume(appOwner != address(0));
 
         address precalculatedAddress = _factory.calculateApplicationAddress(
-            consensus, appOwner, templateHash, dataAvailability, salt
+            outputsMerkleRootValidator, appOwner, templateHash, dataAvailability, salt
         );
 
         IApplication appContract = _factory.newApplication(
-            consensus, appOwner, templateHash, dataAvailability, salt
+            outputsMerkleRootValidator, appOwner, templateHash, dataAvailability, salt
         );
 
         // Precalculated address must match actual address
         assertEq(precalculatedAddress, address(appContract));
 
-        assertEq(address(appContract.getConsensus()), address(consensus));
+        assertEq(
+            address(appContract.getOutputsMerkleRootValidator()),
+            address(outputsMerkleRootValidator)
+        );
         assertEq(appContract.owner(), appOwner);
         assertEq(appContract.getTemplateHash(), templateHash);
         assertEq(appContract.getDataAvailability(), dataAvailability);
 
         precalculatedAddress = _factory.calculateApplicationAddress(
-            consensus, appOwner, templateHash, dataAvailability, salt
+            outputsMerkleRootValidator, appOwner, templateHash, dataAvailability, salt
         );
 
         // Precalculated address must STILL match actual address
@@ -70,11 +77,13 @@ contract ApplicationFactoryTest is Test {
 
         // Cannot deploy an application with the same salt twice
         vm.expectRevert(bytes(""));
-        _factory.newApplication(consensus, appOwner, templateHash, dataAvailability, salt);
+        _factory.newApplication(
+            outputsMerkleRootValidator, appOwner, templateHash, dataAvailability, salt
+        );
     }
 
     function testApplicationCreatedEvent(
-        IConsensus consensus,
+        IOutputsMerkleRootValidator outputsMerkleRootValidator,
         address appOwner,
         bytes32 templateHash,
         bytes calldata dataAvailability
@@ -83,16 +92,21 @@ contract ApplicationFactoryTest is Test {
 
         vm.recordLogs();
 
-        IApplication appContract =
-            _factory.newApplication(consensus, appOwner, templateHash, dataAvailability);
+        IApplication appContract = _factory.newApplication(
+            outputsMerkleRootValidator, appOwner, templateHash, dataAvailability
+        );
 
         _testApplicationCreatedEventAux(
-            consensus, appOwner, templateHash, dataAvailability, appContract
+            outputsMerkleRootValidator,
+            appOwner,
+            templateHash,
+            dataAvailability,
+            appContract
         );
     }
 
     function testApplicationCreatedEventDeterministic(
-        IConsensus consensus,
+        IOutputsMerkleRootValidator outputsMerkleRootValidator,
         address appOwner,
         bytes32 templateHash,
         bytes calldata dataAvailability,
@@ -103,16 +117,20 @@ contract ApplicationFactoryTest is Test {
         vm.recordLogs();
 
         IApplication appContract = _factory.newApplication(
-            consensus, appOwner, templateHash, dataAvailability, salt
+            outputsMerkleRootValidator, appOwner, templateHash, dataAvailability, salt
         );
 
         _testApplicationCreatedEventAux(
-            consensus, appOwner, templateHash, dataAvailability, appContract
+            outputsMerkleRootValidator,
+            appOwner,
+            templateHash,
+            dataAvailability,
+            appContract
         );
     }
 
     function _testApplicationCreatedEventAux(
-        IConsensus consensus,
+        IOutputsMerkleRootValidator outputsMerkleRootValidator,
         address appOwner,
         bytes32 templateHash,
         bytes calldata dataAvailability,
@@ -131,7 +149,10 @@ contract ApplicationFactoryTest is Test {
             ) {
                 ++numOfApplicationsCreated;
 
-                assertEq(entry.topics[1], bytes32(uint256(uint160(address(consensus)))));
+                assertEq(
+                    entry.topics[1],
+                    bytes32(uint256(uint160(address(outputsMerkleRootValidator))))
+                );
 
                 (
                     address appOwner_,

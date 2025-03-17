@@ -6,7 +6,7 @@ pragma solidity ^0.8.8;
 import {Create2} from "@openzeppelin-contracts-5.2.0/utils/Create2.sol";
 
 import {IApplicationFactory} from "./IApplicationFactory.sol";
-import {IConsensus} from "../consensus/IConsensus.sol";
+import {IOutputsMerkleRootValidator} from "../consensus/IOutputsMerkleRootValidator.sol";
 import {Application} from "./Application.sol";
 import {IApplication} from "./IApplication.sol";
 
@@ -14,41 +14,50 @@ import {IApplication} from "./IApplication.sol";
 /// @notice Allows anyone to reliably deploy a new `IApplication` contract.
 contract ApplicationFactory is IApplicationFactory {
     function newApplication(
-        IConsensus consensus,
+        IOutputsMerkleRootValidator outputsMerkleRootValidator,
         address appOwner,
         bytes32 templateHash,
         bytes calldata dataAvailability
     ) external override returns (IApplication) {
-        IApplication appContract =
-            new Application(consensus, appOwner, templateHash, dataAvailability);
+        IApplication appContract = new Application(
+            outputsMerkleRootValidator, appOwner, templateHash, dataAvailability
+        );
 
         emit ApplicationCreated(
-            consensus, appOwner, templateHash, dataAvailability, appContract
+            outputsMerkleRootValidator,
+            appOwner,
+            templateHash,
+            dataAvailability,
+            appContract
         );
 
         return appContract;
     }
 
     function newApplication(
-        IConsensus consensus,
+        IOutputsMerkleRootValidator outputsMerkleRootValidator,
         address appOwner,
         bytes32 templateHash,
         bytes calldata dataAvailability,
         bytes32 salt
     ) external override returns (IApplication) {
         IApplication appContract = new Application{salt: salt}(
-            consensus, appOwner, templateHash, dataAvailability
+            outputsMerkleRootValidator, appOwner, templateHash, dataAvailability
         );
 
         emit ApplicationCreated(
-            consensus, appOwner, templateHash, dataAvailability, appContract
+            outputsMerkleRootValidator,
+            appOwner,
+            templateHash,
+            dataAvailability,
+            appContract
         );
 
         return appContract;
     }
 
     function calculateApplicationAddress(
-        IConsensus consensus,
+        IOutputsMerkleRootValidator outputsMerkleRootValidator,
         address appOwner,
         bytes32 templateHash,
         bytes calldata dataAvailability,
@@ -59,7 +68,12 @@ contract ApplicationFactory is IApplicationFactory {
             keccak256(
                 abi.encodePacked(
                     type(Application).creationCode,
-                    abi.encode(consensus, appOwner, templateHash, dataAvailability)
+                    abi.encode(
+                        outputsMerkleRootValidator,
+                        appOwner,
+                        templateHash,
+                        dataAvailability
+                    )
                 )
             )
         );

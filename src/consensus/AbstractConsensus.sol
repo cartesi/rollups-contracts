@@ -6,11 +6,11 @@ pragma solidity ^0.8.8;
 import {ERC165} from "@openzeppelin-contracts-5.2.0/utils/introspection/ERC165.sol";
 import {IERC165} from "@openzeppelin-contracts-5.2.0/utils/introspection/IERC165.sol";
 
+import {IOutputsMerkleRootValidator} from "./IOutputsMerkleRootValidator.sol";
 import {IConsensus} from "./IConsensus.sol";
-import {IClaimSubmitter} from "./IClaimSubmitter.sol";
 
-/// @notice Abstract implementation of IClaimSubmitter
-abstract contract AbstractClaimSubmitter is IClaimSubmitter, ERC165 {
+/// @notice Abstract implementation of IConsensus
+abstract contract AbstractConsensus is IConsensus, ERC165 {
     /// @notice The epoch length
     uint256 private immutable _epochLength;
 
@@ -24,7 +24,7 @@ abstract contract AbstractClaimSubmitter is IClaimSubmitter, ERC165 {
         _epochLength = epochLength;
     }
 
-    /// @inheritdoc IConsensus
+    /// @inheritdoc IOutputsMerkleRootValidator
     function isOutputsMerkleRootValid(address appContract, bytes32 outputsMerkleRoot)
         public
         view
@@ -34,7 +34,7 @@ abstract contract AbstractClaimSubmitter is IClaimSubmitter, ERC165 {
         return _validOutputsMerkleRoots[appContract][outputsMerkleRoot];
     }
 
-    /// @inheritdoc IClaimSubmitter
+    /// @inheritdoc IConsensus
     function getEpochLength() public view override returns (uint256) {
         return _epochLength;
     }
@@ -47,7 +47,7 @@ abstract contract AbstractClaimSubmitter is IClaimSubmitter, ERC165 {
         override(IERC165, ERC165)
         returns (bool)
     {
-        return interfaceId == type(IClaimSubmitter).interfaceId
+        return interfaceId == type(IConsensus).interfaceId
             || super.supportsInterface(interfaceId);
     }
 

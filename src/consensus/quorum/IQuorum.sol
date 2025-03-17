@@ -3,7 +3,7 @@
 
 pragma solidity ^0.8.8;
 
-import {IClaimSubmitter} from "../IClaimSubmitter.sol";
+import {IConsensus} from "../IConsensus.sol";
 
 /// @notice A consensus model controlled by a small, immutable set of `n` validators.
 /// @notice You can know the value of `n` by calling the `numOfValidators` function.
@@ -11,7 +11,7 @@ import {IClaimSubmitter} from "../IClaimSubmitter.sol";
 /// These numbers are used internally instead of addresses for gas optimization reasons.
 /// @notice You can list the validators in the quorum by calling the `validatorById`
 /// function for each ID from 1 to `n`.
-interface IQuorum is IClaimSubmitter {
+interface IQuorum is IConsensus {
     /// @notice Get the number of validators.
     function numOfValidators() external view returns (uint256);
 
