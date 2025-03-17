@@ -7,7 +7,7 @@ import {IERC165} from "@openzeppelin-contracts-5.2.0/utils/introspection/IERC165
 
 import {Quorum} from "src/consensus/quorum/Quorum.sol";
 import {IQuorum} from "src/consensus/quorum/IQuorum.sol";
-import {IClaimSubmitter} from "src/consensus/IClaimSubmitter.sol";
+import {IConsensus} from "src/consensus/IConsensus.sol";
 
 import {ERC165Test} from "../../util/ERC165Test.sol";
 import {LibAddressArray} from "../../util/LibAddressArray.sol";
@@ -83,7 +83,7 @@ contract QuorumTest is Test, ERC165Test {
     function _getSupportedInterfaces() internal pure override returns (bytes4[] memory) {
         bytes4[] memory ifaces = new bytes4[](3);
         ifaces[0] = type(IERC165).interfaceId;
-        ifaces[1] = type(IClaimSubmitter).interfaceId;
+        ifaces[1] = type(IConsensus).interfaceId;
         ifaces[2] = type(IQuorum).interfaceId;
         return ifaces;
     }
@@ -296,7 +296,7 @@ contract QuorumTest is Test, ERC165Test {
 
             if (
                 entry.emitter == address(quorum)
-                    && entry.topics[0] == IClaimSubmitter.ClaimSubmission.selector
+                    && entry.topics[0] == IConsensus.ClaimSubmission.selector
             ) {
                 (uint256 lastProcessedBlockNumber, bytes32 outputHashesRootHash) =
                     abi.decode(entry.data, (uint256, bytes32));
@@ -311,7 +311,7 @@ contract QuorumTest is Test, ERC165Test {
 
             if (
                 entry.emitter == address(quorum)
-                    && entry.topics[0] == IClaimSubmitter.ClaimAcceptance.selector
+                    && entry.topics[0] == IConsensus.ClaimAcceptance.selector
             ) {
                 (uint256 lastProcessedBlockNumber, bytes32 outputHashesRootHash) =
                     abi.decode(entry.data, (uint256, bytes32));

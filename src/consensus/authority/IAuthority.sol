@@ -4,7 +4,7 @@
 pragma solidity ^0.8.8;
 
 import {IOwnable} from "../../access/IOwnable.sol";
-import {IClaimSubmitter} from "../IClaimSubmitter.sol";
+import {IConsensus} from "../IConsensus.sol";
 
 /// @notice A consensus contract controlled by a single address, the owner.
-interface IAuthority is IClaimSubmitter, IOwnable {}
+interface IAuthority is IConsensus, IOwnable {}

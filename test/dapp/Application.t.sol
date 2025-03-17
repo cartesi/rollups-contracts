@@ -7,7 +7,7 @@ import {Application} from "src/dapp/Application.sol";
 import {Authority} from "src/consensus/authority/Authority.sol";
 import {CanonicalMachine} from "src/common/CanonicalMachine.sol";
 import {IApplication} from "src/dapp/IApplication.sol";
-import {IConsensus} from "src/consensus/IConsensus.sol";
+import {IOutputsMerkleRootValidator} from "src/consensus/IOutputsMerkleRootValidator.sol";
 import {OutputValidityProof} from "src/common/OutputValidityProof.sol";
 import {Outputs} from "src/common/Outputs.sol";
 import {SafeERC20Transfer} from "src/delegatecall/SafeERC20Transfer.sol";
@@ -100,7 +100,7 @@ contract ApplicationTest is Test, OwnableTest {
     }
 
     function testConstructor(
-        IConsensus consensus,
+        IOutputsMerkleRootValidator outputsMerkleRootValidator,
         address owner,
         bytes32 templateHash,
         bytes calldata dataAvailability
@@ -110,37 +110,46 @@ contract ApplicationTest is Test, OwnableTest {
         vm.expectEmit(true, true, false, false);
         emit Ownable.OwnershipTransferred(address(0), owner);
 
-        IApplication appContract =
-            new Application(consensus, owner, templateHash, dataAvailability);
+        IApplication appContract = new Application(
+            outputsMerkleRootValidator, owner, templateHash, dataAvailability
+        );
 
-        assertEq(address(appContract.getConsensus()), address(consensus));
+        assertEq(
+            address(appContract.getOutputsMerkleRootValidator()),
+            address(outputsMerkleRootValidator)
+        );
         assertEq(appContract.owner(), owner);
         assertEq(appContract.getTemplateHash(), templateHash);
         assertEq(appContract.getDataAvailability(), dataAvailability);
     }
 
-    // -------------------
-    // consensus migration
-    // -------------------
+    // ---------------------------------------
+    // outputs Merkle root validator migration
+    // ---------------------------------------
 
-    function testMigrateToConsensusRevertsUnauthorized(
+    function testMigrateToOutputsMerkleRootValidatorRevertsUnauthorized(
         address caller,
-        IConsensus newConsensus
+        IOutputsMerkleRootValidator newOutputsMerkleRootValidator
     ) external {
         vm.assume(caller != _appOwner);
         vm.startPrank(caller);
         vm.expectRevert(
             abi.encodeWithSelector(Ownable.OwnableUnauthorizedAccount.selector, caller)
         );
-        _appContract.migrateToConsensus(newConsensus);
+        _appContract.migrateToOutputsMerkleRootValidator(newOutputsMerkleRootValidator);
     }
 
-    function testMigrateToConsensus(IConsensus newConsensus) external {
+    function testMigrateToOutputsMerkleRootValidator(
+        IOutputsMerkleRootValidator newOutputsMerkleRootValidator
+    ) external {
         vm.prank(_appOwner);
         vm.expectEmit(false, false, false, true, address(_appContract));
-        emit IApplication.NewConsensus(newConsensus);
-        _appContract.migrateToConsensus(newConsensus);
-        assertEq(address(_appContract.getConsensus()), address(newConsensus));
+        emit IApplication.NewOutputsMerkleRootValidator(newOutputsMerkleRootValidator);
+        _appContract.migrateToOutputsMerkleRootValidator(newOutputsMerkleRootValidator);
+        assertEq(
+            address(_appContract.getOutputsMerkleRootValidator()),
+            address(newOutputsMerkleRootValidator)
+        );
     }
 
     // -----------------

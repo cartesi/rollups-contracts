@@ -12,7 +12,7 @@ import {Ownable} from "@openzeppelin-contracts-5.2.0/access/Ownable.sol";
 
 import {Authority} from "src/consensus/authority/Authority.sol";
 import {IAuthority} from "src/consensus/authority/IAuthority.sol";
-import {IClaimSubmitter} from "src/consensus/IClaimSubmitter.sol";
+import {IConsensus} from "src/consensus/IConsensus.sol";
 import {IOwnable} from "src/access/IOwnable.sol";
 
 import {ERC165Test} from "../../util/ERC165Test.sol";
@@ -37,7 +37,7 @@ contract AuthorityTest is Test, ERC165Test, OwnableTest {
     function _getSupportedInterfaces() internal pure override returns (bytes4[] memory) {
         bytes4[] memory ifaces = new bytes4[](3);
         ifaces[0] = type(IERC165).interfaceId;
-        ifaces[1] = type(IClaimSubmitter).interfaceId;
+        ifaces[1] = type(IConsensus).interfaceId;
         ifaces[2] = type(IAuthority).interfaceId;
         return ifaces;
     }
@@ -160,11 +160,11 @@ contract AuthorityTest is Test, ERC165Test, OwnableTest {
         bytes32 claim
     ) internal {
         vm.expectEmit(true, true, false, true, address(authority));
-        emit IClaimSubmitter.ClaimSubmission(
+        emit IConsensus.ClaimSubmission(
             owner, appContract, lastProcessedBlockNumber, claim
         );
 
         vm.expectEmit(true, false, false, true, address(authority));
-        emit IClaimSubmitter.ClaimAcceptance(appContract, lastProcessedBlockNumber, claim);
+        emit IConsensus.ClaimAcceptance(appContract, lastProcessedBlockNumber, claim);
     }
 }

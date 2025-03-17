@@ -120,7 +120,7 @@ contract SelfHostedApplicationFactoryTest is Test {
         assertEq(authority.owner(), authorityOwner);
         assertEq(authority.getEpochLength(), epochLength);
 
-        assertEq(address(application.getConsensus()), authorityAddr);
+        assertEq(address(application.getOutputsMerkleRootValidator()), authorityAddr);
         assertEq(application.owner(), appOwner);
         assertEq(application.getTemplateHash(), templateHash);
         assertEq(application.getDataAvailability(), dataAvailability);

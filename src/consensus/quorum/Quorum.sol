@@ -7,9 +7,9 @@ import {BitMaps} from "@openzeppelin-contracts-5.2.0/utils/structs/BitMaps.sol";
 import {IERC165} from "@openzeppelin-contracts-5.2.0/utils/introspection/IERC165.sol";
 
 import {IQuorum} from "./IQuorum.sol";
-import {AbstractClaimSubmitter} from "../AbstractClaimSubmitter.sol";
+import {AbstractConsensus} from "../AbstractConsensus.sol";
 
-contract Quorum is IQuorum, AbstractClaimSubmitter {
+contract Quorum is IQuorum, AbstractConsensus {
     using BitMaps for BitMaps.BitMap;
 
     /// @notice The total number of validators.
@@ -46,7 +46,7 @@ contract Quorum is IQuorum, AbstractClaimSubmitter {
     /// @dev Duplicates in the `validators` array are ignored.
     /// @dev Reverts if the epoch length is zero.
     constructor(address[] memory validators, uint256 epochLength)
-        AbstractClaimSubmitter(epochLength)
+        AbstractConsensus(epochLength)
     {
         uint256 n;
         for (uint256 i; i < validators.length; ++i) {
@@ -128,11 +128,11 @@ contract Quorum is IQuorum, AbstractClaimSubmitter {
         return _votes[appContract][lastProcessedBlockNumber][outputsMerkleRoot];
     }
 
-    /// @inheritdoc AbstractClaimSubmitter
+    /// @inheritdoc AbstractConsensus
     function supportsInterface(bytes4 interfaceId)
         public
         view
-        override(IERC165, AbstractClaimSubmitter)
+        override(IERC165, AbstractConsensus)
         returns (bool)
     {
         return interfaceId == type(IQuorum).interfaceId

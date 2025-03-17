@@ -4,7 +4,7 @@
 pragma solidity ^0.8.8;
 
 import {IApplication} from "./IApplication.sol";
-import {IConsensus} from "../consensus/IConsensus.sol";
+import {IOutputsMerkleRootValidator} from "../consensus/IOutputsMerkleRootValidator.sol";
 import {LibOutputValidityProof} from "../library/LibOutputValidityProof.sol";
 import {OutputValidityProof} from "../common/OutputValidityProof.sol";
 import {Outputs} from "../common/Outputs.sol";
@@ -40,27 +40,27 @@ contract Application is
     /// @dev See the `wasOutputExecuted` function.
     BitMaps.BitMap internal _executed;
 
-    /// @notice The current consensus contract.
-    /// @dev See the `getConsensus` and `migrateToConsensus` functions.
-    IConsensus internal _consensus;
+    /// @notice The current outputs Merkle root validator contract.
+    /// @dev See the `getOutputsMerkleRootValidator` and `migrateToOutputsMerkleRootValidator` functions.
+    IOutputsMerkleRootValidator internal _outputsMerkleRootValidator;
 
     /// @notice The data availability solution.
     /// @dev See the `getDataAvailability` function.
     bytes internal _dataAvailability;
 
     /// @notice Creates an `Application` contract.
-    /// @param consensus The initial consensus contract
+    /// @param outputsMerkleRootValidator The initial outputs Merkle root validator contract
     /// @param initialOwner The initial application owner
     /// @param templateHash The initial machine state hash
     /// @dev Reverts if the initial application owner address is zero.
     constructor(
-        IConsensus consensus,
+        IOutputsMerkleRootValidator outputsMerkleRootValidator,
         address initialOwner,
         bytes32 templateHash,
         bytes memory dataAvailability
     ) Ownable(initialOwner) {
         _templateHash = templateHash;
-        _consensus = consensus;
+        _outputsMerkleRootValidator = outputsMerkleRootValidator;
         _dataAvailability = dataAvailability;
     }
 
@@ -103,9 +103,11 @@ contract Application is
         emit OutputExecuted(outputIndex, output);
     }
 
-    function migrateToConsensus(IConsensus newConsensus) external override onlyOwner {
-        _consensus = newConsensus;
-        emit NewConsensus(newConsensus);
+    function migrateToOutputsMerkleRootValidator(
+        IOutputsMerkleRootValidator newOutputsMerkleRootValidator
+    ) external override onlyOwner {
+        _outputsMerkleRootValidator = newOutputsMerkleRootValidator;
+        emit NewOutputsMerkleRootValidator(newOutputsMerkleRootValidator);
     }
 
     function wasOutputExecuted(uint256 outputIndex)
@@ -145,8 +147,13 @@ contract Application is
         return _templateHash;
     }
 
-    function getConsensus() external view override returns (IConsensus) {
-        return _consensus;
+    function getOutputsMerkleRootValidator()
+        external
+        view
+        override
+        returns (IOutputsMerkleRootValidator)
+    {
+        return _outputsMerkleRootValidator;
     }
 
     function getDataAvailability() external view override returns (bytes memory) {
@@ -166,14 +173,16 @@ contract Application is
     }
 
     /// @notice Check if an outputs Merkle root is valid,
-    /// according to the current consensus.
+    /// according to the current outputs Merkle root validator.
     /// @param outputsMerkleRoot The output Merkle root
     function _isOutputsMerkleRootValid(bytes32 outputsMerkleRoot)
         internal
         view
         returns (bool)
     {
-        return _consensus.isOutputsMerkleRootValid(address(this), outputsMerkleRoot);
+        return _outputsMerkleRootValidator.isOutputsMerkleRootValid(
+            address(this), outputsMerkleRoot
+        );
     }
 
     /// @notice Executes a voucher

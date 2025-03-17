@@ -3,7 +3,7 @@
 
 pragma solidity ^0.8.8;
 
-import {IConsensus} from "../consensus/IConsensus.sol";
+import {IOutputsMerkleRootValidator} from "../consensus/IOutputsMerkleRootValidator.sol";
 import {IAuthority} from "../consensus/authority/IAuthority.sol";
 import {IAuthorityFactory} from "../consensus/authority/IAuthorityFactory.sol";
 import {IApplication} from "./IApplication.sol";
@@ -67,7 +67,11 @@ contract SelfHostedApplicationFactory is ISelfHostedApplicationFactory {
             _authorityFactory.calculateAuthorityAddress(authorityOwner, epochLength, salt);
 
         application = _applicationFactory.calculateApplicationAddress(
-            IConsensus(authority), appOwner, templateHash, dataAvailability, salt
+            IOutputsMerkleRootValidator(authority),
+            appOwner,
+            templateHash,
+            dataAvailability,
+            salt
         );
     }
 }
