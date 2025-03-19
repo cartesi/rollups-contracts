@@ -12,10 +12,12 @@
         "prepack": "pnpm clean && pnpm build:contracts"
     },
     "devDependencies": {
-        "@changesets/cli": "^2.27.1",
+        "@changesets/cli": "^2.28.1",
         "@usecannon/cli": "^2.21.5"
     },
-    "files": ["out"],
+    "files": [
+        "out"
+    ],
     "license": "Apache-2.0",
     "packageManager": "pnpm@10.6.1"
 }
