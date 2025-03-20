@@ -29,7 +29,7 @@ jobs:
       - uses: ./.github/actions/setup
 
       - name: Create release PR or publish packages to npmjs.com
-        uses: changesets/action@3de3850952bec538fde60aac71731376e57b9b57
+        uses: changesets/action@06245a4e0a36c064a573d4150030f5ec548e4fcc
         id: changeset
         with:
           setupGitUser: false
