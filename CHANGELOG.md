@@ -1,5 +1,11 @@
 # @cartesi/rollups
 
+## 2.0.0-rc.17
+
+### Patch Changes
+
+- 8fe54d7: Fix workflow that publishes Rust bindings
+
 ## 2.0.0-rc.16
 
 ### Minor Changes
