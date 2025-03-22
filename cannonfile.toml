@@ -61,6 +61,26 @@ create2 = true
 salt = "<%= zeroHash %>"
 ifExists = "continue"
 
+[deploy.DirectInputApplicationFactory]
+artifact = "DirectInputApplicationFactory"
+args = [
+    "<%= contracts.ApplicationFactory.address %>",
+    "<%= contracts.InputBox.address %>",
+]
+create2 = true
+salt = "<%= zeroHash %>"
+ifExists = "continue"
+
+[deploy.EspressoApplicationFactory]
+artifact = "EspressoApplicationFactory"
+args = [
+    "<%= contracts.ApplicationFactory.address %>",
+    "<%= contracts.InputBox.address %>",
+]
+create2 = true
+salt = "<%= zeroHash %>"
+ifExists = "continue"
+
 [deploy.SelfHostedApplicationFactory]
 artifact = "SelfHostedApplicationFactory"
 args = [
