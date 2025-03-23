@@ -28,8 +28,8 @@ import {IERC721} from "@openzeppelin-contracts-5.2.0/token/ERC721/IERC721.sol";
 import {Ownable} from "@openzeppelin-contracts-5.2.0/access/Ownable.sol";
 import {SafeERC20} from "@openzeppelin-contracts-5.2.0/token/ERC20/utils/SafeERC20.sol";
 
-import {Vm} from "forge-std-1.9.6/Vm.sol";
-import {Test} from "forge-std-1.9.6/Test.sol";
+import {Vm} from "forge-std-1.9.6/src/Vm.sol";
+import {Test} from "forge-std-1.9.6/src/Test.sol";
 
 import {OwnableTest} from "../util/OwnableTest.sol";
 import {EtherReceiver} from "../util/EtherReceiver.sol";

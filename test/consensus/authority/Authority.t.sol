@@ -4,8 +4,8 @@
 /// @title Authority Test
 pragma solidity ^0.8.22;
 
-import {Vm} from "forge-std-1.9.6/Vm.sol";
-import {Test} from "forge-std-1.9.6/Test.sol";
+import {Vm} from "forge-std-1.9.6/src/Vm.sol";
+import {Test} from "forge-std-1.9.6/src/Test.sol";
 
 import {IERC165} from "@openzeppelin-contracts-5.2.0/utils/introspection/IERC165.sol";
 import {Ownable} from "@openzeppelin-contracts-5.2.0/access/Ownable.sol";
