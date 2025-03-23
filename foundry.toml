@@ -1,7 +1,5 @@
 [profile.default]
-src = "src"
-out = "out"
-libs = ["dependencies"]
+libs = []
 solc_version = "0.8.23"
 via_ir = true
 optimizer = true
@@ -13,9 +11,6 @@ line_length = 90
 runs = 32
 depth = 100
 fail_on_revert = true
-
-[soldeer]
-remappings_generate = false
 
 [dependencies]
 "@openzeppelin-contracts" = "5.2.0"

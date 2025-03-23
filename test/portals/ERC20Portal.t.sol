@@ -11,7 +11,7 @@ import {IERC20Portal} from "src/portals/IERC20Portal.sol";
 import {IInputBox} from "src/inputs/IInputBox.sol";
 import {InputEncoding} from "src/common/InputEncoding.sol";
 
-import {Test} from "forge-std-1.9.6/Test.sol";
+import {Test} from "forge-std-1.9.6/src/Test.sol";
 
 import {SimpleERC20} from "../util/SimpleERC20.sol";
 

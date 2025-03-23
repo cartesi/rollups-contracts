@@ -11,7 +11,7 @@ import {IERC1155BatchPortal} from "src/portals/IERC1155BatchPortal.sol";
 import {IInputBox} from "src/inputs/IInputBox.sol";
 import {InputEncoding} from "src/common/InputEncoding.sol";
 
-import {Test} from "forge-std-1.9.6/Test.sol";
+import {Test} from "forge-std-1.9.6/src/Test.sol";
 
 import {SimpleBatchERC1155} from "../util/SimpleERC1155.sol";
 

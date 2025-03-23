@@ -11,7 +11,7 @@ import {IERC721Portal} from "src/portals/IERC721Portal.sol";
 import {IInputBox} from "src/inputs/IInputBox.sol";
 import {InputEncoding} from "src/common/InputEncoding.sol";
 
-import {Test} from "forge-std-1.9.6/Test.sol";
+import {Test} from "forge-std-1.9.6/src/Test.sol";
 
 import {SimpleERC721} from "../util/SimpleERC721.sol";
 
