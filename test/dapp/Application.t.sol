@@ -100,12 +100,15 @@ contract ApplicationTest is Test, OwnableTest {
     }
 
     function testConstructor(
+        uint256 blockNumber,
         IOutputsMerkleRootValidator outputsMerkleRootValidator,
         address owner,
         bytes32 templateHash,
         bytes calldata dataAvailability
     ) external {
         vm.assume(owner != address(0));
+
+        vm.roll(blockNumber);
 
         vm.expectEmit(true, true, false, false);
         emit Ownable.OwnershipTransferred(address(0), owner);
@@ -121,6 +124,7 @@ contract ApplicationTest is Test, OwnableTest {
         assertEq(appContract.owner(), owner);
         assertEq(appContract.getTemplateHash(), templateHash);
         assertEq(appContract.getDataAvailability(), dataAvailability);
+        assertEq(appContract.getDeploymentBlockNumber(), blockNumber);
     }
 
     // ---------------------------------------

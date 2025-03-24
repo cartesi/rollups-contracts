@@ -32,6 +32,9 @@ contract Application is
     using LibAddress for address;
     using LibOutputValidityProof for OutputValidityProof;
 
+    /// @notice Deployment block number
+    uint256 immutable _deploymentBlockNumber = block.number;
+
     /// @notice The initial machine state hash.
     /// @dev See the `getTemplateHash` function.
     bytes32 internal immutable _templateHash;
@@ -158,6 +161,11 @@ contract Application is
 
     function getDataAvailability() external view override returns (bytes memory) {
         return _dataAvailability;
+    }
+
+    /// @inheritdoc IApplication
+    function getDeploymentBlockNumber() external view override returns (uint256) {
+        return _deploymentBlockNumber;
     }
 
     function owner() public view override(IOwnable, Ownable) returns (address) {

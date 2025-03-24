@@ -120,4 +120,7 @@ interface IApplication is IOwnable {
     /// @return Solidity ABI-encoded function call that describes
     /// the source of inputs that should be fed to the application.
     function getDataAvailability() external view returns (bytes memory);
+
+    /// @notice Get number of block in which contract was deployed
+    function getDeploymentBlockNumber() external view returns (uint256);
 }

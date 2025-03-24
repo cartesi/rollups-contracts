@@ -20,12 +20,15 @@ contract ApplicationFactoryTest is Test {
     }
 
     function testNewApplication(
+        uint256 blockNumber,
         IOutputsMerkleRootValidator outputsMerkleRootValidator,
         address appOwner,
         bytes32 templateHash,
         bytes calldata dataAvailability
     ) public {
         vm.assume(appOwner != address(0));
+
+        vm.roll(blockNumber);
 
         IApplication appContract = _factory.newApplication(
             outputsMerkleRootValidator, appOwner, templateHash, dataAvailability
@@ -38,9 +41,11 @@ contract ApplicationFactoryTest is Test {
         assertEq(appContract.owner(), appOwner);
         assertEq(appContract.getTemplateHash(), templateHash);
         assertEq(appContract.getDataAvailability(), dataAvailability);
+        assertEq(appContract.getDeploymentBlockNumber(), blockNumber);
     }
 
     function testNewApplicationDeterministic(
+        uint256 blockNumber,
         IOutputsMerkleRootValidator outputsMerkleRootValidator,
         address appOwner,
         bytes32 templateHash,
@@ -48,6 +53,8 @@ contract ApplicationFactoryTest is Test {
         bytes32 salt
     ) public {
         vm.assume(appOwner != address(0));
+
+        vm.roll(blockNumber);
 
         address precalculatedAddress = _factory.calculateApplicationAddress(
             outputsMerkleRootValidator, appOwner, templateHash, dataAvailability, salt
@@ -67,6 +74,7 @@ contract ApplicationFactoryTest is Test {
         assertEq(appContract.owner(), appOwner);
         assertEq(appContract.getTemplateHash(), templateHash);
         assertEq(appContract.getDataAvailability(), dataAvailability);
+        assertEq(appContract.getDeploymentBlockNumber(), blockNumber);
 
         precalculatedAddress = _factory.calculateApplicationAddress(
             outputsMerkleRootValidator, appOwner, templateHash, dataAvailability, salt
