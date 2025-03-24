@@ -9,14 +9,10 @@ import {Inputs} from "../common/Inputs.sol";
 
 contract InputBox is IInputBox {
     /// @notice Deployment block number
-    uint256 immutable _deploymentBlockNumber;
+    uint256 immutable _deploymentBlockNumber = block.number;
 
     /// @notice Mapping of application contract addresses to arrays of input hashes.
     mapping(address => bytes32[]) private _inputBoxes;
-
-    constructor() {
-        _deploymentBlockNumber = block.number;
-    }
 
     /// @inheritdoc IInputBox
     function addInput(address appContract, bytes calldata payload)
