@@ -72,6 +72,7 @@ contract Application is
     ///      the backend of it, then please do so through the Ether portal contract.
     receive() external payable {}
 
+    /// @inheritdoc IApplication
     function executeOutput(bytes calldata output, OutputValidityProof calldata proof)
         external
         override
@@ -106,6 +107,7 @@ contract Application is
         emit OutputExecuted(outputIndex, output);
     }
 
+    /// @inheritdoc IApplication
     function migrateToOutputsMerkleRootValidator(
         IOutputsMerkleRootValidator newOutputsMerkleRootValidator
     ) external override onlyOwner {
@@ -113,6 +115,7 @@ contract Application is
         emit NewOutputsMerkleRootValidator(newOutputsMerkleRootValidator);
     }
 
+    /// @inheritdoc IApplication
     function wasOutputExecuted(uint256 outputIndex)
         external
         view
@@ -122,6 +125,7 @@ contract Application is
         return _executed.get(outputIndex);
     }
 
+    /// @inheritdoc IApplication
     function validateOutput(bytes calldata output, OutputValidityProof calldata proof)
         public
         view
@@ -130,6 +134,7 @@ contract Application is
         validateOutputHash(keccak256(output), proof);
     }
 
+    /// @inheritdoc IApplication
     function validateOutputHash(bytes32 outputHash, OutputValidityProof calldata proof)
         public
         view
@@ -146,10 +151,12 @@ contract Application is
         }
     }
 
+    /// @inheritdoc IApplication
     function getTemplateHash() external view override returns (bytes32) {
         return _templateHash;
     }
 
+    /// @inheritdoc IApplication
     function getOutputsMerkleRootValidator()
         external
         view
@@ -159,6 +166,7 @@ contract Application is
         return _outputsMerkleRootValidator;
     }
 
+    /// @inheritdoc IApplication
     function getDataAvailability() external view override returns (bytes memory) {
         return _dataAvailability;
     }
@@ -168,14 +176,17 @@ contract Application is
         return _deploymentBlockNumber;
     }
 
+    /// @inheritdoc Ownable
     function owner() public view override(IOwnable, Ownable) returns (address) {
         return super.owner();
     }
 
+    /// @inheritdoc Ownable
     function renounceOwnership() public override(IOwnable, Ownable) {
         super.renounceOwnership();
     }
 
+    /// @inheritdoc Ownable
     function transferOwnership(address newOwner) public override(IOwnable, Ownable) {
         super.transferOwnership(newOwner);
     }
