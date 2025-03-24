@@ -144,7 +144,7 @@ contract ApplicationTest is Test, OwnableTest {
     ) external {
         vm.prank(_appOwner);
         vm.expectEmit(false, false, false, true, address(_appContract));
-        emit IApplication.NewOutputsMerkleRootValidator(newOutputsMerkleRootValidator);
+        emit IApplication.OutputsMerkleRootValidatorChanged(newOutputsMerkleRootValidator);
         _appContract.migrateToOutputsMerkleRootValidator(newOutputsMerkleRootValidator);
         assertEq(
             address(_appContract.getOutputsMerkleRootValidator()),

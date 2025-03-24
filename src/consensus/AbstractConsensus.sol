@@ -55,13 +55,13 @@ abstract contract AbstractConsensus is IConsensus, ERC165 {
     /// @param appContract The application contract address
     /// @param lastProcessedBlockNumber The number of the last processed block
     /// @param outputsMerkleRoot The output Merkle root hash
-    /// @dev Emits a `ClaimAcceptance` event.
+    /// @dev Emits a `ClaimAccepted` event.
     function _acceptClaim(
         address appContract,
         uint256 lastProcessedBlockNumber,
         bytes32 outputsMerkleRoot
     ) internal {
         _validOutputsMerkleRoots[appContract][outputsMerkleRoot] = true;
-        emit ClaimAcceptance(appContract, lastProcessedBlockNumber, outputsMerkleRoot);
+        emit ClaimAccepted(appContract, lastProcessedBlockNumber, outputsMerkleRoot);
     }
 }

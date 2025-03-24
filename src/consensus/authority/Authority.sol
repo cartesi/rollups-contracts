@@ -29,7 +29,7 @@ contract Authority is IAuthority, AbstractConsensus, Ownable {
         uint256 lastProcessedBlockNumber,
         bytes32 outputsMerkleRoot
     ) external override onlyOwner {
-        emit ClaimSubmission(
+        emit ClaimSubmitted(
             msg.sender, appContract, lastProcessedBlockNumber, outputsMerkleRoot
         );
         _acceptClaim(appContract, lastProcessedBlockNumber, outputsMerkleRoot);

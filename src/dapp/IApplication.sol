@@ -29,7 +29,7 @@ interface IApplication is IOwnable {
 
     /// @notice MUST trigger when a new outputs Merkle root validator is chosen.
     /// @param newOutputsMerkleRootValidator The new outputs Merkle root validator
-    event NewOutputsMerkleRootValidator(
+    event OutputsMerkleRootValidatorChanged(
         IOutputsMerkleRootValidator newOutputsMerkleRootValidator
     );
 

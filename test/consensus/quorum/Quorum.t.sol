@@ -296,7 +296,7 @@ contract QuorumTest is Test, ERC165Test {
 
             if (
                 entry.emitter == address(quorum)
-                    && entry.topics[0] == IConsensus.ClaimSubmission.selector
+                    && entry.topics[0] == IConsensus.ClaimSubmitted.selector
             ) {
                 (uint256 lastProcessedBlockNumber, bytes32 outputHashesRootHash) =
                     abi.decode(entry.data, (uint256, bytes32));
@@ -311,7 +311,7 @@ contract QuorumTest is Test, ERC165Test {
 
             if (
                 entry.emitter == address(quorum)
-                    && entry.topics[0] == IConsensus.ClaimAcceptance.selector
+                    && entry.topics[0] == IConsensus.ClaimAccepted.selector
             ) {
                 (uint256 lastProcessedBlockNumber, bytes32 outputHashesRootHash) =
                     abi.decode(entry.data, (uint256, bytes32));

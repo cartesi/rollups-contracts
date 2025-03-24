@@ -107,7 +107,7 @@ contract Application is
         IOutputsMerkleRootValidator newOutputsMerkleRootValidator
     ) external override onlyOwner {
         _outputsMerkleRootValidator = newOutputsMerkleRootValidator;
-        emit NewOutputsMerkleRootValidator(newOutputsMerkleRootValidator);
+        emit OutputsMerkleRootValidatorChanged(newOutputsMerkleRootValidator);
     }
 
     function wasOutputExecuted(uint256 outputIndex)

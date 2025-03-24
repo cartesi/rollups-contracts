@@ -160,11 +160,11 @@ contract AuthorityTest is Test, ERC165Test, OwnableTest {
         bytes32 claim
     ) internal {
         vm.expectEmit(true, true, false, true, address(authority));
-        emit IConsensus.ClaimSubmission(
+        emit IConsensus.ClaimSubmitted(
             owner, appContract, lastProcessedBlockNumber, claim
         );
 
         vm.expectEmit(true, false, false, true, address(authority));
-        emit IConsensus.ClaimAcceptance(appContract, lastProcessedBlockNumber, claim);
+        emit IConsensus.ClaimAccepted(appContract, lastProcessedBlockNumber, claim);
     }
 }
