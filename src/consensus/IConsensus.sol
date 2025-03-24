@@ -13,8 +13,8 @@ import {IOutputsMerkleRootValidator} from "./IOutputsMerkleRootValidator.sol";
 /// @notice The claim that validators may submit to the consensus contract
 /// is the root of this Merkle tree after processing all base layer blocks until some height.
 /// @notice A validator should be able to save transaction fees by not submitting a claim if it was...
-/// - already submitted by the validator (see the `ClaimSubmission` event) or;
-/// - already accepted by the consensus (see the `ClaimAcceptance` event).
+/// - already submitted by the validator (see the `ClaimSubmitted` event) or;
+/// - already accepted by the consensus (see the `ClaimAccepted` event).
 /// @notice The acceptance criteria for claims may depend on the type of consensus, and is not specified by this interface.
 /// For example, a claim may be accepted if it was...
 /// - submitted by an authority or;
@@ -27,7 +27,7 @@ interface IConsensus is IOutputsMerkleRootValidator {
     /// @param appContract The application contract address
     /// @param lastProcessedBlockNumber The number of the last processed block
     /// @param outputsMerkleRoot The outputs Merkle root
-    event ClaimSubmission(
+    event ClaimSubmitted(
         address indexed submitter,
         address indexed appContract,
         uint256 lastProcessedBlockNumber,
@@ -38,7 +38,7 @@ interface IConsensus is IOutputsMerkleRootValidator {
     /// @param appContract The application contract address
     /// @param lastProcessedBlockNumber The number of the last processed block
     /// @param outputsMerkleRoot The outputs Merkle root
-    event ClaimAcceptance(
+    event ClaimAccepted(
         address indexed appContract,
         uint256 lastProcessedBlockNumber,
         bytes32 outputsMerkleRoot
@@ -48,8 +48,8 @@ interface IConsensus is IOutputsMerkleRootValidator {
     /// @param appContract The application contract address
     /// @param lastProcessedBlockNumber The number of the last processed block
     /// @param outputsMerkleRoot The outputs Merkle root
-    /// @dev MUST fire a `ClaimSubmission` event.
-    /// @dev MAY fire a `ClaimAcceptance` event, if the acceptance criteria is met.
+    /// @dev MUST fire a `ClaimSubmitted` event.
+    /// @dev MAY fire a `ClaimAccepted` event, if the acceptance criteria is met.
     function submitClaim(
         address appContract,
         uint256 lastProcessedBlockNumber,
