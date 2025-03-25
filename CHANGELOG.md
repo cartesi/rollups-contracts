@@ -1,5 +1,25 @@
 # @cartesi/rollups
 
+## 2.0.0-rc.17
+
+### Major Changes
+
+- bc0558f: Rename events:
+
+  - `ClaimAcceptance` -> `ClaimAccepted`
+
+  - `ClaimSubmission` -> `ClaimSubmitted`
+
+  - `NewOutputsMerkleRootValidator` -> `OutputsMerkleRootValidatorChanged`
+
+### Minor Changes
+
+- 5e19b4b: Add `getDeploymentBlockNumber` function to `IApplication` interface
+
+### Patch Changes
+
+- 8fe54d7: Fix workflow that publishes Rust bindings
+
 ## 2.0.0-rc.16
 
 ### Minor Changes
