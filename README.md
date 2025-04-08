@@ -87,7 +87,7 @@ Here are some examples of use cases:
 
 ## Related projects
 
-The contracts are used by several other projects in the Cartesi ecossystem:
+The contracts are used by several other projects in the Cartesi ecosystem:
 
 - [Cartesi CLI]
 - [Cartesi Rollups Node]
