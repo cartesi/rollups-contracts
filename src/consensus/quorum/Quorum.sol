@@ -68,6 +68,8 @@ contract Quorum is IQuorum, AbstractConsensus {
         uint256 id = _validatorId[msg.sender];
         require(id > 0, "Quorum: caller is not validator");
 
+        _validateLastProcessedBlockNumber(lastProcessedBlockNumber);
+
         emit ClaimSubmitted(
             msg.sender, appContract, lastProcessedBlockNumber, outputsMerkleRoot
         );

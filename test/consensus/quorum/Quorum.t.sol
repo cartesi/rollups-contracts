@@ -23,7 +23,7 @@ struct Claim {
 }
 
 library LibQuorum {
-    function numOfValidatorsInFavorOf(IQuorum quorum, Claim calldata claim)
+    function numOfValidatorsInFavorOf(IQuorum quorum, Claim memory claim)
         internal
         view
         returns (uint256)
@@ -33,7 +33,7 @@ library LibQuorum {
         );
     }
 
-    function isValidatorInFavorOf(IQuorum quorum, Claim calldata claim, uint256 id)
+    function isValidatorInFavorOf(IQuorum quorum, Claim memory claim, uint256 id)
         internal
         view
         returns (bool)
@@ -46,13 +46,13 @@ library LibQuorum {
         );
     }
 
-    function submitClaim(IQuorum quorum, Claim calldata claim) internal {
+    function submitClaim(IQuorum quorum, Claim memory claim) internal {
         quorum.submitClaim(
             claim.appContract, claim.lastProcessedBlockNumber, claim.outputHashesRootHash
         );
     }
 
-    function isOutputsMerkleRootValid(IQuorum quorum, Claim calldata claim)
+    function isOutputsMerkleRootValid(IQuorum quorum, Claim memory claim)
         internal
         view
         returns (bool)
@@ -222,10 +222,19 @@ contract QuorumTest is Test, ERC165Test {
     function testSubmitClaim(
         uint8 numOfValidators,
         uint256 epochLength,
-        Claim calldata claim
+        uint256 epochNumber,
+        uint256 blockNumber,
+        Claim memory claim
     ) external {
         numOfValidators = uint8(bound(numOfValidators, 1, 7));
         IQuorum quorum = _deployQuorum(numOfValidators, epochLength);
+
+        blockNumber = bound(blockNumber, epochLength, type(uint256).max);
+        epochNumber = bound(epochNumber, 0, (blockNumber / epochLength) - 1);
+        claim.lastProcessedBlockNumber = epochNumber * epochLength + epochLength - 1;
+
+        vm.roll(blockNumber);
+
         bool[] memory inFavorOf = new bool[](numOfValidators + 1);
         for (uint256 id = 1; id <= numOfValidators; ++id) {
             _submitClaimAs(quorum, claim, id);
@@ -238,10 +247,21 @@ contract QuorumTest is Test, ERC165Test {
     /// @dev Each slot has 256 bits, one for each validator ID.
     /// The first bit is skipped because validator IDs start from 1.
     /// Therefore, validator ID 256 is the first to use a new slot.
-    function testSubmitClaim256(Claim calldata claim, uint256 epochLength) external {
+    function testSubmitClaim256(
+        uint256 epochLength,
+        uint256 epochNumber,
+        uint256 blockNumber,
+        Claim memory claim
+    ) external {
         uint256 numOfValidators = 256;
 
         IQuorum quorum = _deployQuorum(numOfValidators, epochLength);
+
+        blockNumber = bound(blockNumber, epochLength, type(uint256).max);
+        epochNumber = bound(epochNumber, 0, (blockNumber / epochLength) - 1);
+        claim.lastProcessedBlockNumber = epochNumber * epochLength + epochLength - 1;
+
+        vm.roll(blockNumber);
 
         uint256 id = numOfValidators;
 
@@ -262,11 +282,10 @@ contract QuorumTest is Test, ERC165Test {
         return new Quorum(vm.addrs(numOfValidators), epochLength);
     }
 
-    function _checkSubmitted(
-        IQuorum quorum,
-        Claim calldata claim,
-        bool[] memory inFavorOf
-    ) internal view {
+    function _checkSubmitted(IQuorum quorum, Claim memory claim, bool[] memory inFavorOf)
+        internal
+        view
+    {
         uint256 inFavorCount;
         uint256 numOfValidators = quorum.numOfValidators();
 
@@ -278,7 +297,7 @@ contract QuorumTest is Test, ERC165Test {
         assertEq(quorum.numOfValidatorsInFavorOf(claim), inFavorCount);
     }
 
-    function _submitClaimAs(IQuorum quorum, Claim calldata claim, uint256 id) internal {
+    function _submitClaimAs(IQuorum quorum, Claim memory claim, uint256 id) internal {
         address validator = quorum.validatorById(id);
 
         vm.recordLogs();

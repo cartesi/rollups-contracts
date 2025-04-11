@@ -38,11 +38,30 @@ interface IConsensus is IOutputsMerkleRootValidator {
     /// @param appContract The application contract address
     /// @param lastProcessedBlockNumber The number of the last processed block
     /// @param outputsMerkleRoot The outputs Merkle root
+    /// @dev For each application and lastProcessedBlockNumber,
+    /// there can be at most one accepted claim.
     event ClaimAccepted(
         address indexed appContract,
         uint256 lastProcessedBlockNumber,
         bytes32 outputsMerkleRoot
     );
+
+    /// @notice The claim contains the number of a block that is not
+    /// at the end of an epoch (its modulo epoch length is not epoch length - 1).
+    /// @param lastProcessedBlockNumber The number of the last processed block
+    /// @param epochLength The epoch length
+    error NotEpochFinalBlock(uint256 lastProcessedBlockNumber, uint256 epochLength);
+
+    /// @notice The claim contains the number of a block in the future
+    /// (it is greater or equal to the current block number).
+    /// @param lastProcessedBlockNumber The number of the last processed block
+    /// @param currentBlockNumber The number of the current block
+    error NotPastBlock(uint256 lastProcessedBlockNumber, uint256 currentBlockNumber);
+
+    /// @notice A claim for that application and epoch was already submitted by the validator.
+    /// @param appContract The application contract address
+    /// @param lastProcessedBlockNumber The number of the last processed block
+    error NotFirstClaim(address appContract, uint256 lastProcessedBlockNumber);
 
     /// @notice Submit a claim to the consensus.
     /// @param appContract The application contract address
