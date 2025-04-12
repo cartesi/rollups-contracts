@@ -19,17 +19,37 @@ import {Vm} from "forge-std-1.9.6/src/Vm.sol";
 struct Claim {
     address appContract;
     uint256 lastProcessedBlockNumber;
-    bytes32 outputHashesRootHash;
+    bytes32 outputsMerkleRoot;
 }
 
 library LibQuorum {
+    function numOfValidatorsInFavorOfAnyClaimInEpoch(IQuorum quorum, Claim memory claim)
+        internal
+        view
+        returns (uint256)
+    {
+        return quorum.numOfValidatorsInFavorOfAnyClaimInEpoch(
+            claim.appContract, claim.lastProcessedBlockNumber
+        );
+    }
+
+    function isValidatorInFavorOfAnyClaimInEpoch(
+        IQuorum quorum,
+        Claim memory claim,
+        uint256 id
+    ) internal view returns (bool) {
+        return quorum.isValidatorInFavorOfAnyClaimInEpoch(
+            claim.appContract, claim.lastProcessedBlockNumber, id
+        );
+    }
+
     function numOfValidatorsInFavorOf(IQuorum quorum, Claim memory claim)
         internal
         view
         returns (uint256)
     {
         return quorum.numOfValidatorsInFavorOf(
-            claim.appContract, claim.lastProcessedBlockNumber, claim.outputHashesRootHash
+            claim.appContract, claim.lastProcessedBlockNumber, claim.outputsMerkleRoot
         );
     }
 
@@ -39,16 +59,13 @@ library LibQuorum {
         returns (bool)
     {
         return quorum.isValidatorInFavorOf(
-            claim.appContract,
-            claim.lastProcessedBlockNumber,
-            claim.outputHashesRootHash,
-            id
+            claim.appContract, claim.lastProcessedBlockNumber, claim.outputsMerkleRoot, id
         );
     }
 
     function submitClaim(IQuorum quorum, Claim memory claim) internal {
         quorum.submitClaim(
-            claim.appContract, claim.lastProcessedBlockNumber, claim.outputHashesRootHash
+            claim.appContract, claim.lastProcessedBlockNumber, claim.outputsMerkleRoot
         );
     }
 
@@ -57,8 +74,7 @@ library LibQuorum {
         view
         returns (bool)
     {
-        return
-            quorum.isOutputsMerkleRootValid(claim.appContract, claim.outputHashesRootHash);
+        return quorum.isOutputsMerkleRootValid(claim.appContract, claim.outputsMerkleRoot);
     }
 }
 
@@ -200,6 +216,34 @@ contract QuorumTest is Test, ERC165Test {
         quorum.submitClaim(claim);
     }
 
+    function testIsOutputsMerkleRootValid(
+        uint8 numOfValidators,
+        uint256 epochLength,
+        Claim calldata claim
+    ) external {
+        IQuorum quorum = _deployQuorum(numOfValidators, epochLength);
+        assertFalse(quorum.isOutputsMerkleRootValid(claim));
+    }
+
+    function testNumOfValidatorsInFavorOfAnyClaimInEpoch(
+        uint8 numOfValidators,
+        uint256 epochLength,
+        Claim calldata claim
+    ) external {
+        IQuorum quorum = _deployQuorum(numOfValidators, epochLength);
+        assertEq(quorum.numOfValidatorsInFavorOfAnyClaimInEpoch(claim), 0);
+    }
+
+    function testIsValidatorInFavorOfAnyClaimInEpoch(
+        uint8 numOfValidators,
+        uint256 epochLength,
+        Claim calldata claim,
+        uint256 id
+    ) external {
+        IQuorum quorum = _deployQuorum(numOfValidators, epochLength);
+        assertFalse(quorum.isValidatorInFavorOfAnyClaimInEpoch(claim, id));
+    }
+
     function testNumOfValidatorsInFavorOf(
         uint8 numOfValidators,
         uint256 epochLength,
@@ -229,9 +273,9 @@ contract QuorumTest is Test, ERC165Test {
         numOfValidators = uint8(bound(numOfValidators, 1, 7));
         IQuorum quorum = _deployQuorum(numOfValidators, epochLength);
 
-        blockNumber = bound(blockNumber, epochLength, type(uint256).max);
-        epochNumber = bound(epochNumber, 0, (blockNumber / epochLength) - 1);
-        claim.lastProcessedBlockNumber = epochNumber * epochLength + epochLength - 1;
+        blockNumber = _boundBlockNumber(blockNumber, epochLength);
+        epochNumber = _boundEpochNumber(epochNumber, blockNumber, epochLength);
+        _boundClaim(claim, epochNumber, epochLength);
 
         vm.roll(blockNumber);
 
@@ -257,9 +301,9 @@ contract QuorumTest is Test, ERC165Test {
 
         IQuorum quorum = _deployQuorum(numOfValidators, epochLength);
 
-        blockNumber = bound(blockNumber, epochLength, type(uint256).max);
-        epochNumber = bound(epochNumber, 0, (blockNumber / epochLength) - 1);
-        claim.lastProcessedBlockNumber = epochNumber * epochLength + epochLength - 1;
+        blockNumber = _boundBlockNumber(blockNumber, epochLength);
+        epochNumber = _boundEpochNumber(epochNumber, blockNumber, epochLength);
+        _boundClaim(claim, epochNumber, epochLength);
 
         vm.roll(blockNumber);
 
@@ -269,6 +313,120 @@ contract QuorumTest is Test, ERC165Test {
 
         assertTrue(quorum.isValidatorInFavorOf(claim, id));
         assertEq(quorum.numOfValidatorsInFavorOf(claim), 1);
+    }
+
+    function testSubmitClaimNotFirstClaim(
+        uint8 numOfValidators,
+        uint256 epochLength,
+        uint256 epochNumber,
+        uint256 blockNumber,
+        Claim memory claim,
+        bytes32 outputsMerkleRoot2,
+        uint256 id
+    ) external {
+        vm.assume(epochLength >= 2);
+        vm.assume(claim.outputsMerkleRoot != outputsMerkleRoot2);
+
+        numOfValidators = uint8(bound(numOfValidators, 1, type(uint8).max));
+        IQuorum quorum = _deployQuorum(numOfValidators, epochLength);
+        id = bound(id, 1, numOfValidators);
+
+        blockNumber = _boundBlockNumber(blockNumber, epochLength);
+        epochNumber = _boundEpochNumber(epochNumber, blockNumber, epochLength);
+        _boundClaim(claim, epochNumber, epochLength);
+
+        vm.roll(blockNumber);
+
+        vm.startPrank(quorum.validatorById(id));
+        quorum.submitClaim(claim);
+
+        // Re-submitting the same claim is OK
+        quorum.submitClaim(claim);
+
+        assertEq(quorum.numOfValidatorsInFavorOfAnyClaimInEpoch(claim), 1);
+        assertEq(quorum.numOfValidatorsInFavorOf(claim), 1);
+        assertTrue(quorum.isValidatorInFavorOfAnyClaimInEpoch(claim, id));
+        assertTrue(quorum.isValidatorInFavorOf(claim, id));
+
+        // Submitting a different claim for the same epoch isn't OK
+        claim.outputsMerkleRoot = outputsMerkleRoot2;
+        vm.expectRevert(
+            abi.encodeWithSelector(
+                IConsensus.NotFirstClaim.selector,
+                claim.appContract,
+                claim.lastProcessedBlockNumber
+            )
+        );
+        quorum.submitClaim(claim);
+    }
+
+    function testSubmitClaimNotEpochFinalBlock(
+        uint8 numOfValidators,
+        uint256 epochLength,
+        uint256 epochNumber,
+        uint256 blockNumber,
+        uint256 blocksAfterEpochStart,
+        Claim memory claim,
+        uint256 id
+    ) external {
+        vm.assume(epochLength >= 2);
+
+        numOfValidators = uint8(bound(numOfValidators, 1, type(uint8).max));
+        IQuorum quorum = _deployQuorum(numOfValidators, epochLength);
+        id = bound(id, 1, numOfValidators);
+
+        blocksAfterEpochStart = bound(blocksAfterEpochStart, 0, epochLength - 2);
+        blockNumber = bound(blockNumber, epochLength, type(uint256).max);
+        epochNumber = bound(epochNumber, 0, (blockNumber / epochLength) - 1);
+        claim.lastProcessedBlockNumber = epochNumber * epochLength + blocksAfterEpochStart;
+
+        vm.roll(blockNumber);
+
+        vm.prank(quorum.validatorById(id));
+
+        vm.expectRevert(
+            abi.encodeWithSelector(
+                IConsensus.NotEpochFinalBlock.selector,
+                claim.lastProcessedBlockNumber,
+                epochLength
+            )
+        );
+
+        quorum.submitClaim(claim);
+    }
+
+    function testSubmitClaimNotPastBlock(
+        uint8 numOfValidators,
+        uint256 epochLength,
+        uint256 epochNumber,
+        uint256 blockNumber,
+        Claim memory claim,
+        uint256 id
+    ) external {
+        vm.assume(epochLength >= 2);
+
+        numOfValidators = uint8(bound(numOfValidators, 1, type(uint8).max));
+        IQuorum quorum = _deployQuorum(numOfValidators, epochLength);
+        id = bound(id, 1, numOfValidators);
+
+        uint256 maxEpochNumber = (type(uint256).max - (epochLength - 1)) / epochLength;
+        epochNumber = bound(epochNumber, 0, maxEpochNumber);
+        claim.lastProcessedBlockNumber = epochNumber * epochLength + (epochLength - 1);
+        blockNumber = bound(blockNumber, 0, claim.lastProcessedBlockNumber);
+
+        vm.roll(blockNumber);
+
+        vm.prank(quorum.validatorById(id));
+
+        vm.expectRevert(
+            abi.encodeWithSelector(
+                IConsensus.NotPastBlock.selector,
+                claim.lastProcessedBlockNumber,
+                blockNumber
+            )
+        );
+
+        quorum.submitClaim(claim);
     }
 
     // Internal functions
@@ -291,10 +449,12 @@ contract QuorumTest is Test, ERC165Test {
 
         for (uint256 id = 1; id <= numOfValidators; ++id) {
             assertEq(quorum.isValidatorInFavorOf(claim, id), inFavorOf[id]);
+            assertEq(quorum.isValidatorInFavorOfAnyClaimInEpoch(claim, id), inFavorOf[id]);
             if (inFavorOf[id]) ++inFavorCount;
         }
 
         assertEq(quorum.numOfValidatorsInFavorOf(claim), inFavorCount);
+        assertEq(quorum.numOfValidatorsInFavorOfAnyClaimInEpoch(claim), inFavorCount);
     }
 
     function _submitClaimAs(IQuorum quorum, Claim memory claim, uint256 id) internal {
@@ -317,13 +477,13 @@ contract QuorumTest is Test, ERC165Test {
                 entry.emitter == address(quorum)
                     && entry.topics[0] == IConsensus.ClaimSubmitted.selector
             ) {
-                (uint256 lastProcessedBlockNumber, bytes32 outputHashesRootHash) =
+                (uint256 lastProcessedBlockNumber, bytes32 outputsMerkleRoot) =
                     abi.decode(entry.data, (uint256, bytes32));
 
                 assertEq(entry.topics[1], validator.asTopic());
                 assertEq(entry.topics[2], claim.appContract.asTopic());
                 assertEq(lastProcessedBlockNumber, claim.lastProcessedBlockNumber);
-                assertEq(outputHashesRootHash, claim.outputHashesRootHash);
+                assertEq(outputsMerkleRoot, claim.outputsMerkleRoot);
 
                 ++numOfSubmissions;
             }
@@ -332,12 +492,12 @@ contract QuorumTest is Test, ERC165Test {
                 entry.emitter == address(quorum)
                     && entry.topics[0] == IConsensus.ClaimAccepted.selector
             ) {
-                (uint256 lastProcessedBlockNumber, bytes32 outputHashesRootHash) =
+                (uint256 lastProcessedBlockNumber, bytes32 outputsMerkleRoot) =
                     abi.decode(entry.data, (uint256, bytes32));
 
                 assertEq(entry.topics[1], claim.appContract.asTopic());
                 assertEq(lastProcessedBlockNumber, claim.lastProcessedBlockNumber);
-                assertEq(outputHashesRootHash, claim.outputHashesRootHash);
+                assertEq(outputsMerkleRoot, claim.outputsMerkleRoot);
 
                 ++numOfAcceptances;
             }
@@ -357,5 +517,28 @@ contract QuorumTest is Test, ERC165Test {
         assertEq(
             quorum.isOutputsMerkleRootValid(claim), inFavorCount > (numOfValidators / 2)
         );
+    }
+
+    function _boundBlockNumber(uint256 blockNumber, uint256 epochLength)
+        internal
+        pure
+        returns (uint256)
+    {
+        return bound(blockNumber, epochLength, type(uint256).max);
+    }
+
+    function _boundEpochNumber(
+        uint256 epochNumber,
+        uint256 blockNumber,
+        uint256 epochLength
+    ) internal pure returns (uint256) {
+        return bound(epochNumber, 0, (blockNumber / epochLength) - 1);
+    }
+
+    function _boundClaim(Claim memory claim, uint256 epochNumber, uint256 epochLength)
+        internal
+        pure
+    {
+        claim.lastProcessedBlockNumber = epochNumber * epochLength + (epochLength - 1);
     }
 }

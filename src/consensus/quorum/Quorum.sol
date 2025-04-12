@@ -37,6 +37,12 @@ contract Quorum is IQuorum, AbstractConsensus {
     }
 
     /// @notice Votes indexed by application contract address,
+    /// and last processed block number.
+    /// @dev See the `numOfValidatorsInFavorOfAnyClaimInEpoch`
+    /// and `isValidatorInFavorOfAnyClaimInEpoch` functions.
+    mapping(address => mapping(uint256 => Votes)) private _allVotes;
+
+    /// @notice Votes indexed by application contract address,
     /// last processed block number and outputs Merkle root.
     /// @dev See the `numOfValidatorsInFavorOf` and `isValidatorInFavorOf` functions.
     mapping(address => mapping(uint256 => mapping(bytes32 => Votes))) private _votes;
@@ -77,7 +83,23 @@ contract Quorum is IQuorum, AbstractConsensus {
         Votes storage votes =
             _getVotes(appContract, lastProcessedBlockNumber, outputsMerkleRoot);
 
+        Votes storage allVotes = _getAllVotes(appContract, lastProcessedBlockNumber);
+
+        // Skip storage changes if validator already voted
+        // for the same exact claim before
         if (!votes.inFavorById.get(id)) {
+            // Revert if validator has submitted another claim for the same epoch
+            require(
+                !allVotes.inFavorById.get(id),
+                NotFirstClaim(appContract, lastProcessedBlockNumber)
+            );
+
+            // Register vote (for any claim in the epoch)
+            allVotes.inFavorById.set(id);
+            ++allVotes.inFavorCount;
+
+            // Register vote (for the specific claim)
+            // and accept the claim if a majority has been reached
             votes.inFavorById.set(id);
             if (++votes.inFavorCount == 1 + _numOfValidators / 2) {
                 _acceptClaim(appContract, lastProcessedBlockNumber, outputsMerkleRoot);
@@ -95,6 +117,21 @@ contract Quorum is IQuorum, AbstractConsensus {
 
     function validatorById(uint256 id) external view override returns (address) {
         return _validatorById[id];
+    }
+
+    function numOfValidatorsInFavorOfAnyClaimInEpoch(
+        address appContract,
+        uint256 lastProcessedBlockNumber
+    ) external view override returns (uint256) {
+        return _getAllVotes(appContract, lastProcessedBlockNumber).inFavorCount;
+    }
+
+    function isValidatorInFavorOfAnyClaimInEpoch(
+        address appContract,
+        uint256 lastProcessedBlockNumber,
+        uint256 id
+    ) external view override returns (bool) {
+        return _getAllVotes(appContract, lastProcessedBlockNumber).inFavorById.get(id);
     }
 
     function numOfValidatorsInFavorOf(
@@ -115,6 +152,18 @@ contract Quorum is IQuorum, AbstractConsensus {
         return _getVotes(appContract, lastProcessedBlockNumber, outputsMerkleRoot)
             .inFavorById
             .get(id);
+    }
+
+    /// @notice Get a `Votes` structure from storage from a given epoch.
+    /// @param appContract The application contract address
+    /// @param lastProcessedBlockNumber The number of the last processed block
+    /// @return The `Votes` structure related to all claims in a given epoch
+    function _getAllVotes(address appContract, uint256 lastProcessedBlockNumber)
+        internal
+        view
+        returns (Votes storage)
+    {
+        return _allVotes[appContract][lastProcessedBlockNumber];
     }
 
     /// @notice Get a `Votes` structure from storage from a given claim.
