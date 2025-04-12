@@ -3,6 +3,7 @@
 
 pragma solidity ^0.8.8;
 
+import {BitMaps} from "@openzeppelin-contracts-5.2.0/utils/structs/BitMaps.sol";
 import {IERC165} from "@openzeppelin-contracts-5.2.0/utils/introspection/IERC165.sol";
 import {Ownable} from "@openzeppelin-contracts-5.2.0/access/Ownable.sol";
 
@@ -15,6 +16,12 @@ import {IOwnable} from "../../access/IOwnable.sol";
 /// @dev This contract inherits from OpenZeppelin's `Ownable` contract.
 ///      For more information on `Ownable`, please consult OpenZeppelin's official documentation.
 contract Authority is IAuthority, AbstractConsensus, Ownable {
+    using BitMaps for BitMaps.BitMap;
+
+    /// @notice Epochs with a submitted (and accepted) claim, per application.
+    /// @dev Epochs are stored in bitmap structure by their number (last processed block number / epoch length).
+    mapping(address => BitMaps.BitMap) _validatedEpochs;
+
     /// @param initialOwner The initial contract owner
     /// @param epochLength The epoch length
     /// @dev Reverts if the epoch length is zero.
@@ -29,10 +36,23 @@ contract Authority is IAuthority, AbstractConsensus, Ownable {
         uint256 lastProcessedBlockNumber,
         bytes32 outputsMerkleRoot
     ) external override onlyOwner {
+        _validateLastProcessedBlockNumber(lastProcessedBlockNumber);
+
+        uint256 epochNumber = lastProcessedBlockNumber / _epochLength;
+
+        BitMaps.BitMap storage bitmap = _validatedEpochs[appContract];
+
+        require(
+            !bitmap.get(epochNumber), NotFirstClaim(appContract, lastProcessedBlockNumber)
+        );
+
         emit ClaimSubmitted(
             msg.sender, appContract, lastProcessedBlockNumber, outputsMerkleRoot
         );
+
         _acceptClaim(appContract, lastProcessedBlockNumber, outputsMerkleRoot);
+
+        bitmap.set(epochNumber);
     }
 
     /// @inheritdoc Ownable

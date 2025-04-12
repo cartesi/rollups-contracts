@@ -118,17 +118,25 @@ contract AuthorityTest is Test, ERC165Test, OwnableTest {
         authority.submitClaim(appContract, lastProcessedBlockNumber, claim);
     }
 
-    function testSubmitClaim(
+    function testSubmitClaimNotFirstClaim(
         address owner,
         uint256 epochLength,
         address appContract,
-        uint256 lastProcessedBlockNumber,
-        bytes32 claim
+        uint256 epochNumber,
+        uint256 blockNumber,
+        bytes32 claim,
+        bytes32 claim2
     ) public {
         vm.assume(owner != address(0));
-        vm.assume(epochLength > 0);
+        vm.assume(epochLength >= 1);
 
         IAuthority authority = new Authority(owner, epochLength);
+
+        blockNumber = bound(blockNumber, epochLength, type(uint256).max);
+        epochNumber = bound(epochNumber, 0, (blockNumber / epochLength) - 1);
+        uint256 lastProcessedBlockNumber = epochNumber * epochLength + (epochLength - 1);
+
+        vm.roll(blockNumber);
 
         _expectClaimEvents(authority, owner, appContract, lastProcessedBlockNumber, claim);
 
@@ -136,6 +144,76 @@ contract AuthorityTest is Test, ERC165Test, OwnableTest {
         authority.submitClaim(appContract, lastProcessedBlockNumber, claim);
 
         assertTrue(authority.isOutputsMerkleRootValid(appContract, claim));
+
+        vm.expectRevert(
+            abi.encodeWithSelector(
+                IConsensus.NotFirstClaim.selector, appContract, lastProcessedBlockNumber
+            )
+        );
+        vm.prank(owner);
+        authority.submitClaim(appContract, lastProcessedBlockNumber, claim2);
+    }
+
+    function testSubmitClaimNotEpochFinalBlock(
+        address owner,
+        uint256 epochLength,
+        address appContract,
+        uint256 epochNumber,
+        uint256 blockNumber,
+        uint256 blocksAfterEpochStart,
+        bytes32 claim
+    ) public {
+        vm.assume(owner != address(0));
+        vm.assume(epochLength >= 2);
+
+        IAuthority authority = new Authority(owner, epochLength);
+
+        blocksAfterEpochStart = bound(blocksAfterEpochStart, 0, epochLength - 2);
+        blockNumber = bound(blockNumber, epochLength, type(uint256).max);
+        epochNumber = bound(epochNumber, 0, (blockNumber / epochLength) - 1);
+        uint256 lastProcessedBlockNumber =
+            epochNumber * epochLength + blocksAfterEpochStart;
+
+        vm.roll(blockNumber);
+
+        vm.expectRevert(
+            abi.encodeWithSelector(
+                IConsensus.NotEpochFinalBlock.selector,
+                lastProcessedBlockNumber,
+                epochLength
+            )
+        );
+        vm.prank(owner);
+        authority.submitClaim(appContract, lastProcessedBlockNumber, claim);
+    }
+
+    function testSubmitClaimNotPastBlock(
+        address owner,
+        uint256 epochLength,
+        address appContract,
+        uint256 epochNumber,
+        uint256 blockNumber,
+        bytes32 claim
+    ) public {
+        vm.assume(owner != address(0));
+        vm.assume(epochLength >= 1);
+
+        IAuthority authority = new Authority(owner, epochLength);
+
+        uint256 maxEpochNumber = (type(uint256).max - (epochLength - 1)) / epochLength;
+        epochNumber = bound(epochNumber, 0, maxEpochNumber);
+        uint256 lastProcessedBlockNumber = epochNumber * epochLength + (epochLength - 1);
+        blockNumber = bound(blockNumber, 0, lastProcessedBlockNumber);
+
+        vm.roll(blockNumber);
+
+        vm.expectRevert(
+            abi.encodeWithSelector(
+                IConsensus.NotPastBlock.selector, lastProcessedBlockNumber, blockNumber
+            )
+        );
+        vm.prank(owner);
+        authority.submitClaim(appContract, lastProcessedBlockNumber, claim);
     }
 
     function testIsOutputsMerkleRootValid(

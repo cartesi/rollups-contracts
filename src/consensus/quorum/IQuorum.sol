@@ -27,6 +27,27 @@ interface IQuorum is IConsensus {
     /// @dev Invalid IDs map to address zero.
     function validatorById(uint256 id) external view returns (address);
 
+    /// @notice Get the number of validators in favor of any claim in a given epoch.
+    /// @param appContract The application contract address
+    /// @param lastProcessedBlockNumber The number of the last processed block
+    /// @return Number of validators in favor of any claim in the epoch
+    function numOfValidatorsInFavorOfAnyClaimInEpoch(
+        address appContract,
+        uint256 lastProcessedBlockNumber
+    ) external view returns (uint256);
+
+    /// @notice Check whether a validator is in favor of any claim in a given epoch.
+    /// @param appContract The application contract address
+    /// @param lastProcessedBlockNumber The number of the last processed block
+    /// @param id The ID of the validator
+    /// @return Whether validator is in favor of any claim in the epoch
+    /// @dev Assumes the provided ID is valid.
+    function isValidatorInFavorOfAnyClaimInEpoch(
+        address appContract,
+        uint256 lastProcessedBlockNumber,
+        uint256 id
+    ) external view returns (bool);
+
     /// @notice Get the number of validators in favor of a claim.
     /// @param appContract The application contract address
     /// @param lastProcessedBlockNumber The number of the last processed block
