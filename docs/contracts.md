@@ -119,7 +119,7 @@ using a mix of [strict](https://docs.soliditylang.org/en/v0.8.25/abi-spec.html#s
 and [non-standard packed](https://docs.soliditylang.org/en/v0.8.25/abi-spec.html#non-standard-packed-mode) modes.
 In Solidity, strict encoding is performed using `abi.encode`,
 while non-standard packed encoding uses `abi.encodePacked`.
-Decoding data that was encoded using stict mode is trivial,
+Decoding data that was encoded using strict mode is trivial,
 and many Ethereum libraries offer this feature out-of-the-box.
 Decoding data that was encoded in non-standard packed mode, however,
 is not an operation well-supported by libraries in general,
