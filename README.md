@@ -1,3 +1,5 @@
+[![License](https://img.shields.io/github/license/cartesi/rollups-contracts)](https://github.com/cartesi/rollups-contracts/blob/main/LICENSE)
+
 # Cartesi Rollups Contracts
 
 The Cartesi Rollups Contracts are a set of Solidity smart contracts
