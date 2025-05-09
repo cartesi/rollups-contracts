@@ -1,5 +1,5 @@
 [profile.default]
-libs = []
+libs = ["dependencies"]
 solc_version = "0.8.29"
 via_ir = true
 optimizer = true
