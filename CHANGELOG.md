@@ -1,5 +1,19 @@
 # @cartesi/rollups
 
+## 2.0.0-rc.18
+
+### Major Changes
+
+- 263543d: Avoid conflicting claims in Quorum
+
+### Minor Changes
+
+- 6e893a7: Make `Authority` and `Quorum` validate last processed block number
+
+### Patch Changes
+
+- 101bc7a: Bump solc from 0.8.23 to 0.8.29
+
 ## 2.0.0-rc.17
 
 ### Major Changes
