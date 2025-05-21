@@ -12,10 +12,6 @@ jobs:
   version_or_publish:
     name: Version packages or publish them to npmjs.com
     runs-on: ubuntu-latest
-    outputs:
-      published: ${{ steps.changeset.outputs.published }}
-      version: ${{ steps.get_version.outputs.version }}
-
     steps:
       - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
         with:
@@ -30,7 +26,6 @@ jobs:
 
       - name: Create release PR or publish packages to npmjs.com
         uses: changesets/action@e0145edc7d9d8679003495b11f87bd8ef63c0cba
-        id: changeset
         with:
           setupGitUser: false
           commit: "chore: version packages"
@@ -38,34 +33,3 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.BOT_TOKEN }}
           NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
-
-      - name: Get version
-        id: get_version
-        run: jq -r '"version=\(.version)"' package.json >> "$GITHUB_OUTPUT"
-
-  rust_bindings:
-    name: Generate and publish Rust bindings
-    needs: version_or_publish
-    if: ${{ needs.version_or_publish.outputs.published == 'true' }}
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
-
-      - uses: ./.github/actions/setup
-
-      - name: Generate Rust bindings
-        run: |
-          forge bind \
-            --crate-name cartesi-rollups-contracts \
-            --crate-version "$VERSION" \
-            --crate-license "Apache-2.0" \
-            --crate-description "Rust bindings for Cartesi Rollups smart contracts" \
-            --alloy-version "0.12.4"
-        env:
-          VERSION: ${{ needs.version_or_publish.outputs.version }}
-
-      - name: Publish Rust package to crates.io
-        working-directory: out/bindings
-        run: cargo publish
-        env:
-          CARGO_REGISTRY_TOKEN: ${{ secrets.CARGO_REGISTRY_TOKEN }}
