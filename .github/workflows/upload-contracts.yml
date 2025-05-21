@@ -1,0 +1,31 @@
+name: Upload contracts
+
+on:
+  push:
+    tags:
+      - v*
+
+jobs:
+  push:
+    name: Publish contracts to Soldeer.xyz
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+
+      - uses: ./.github/actions/setup
+        id: setup
+
+      - name: Extract version from tag
+        id: extract_version
+        run: echo "version=${GITHUB_REF#refs/tags/v}" >> $GITHUB_OUTPUT
+
+      - name: Log in with Soldeer credentials
+        run: forge soldeer login --email "$SOLDEER_EMAIL" --password "$SOLDEER_PASSWORD"
+        env:
+          SOLDEER_EMAIL: ${{ secrets.SOLDEER_EMAIL }}
+          SOLDEER_PASSWORD: ${{ secrets.SOLDEER_PASSWORD }}
+
+      - name: Push package to Soldeer.xyz
+        run: forge soldeer push "cartesi-rollups-contracts~$VERSION"
+        env:
+          VERSION: ${{ steps.extract_version.outputs.version }}
