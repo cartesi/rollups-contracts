@@ -539,7 +539,9 @@ contract ApplicationTest is Test, OwnableTest {
 
         vm.expectRevert(
             abi.encodeWithSelector(
-                IApplication.InsufficientFunds.selector, _transferAmount, 0
+                IApplication.InsufficientFunds.selector,
+                _transferAmount,
+                address(_appContract).balance
             )
         );
         _appContract.executeOutput(output, proof);
@@ -580,7 +582,13 @@ contract ApplicationTest is Test, OwnableTest {
             "Application contract does not have enough Ether"
         );
 
-        vm.expectRevert();
+        vm.expectRevert(
+            abi.encodeWithSelector(
+                IApplication.InsufficientFunds.selector,
+                _transferAmount,
+                address(_appContract).balance
+            )
+        );
         _appContract.executeOutput(output, proof);
 
         vm.deal(address(_appContract), _transferAmount);
