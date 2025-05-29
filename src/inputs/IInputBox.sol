@@ -43,6 +43,17 @@ interface IInputBox {
         view
         returns (bytes32);
 
+    /// @notice Get the Merkle root of an input in an application's input box,
+    /// using the smallest Merkle tree with 32-byte leaves that fits the whole input,
+    /// padded with zeroes, if necessary.
+    /// @param appContract The application contract address
+    /// @param index The input index
+    /// @dev The provided index must be valid.
+    function getInputMerkleRoot(address appContract, uint256 index)
+        external
+        view
+        returns (bytes32);
+
     /// @notice Get number of block in which contract was deployed
     function getDeploymentBlockNumber() external view returns (uint256);
 }
