@@ -1,0 +1,51 @@
+name = "cartesi-rollups-add-input"
+version = "0.0.1"
+
+[var.Settings]
+payloadLength = "1"
+
+[pull.cartesiRollups]
+source = "cartesi-rollups:2.0.0-rc.18@main"
+
+[invoke.addInput]
+target = "cartesiRollups.InputBox"
+func = "addInput"
+args = [
+    "<%= cartesiRollups.InputBox.address %>",
+    "0x<%= ('ff').repeat(Number(settings.payloadLength)) %>"
+]
+
+# [deploy.EtherPortal]
+# artifact = "EtherPortal"
+# args = ["<%= contracts.InputBox.address %>"]
+# create2 = true
+# salt = "0x0000000000000000000000000000000000000000662dd166dc6bd4039ae579b6"
+# ifExists = "continue"
+# 
+# [deploy.ERC20Portal]
+# artifact = "ERC20Portal"
+# args = ["<%= contracts.InputBox.address %>"]
+# create2 = true
+# salt = "0x000000000000000000000000000000000000000017b77947fdeb03000cc24feb"
+# ifExists = "continue"
+# 
+# [deploy.ERC721Portal]
+# artifact = "ERC721Portal"
+# args = ["<%= contracts.InputBox.address %>"]
+# create2 = true
+# salt = "0x0000000000000000000000000000000000000000319afdcf02a22000e4d9637b"
+# ifExists = "continue"
+# 
+# [deploy.ERC1155SinglePortal]
+# artifact = "ERC1155SinglePortal"
+# args = ["<%= contracts.InputBox.address %>"]
+# create2 = true
+# salt = "0x0000000000000000000000000000000000000000aa9661792c43e002e10f198f"
+# ifExists = "continue"
+# 
+# [deploy.ERC1155BatchPortal]
+# artifact = "ERC1155BatchPortal"
+# args = ["<%= contracts.InputBox.address %>"]
+# create2 = true
+# salt = "0x0000000000000000000000000000000000000000073472e7ffc6990390c1bd71"
+# ifExists = "continue"
