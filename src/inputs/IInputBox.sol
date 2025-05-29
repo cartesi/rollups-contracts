@@ -34,15 +34,6 @@ interface IInputBox {
     /// @param appContract The application contract address
     function getNumberOfInputs(address appContract) external view returns (uint256);
 
-    /// @notice Get the hash of an input in an application's input box.
-    /// @param appContract The application contract address
-    /// @param index The input index
-    /// @dev The provided index must be valid.
-    function getInputHash(address appContract, uint256 index)
-        external
-        view
-        returns (bytes32);
-
     /// @notice Get the Merkle root of an input in an application's input box,
     /// using the smallest Merkle tree with 32-byte leaves that fits the whole input,
     /// padded with zeroes, if necessary.

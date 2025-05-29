@@ -15,17 +15,8 @@ contract InputBox is IInputBox {
     /// @notice Deployment block number
     uint256 immutable _deploymentBlockNumber = block.number;
 
-    /// @notice An input box entry
-    /// @param inputHash The input hash (using keccak256)
-    /// @param inputMerkleRoot The input Merkle root (using 32-byte leaves
-    /// and the smallest Merkle tree that fits the whole input, padded with zeroes).
-    struct InputBoxEntry {
-        bytes32 inputHash;
-        bytes32 inputMerkleRoot;
-    }
-
     /// @notice Mapping of application contract addresses to arrays of input hashes.
-    mapping(address => InputBoxEntry[]) private _inputBoxes;
+    mapping(address => bytes32[]) private _inputBoxes;
 
     /// @inheritdoc IInputBox
     function addInput(address appContract, bytes calldata payload)
@@ -33,7 +24,7 @@ contract InputBox is IInputBox {
         override
         returns (bytes32)
     {
-        InputBoxEntry[] storage inputBox = _inputBoxes[appContract];
+        bytes32[] storage inputBox = _inputBoxes[appContract];
 
         uint256 index = inputBox.length;
 
@@ -57,18 +48,14 @@ contract InputBox is IInputBox {
             );
         }
 
-        bytes32 inputHash = keccak256(input);
-
         uint256 log2SizeOfDrive = input.length.getMinLog2SizeOfDrive();
         bytes32 inputMerkleRoot = input.getMerkleRootFromBytes(log2SizeOfDrive);
 
-        inputBox.push(
-            InputBoxEntry({inputHash: inputHash, inputMerkleRoot: inputMerkleRoot})
-        );
+        inputBox.push(inputMerkleRoot);
 
         emit InputAdded(appContract, index, input);
 
-        return inputHash;
+        return inputMerkleRoot;
     }
 
     /// @inheritdoc IInputBox
@@ -82,23 +69,13 @@ contract InputBox is IInputBox {
     }
 
     /// @inheritdoc IInputBox
-    function getInputHash(address appContract, uint256 index)
-        external
-        view
-        override
-        returns (bytes32)
-    {
-        return _inputBoxes[appContract][index].inputHash;
-    }
-
-    /// @inheritdoc IInputBox
     function getInputMerkleRoot(address appContract, uint256 index)
         external
         view
         override
         returns (bytes32)
     {
-        return _inputBoxes[appContract][index].inputMerkleRoot;
+        return _inputBoxes[appContract][index];
     }
 
     /// @inheritdoc IInputBox
