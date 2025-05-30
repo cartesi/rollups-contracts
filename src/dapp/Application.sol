@@ -11,33 +11,39 @@ import {Outputs} from "../common/Outputs.sol";
 import {LibAddress} from "../library/LibAddress.sol";
 import {IOwnable} from "../access/IOwnable.sol";
 
-import {Ownable} from "@openzeppelin-contracts-5.2.0/access/Ownable.sol";
 import {ERC721Holder} from
     "@openzeppelin-contracts-5.2.0/token/ERC721/utils/ERC721Holder.sol";
 import {ERC1155Holder} from
     "@openzeppelin-contracts-5.2.0/token/ERC1155/utils/ERC1155Holder.sol";
-import {ReentrancyGuard} from "@openzeppelin-contracts-5.2.0/utils/ReentrancyGuard.sol";
+import {ReentrancyGuardTransient} from
+    "@openzeppelin-contracts-5.2.0/utils/ReentrancyGuardTransient.sol";
 import {IERC721Receiver} from
     "@openzeppelin-contracts-5.2.0/token/ERC721/IERC721Receiver.sol";
 import {BitMaps} from "@openzeppelin-contracts-5.2.0/utils/structs/BitMaps.sol";
+import {Clones} from "@openzeppelin-contracts-5.2.0/proxy/Clones.sol";
 
 contract Application is
     IApplication,
-    Ownable,
     ERC721Holder,
     ERC1155Holder,
-    ReentrancyGuard
+    ReentrancyGuardTransient
 {
+    using Clones for address;
     using BitMaps for BitMaps.BitMap;
     using LibAddress for address;
     using LibOutputValidityProof for OutputValidityProof;
 
-    /// @notice Deployment block number
-    uint256 immutable _deploymentBlockNumber = block.number;
+    /// @notice Arguments embedded into the proxy contract's bytecode
+    struct Args {
+        bytes32 templateHash;
+        bytes dataAvailability;
+    }
 
-    /// @notice The initial machine state hash.
-    /// @dev See the `getTemplateHash` function.
-    bytes32 internal immutable _templateHash;
+    /// @notice Whether the proxy has been initialized already.
+    bool internal _initialized;
+
+    /// @notice Deployment block number
+    uint256 internal _deploymentBlockNumber;
 
     /// @notice Keeps track of which outputs have been executed.
     /// @dev See the `wasOutputExecuted` function.
@@ -47,24 +53,24 @@ contract Application is
     /// @dev See the `getOutputsMerkleRootValidator` and `migrateToOutputsMerkleRootValidator` functions.
     IOutputsMerkleRootValidator internal _outputsMerkleRootValidator;
 
-    /// @notice The data availability solution.
-    /// @dev See the `getDataAvailability` function.
-    bytes internal _dataAvailability;
+    /// @notice Application owner
+    /// @dev See the `owner`, `transferOwnership` and `renounceOwnership` functions.
+    address internal _owner;
 
-    /// @notice Creates an `Application` contract.
+    /// @notice Initialize an `Application` contract proxy.
     /// @param outputsMerkleRootValidator The initial outputs Merkle root validator contract
     /// @param initialOwner The initial application owner
-    /// @param templateHash The initial machine state hash
     /// @dev Reverts if the initial application owner address is zero.
-    constructor(
+    function initialize(
         IOutputsMerkleRootValidator outputsMerkleRootValidator,
-        address initialOwner,
-        bytes32 templateHash,
-        bytes memory dataAvailability
-    ) Ownable(initialOwner) {
-        _templateHash = templateHash;
+        address initialOwner
+    ) external {
+        assert(!_initialized);
+        _ensureNewOwnerIsValid(initialOwner);
+        _deploymentBlockNumber = block.number;
         _outputsMerkleRootValidator = outputsMerkleRootValidator;
-        _dataAvailability = dataAvailability;
+        _transferOwnership(initialOwner);
+        _initialized = true;
     }
 
     /// @notice Accept Ether transfers.
@@ -153,7 +159,7 @@ contract Application is
 
     /// @inheritdoc IApplication
     function getTemplateHash() external view override returns (bytes32) {
-        return _templateHash;
+        return _args().templateHash;
     }
 
     /// @inheritdoc IApplication
@@ -168,7 +174,7 @@ contract Application is
 
     /// @inheritdoc IApplication
     function getDataAvailability() external view override returns (bytes memory) {
-        return _dataAvailability;
+        return _args().dataAvailability;
     }
 
     /// @inheritdoc IApplication
@@ -176,19 +182,26 @@ contract Application is
         return _deploymentBlockNumber;
     }
 
-    /// @inheritdoc Ownable
-    function owner() public view override(IOwnable, Ownable) returns (address) {
-        return super.owner();
+    /// @inheritdoc IOwnable
+    function owner() external view override returns (address) {
+        return _owner;
     }
 
-    /// @inheritdoc Ownable
-    function renounceOwnership() public override(IOwnable, Ownable) {
-        super.renounceOwnership();
+    /// @inheritdoc IOwnable
+    function renounceOwnership() external override onlyOwner {
+        _transferOwnership(address(0));
     }
 
-    /// @inheritdoc Ownable
-    function transferOwnership(address newOwner) public override(IOwnable, Ownable) {
-        super.transferOwnership(newOwner);
+    /// @inheritdoc IOwnable
+    function transferOwnership(address newOwner) public override onlyOwner {
+        _ensureNewOwnerIsValid(newOwner);
+        _transferOwnership(newOwner);
+    }
+
+    /// @notice Makes a function permissioned.
+    modifier onlyOwner() {
+        _ensureSenderIsOwner();
+        _;
     }
 
     /// @notice Check if an outputs Merkle root is valid,
@@ -232,5 +245,27 @@ contract Application is
         (destination, payload) = abi.decode(arguments, (address, bytes));
 
         destination.safeDelegateCall(payload);
+    }
+
+    /// @notice Get the initialization arguments embedded into the proxy's bytecode
+    function _args() internal view returns (Args memory) {
+        return abi.decode(address(this).fetchCloneArgs(), (Args));
+    }
+
+    /// @notice Transfer ownership without checking arguments or message sender.
+    function _transferOwnership(address newOwner) internal {
+        address oldOwner = _owner;
+        _owner = newOwner;
+        emit OwnershipTransferred(oldOwner, newOwner);
+    }
+
+    /// @notice Revert if the message sender is not the owner.
+    function _ensureSenderIsOwner() internal view {
+        require(msg.sender == _owner, OwnableUnauthorizedAccount(msg.sender));
+    }
+
+    /// @notice Revert if the new owner address is the zero address.
+    function _ensureNewOwnerIsValid(address newOwner) internal pure {
+        require(newOwner != address(0), OwnableInvalidOwner(newOwner));
     }
 }

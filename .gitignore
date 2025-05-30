@@ -2,7 +2,7 @@
 /coverage
 /dependencies
 /deployments
-/docs
+/forge-docs
 /node_modules
 /out
 lcov.info

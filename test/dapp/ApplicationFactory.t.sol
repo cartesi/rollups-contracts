@@ -7,16 +7,19 @@ pragma solidity ^0.8.22;
 import {ApplicationFactory} from "src/dapp/ApplicationFactory.sol";
 import {IApplicationFactory} from "src/dapp/IApplicationFactory.sol";
 import {IApplication} from "src/dapp/IApplication.sol";
+import {Application} from "src/dapp/Application.sol";
 import {IOutputsMerkleRootValidator} from "src/consensus/IOutputsMerkleRootValidator.sol";
 
 import {Test} from "forge-std-1.9.6/src/Test.sol";
 import {Vm} from "forge-std-1.9.6/src/Vm.sol";
 
+import {Errors} from "@openzeppelin-contracts-5.2.0/utils/Errors.sol";
+
 contract ApplicationFactoryTest is Test {
     ApplicationFactory _factory;
 
     function setUp() public {
-        _factory = new ApplicationFactory();
+        _factory = new ApplicationFactory(new Application());
     }
 
     function testNewApplication(
@@ -84,7 +87,7 @@ contract ApplicationFactoryTest is Test {
         assertEq(precalculatedAddress, address(appContract));
 
         // Cannot deploy an application with the same salt twice
-        vm.expectRevert(bytes(""));
+        vm.expectRevert(Errors.FailedDeployment.selector);
         _factory.newApplication(
             outputsMerkleRootValidator, appOwner, templateHash, dataAvailability, salt
         );

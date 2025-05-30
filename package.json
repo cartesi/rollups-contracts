@@ -14,7 +14,7 @@
     },
     "devDependencies": {
         "@changesets/cli": "^2.29.4",
-        "@usecannon/cli": "^2.22.0"
+        "@usecannon/cli": "^2.23.0"
     },
     "files": [
         "out"

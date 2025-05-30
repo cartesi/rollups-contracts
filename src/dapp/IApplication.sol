@@ -38,6 +38,10 @@ interface IApplication is IOwnable {
     /// @param output The output
     event OutputExecuted(uint64 outputIndex, bytes output);
 
+    /// @notice The owner has transferred the ownership to another address
+    /// or renounced the ownership (if `newOwner` is `address(0)`).
+    event OwnershipTransferred(address indexed previousOwner, address indexed newOwner);
+
     // Errors
 
     /// @notice Could not execute an output, because the application contract doesn't know how to.
@@ -59,6 +63,12 @@ interface IApplication is IOwnable {
 
     /// @notice Raised when the computed outputs Merkle root is invalid, according to the current outputs Merkle root validator.
     error InvalidOutputsMerkleRoot(bytes32 outputsMerkleRoot);
+
+    /// @notice Tried to call a permissioned function (message sender must be the owner).
+    error OwnableUnauthorizedAccount(address account);
+
+    /// @notice Tried to transfer the ownership to an invalid owner (e.g. `address(0)`).
+    error OwnableInvalidOwner(address owner);
 
     // Permissioned functions
 
