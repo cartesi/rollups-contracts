@@ -144,7 +144,7 @@ Breaking Change section should start with the phrase "BREAKING CHANGE: " followe
 Similarly, a Deprecation section should start with "DEPRECATED: " followed by a short description of what is deprecated, a blank line, and a detailed description of the deprecation that also mentions the recommended update path.
 
 
-## <a name="authors" \>Authors
+## <a name="authors" />Authors
 
 Any contributor who has in the past had at least one pull request for a code change accepted in this repo may submit a pull request to have their name added to the AUTHORS file.
 Submissions to the AUTHORS file should be in the format below:
