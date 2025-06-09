@@ -1,5 +1,11 @@
 # @cartesi/rollups
 
+## 2.0.1-alpha.0
+
+### Patch Changes
+
+- 84cb34e: Add dotfiles to `.soldeerignore`
+
 ## 2.0.0
 
 ### Additions
