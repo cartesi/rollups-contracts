@@ -26,6 +26,7 @@ jobs:
             --crate-version "$VERSION" \
             --crate-license "Apache-2.0" \
             --crate-description "Rust bindings for Cartesi Rollups smart contracts" \
+            --skip-extra-derives \
             --alloy-version "0.12.4"
         env:
           VERSION: ${{ steps.extract_version.outputs.version }}
