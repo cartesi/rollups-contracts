@@ -71,6 +71,7 @@ cast call $(jq -r .address deployments/InputBox.json) 'getDeploymentBlockNumber(
 ## Documentation
 
 A more in-depth documentation on the contracts can be found [here](./docs/contracts.md).
+A tutorial on how to deploy core and applcation specific contracts can be found [here](.docs/deployment.md).
 
 ## Use cases
 
