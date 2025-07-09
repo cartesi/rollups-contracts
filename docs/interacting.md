@@ -75,7 +75,7 @@ cast call $SELF_HOSTED_APPLICATION_FACTORY_ADDRESS \
   --rpc-url $RPC_URL
 ```
 
-> [!TIP] Cannon includes an interactive CLI!
+> [!TIP] [Cannon](https://usecannon.com/) includes an interactive CLI!
 > As an alternative you can also use Cannon interactive CLI to inspect deployed contracts, call functions on them, view state and logs 
 
 ---
