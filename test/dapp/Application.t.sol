@@ -4,9 +4,11 @@
 pragma solidity ^0.8.22;
 
 import {Application} from "src/dapp/Application.sol";
+import {ApplicationFactory} from "src/dapp/ApplicationFactory.sol";
 import {Authority} from "src/consensus/authority/Authority.sol";
 import {CanonicalMachine} from "src/common/CanonicalMachine.sol";
 import {IApplication} from "src/dapp/IApplication.sol";
+import {IApplicationFactory} from "src/dapp/IApplicationFactory.sol";
 import {IOutputsMerkleRootValidator} from "src/consensus/IOutputsMerkleRootValidator.sol";
 import {OutputValidityProof} from "src/common/OutputValidityProof.sol";
 import {Outputs} from "src/common/Outputs.sol";
@@ -45,6 +47,7 @@ contract ApplicationTest is Test, OwnableTest {
     using ExternalLibMerkle32 for bytes32[];
     using LibAddressArray for Vm;
 
+    IApplicationFactory _appFactory;
     IApplication _appContract;
     EtherReceiver _etherReceiver;
     Authority _authority;
@@ -96,7 +99,7 @@ contract ApplicationTest is Test, OwnableTest {
         vm.expectRevert(
             abi.encodeWithSelector(Ownable.OwnableInvalidOwner.selector, address(0))
         );
-        new Application(_authority, address(0), _templateHash, new bytes(0));
+        _appFactory.newApplication(_authority, address(0), _templateHash, new bytes(0));
     }
 
     function testConstructor(
@@ -113,7 +116,7 @@ contract ApplicationTest is Test, OwnableTest {
         vm.expectEmit(true, true, false, false);
         emit Ownable.OwnershipTransferred(address(0), owner);
 
-        IApplication appContract = new Application(
+        IApplication appContract = _appFactory.newApplication(
             outputsMerkleRootValidator, owner, templateHash, dataAvailability
         );
 
@@ -345,8 +348,10 @@ contract ApplicationTest is Test, OwnableTest {
         _inputBox = new InputBox();
         _authority = new Authority(_authorityOwner, _epochLength);
         _dataAvailability = abi.encodeCall(DataAvailability.InputBox, (_inputBox));
-        _appContract =
-            new Application(_authority, _appOwner, _templateHash, _dataAvailability);
+        _appFactory = new ApplicationFactory(new Application());
+        _appContract = _appFactory.newApplication(
+            _authority, _appOwner, _templateHash, _dataAvailability
+        );
         _safeERC20Transfer = new SafeERC20Transfer();
     }
 
@@ -539,7 +544,9 @@ contract ApplicationTest is Test, OwnableTest {
 
         vm.expectRevert(
             abi.encodeWithSelector(
-                IApplication.InsufficientFunds.selector, _transferAmount, 0
+                IApplication.InsufficientFunds.selector,
+                _transferAmount,
+                address(_appContract).balance
             )
         );
         _appContract.executeOutput(output, proof);
@@ -580,7 +587,13 @@ contract ApplicationTest is Test, OwnableTest {
             "Application contract does not have enough Ether"
         );
 
-        vm.expectRevert();
+        vm.expectRevert(
+            abi.encodeWithSelector(
+                IApplication.InsufficientFunds.selector,
+                _transferAmount,
+                address(_appContract).balance
+            )
+        );
         _appContract.executeOutput(output, proof);
 
         vm.deal(address(_appContract), _transferAmount);
