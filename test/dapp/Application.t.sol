@@ -33,7 +33,7 @@ import {Test} from "forge-std-1.9.6/src/Test.sol";
 
 import {OwnableTest} from "../util/OwnableTest.sol";
 import {EtherReceiver} from "../util/EtherReceiver.sol";
-import {ExternalLibMerkle32} from "../library/LibMerkle32.t.sol";
+import {ExternalLibBinaryMerkleTree} from "../library/LibBinaryMerkleTree.t.sol";
 import {LibAddressArray} from "../util/LibAddressArray.sol";
 import {LibEmulator} from "../util/LibEmulator.sol";
 import {SimpleERC20} from "../util/SimpleERC20.sol";
@@ -42,7 +42,7 @@ import {SimpleSingleERC1155, SimpleBatchERC1155} from "../util/SimpleERC1155.sol
 
 contract ApplicationTest is Test, OwnableTest {
     using LibEmulator for LibEmulator.State;
-    using ExternalLibMerkle32 for bytes32[];
+    using ExternalLibBinaryMerkleTree for bytes32[];
     using LibAddressArray for Vm;
 
     IApplication _appContract;
