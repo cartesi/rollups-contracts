@@ -12,18 +12,6 @@ import {IAuthority} from "./IAuthority.sol";
 /// @title Authority Factory
 /// @notice Allows anyone to reliably deploy a new `IAuthority` contract.
 contract AuthorityFactory is IAuthorityFactory {
-    function newAuthority(address authorityOwner, uint256 epochLength)
-        external
-        override
-        returns (IAuthority)
-    {
-        IAuthority authority = new Authority(authorityOwner, epochLength);
-
-        emit AuthorityCreated(authority);
-
-        return authority;
-    }
-
     function newAuthority(address authorityOwner, uint256 epochLength, bytes32 salt)
         external
         override

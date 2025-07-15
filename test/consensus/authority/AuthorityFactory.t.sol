@@ -25,11 +25,6 @@ contract AuthorityFactoryTest is Test {
         vm.expectRevert(
             abi.encodeWithSelector(Ownable.OwnableInvalidOwner.selector, address(0))
         );
-        _factory.newAuthority(address(0), epochLength);
-
-        vm.expectRevert(
-            abi.encodeWithSelector(Ownable.OwnableInvalidOwner.selector, address(0))
-        );
         _factory.newAuthority(address(0), epochLength, salt);
     }
 
@@ -37,21 +32,7 @@ contract AuthorityFactoryTest is Test {
         vm.assume(authorityOwner != address(0));
 
         vm.expectRevert("epoch length must not be zero");
-        _factory.newAuthority(authorityOwner, 0);
-
-        vm.expectRevert("epoch length must not be zero");
         _factory.newAuthority(authorityOwner, 0, salt);
-    }
-
-    function testNewAuthority(address authorityOwner, uint256 epochLength) public {
-        vm.assume(authorityOwner != address(0));
-        vm.assume(epochLength > 0);
-
-        vm.recordLogs();
-
-        IAuthority authority = _factory.newAuthority(authorityOwner, epochLength);
-
-        _testNewAuthorityAux(authorityOwner, epochLength, authority);
     }
 
     function testNewAuthorityDeterministic(

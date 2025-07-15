@@ -26,20 +26,6 @@ interface IApplicationFactory {
 
     // Permissionless functions
 
-    /// @notice Deploy a new application.
-    /// @param outputsMerkleRootValidator The initial outputs Merkle root validator contract
-    /// @param appOwner The initial application owner
-    /// @param templateHash The initial machine state hash
-    /// @return The application
-    /// @dev On success, MUST emit an `ApplicationCreated` event.
-    /// @dev Reverts if the application owner address is zero.
-    function newApplication(
-        IOutputsMerkleRootValidator outputsMerkleRootValidator,
-        address appOwner,
-        bytes32 templateHash,
-        bytes calldata dataAvailability
-    ) external returns (IApplication);
-
     /// @notice Deploy a new application deterministically.
     /// @param outputsMerkleRootValidator The initial outputs Merkle root validator contract
     /// @param appOwner The initial application owner
