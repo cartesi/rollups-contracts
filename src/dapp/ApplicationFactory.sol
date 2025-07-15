@@ -17,27 +17,6 @@ contract ApplicationFactory is IApplicationFactory {
         IOutputsMerkleRootValidator outputsMerkleRootValidator,
         address appOwner,
         bytes32 templateHash,
-        bytes calldata dataAvailability
-    ) external override returns (IApplication) {
-        IApplication appContract = new Application(
-            outputsMerkleRootValidator, appOwner, templateHash, dataAvailability
-        );
-
-        emit ApplicationCreated(
-            outputsMerkleRootValidator,
-            appOwner,
-            templateHash,
-            dataAvailability,
-            appContract
-        );
-
-        return appContract;
-    }
-
-    function newApplication(
-        IOutputsMerkleRootValidator outputsMerkleRootValidator,
-        address appOwner,
-        bytes32 templateHash,
         bytes calldata dataAvailability,
         bytes32 salt
     ) external override returns (IApplication) {

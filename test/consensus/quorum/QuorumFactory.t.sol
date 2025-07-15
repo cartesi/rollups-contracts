@@ -28,23 +28,7 @@ contract QuorumFactoryTest is Test {
         address[] memory validators = vm.addrs(numOfValidators);
 
         vm.expectRevert("epoch length must not be zero");
-        _factory.newQuorum(validators, 0);
-
-        vm.expectRevert("epoch length must not be zero");
         _factory.newQuorum(validators, 0, salt);
-    }
-
-    function testNewQuorum(uint256 seed, uint256 epochLength) public {
-        vm.assume(epochLength > 0);
-
-        uint256 numOfValidators = bound(seed, 1, _QUORUM_MAX_SIZE);
-        address[] memory validators = vm.addrs(numOfValidators);
-
-        vm.recordLogs();
-
-        IQuorum quorum = _factory.newQuorum(validators, epochLength);
-
-        _testNewQuorumAux(validators, epochLength, quorum);
     }
 
     function testNewQuorumDeterministic(uint256 seed, uint256 epochLength, bytes32 salt)
