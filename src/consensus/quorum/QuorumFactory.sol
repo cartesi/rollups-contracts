@@ -12,18 +12,6 @@ import {Quorum} from "./Quorum.sol";
 /// @title Quorum Factory
 /// @notice Allows anyone to reliably deploy a new `IQuorum` contract.
 contract QuorumFactory is IQuorumFactory {
-    function newQuorum(address[] calldata validators, uint256 epochLength)
-        external
-        override
-        returns (IQuorum)
-    {
-        IQuorum quorum = new Quorum(validators, epochLength);
-
-        emit QuorumCreated(quorum);
-
-        return quorum;
-    }
-
     function newQuorum(address[] calldata validators, uint256 epochLength, bytes32 salt)
         external
         override

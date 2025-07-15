@@ -19,31 +19,6 @@ contract ApplicationFactoryTest is Test {
         _factory = new ApplicationFactory();
     }
 
-    function testNewApplication(
-        uint256 blockNumber,
-        IOutputsMerkleRootValidator outputsMerkleRootValidator,
-        address appOwner,
-        bytes32 templateHash,
-        bytes calldata dataAvailability
-    ) public {
-        vm.assume(appOwner != address(0));
-
-        vm.roll(blockNumber);
-
-        IApplication appContract = _factory.newApplication(
-            outputsMerkleRootValidator, appOwner, templateHash, dataAvailability
-        );
-
-        assertEq(
-            address(appContract.getOutputsMerkleRootValidator()),
-            address(outputsMerkleRootValidator)
-        );
-        assertEq(appContract.owner(), appOwner);
-        assertEq(appContract.getTemplateHash(), templateHash);
-        assertEq(appContract.getDataAvailability(), dataAvailability);
-        assertEq(appContract.getDeploymentBlockNumber(), blockNumber);
-    }
-
     function testNewApplicationDeterministic(
         uint256 blockNumber,
         IOutputsMerkleRootValidator outputsMerkleRootValidator,
@@ -87,29 +62,6 @@ contract ApplicationFactoryTest is Test {
         vm.expectRevert(bytes(""));
         _factory.newApplication(
             outputsMerkleRootValidator, appOwner, templateHash, dataAvailability, salt
-        );
-    }
-
-    function testApplicationCreatedEvent(
-        IOutputsMerkleRootValidator outputsMerkleRootValidator,
-        address appOwner,
-        bytes32 templateHash,
-        bytes calldata dataAvailability
-    ) public {
-        vm.assume(appOwner != address(0));
-
-        vm.recordLogs();
-
-        IApplication appContract = _factory.newApplication(
-            outputsMerkleRootValidator, appOwner, templateHash, dataAvailability
-        );
-
-        _testApplicationCreatedEventAux(
-            outputsMerkleRootValidator,
-            appOwner,
-            templateHash,
-            dataAvailability,
-            appContract
         );
     }
 
