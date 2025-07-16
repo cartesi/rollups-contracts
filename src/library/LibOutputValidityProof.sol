@@ -6,7 +6,7 @@ pragma solidity ^0.8.8;
 import {CanonicalMachine} from "../common/CanonicalMachine.sol";
 import {OutputValidityProof} from "../common/OutputValidityProof.sol";
 
-import {LibHash} from "./LibHash.sol";
+import {LibKeccak256} from "./LibKeccak256.sol";
 import {LibBinaryMerkleTree} from "./LibBinaryMerkleTree.sol";
 
 library LibOutputValidityProof {
@@ -26,7 +26,7 @@ library LibOutputValidityProof {
         returns (bytes32)
     {
         return v.outputHashesSiblings.merkleRootAfterReplacement(
-            v.outputIndex, outputHash, LibHash.efficientKeccak256
+            v.outputIndex, outputHash, LibKeccak256.hashPair
         );
     }
 }

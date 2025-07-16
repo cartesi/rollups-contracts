@@ -5,7 +5,7 @@ pragma solidity ^0.8.22;
 
 import {Test} from "forge-std-1.9.6/src/Test.sol";
 
-import {LibHash} from "src/library/LibHash.sol";
+import {LibKeccak256} from "src/library/LibKeccak256.sol";
 import {LibBinaryMerkleTree} from "src/library/LibBinaryMerkleTree.sol";
 
 import {console} from "forge-std-1.9.6/src/console.sol";
@@ -21,7 +21,7 @@ library ExternalLibBinaryMerkleTree {
         uint256 index,
         bytes32 leaf
     ) external pure returns (bytes32) {
-        return sibs.merkleRootAfterReplacement(index, leaf, LibHash.efficientKeccak256);
+        return sibs.merkleRootAfterReplacement(index, leaf, LibKeccak256.hashPair);
     }
 }
 
@@ -56,8 +56,8 @@ contract LibBinaryMerkleTreeTest is Test {
         );
     }
 
-    function testEfficientKeccak256Fuzzy(bytes32 a, bytes32 b) external pure {
-        assertEq(_parent(a, b), LibHash.efficientKeccak256(a, b));
+    function testHashPairFuzzy(bytes32 a, bytes32 b) external pure {
+        assertEq(_parent(a, b), LibKeccak256.hashPair(a, b));
     }
 
     function testMerkleRootAfterReplacementHeightZero(bytes32 leaf) external {
@@ -140,10 +140,10 @@ contract LibBinaryMerkleTreeTest is Test {
         bytes32 defaultNode;
 
         bytes32 root =
-            leaves.merkleRootFromNodes(defaultNode, height, LibHash.efficientKeccak256);
+            leaves.merkleRootFromNodes(defaultNode, height, LibKeccak256.hashPair);
 
         bytes32[] memory siblings =
-            leaves.siblings(defaultNode, index, height, LibHash.efficientKeccak256);
+            leaves.siblings(defaultNode, index, height, LibKeccak256.hashPair);
 
         bytes32 newRoot = siblings.merkleRootAfterReplacement(index, leaf);
 

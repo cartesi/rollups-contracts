@@ -7,7 +7,7 @@ import {SafeCast} from "@openzeppelin-contracts-5.2.0/utils/math/SafeCast.sol";
 
 import {CanonicalMachine} from "src/common/CanonicalMachine.sol";
 import {OutputValidityProof} from "src/common/OutputValidityProof.sol";
-import {LibHash} from "src/library/LibHash.sol";
+import {LibKeccak256} from "src/library/LibKeccak256.sol";
 
 import {LibBinaryMerkleTreeHelper} from "./LibBinaryMerkleTreeHelper.sol";
 
@@ -19,7 +19,7 @@ library LibEmulator {
         bytes[] outputs;
     }
 
-    bytes32 constant NO_OUTPUT_LEAF_NODE = bytes32(0);
+    bytes32 constant NO_OUTPUT_SENTINEL_VALUE = bytes32(0);
 
     type OutputIndex is uint64;
 
@@ -81,9 +81,9 @@ library LibEmulator {
         returns (bytes32)
     {
         return outputHashes.merkleRootFromNodes(
-            NO_OUTPUT_LEAF_NODE,
+            NO_OUTPUT_SENTINEL_VALUE,
             CanonicalMachine.LOG2_MAX_OUTPUTS,
-            LibHash.efficientKeccak256
+            LibKeccak256.hashPair
         );
     }
 
@@ -93,10 +93,10 @@ library LibEmulator {
         returns (bytes32[] memory)
     {
         return outputHashes.siblings(
-            NO_OUTPUT_LEAF_NODE,
+            NO_OUTPUT_SENTINEL_VALUE,
             outputIndex,
             CanonicalMachine.LOG2_MAX_OUTPUTS,
-            LibHash.efficientKeccak256
+            LibKeccak256.hashPair
         );
     }
 
