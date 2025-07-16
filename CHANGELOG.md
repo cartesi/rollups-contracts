@@ -1,5 +1,11 @@
 # @cartesi/rollups
 
+## 3.0.0-alpha.0
+
+### Major Changes
+
+- 55e2ae0: Removed non-deterministic deployment functions from factories
+
 ## 2.0.1
 
 ### Patch Changes
