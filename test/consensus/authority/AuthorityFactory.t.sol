@@ -62,23 +62,11 @@ contract AuthorityFactoryTest is Test {
         vm.assume(authorityOwner != address(0));
         vm.assume(epochLength > 0);
 
-        address precalculatedAddress =
-            _factory.calculateAuthorityAddress(authorityOwner, epochLength, salt);
-
         vm.recordLogs();
 
         IAuthority authority = _factory.newAuthority(authorityOwner, epochLength, salt);
 
         _testNewAuthorityAux(authorityOwner, epochLength, authority);
-
-        // Precalculated address must match actual address
-        assertEq(precalculatedAddress, address(authority));
-
-        precalculatedAddress =
-            _factory.calculateAuthorityAddress(authorityOwner, epochLength, salt);
-
-        // Precalculated address must STILL match actual address
-        assertEq(precalculatedAddress, address(authority));
 
         // Cannot deploy an authority with the same salt twice
         vm.expectRevert();

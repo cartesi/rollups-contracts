@@ -35,19 +35,4 @@ contract AuthorityFactory is IAuthorityFactory {
 
         return authority;
     }
-
-    function calculateAuthorityAddress(
-        address authorityOwner,
-        uint256 epochLength,
-        bytes32 salt
-    ) external view override returns (address) {
-        return Create2.computeAddress(
-            salt,
-            keccak256(
-                abi.encodePacked(
-                    type(Authority).creationCode, abi.encode(authorityOwner, epochLength)
-                )
-            )
-        );
-    }
 }

@@ -35,19 +35,4 @@ contract QuorumFactory is IQuorumFactory {
 
         return quorum;
     }
-
-    function calculateQuorumAddress(
-        address[] calldata validators,
-        uint256 epochLength,
-        bytes32 salt
-    ) external view override returns (address) {
-        return Create2.computeAddress(
-            salt,
-            keccak256(
-                abi.encodePacked(
-                    type(Quorum).creationCode, abi.encode(validators, epochLength)
-                )
-            )
-        );
-    }
 }

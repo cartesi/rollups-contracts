@@ -55,27 +55,4 @@ contract ApplicationFactory is IApplicationFactory {
 
         return appContract;
     }
-
-    function calculateApplicationAddress(
-        IOutputsMerkleRootValidator outputsMerkleRootValidator,
-        address appOwner,
-        bytes32 templateHash,
-        bytes calldata dataAvailability,
-        bytes32 salt
-    ) external view override returns (address) {
-        return Create2.computeAddress(
-            salt,
-            keccak256(
-                abi.encodePacked(
-                    type(Application).creationCode,
-                    abi.encode(
-                        outputsMerkleRootValidator,
-                        appOwner,
-                        templateHash,
-                        dataAvailability
-                    )
-                )
-            )
-        );
-    }
 }

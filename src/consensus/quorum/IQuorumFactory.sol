@@ -38,17 +38,4 @@ interface IQuorumFactory {
     function newQuorum(address[] calldata validators, uint256 epochLength, bytes32 salt)
         external
         returns (IQuorum);
-
-    /// @notice Calculate the address of a quorum to be deployed deterministically.
-    /// @param validators the list of validators
-    /// @param epochLength The epoch length
-    /// @param salt The salt used to deterministically generate the quorum address
-    /// @return The deterministic quorum address
-    /// @dev Beware that only the `newQuorum` function with the `salt` parameter
-    ///      is able to deterministically deploy a quorum.
-    function calculateQuorumAddress(
-        address[] calldata validators,
-        uint256 epochLength,
-        bytes32 salt
-    ) external view returns (address);
 }

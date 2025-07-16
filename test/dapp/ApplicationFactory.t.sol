@@ -56,16 +56,9 @@ contract ApplicationFactoryTest is Test {
 
         vm.roll(blockNumber);
 
-        address precalculatedAddress = _factory.calculateApplicationAddress(
-            outputsMerkleRootValidator, appOwner, templateHash, dataAvailability, salt
-        );
-
         IApplication appContract = _factory.newApplication(
             outputsMerkleRootValidator, appOwner, templateHash, dataAvailability, salt
         );
-
-        // Precalculated address must match actual address
-        assertEq(precalculatedAddress, address(appContract));
 
         assertEq(
             address(appContract.getOutputsMerkleRootValidator()),
@@ -75,13 +68,6 @@ contract ApplicationFactoryTest is Test {
         assertEq(appContract.getTemplateHash(), templateHash);
         assertEq(appContract.getDataAvailability(), dataAvailability);
         assertEq(appContract.getDeploymentBlockNumber(), blockNumber);
-
-        precalculatedAddress = _factory.calculateApplicationAddress(
-            outputsMerkleRootValidator, appOwner, templateHash, dataAvailability, salt
-        );
-
-        // Precalculated address must STILL match actual address
-        assertEq(precalculatedAddress, address(appContract));
 
         // Cannot deploy an application with the same salt twice
         vm.expectRevert(bytes(""));

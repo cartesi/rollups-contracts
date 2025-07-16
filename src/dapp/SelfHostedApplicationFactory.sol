@@ -54,24 +54,4 @@ contract SelfHostedApplicationFactory is ISelfHostedApplicationFactory {
             authority, appOwner, templateHash, dataAvailability, salt
         );
     }
-
-    function calculateAddresses(
-        address authorityOwner,
-        uint256 epochLength,
-        address appOwner,
-        bytes32 templateHash,
-        bytes calldata dataAvailability,
-        bytes32 salt
-    ) external view returns (address application, address authority) {
-        authority =
-            _authorityFactory.calculateAuthorityAddress(authorityOwner, epochLength, salt);
-
-        application = _applicationFactory.calculateApplicationAddress(
-            IOutputsMerkleRootValidator(authority),
-            appOwner,
-            templateHash,
-            dataAvailability,
-            salt
-        );
-    }
 }

@@ -55,23 +55,11 @@ contract QuorumFactoryTest is Test {
         uint256 numOfValidators = bound(seed, 1, _QUORUM_MAX_SIZE);
         address[] memory validators = vm.addrs(numOfValidators);
 
-        address precalculatedAddress =
-            _factory.calculateQuorumAddress(validators, epochLength, salt);
-
         vm.recordLogs();
 
         IQuorum quorum = _factory.newQuorum(validators, epochLength, salt);
 
         _testNewQuorumAux(validators, epochLength, quorum);
-
-        // Precalculated address must match actual address
-        assertEq(precalculatedAddress, address(quorum));
-
-        precalculatedAddress =
-            _factory.calculateQuorumAddress(validators, epochLength, salt);
-
-        // Precalculated address must STILL match actual address
-        assertEq(precalculatedAddress, address(quorum));
 
         // Cannot deploy a quorum with the same salt twice
         vm.expectRevert();

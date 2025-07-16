@@ -100,13 +100,6 @@ contract SelfHostedApplicationFactoryTest is Test {
         vm.assume(authorityOwner != address(0));
         vm.assume(epochLength > 0);
 
-        address appAddr;
-        address authorityAddr;
-
-        (appAddr, authorityAddr) = factory.calculateAddresses(
-            authorityOwner, epochLength, appOwner, templateHash, dataAvailability, salt
-        );
-
         IApplication application;
         IAuthority authority;
 
@@ -114,13 +107,10 @@ contract SelfHostedApplicationFactoryTest is Test {
             authorityOwner, epochLength, appOwner, templateHash, dataAvailability, salt
         );
 
-        assertEq(appAddr, address(application));
-        assertEq(authorityAddr, address(authority));
-
         assertEq(authority.owner(), authorityOwner);
         assertEq(authority.getEpochLength(), epochLength);
 
-        assertEq(address(application.getOutputsMerkleRootValidator()), authorityAddr);
+        assertEq(address(application.getOutputsMerkleRootValidator()), address(authority));
         assertEq(application.owner(), appOwner);
         assertEq(application.getTemplateHash(), templateHash);
         assertEq(application.getDataAvailability(), dataAvailability);

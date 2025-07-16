@@ -37,22 +37,4 @@ interface ISelfHostedApplicationFactory {
         bytes calldata dataAvailability,
         bytes32 salt
     ) external returns (IApplication, IAuthority);
-
-    /// @notice Calculate the addresses of the application and authority contracts
-    /// to be deployed deterministically.
-    /// @param authorityOwner The initial authority owner
-    /// @param epochLength The epoch length
-    /// @param appOwner The initial application owner
-    /// @param templateHash The initial machine state hash
-    /// @param salt The salt used to deterministically generate the addresses
-    /// @return The application address
-    /// @return The authority address
-    function calculateAddresses(
-        address authorityOwner,
-        uint256 epochLength,
-        address appOwner,
-        bytes32 templateHash,
-        bytes calldata dataAvailability,
-        bytes32 salt
-    ) external view returns (address, address);
 }

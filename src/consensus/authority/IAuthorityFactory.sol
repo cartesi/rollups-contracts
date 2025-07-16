@@ -38,17 +38,4 @@ interface IAuthorityFactory {
     function newAuthority(address authorityOwner, uint256 epochLength, bytes32 salt)
         external
         returns (IAuthority);
-
-    /// @notice Calculate the address of an authority to be deployed deterministically.
-    /// @param authorityOwner The initial authority owner
-    /// @param epochLength The epoch length
-    /// @param salt The salt used to deterministically generate the authority address
-    /// @return The deterministic authority address
-    /// @dev Beware that only the `newAuthority` function with the `salt` parameter
-    ///      is able to deterministically deploy an authority.
-    function calculateAuthorityAddress(
-        address authorityOwner,
-        uint256 epochLength,
-        bytes32 salt
-    ) external view returns (address);
 }

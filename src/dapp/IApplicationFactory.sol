@@ -55,20 +55,4 @@ interface IApplicationFactory {
         bytes calldata dataAvailability,
         bytes32 salt
     ) external returns (IApplication);
-
-    /// @notice Calculate the address of an application contract to be deployed deterministically.
-    /// @param outputsMerkleRootValidator The initial outputs Merkle root validator contract
-    /// @param appOwner The initial application owner
-    /// @param templateHash The initial machine state hash
-    /// @param salt The salt used to deterministically generate the application contract address
-    /// @return The deterministic application contract address
-    /// @dev Beware that only the `newApplication` function with the `salt` parameter
-    ///      is able to deterministically deploy an application.
-    function calculateApplicationAddress(
-        IOutputsMerkleRootValidator outputsMerkleRootValidator,
-        address appOwner,
-        bytes32 templateHash,
-        bytes calldata dataAvailability,
-        bytes32 salt
-    ) external view returns (address);
 }
