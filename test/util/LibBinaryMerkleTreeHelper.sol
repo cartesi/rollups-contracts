@@ -39,7 +39,7 @@ library LibBinaryMerkleTreeHelper {
     /// @param nodeIndex The index of the node
     /// @param height The height of the Merkle tree
     /// @param nodeFromChildren The function that computes nodes from their children
-    /// @return The siblings of the ancestors of the leaf in bottom-up order
+    /// @return The siblings of the node in bottom-up order
     /// @dev Raises an `InvalidNodeIndex` error if the provided index is out of bounds.
     /// @dev Raises an `InvalidHeight` error if more than `2^height` nodes are provided.
     function siblings(
@@ -96,6 +96,40 @@ library LibBinaryMerkleTreeHelper {
             return nodes[index];
         } else {
             return defaultNode;
+        }
+    }
+
+    /// @notice Compute leaves from data blocks.
+    /// @param dataBlocks The array of data blocks
+    /// @param leafFromDataBlock The function that computes leaves from data blocks
+    function toLeaves(
+        bytes[] memory dataBlocks,
+        function(bytes memory) pure returns (bytes32) leafFromDataBlock
+    ) internal pure returns (bytes32[] memory leaves) {
+        leaves = new bytes32[](dataBlocks.length);
+        for (uint256 i; i < dataBlocks.length; ++i) {
+            leaves[i] = leafFromDataBlock(dataBlocks[i]);
+        }
+    }
+
+    /// @notice Splits a data buffer into equally-sized blocks.
+    /// @param data The byte array
+    /// @param dataBlockSize The data block size
+    /// @return dataBlocks An array of data blocks.
+    function splitIntoBlocks(bytes memory data, uint256 dataBlockSize)
+        internal
+        pure
+        returns (bytes[] memory dataBlocks)
+    {
+        dataBlocks = new bytes[]((data.length + dataBlockSize - 1) / dataBlockSize);
+        for (uint256 i; i < dataBlocks.length; ++i) {
+            dataBlocks[i] = new bytes(dataBlockSize);
+            uint256 offset = i * dataBlockSize;
+            for (uint256 j; j < dataBlockSize; ++j) {
+                if (offset + j < data.length) {
+                    dataBlocks[i][j] = data[offset + j];
+                }
+            }
         }
     }
 }
