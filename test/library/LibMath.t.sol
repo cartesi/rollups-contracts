@@ -35,6 +35,22 @@ library LibNaiveMath {
         }
         return 256;
     }
+
+    function floorLog2(uint256 x) internal pure returns (uint256) {
+        require(x > 0, "floorLog2(0) is undefined");
+        for (uint256 i; i < 256; ++i) {
+            if ((x >> i) == 1) {
+                return i;
+            }
+        }
+        revert("unexpected code path reached");
+    }
+}
+
+library ExternalLibMath {
+    function floorLog2(uint256 x) external pure returns (uint256) {
+        return LibMath.floorLog2(x);
+    }
 }
 
 contract LibMathTest is Test {
@@ -81,6 +97,28 @@ contract LibMathTest is Test {
 
     function testCeilLog2(uint256 x) external pure {
         assertEq(LibMath.ceilLog2(x), LibNaiveMath.ceilLog2(x));
+    }
+
+    function testFloorLog2() external pure {
+        assertEq(LibMath.floorLog2(1), 0);
+        assertEq(LibMath.floorLog2(type(uint256).max), 255);
+        for (uint256 i; i < 256; ++i) {
+            assertEq(LibMath.floorLog2(1 << i), i);
+            for (uint256 j; j < i; ++j) {
+                assertEq(LibMath.floorLog2((1 << i) | (1 << j)), i);
+                assertEq(LibMath.floorLog2((1 << i) - (1 << j)), i - 1);
+            }
+        }
+    }
+
+    function testFloorLog2(uint256 x) external pure {
+        vm.assume(x > 0);
+        assertEq(LibMath.floorLog2(x), LibNaiveMath.floorLog2(x));
+    }
+
+    function testFloorLog2OfZero() external {
+        vm.expectRevert(LibMath.FloorLog2OfZeroIsUndefined.selector);
+        ExternalLibMath.floorLog2(0);
     }
 
     function testMin(uint256 x) external pure {

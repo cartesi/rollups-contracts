@@ -63,6 +63,18 @@ library LibMath {
         else return 256 - clz(x - 1);
     }
 
+    /// @notice Tried to compute floorLog2(0), which is undefined.
+    error FloorLog2OfZeroIsUndefined();
+
+    /// @notice the biggest y for which x >= 2^y
+    /// @param x number you want the floorLog2 of
+    /// @dev this a binary search implementation
+    /// @dev this function reverts if x = 0 is provided
+    function floorLog2(uint256 x) internal pure returns (uint256) {
+        if (x == 0) revert FloorLog2OfZeroIsUndefined();
+        else return 255 - clz(x);
+    }
+
     /// @notice the largest of two numbers
     function max(uint256 x, uint256 y) internal pure returns (uint256) {
         return (x > y) ? x : y;
