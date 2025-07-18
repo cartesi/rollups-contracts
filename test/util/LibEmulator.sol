@@ -13,6 +13,8 @@ import {LibBinaryMerkleTreeHelper} from "./LibBinaryMerkleTreeHelper.sol";
 
 library LibEmulator {
     using SafeCast for uint256;
+    using LibEmulator for State;
+    using LibBinaryMerkleTreeHelper for bytes[];
     using LibBinaryMerkleTreeHelper for bytes32[];
 
     struct State {
@@ -21,18 +23,16 @@ library LibEmulator {
 
     bytes32 constant NO_OUTPUT_SENTINEL_VALUE = bytes32(0);
 
-    type OutputIndex is uint64;
-
     // -------------
     // state changes
     // -------------
 
     function addOutput(State storage state, bytes memory output)
         internal
-        returns (OutputIndex outputIndex)
+        returns (uint64 outputIndex)
     {
         bytes[] storage outputs = state.outputs;
-        outputIndex = OutputIndex.wrap(outputs.length.toUint64());
+        outputIndex = outputs.length.toUint64();
         outputs.push(output);
     }
 
@@ -40,59 +40,43 @@ library LibEmulator {
     // state queries
     // -------------
 
-    function getOutput(State storage state, OutputIndex outputIndex)
+    function getOutput(State storage state, uint64 outputIndex)
         internal
         view
-        returns (bytes storage)
+        returns (bytes storage output)
     {
-        return state.outputs[OutputIndex.unwrap(outputIndex)];
+        return state.outputs[outputIndex];
     }
 
-    function getOutputValidityProof(State storage state, OutputIndex outputIndex)
+    function getOutputValidityProof(State storage state, uint64 outputIndex)
         internal
         view
-        returns (OutputValidityProof memory)
+        returns (OutputValidityProof memory proof)
     {
-        bytes32[] memory outputHashes;
-
-        outputHashes = getOutputHashes(state.outputs);
-
-        return OutputValidityProof(
-            OutputIndex.unwrap(outputIndex),
-            getOutputSiblings(outputHashes, OutputIndex.unwrap(outputIndex))
-        );
+        return OutputValidityProof({
+            outputIndex: outputIndex,
+            outputHashesSiblings: state.getOutpuHashesSiblings(outputIndex)
+        });
     }
 
-    function getOutputsMerkleRoot(State storage state) internal view returns (bytes32) {
-        bytes32[] memory outputHashes;
-
-        outputHashes = getOutputHashes(state.outputs);
-
-        return getOutputsMerkleRoot(outputHashes);
-    }
-
-    // -----------------
-    // Merkle operations
-    // -----------------
-
-    function getOutputsMerkleRoot(bytes32[] memory outputHashes)
+    function getOutputsMerkleRoot(State storage state)
         internal
-        pure
-        returns (bytes32)
+        view
+        returns (bytes32 outputsMerkleRoot)
     {
-        return outputHashes.merkleRootFromNodes(
+        return state.getOutputHashes().merkleRootFromNodes(
             NO_OUTPUT_SENTINEL_VALUE,
             CanonicalMachine.LOG2_MAX_OUTPUTS,
             LibKeccak256.hashPair
         );
     }
 
-    function getOutputSiblings(bytes32[] memory outputHashes, uint64 outputIndex)
+    function getOutpuHashesSiblings(State storage state, uint64 outputIndex)
         internal
-        pure
-        returns (bytes32[] memory)
+        view
+        returns (bytes32[] memory outputHashSiblings)
     {
-        return outputHashes.siblings(
+        return state.getOutputHashes().siblings(
             NO_OUTPUT_SENTINEL_VALUE,
             outputIndex,
             CanonicalMachine.LOG2_MAX_OUTPUTS,
@@ -100,18 +84,11 @@ library LibEmulator {
         );
     }
 
-    // ---------------
-    // Hash operations
-    // ---------------
-
-    function getOutputHashes(bytes[] memory outputs)
+    function getOutputHashes(State storage state)
         internal
-        pure
-        returns (bytes32[] memory leaves)
+        view
+        returns (bytes32[] memory outputHashes)
     {
-        leaves = new bytes32[](outputs.length);
-        for (uint256 i; i < leaves.length; ++i) {
-            leaves[i] = keccak256(outputs[i]);
-        }
+        return state.outputs.toLeaves(LibKeccak256.hashBytes);
     }
 }

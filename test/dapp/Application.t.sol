@@ -65,7 +65,7 @@ contract ApplicationTest is Test, OwnableTest {
     uint256[] _tokenIds;
     uint256[] _initialSupplies;
     uint256[] _transferAmounts;
-    mapping(string => LibEmulator.OutputIndex) _outputIndexByName;
+    mapping(string => uint64) _outputIndexByName;
 
     uint256 constant _epochLength = 1;
     bytes32 constant _templateHash = keccak256("templateHash");
@@ -459,13 +459,11 @@ contract ApplicationTest is Test, OwnableTest {
         return abi.encodeCall(Outputs.DelegateCallVoucher, (destination, payload));
     }
 
-    function _addOutput(bytes memory output) internal returns (LibEmulator.OutputIndex) {
+    function _addOutput(bytes memory output) internal returns (uint64) {
         return _emulator.addOutput(output);
     }
 
-    function _nameOutput(string memory name, LibEmulator.OutputIndex outputIndex)
-        internal
-    {
+    function _nameOutput(string memory name, uint64 outputIndex) internal {
         _outputIndexByName[name] = outputIndex;
         _outputNames.push(name);
     }
