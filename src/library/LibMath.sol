@@ -56,9 +56,9 @@ library LibMath {
     }
 
     /// @notice the smallest y for which x <= 2^y
-    /// @param x number you want the log2clp of
+    /// @param x number you want the ceilLog2 of
     /// @dev this a binary search implementation
-    function log2clp(uint256 x) internal pure returns (uint256) {
+    function ceilLog2(uint256 x) internal pure returns (uint256) {
         if (x == 0) return 0;
         else return 256 - clz(x - 1);
     }
