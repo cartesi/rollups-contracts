@@ -27,7 +27,7 @@ library LibNaiveMath {
         return n;
     }
 
-    function log2clp(uint256 x) internal pure returns (uint256) {
+    function ceilLog2(uint256 x) internal pure returns (uint256) {
         for (uint256 i; i < 256; ++i) {
             if (x <= (1 << i)) {
                 return i;
@@ -68,19 +68,19 @@ contract LibMathTest is Test {
         assertEq(LibMath.clz(x), LibNaiveMath.clz(x));
     }
 
-    function testLog2Clp() external pure {
-        assertEq(LibMath.log2clp(0), 0);
-        assertEq(LibMath.log2clp(type(uint256).max), 256);
+    function testCeilLog2() external pure {
+        assertEq(LibMath.ceilLog2(0), 0);
+        assertEq(LibMath.ceilLog2(type(uint256).max), 256);
         for (uint256 i; i < 256; ++i) {
-            assertEq(LibMath.log2clp(1 << i), i);
+            assertEq(LibMath.ceilLog2(1 << i), i);
             for (uint256 j; j < i; ++j) {
-                assertEq(LibMath.log2clp((1 << i) | (1 << j)), i + 1);
+                assertEq(LibMath.ceilLog2((1 << i) | (1 << j)), i + 1);
             }
         }
     }
 
-    function testLog2Clp(uint256 x) external pure {
-        assertEq(LibMath.log2clp(x), LibNaiveMath.log2clp(x));
+    function testCeilLog2(uint256 x) external pure {
+        assertEq(LibMath.ceilLog2(x), LibNaiveMath.ceilLog2(x));
     }
 
     function testMin(uint256 x) external pure {
