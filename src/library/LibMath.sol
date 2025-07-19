@@ -5,17 +5,17 @@ pragma solidity ^0.8.0;
 
 /// @author Felipe Argento
 library LibMath {
-    /// @notice count trailing zeros
-    /// @param x number you want the ctz of
-    /// @dev this a binary search implementation
+    /// @notice Count trailing zeros.
+    /// @param x The number you want the ctz of
+    /// @dev This is a binary search implementation.
     function ctz(uint256 x) internal pure returns (uint256) {
         if (x == 0) return 256;
         else return 256 - clz(~x & (x - 1));
     }
 
-    /// @notice count leading zeros
-    /// @param x number you want the clz of
-    /// @dev this a binary search implementation
+    /// @notice Count leading zeros.
+    /// @param x The number you want the clz of
+    /// @dev This a binary search implementation.
     function clz(uint256 x) internal pure returns (uint256) {
         if (x == 0) return 256;
 
@@ -55,9 +55,9 @@ library LibMath {
         return n;
     }
 
-    /// @notice the smallest y for which x <= 2^y
-    /// @param x number you want the ceilLog2 of
-    /// @dev this a binary search implementation
+    /// @notice The smallest y for which x <= 2^y.
+    /// @param x The number you want the ceilLog2 of
+    /// @dev This is a binary search implementation.
     function ceilLog2(uint256 x) internal pure returns (uint256) {
         if (x == 0) return 0;
         else return 256 - clz(x - 1);
@@ -66,21 +66,21 @@ library LibMath {
     /// @notice Tried to compute floorLog2(0), which is undefined.
     error FloorLog2OfZeroIsUndefined();
 
-    /// @notice the biggest y for which x >= 2^y
-    /// @param x number you want the floorLog2 of
-    /// @dev this a binary search implementation
-    /// @dev this function reverts if x = 0 is provided
+    /// @notice The biggest y for which x >= 2^y.
+    /// @param x The number you want the floorLog2 of
+    /// @dev This is a binary search implementation.
+    /// @dev This function reverts if x = 0 is provided.
     function floorLog2(uint256 x) internal pure returns (uint256) {
         if (x == 0) revert FloorLog2OfZeroIsUndefined();
         else return 255 - clz(x);
     }
 
-    /// @notice the largest of two numbers
+    /// @notice The largest of two numbers.
     function max(uint256 x, uint256 y) internal pure returns (uint256) {
         return (x > y) ? x : y;
     }
 
-    /// @notice the smallest of two numbers
+    /// @notice The smallest of two numbers.
     function min(uint256 x, uint256 y) internal pure returns (uint256) {
         return (x < y) ? x : y;
     }
