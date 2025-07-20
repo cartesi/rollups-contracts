@@ -5,14 +5,14 @@ pragma solidity ^0.8.8;
 
 /// @notice Provides data availability of inputs for applications.
 /// @notice Each application has its own append-only list of inputs.
-/// @notice Off-chain, inputs can be retrieved via events.
-/// @notice On-chain, only the input hashes are stored.
-/// @notice See `LibInput` for more details on how such hashes are computed.
+/// @notice Off-chain, inputs can be retrieved through `InputAdded` events.
+/// @notice On-chain, input Merkle roots can be retrieved through the `getInputMerkleRoot` function.
+/// @notice Merkle trees have the smallest height possible while still covering the whole input.
 interface IInputBox {
     /// @notice MUST trigger when an input is added.
     /// @param appContract The application contract address
     /// @param index The input index
-    /// @param input The input blob
+    /// @param input The input
     event InputAdded(address indexed appContract, uint256 indexed index, bytes input);
 
     /// @notice Input is too large.
@@ -24,7 +24,7 @@ interface IInputBox {
     /// @notice Send an input to an application.
     /// @param appContract The application contract address
     /// @param payload The input payload
-    /// @return The hash of the input blob
+    /// @return The Merkle root of the input
     /// @dev MUST fire an `InputAdded` event.
     function addInput(address appContract, bytes calldata payload)
         external
@@ -34,11 +34,11 @@ interface IInputBox {
     /// @param appContract The application contract address
     function getNumberOfInputs(address appContract) external view returns (uint256);
 
-    /// @notice Get the hash of an input in an application's input box.
+    /// @notice Get the Merkle root of an input in an application's input box.
     /// @param appContract The application contract address
     /// @param index The input index
     /// @dev The provided index must be valid.
-    function getInputHash(address appContract, uint256 index)
+    function getInputMerkleRoot(address appContract, uint256 index)
         external
         view
         returns (bytes32);

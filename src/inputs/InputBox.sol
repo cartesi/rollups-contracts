@@ -6,12 +6,18 @@ pragma solidity ^0.8.18;
 import {IInputBox} from "./IInputBox.sol";
 import {CanonicalMachine} from "../common/CanonicalMachine.sol";
 import {Inputs} from "../common/Inputs.sol";
+import {LibBinaryMerkleTree} from "../library/LibBinaryMerkleTree.sol";
+import {LibKeccak256} from "../library/LibKeccak256.sol";
+import {LibMath} from "../library/LibMath.sol";
 
 contract InputBox is IInputBox {
+    using LibMath for uint256;
+    using LibBinaryMerkleTree for bytes;
+
     /// @notice Deployment block number
     uint256 immutable _deploymentBlockNumber = block.number;
 
-    /// @notice Mapping of application contract addresses to arrays of input hashes.
+    /// @notice Mapping of application contract addresses to arrays of input Merkle roots.
     mapping(address => bytes32[]) private _inputBoxes;
 
     /// @inheritdoc IInputBox
@@ -44,13 +50,13 @@ contract InputBox is IInputBox {
             );
         }
 
-        bytes32 inputHash = keccak256(input);
+        bytes32 inputMerkleRoot = _merkleRoot(input);
 
-        inputBox.push(inputHash);
+        inputBox.push(inputMerkleRoot);
 
         emit InputAdded(appContract, index, input);
 
-        return inputHash;
+        return inputMerkleRoot;
     }
 
     /// @inheritdoc IInputBox
@@ -64,7 +70,7 @@ contract InputBox is IInputBox {
     }
 
     /// @inheritdoc IInputBox
-    function getInputHash(address appContract, uint256 index)
+    function getInputMerkleRoot(address appContract, uint256 index)
         external
         view
         override
@@ -76,5 +82,23 @@ contract InputBox is IInputBox {
     /// @inheritdoc IInputBox
     function getDeploymentBlockNumber() external view override returns (uint256) {
         return _deploymentBlockNumber;
+    }
+
+    /// @notice Compute the Merkle root of an input.
+    /// @param input The input
+    /// @return inputMerkleRoot The input Merkle root
+    function _merkleRoot(bytes memory input)
+        internal
+        pure
+        returns (bytes32 inputMerkleRoot)
+    {
+        uint256 log2DataBlockSize = CanonicalMachine.LOG2_MERKLE_TREE_DATA_BLOCK_SIZE;
+        uint256 log2DriveSize = input.length.ceilLog2().max(log2DataBlockSize);
+        return input.merkleRoot(
+            log2DriveSize,
+            log2DataBlockSize,
+            LibKeccak256.hashBlock,
+            LibKeccak256.hashPair
+        );
     }
 }
