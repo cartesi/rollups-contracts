@@ -8,10 +8,16 @@ import {InputBox} from "src/inputs/InputBox.sol";
 import {IInputBox} from "src/inputs/IInputBox.sol";
 import {CanonicalMachine} from "src/common/CanonicalMachine.sol";
 import {Inputs} from "src/common/Inputs.sol";
+import {LibBinaryMerkleTree} from "src/library/LibBinaryMerkleTree.sol";
+import {LibKeccak256} from "src/library/LibKeccak256.sol";
+import {LibMath} from "src/library/LibMath.sol";
 
 import {EvmAdvanceEncoder} from "../util/EvmAdvanceEncoder.sol";
 
 contract InputBoxTest is Test {
+    using LibMath for uint256;
+    using LibBinaryMerkleTree for bytes;
+
     InputBox _inputBox;
 
     function setUp() public {
@@ -83,25 +89,34 @@ contract InputBoxTest is Test {
 
         // testing added inputs
         for (uint256 i; i < numPayloads; ++i) {
-            bytes32 inputHash = keccak256(
-                abi.encodeCall(
-                    Inputs.EvmAdvance,
-                    (
-                        chainId,
-                        appContract,
-                        address(this),
-                        i, // block.number
-                        i + year2022, // block.timestamp
-                        _prevrandao(i), // block.prevrandao
-                        i, // inputBox.length
-                        payloads[i]
-                    )
+            bytes memory input = abi.encodeCall(
+                Inputs.EvmAdvance,
+                (
+                    chainId,
+                    appContract,
+                    address(this),
+                    i, // block.number
+                    i + year2022, // block.timestamp
+                    _prevrandao(i), // block.prevrandao
+                    i, // inputBox.length
+                    payloads[i]
                 )
             );
-            // test if input hash is the same as in InputBox
-            assertEq(inputHash, _inputBox.getInputHash(appContract, i));
-            // test if input hash is the same as returned from calling addInput() function
-            assertEq(inputHash, returnedValues[i]);
+
+            uint256 log2DataBlockSize = CanonicalMachine.LOG2_MERKLE_TREE_DATA_BLOCK_SIZE;
+            uint256 log2DriveSize = input.length.ceilLog2().max(log2DataBlockSize);
+
+            bytes32 inputMerkleRoot = input.merkleRoot(
+                log2DriveSize,
+                log2DataBlockSize,
+                LibKeccak256.hashBlock,
+                LibKeccak256.hashPair
+            );
+
+            // test if input Merkle root is the same as in InputBox
+            assertEq(inputMerkleRoot, _inputBox.getInputMerkleRoot(appContract, i));
+            // test if input Merkle root is the same as returned from calling addInput() function
+            assertEq(inputMerkleRoot, returnedValues[i]);
         }
     }
 
