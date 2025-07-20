@@ -96,7 +96,27 @@ contract LibMathTest is Test {
     }
 
     function testCeilLog2(uint256 x) external pure {
-        assertEq(LibMath.ceilLog2(x), LibNaiveMath.ceilLog2(x));
+        uint256 y = LibMath.ceilLog2(x);
+        assertEq(y, LibNaiveMath.ceilLog2(x));
+
+        // Check that x <= 2^y
+        if (y < 256) {
+            // If y < 256, then we can
+            // represent 2^y in an EVM word
+            assertLe(x, 1 << y);
+        } else {
+            // For any uint256 value x,
+            // it is true that x < 2^256
+            assertEq(y, 256);
+        }
+
+        // Check that y is the smallest
+        // number possible that satisfies
+        // x <= 2^y. That is, check that
+        // it doesn't hold for y-1.
+        if (y >= 1) {
+            assertGe(x, 1 << (y - 1));
+        }
     }
 
     function testFloorLog2() external pure {
@@ -113,7 +133,30 @@ contract LibMathTest is Test {
 
     function testFloorLog2(uint256 x) external pure {
         vm.assume(x > 0);
-        assertEq(LibMath.floorLog2(x), LibNaiveMath.floorLog2(x));
+        uint256 y = LibMath.floorLog2(x);
+        assertEq(y, LibNaiveMath.floorLog2(x));
+
+        // For any uint256 value x,
+        // it is not true that x >= 2^256
+        assertLt(y, 256);
+
+        // Check that x >= 2^y
+        // Because y < 256, we can
+        // represent 2^y in an EVM word.
+        assertGe(x, 1 << y);
+
+        // Check that y is the biggest
+        // number possible that satisfies
+        // x >= 2^y. That is, check that
+        // it doesn't hold for y+1.
+        // We don't need to check
+        // For y = 255, we don't need
+        // to check, because for any
+        // uint256 value x, it is always
+        // true that x < 2^256.
+        if ((y + 1) < 256) {
+            assertLt(x, 1 << (y + 1));
+        }
     }
 
     function testFloorLog2OfZero() external {
