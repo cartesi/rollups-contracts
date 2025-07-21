@@ -4,6 +4,9 @@
 pragma solidity ^0.8.22;
 
 import {Test} from "forge-std-1.9.6/src/Test.sol";
+
+import {Create2} from "@openzeppelin-contracts-5.2.0/utils/Create2.sol";
+
 import {InputBox} from "src/inputs/InputBox.sol";
 import {IInputBox} from "src/inputs/IInputBox.sol";
 import {CanonicalMachine} from "src/common/CanonicalMachine.sol";
@@ -13,6 +16,8 @@ import {LibKeccak256} from "src/library/LibKeccak256.sol";
 import {LibMath} from "src/library/LibMath.sol";
 
 import {EvmAdvanceEncoder} from "../util/EvmAdvanceEncoder.sol";
+
+contract MockApplication {}
 
 contract InputBoxTest is Test {
     using LibMath for uint256;
@@ -34,8 +39,27 @@ contract InputBoxTest is Test {
         assertEq(_inputBox.getNumberOfInputs(appContract), 0);
     }
 
+    function testAddInputNoContract(
+        uint256 privateKey,
+        bytes32 salt,
+        bytes calldata payload
+    ) external {
+        privateKey = boundPrivateKey(privateKey);
+
+        _testAddInputNoContract(address(0), payload);
+        _testAddInputNoContract(vm.addr(privateKey), payload);
+
+        bytes32 bytecodeHash = keccak256(type(MockApplication).creationCode);
+        address appContract = Create2.computeAddress(salt, bytecodeHash);
+        _testAddInputNoContract(appContract, payload);
+
+        assertEq(appContract, address(new MockApplication{salt: salt}()));
+        assertGt(appContract.code.length, 0);
+        _inputBox.addInput(appContract, payload);
+    }
+
     function testAddLargeInput() public {
-        address appContract = vm.addr(1);
+        address appContract = address(new MockApplication());
         uint256 max = _getMaxInputPayloadLength();
 
         _inputBox.addInput(appContract, new bytes(max));
@@ -55,9 +79,9 @@ contract InputBoxTest is Test {
         _inputBox.addInput(appContract, largePayload);
     }
 
-    function testAddInput(uint64 chainId, address appContract, bytes[] calldata payloads)
-        public
-    {
+    function testAddInput(uint64 chainId, bytes[] calldata payloads) public {
+        address appContract = address(new MockApplication());
+
         vm.chainId(chainId); // foundry limits chain id to be less than 2^64 - 1
 
         uint256 numPayloads = payloads.length;
@@ -118,6 +142,18 @@ contract InputBoxTest is Test {
             // test if input Merkle root is the same as returned from calling addInput() function
             assertEq(inputMerkleRoot, returnedValues[i]);
         }
+    }
+
+    function _testAddInputNoContract(address appContract, bytes calldata payload)
+        internal
+    {
+        assertEq(appContract.code.length, 0, "expected account with no code");
+        vm.expectRevert(
+            abi.encodeWithSelector(
+                IInputBox.ApplicationContractNotDeployed.selector, appContract
+            )
+        );
+        _inputBox.addInput(appContract, payload);
     }
 
     function _prevrandao(uint256 blockNumber) internal pure returns (uint256) {
