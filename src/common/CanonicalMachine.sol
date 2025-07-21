@@ -8,8 +8,8 @@ pragma solidity ^0.8.8;
 /// @notice Defines several constants related to the reference implementation
 /// of the RISC-V machine that runs Linux, also known as the "Cartesi Machine".
 library CanonicalMachine {
-    /// @notice Maximum input size (64 kilobytes).
-    uint256 constant INPUT_MAX_SIZE = 1 << 16;
+    /// @notice Maximum input size (2 megabytes).
+    uint256 constant INPUT_MAX_SIZE = 1 << 21;
 
     /// @notice Log2 of maximum number of outputs.
     uint256 constant LOG2_MAX_OUTPUTS = 63;
