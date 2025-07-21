@@ -22,6 +22,10 @@ interface IInputBox {
     /// @param input The input
     event InputAdded(address indexed appContract, uint256 indexed index, bytes input);
 
+    /// @notice The application contract was not deployed yet.
+    /// @param appContract The application contract address
+    error ApplicationContractNotDeployed(address appContract);
+
     /// @notice Input is too large.
     /// @param appContract The application contract address
     /// @param inputLength The input length

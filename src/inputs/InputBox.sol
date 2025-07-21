@@ -1,7 +1,7 @@
 // (c) Cartesi and individual authors (see AUTHORS)
 // SPDX-License-Identifier: Apache-2.0 (see LICENSE)
 
-pragma solidity ^0.8.18;
+pragma solidity ^0.8.27;
 
 import {IInputBox} from "./IInputBox.sol";
 import {CanonicalMachine} from "../common/CanonicalMachine.sol";
@@ -9,9 +9,11 @@ import {Inputs} from "../common/Inputs.sol";
 import {LibBinaryMerkleTree} from "../library/LibBinaryMerkleTree.sol";
 import {LibKeccak256} from "../library/LibKeccak256.sol";
 import {LibMath} from "../library/LibMath.sol";
+import {LibAddress} from "../library/LibAddress.sol";
 
 contract InputBox is IInputBox {
     using LibMath for uint256;
+    using LibAddress for address;
     using LibBinaryMerkleTree for bytes;
 
     /// @notice Deployment block number
@@ -26,6 +28,8 @@ contract InputBox is IInputBox {
         override
         returns (bytes32)
     {
+        require(appContract.hasCode(), ApplicationContractNotDeployed(appContract));
+
         bytes32[] storage inputBox = _inputBoxes[appContract];
 
         uint256 index = inputBox.length;
