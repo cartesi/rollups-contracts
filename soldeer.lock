@@ -6,6 +6,18 @@ checksum = "6dbd0440446b2ed16ca25e9f1af08fc0c5c1e73e71fee86ae8a00daa774e3817"
 integrity = "4cb7f3777f67fdf4b7d0e2f94d2f93f198b2e5dce718b7062ac7c2c83e1183bd"
 
 [[dependencies]]
+name = "cartesi-dave"
+version = "1.0.0"
+git = "https://github.com/cartesi/dave.git"
+rev = "5a2c89bf8035dd0a1f06f9693770d056e3dda65c"
+
+[[dependencies]]
+name = "cartesi-machine-solidity-step"
+version = "0.13.0"
+git = "https://github.com/cartesi/machine-solidity-step.git"
+rev = "97fbc294dc5f816f0349fc1291456c9a06091669"
+
+[[dependencies]]
 name = "forge-std"
 version = "1.9.6"
 url = "https://soldeer-revisions.s3.amazonaws.com/forge-std/1_9_6_01-02-2025_20:49:10_forge-std-1.9.zip"
