@@ -55,8 +55,15 @@ create2 = true
 salt = "0x0000000000000000000000000000000000000000d5556a1a1397890355d302fb"
 ifExists = "continue"
 
+[deploy.Application]
+artifact = "Application"
+create2 = true
+salt = "<%= zeroHash %>"
+ifExists = "continue"
+
 [deploy.ApplicationFactory]
 artifact = "ApplicationFactory"
+args = ["<%= contracts.Application.address %>"]
 create2 = true
 salt = "0x0000000000000000000000000000000000000000381c2f62d29c55017736a80e"
 ifExists = "continue"

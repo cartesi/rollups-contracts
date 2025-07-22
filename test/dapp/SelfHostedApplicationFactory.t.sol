@@ -12,6 +12,7 @@ import {IAuthority} from "src/consensus/authority/IAuthority.sol";
 import {IApplicationFactory} from "src/dapp/IApplicationFactory.sol";
 import {ApplicationFactory} from "src/dapp/ApplicationFactory.sol";
 import {IApplication} from "src/dapp/IApplication.sol";
+import {Application} from "src/dapp/Application.sol";
 import {ISelfHostedApplicationFactory} from "src/dapp/ISelfHostedApplicationFactory.sol";
 import {SelfHostedApplicationFactory} from "src/dapp/SelfHostedApplicationFactory.sol";
 
@@ -24,7 +25,7 @@ contract SelfHostedApplicationFactoryTest is Test {
 
     function setUp() external {
         authorityFactory = new AuthorityFactory();
-        applicationFactory = new ApplicationFactory();
+        applicationFactory = new ApplicationFactory(new Application());
         factory = new SelfHostedApplicationFactory(authorityFactory, applicationFactory);
     }
 
