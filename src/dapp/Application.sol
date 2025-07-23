@@ -43,6 +43,9 @@ contract Application is
     /// @dev See the `wasOutputExecuted` function.
     BitMaps.BitMap internal _executed;
 
+    /// @notice Keeps track of the number of outputs that have been executed.
+    uint256 internal _numOfExecutedOutputs;
+
     /// @notice The current outputs Merkle root validator contract.
     /// @dev See the `getOutputsMerkleRootValidator` and `migrateToOutputsMerkleRootValidator` functions.
     IOutputsMerkleRootValidator internal _outputsMerkleRootValidator;
@@ -104,6 +107,7 @@ contract Application is
         }
 
         _executed.set(outputIndex);
+        ++_numOfExecutedOutputs;
         emit OutputExecuted(outputIndex, output);
     }
 
@@ -174,6 +178,11 @@ contract Application is
     /// @inheritdoc IApplication
     function getDeploymentBlockNumber() external view override returns (uint256) {
         return _deploymentBlockNumber;
+    }
+
+    /// @inheritdoc IApplication
+    function getNumberOfExecutedOutputs() external view override returns (uint256) {
+        return _numOfExecutedOutputs;
     }
 
     /// @inheritdoc Ownable
