@@ -7,7 +7,14 @@ pragma solidity ^0.8.8;
 /// @notice Each application has its own append-only list of inputs.
 /// @notice Off-chain, inputs can be retrieved through `InputAdded` events.
 /// @notice On-chain, input Merkle roots can be retrieved through the `getInputMerkleRoot` function.
-/// @notice Merkle trees have the smallest height possible while still covering the whole input.
+/// @notice The Merkle root of an input is computed as follows:
+/// @notice First, the input is split into 256-bit data blocks from the LSB to the MSB.
+/// @notice If the last data block is not 256-bit wide, it is right-padded with zeroes.
+/// @notice Second, data blocks are hashed with Keccak-256 to become the leaves of the Merkle tree.
+/// @notice If the leaves do not amount to a power of 2, they are completed with the Keccak-256 of the zeroed data block.
+/// @notice Third, the nodes of a binary Merkle tree are constructed bottom-up from the leaves.
+/// @notice Internal nodes are the Keccak-256 of the left child concatenated with the right child.
+/// @notice Once we reach the root node, we have effectively computed the input Merkle root.
 interface IInputBox {
     /// @notice MUST trigger when an input is added.
     /// @param appContract The application contract address
