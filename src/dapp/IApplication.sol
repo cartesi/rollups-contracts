@@ -123,4 +123,7 @@ interface IApplication is IOwnable {
 
     /// @notice Get number of block in which contract was deployed
     function getDeploymentBlockNumber() external view returns (uint256);
+
+    /// @notice Get number of outputs that have been executed.
+    function getNumberOfExecutedOutputs() external view returns (uint256);
 }

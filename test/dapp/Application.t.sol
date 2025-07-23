@@ -204,11 +204,29 @@ contract ApplicationTest is Test, OwnableTest {
     // output execution
     // ----------------
 
+    function testNumOfExecutedOutputs() external {
+        assertEq(
+            _appContract.getNumberOfExecutedOutputs(),
+            0,
+            "initial getNumberOfExecutedOutputs should be 0"
+        );
+
+        testExecuteEtherTransferVoucher();
+        assertEq(
+            _appContract.getNumberOfExecutedOutputs(), 1, "1 output has been executed"
+        );
+
+        testExecuteEtherMintVoucher();
+        assertEq(
+            _appContract.getNumberOfExecutedOutputs(), 2, "2 outputs have been executed"
+        );
+    }
+
     function testWasOutputExecuted(uint256 outputIndex) external view {
         assertFalse(_appContract.wasOutputExecuted(outputIndex));
     }
 
-    function testExecuteEtherTransferVoucher() external {
+    function testExecuteEtherTransferVoucher() public {
         string memory name = "EtherTransferVoucher";
         bytes memory output = _getOutput(name);
         OutputValidityProof memory proof = _getProof(name);
@@ -216,7 +234,7 @@ contract ApplicationTest is Test, OwnableTest {
         _testEtherTransfer(output, proof);
     }
 
-    function testExecuteEtherMintVoucher() external {
+    function testExecuteEtherMintVoucher() public {
         string memory name = "EtherMintVoucher";
         bytes memory output = _getOutput(name);
         OutputValidityProof memory proof = _getProof(name);
