@@ -5,8 +5,6 @@ pragma solidity ^0.8.8;
 
 import {IAppInbox} from "./IAppInbox.sol";
 import {IAppOutbox} from "./IAppOutbox.sol";
+import {IAppVersion} from "./IAppVersion.sol";
 
-interface IApp is IAppInbox, IAppOutbox {
-    /// @notice Get Cartesi Rollups Contracts major version.
-    function cartesiRollupsContractsMajorVersion() external pure returns (uint256);
-}
+interface IApp is IAppInbox, IAppOutbox, IAppVersion {}

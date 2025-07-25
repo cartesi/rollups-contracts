@@ -5,6 +5,7 @@ pragma solidity ^0.8.27;
 
 import {IPortal} from "./IPortal.sol";
 import {IApp} from "../app/interfaces/IApp.sol";
+import {IAppVersion} from "../app/interfaces/IAppVersion.sol";
 import {Metadata} from "../common/Metadata.sol";
 
 /// @title Portal
@@ -19,7 +20,7 @@ abstract contract Portal is IPortal {
         bytes memory returndata;
 
         // Encode the staticcall payload.
-        payload = abi.encodeCall(IApp.cartesiRollupsContractsMajorVersion, ());
+        payload = abi.encodeCall(IAppVersion.cartesiRollupsContractsMajorVersion, ());
 
         // Send the payload to the app contract via staticcall.
         (success, returndata) = address(appContract).staticcall(payload);
