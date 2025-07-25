@@ -16,8 +16,7 @@ import {LibKeccak256} from "src/library/LibKeccak256.sol";
 import {LibMath} from "src/library/LibMath.sol";
 
 import {EvmAdvanceEncoder} from "../util/EvmAdvanceEncoder.sol";
-
-contract MockApplication {}
+import {MockContract} from "../util/MockContract.sol";
 
 contract InputBoxTest is Test {
     using LibMath for uint256;
@@ -49,17 +48,17 @@ contract InputBoxTest is Test {
         _testAddInputNoContract(address(0), payload);
         _testAddInputNoContract(vm.addr(privateKey), payload);
 
-        bytes32 bytecodeHash = keccak256(type(MockApplication).creationCode);
+        bytes32 bytecodeHash = keccak256(type(MockContract).creationCode);
         address appContract = Create2.computeAddress(salt, bytecodeHash);
         _testAddInputNoContract(appContract, payload);
 
-        assertEq(appContract, address(new MockApplication{salt: salt}()));
+        assertEq(appContract, address(new MockContract{salt: salt}()));
         assertGt(appContract.code.length, 0);
         _inputBox.addInput(appContract, payload);
     }
 
     function testAddLargeInput() public {
-        address appContract = address(new MockApplication());
+        address appContract = address(new MockContract());
         uint256 max = _getMaxInputPayloadLength();
 
         _inputBox.addInput(appContract, new bytes(max));
@@ -80,7 +79,7 @@ contract InputBoxTest is Test {
     }
 
     function testAddInput(uint64 chainId, bytes[] calldata payloads) public {
-        address appContract = address(new MockApplication());
+        address appContract = address(new MockContract());
 
         vm.chainId(chainId); // foundry limits chain id to be less than 2^64 - 1
 
