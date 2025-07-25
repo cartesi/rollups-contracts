@@ -4,24 +4,20 @@
 pragma solidity ^0.8.27;
 
 import {CanonicalMachine} from "../../common/CanonicalMachine.sol";
-import {IInbox} from "../interfaces/IInbox.sol";
+import {IAppInbox} from "../interfaces/IAppInbox.sol";
 import {Inputs} from "../../common/Inputs.sol";
 import {LibBinaryMerkleTree} from "../../library/LibBinaryMerkleTree.sol";
 import {LibKeccak256} from "../../library/LibKeccak256.sol";
 import {LibMath} from "../../library/LibMath.sol";
 
-abstract contract Inbox is IInbox {
+abstract contract AppInbox is IAppInbox {
     using LibMath for uint256;
     using LibBinaryMerkleTree for bytes;
 
     bytes32[] private _inputMerkleRoots;
 
-    /// @inheritdoc IInbox
-    function addInput(bytes calldata payload)
-        external
-        override
-        returns (bytes32)
-    {
+    /// @inheritdoc IAppInbox
+    function addInput(bytes calldata payload) external override returns (bytes32) {
         uint256 index = _inputMerkleRoots.length;
 
         bytes memory input = abi.encodeCall(
@@ -39,9 +35,7 @@ abstract contract Inbox is IInbox {
         );
 
         if (input.length > CanonicalMachine.INPUT_MAX_SIZE) {
-            revert InputTooLarge(
-                input.length, CanonicalMachine.INPUT_MAX_SIZE
-            );
+            revert InputTooLarge(input.length, CanonicalMachine.INPUT_MAX_SIZE);
         }
 
         bytes32 inputMerkleRoot = _merkleRoot(input);
@@ -53,23 +47,13 @@ abstract contract Inbox is IInbox {
         return inputMerkleRoot;
     }
 
-    /// @inheritdoc IInbox
-    function getNumberOfInputs()
-        public
-        view
-        override
-        returns (uint256)
-    {
+    /// @inheritdoc IAppInbox
+    function getNumberOfInputs() public view override returns (uint256) {
         return _inputMerkleRoots.length;
     }
 
-    /// @inheritdoc IInbox
-    function getInputMerkleRoot(uint256 index)
-        public
-        view
-        override
-        returns (bytes32)
-    {
+    /// @inheritdoc IAppInbox
+    function getInputMerkleRoot(uint256 index) public view override returns (bytes32) {
         return _inputMerkleRoots[index];
     }
 

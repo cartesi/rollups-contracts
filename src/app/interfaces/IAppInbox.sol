@@ -15,7 +15,7 @@ pragma solidity ^0.8.8;
 /// @notice Third, the nodes of a binary Merkle tree are constructed bottom-up from the leaves.
 /// @notice Internal nodes are the Keccak-256 of the left child concatenated with the right child.
 /// @notice Once we reach the root node, we have effectively computed the input Merkle root.
-interface IInbox {
+interface IAppInbox {
     /// @notice MUST trigger when an input is added.
     /// @param index The input index
     /// @param input The input
@@ -30,9 +30,7 @@ interface IInbox {
     /// @param payload The input payload
     /// @return The Merkle root of the input
     /// @dev MUST fire an `InputAdded` event.
-    function addInput(bytes calldata payload)
-        external
-        returns (bytes32);
+    function addInput(bytes calldata payload) external returns (bytes32);
 
     /// @notice Get the number of inputs.
     function getNumberOfInputs() external view returns (uint256);
@@ -40,8 +38,5 @@ interface IInbox {
     /// @notice Get the Merkle root of an input by its index.
     /// @param index The input index
     /// @dev The provided index must be valid.
-    function getInputMerkleRoot(uint256 index)
-        external
-        view
-        returns (bytes32);
+    function getInputMerkleRoot(uint256 index) external view returns (bytes32);
 }
