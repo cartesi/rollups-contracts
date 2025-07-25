@@ -16,21 +16,27 @@ pragma solidity ^0.8.8;
 /// @notice Internal nodes are the Keccak-256 of the left child concatenated with the right child.
 /// @notice Once we reach the root node, we have effectively computed the input Merkle root.
 interface IAppInbox {
+    //
+    // Events
+    //
+
     /// @notice MUST trigger when an input is added.
     /// @param index The input index
     /// @param input The input
     event InputAdded(uint256 indexed index, bytes input);
+
+    //
+    // Errors
+    //
 
     /// @notice Input is too large.
     /// @param inputLength The input length
     /// @param maxInputLength The maximum input length
     error InputTooLarge(uint256 inputLength, uint256 maxInputLength);
 
-    /// @notice Send an input.
-    /// @param payload The input payload
-    /// @return The Merkle root of the input
-    /// @dev MUST fire an `InputAdded` event.
-    function addInput(bytes calldata payload) external returns (bytes32);
+    //
+    // View functions
+    //
 
     /// @notice Get the number of inputs.
     function getNumberOfInputs() external view returns (uint256);
@@ -39,4 +45,14 @@ interface IAppInbox {
     /// @param index The input index
     /// @dev The provided index must be valid.
     function getInputMerkleRoot(uint256 index) external view returns (bytes32);
+
+    //
+    // State-changing functions
+    //
+
+    /// @notice Send an input.
+    /// @param payload The input payload
+    /// @return The Merkle root of the input
+    /// @dev MUST fire an `InputAdded` event.
+    function addInput(bytes calldata payload) external returns (bytes32);
 }
