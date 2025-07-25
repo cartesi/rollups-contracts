@@ -3,13 +3,13 @@
 
 pragma solidity ^0.8.8;
 
-import {IInputBox} from "../inputs/IInputBox.sol";
-
 /// @title Portal interface
 interface IPortal {
-    // Permissionless functions
+    /// @notice Tried to interact with an application contract
+    /// but it uses an incompatible version of Cartesi Rollups.
+    error IncompatibleApplicationVersion();
 
-    /// @notice Get the input box used by this portal.
-    /// @return The input box
-    function getInputBox() external view returns (IInputBox);
+    /// @notice Tried to interact with an application contract
+    /// but the call either failed or returned malformed data.
+    error FailedApplicationVersionLookup();
 }

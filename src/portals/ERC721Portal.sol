@@ -5,33 +5,32 @@ pragma solidity ^0.8.8;
 
 import {IERC721} from "@openzeppelin-contracts-5.2.0/token/ERC721/IERC721.sol";
 
+import {IApp} from "../app/interfaces/IApp.sol";
 import {IERC721Portal} from "./IERC721Portal.sol";
-import {Portal} from "./Portal.sol";
-import {IInputBox} from "../inputs/IInputBox.sol";
 import {InputEncoding} from "../common/InputEncoding.sol";
+import {Portal} from "./Portal.sol";
 
 /// @title ERC-721 Portal
 ///
 /// @notice This contract allows anyone to perform transfers of
 /// ERC-721 tokens to an application contract while informing the off-chain machine.
 contract ERC721Portal is IERC721Portal, Portal {
-    /// @notice Constructs the portal.
-    /// @param inputBox The input box used by the portal
-    constructor(IInputBox inputBox) Portal(inputBox) {}
-
+    /// @inheritdoc IERC721Portal
     function depositERC721Token(
         IERC721 token,
-        address appContract,
+        IApp appContract,
         uint256 tokenId,
         bytes calldata baseLayerData,
         bytes calldata execLayerData
     ) external override {
-        token.safeTransferFrom(msg.sender, appContract, tokenId, baseLayerData);
+        _ensureAppIsCompatible(appContract);
 
-        bytes memory payload = InputEncoding.encodeERC721Deposit(
-            token, msg.sender, tokenId, baseLayerData, execLayerData
+        token.safeTransferFrom(msg.sender, address(appContract), tokenId, baseLayerData);
+
+        appContract.addInput(
+            InputEncoding.encodeERC721Deposit(
+                token, msg.sender, tokenId, baseLayerData, execLayerData
+            )
         );
-
-        _inputBox.addInput(appContract, payload);
     }
 }
