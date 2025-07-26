@@ -7,18 +7,10 @@ import {OutputValidityProof} from "../../common/OutputValidityProof.sol";
 
 /// @notice Allows the validation and execution of outputs.
 interface IAppOutbox {
-    //
-    // Events
-    //
-
     /// @notice MUST trigger when an output is executed.
     /// @param outputIndex The index of the output
     /// @param output The output
     event OutputExecuted(uint64 outputIndex, bytes output);
-
-    //
-    // Errors
-    //
 
     /// @notice Could not execute an output, because the application contract doesn't know how to.
     /// @param output The output
@@ -39,10 +31,6 @@ interface IAppOutbox {
 
     /// @notice Raised when the computed outputs Merkle root is invalid.
     error InvalidOutputsMerkleRoot(bytes32 outputsMerkleRoot);
-
-    //
-    // View functions
-    //
 
     /// @notice Get number of outputs that have been executed.
     function getNumberOfExecutedOutputs() external view returns (uint256);
@@ -70,10 +58,6 @@ interface IAppOutbox {
     function validateOutput(bytes calldata output, OutputValidityProof calldata proof)
         external
         view;
-
-    //
-    // State-changing functions
-    //
 
     /// @notice Execute an output.
     /// @param output The output
