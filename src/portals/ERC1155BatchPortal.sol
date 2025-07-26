@@ -24,8 +24,6 @@ contract ERC1155BatchPortal is IERC1155BatchPortal, Portal {
         bytes calldata baseLayerData,
         bytes calldata execLayerData
     ) external override {
-        _ensureAppIsCompatible(appContract);
-
         token.safeBatchTransferFrom(
             msg.sender, address(appContract), tokenIds, values, baseLayerData
         );

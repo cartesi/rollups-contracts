@@ -22,8 +22,6 @@ contract ERC20Portal is IERC20Portal, Portal {
         uint256 value,
         bytes calldata execLayerData
     ) external override {
-        _ensureAppIsCompatible(appContract);
-
         bool success = token.transferFrom(msg.sender, address(appContract), value);
 
         require(success, ERC20TransferFailed());

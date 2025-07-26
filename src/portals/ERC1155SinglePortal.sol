@@ -24,8 +24,6 @@ contract ERC1155SinglePortal is IERC1155SinglePortal, Portal {
         bytes calldata baseLayerData,
         bytes calldata execLayerData
     ) external override {
-        _ensureAppIsCompatible(appContract);
-
         token.safeTransferFrom(
             msg.sender, address(appContract), tokenId, value, baseLayerData
         );

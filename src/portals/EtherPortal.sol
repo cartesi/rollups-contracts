@@ -19,8 +19,6 @@ contract EtherPortal is IEtherPortal, Portal {
         payable
         override
     {
-        _ensureAppIsCompatible(appContract);
-
         (bool success,) = address(appContract).call{value: msg.value}("");
 
         require(success, EtherTransferFailed());

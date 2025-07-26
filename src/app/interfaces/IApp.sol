@@ -3,9 +3,7 @@
 
 pragma solidity ^0.8.8;
 
-import {IAppDA} from "./IAppDA.sol";
 import {IAppInbox} from "./IAppInbox.sol";
 import {IAppOutbox} from "./IAppOutbox.sol";
-import {IAppVersion} from "./IAppVersion.sol";
 
-interface IApp is IAppDA, IAppInbox, IAppOutbox, IAppVersion {}
+interface IApp is IAppInbox, IAppOutbox {}

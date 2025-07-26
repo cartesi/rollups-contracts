@@ -23,8 +23,6 @@ contract ERC721Portal is IERC721Portal, Portal {
         bytes calldata baseLayerData,
         bytes calldata execLayerData
     ) external override {
-        _ensureAppIsCompatible(appContract);
-
         token.safeTransferFrom(msg.sender, address(appContract), tokenId, baseLayerData);
 
         appContract.addInput(
