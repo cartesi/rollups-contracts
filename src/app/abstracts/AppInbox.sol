@@ -15,10 +15,18 @@ abstract contract AppInbox is IAppInbox {
     using LibBinaryMerkleTree for bytes;
 
     bytes32[] private _inputMerkleRoots;
+    uint256 private _blockNumberOfLastSnapshot;
+    uint256 private _numberOfInputsInLastSnapshot;
 
     /// @inheritdoc IAppInbox
     function addInput(bytes calldata payload) external override returns (bytes32) {
         uint256 index = _inputMerkleRoots.length;
+
+        // update snapshot if first input of current block
+        if (_blockNumberOfLastSnapshot < block.number) {
+            _numberOfInputsInLastSnapshot = index;
+            _blockNumberOfLastSnapshot = block.number;
+        }
 
         bytes memory input = abi.encodeCall(
             Inputs.EvmAdvance,
@@ -50,6 +58,21 @@ abstract contract AppInbox is IAppInbox {
     /// @inheritdoc IAppInbox
     function getNumberOfInputs() public view override returns (uint256) {
         return _inputMerkleRoots.length;
+    }
+
+    /// @inheritdoc IAppInbox
+    function getNumberOfInputsBeforeCurrentBlock()
+        public
+        view
+        override
+        returns (uint256)
+    {
+        if (_blockNumberOfLastSnapshot == block.number) {
+            return _numberOfInputsInLastSnapshot;
+        } else {
+            // _blockNumberOfLastSnapshot < block.number
+            return getNumberOfInputs();
+        }
     }
 
     /// @inheritdoc IAppInbox

@@ -41,6 +41,9 @@ interface IAppInbox {
     /// @notice Get the number of inputs.
     function getNumberOfInputs() external view returns (uint256);
 
+    /// @notice Get the number of inputs before the current block.
+    function getNumberOfInputsBeforeCurrentBlock() external view returns (uint256);
+
     /// @notice Get the Merkle root of an input by its index.
     /// @param index The input index
     /// @dev The provided index must be valid.
