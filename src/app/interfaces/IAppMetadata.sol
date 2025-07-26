@@ -3,11 +3,11 @@
 
 pragma solidity ^0.8.8;
 
-interface IAppVersion {
+interface IAppMetadata {
     //
     // View functions
     //
 
     /// @notice Get the major version of Cartesi Rollups Contracts used by the application.
-    function cartesiRollupsContractsMajorVersion() external pure returns (uint256);
+    function getCartesiRollupsContractsMajorVersion() external pure returns (uint256);
 }
