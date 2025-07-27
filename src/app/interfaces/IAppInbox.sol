@@ -41,5 +41,6 @@ interface IAppInbox {
     /// @param payload The input payload
     /// @return The Merkle root of the input
     /// @dev MUST fire an `InputAdded` event.
+    /// @dev MAY raise an `InputTooLarge` error.
     function addInput(bytes calldata payload) external returns (bytes32);
 }
