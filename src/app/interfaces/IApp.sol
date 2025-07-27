@@ -3,7 +3,8 @@
 
 pragma solidity ^0.8.8;
 
+import {IAppEpochs} from "./IAppEpochs.sol";
 import {IAppInbox} from "./IAppInbox.sol";
 import {IAppOutbox} from "./IAppOutbox.sol";
 
-interface IApp is IAppInbox, IAppOutbox {}
+interface IApp is IAppEpochs, IAppInbox, IAppOutbox {}
