@@ -10,7 +10,7 @@ import {LibBinaryMerkleTree} from "../../library/LibBinaryMerkleTree.sol";
 import {LibKeccak256} from "../../library/LibKeccak256.sol";
 import {LibMath} from "../../library/LibMath.sol";
 
-abstract contract AbstractInbox is Inbox {
+abstract contract InboxImpl is Inbox {
     using LibMath for uint256;
     using LibBinaryMerkleTree for bytes;
 

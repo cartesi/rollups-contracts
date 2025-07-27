@@ -7,7 +7,7 @@ import {BlockRange} from "../../common/BlockRange.sol";
 import {EpochManager} from "../interfaces/EpochManager.sol";
 import {EventEmitter} from "../interfaces/EventEmitter.sol";
 
-abstract contract AbstractEpochManager is EpochManager {
+abstract contract EpochManagerImpl is EpochManager {
     /// @notice The block number exclusive upper bounds of each sealed epoch.
     uint256[] private _sealedEpochEnds;
 

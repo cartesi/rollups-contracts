@@ -12,7 +12,7 @@ import {LibOutputValidityProof} from "../../library/LibOutputValidityProof.sol";
 import {OutputValidityProof} from "../../common/OutputValidityProof.sol";
 import {Outputs} from "../../common/Outputs.sol";
 
-abstract contract AbstractOutbox is Outbox, ReentrancyGuard {
+abstract contract OutboxImpl is Outbox, ReentrancyGuard {
     using BitMaps for BitMaps.BitMap;
     using LibAddress for address;
     using LibOutputValidityProof for OutputValidityProof;
