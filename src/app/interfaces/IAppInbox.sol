@@ -17,9 +17,10 @@ pragma solidity ^0.8.8;
 /// @notice Once we reach the root node, we have effectively computed the input Merkle root.
 interface IAppInbox {
     /// @notice MUST trigger when an input is added.
-    /// @param index The input index
+    /// @param inputIndex The input index
     /// @param input The input
-    event InputAdded(uint256 indexed index, bytes input);
+    /// @dev Input indices are zero-based and incremental.
+    event InputAdded(uint256 indexed inputIndex, bytes input);
 
     /// @notice Input is too large.
     /// @param inputLength The input length
@@ -33,14 +34,17 @@ interface IAppInbox {
     function getNumberOfInputsBeforeCurrentBlock() external view returns (uint256);
 
     /// @notice Get the Merkle root of an input by its index.
-    /// @param index The input index
+    /// @param inputIndex The input index
     /// @dev The provided index must be valid.
-    function getInputMerkleRoot(uint256 index) external view returns (bytes32);
+    /// @dev Valid input indices are within the range `[0, N)`.
+    /// @dev See  `getNumberOfInputs` for the value of `N`.
+    function getInputMerkleRoot(uint256 inputIndex) external view returns (bytes32);
 
     /// @notice Send an input.
     /// @param payload The input payload
     /// @return The Merkle root of the input
     /// @dev MUST fire an `InputAdded` event.
     /// @dev MAY raise an `InputTooLarge` error.
+    /// @dev The payload is composed with blockchain metadata to become an input.
     function addInput(bytes calldata payload) external returns (bytes32);
 }
