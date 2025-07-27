@@ -3,7 +3,7 @@
 
 pragma solidity ^0.8.27;
 
-import {IApp} from "../app/interfaces/IApp.sol";
+import {Application} from "../app/interfaces/Application.sol";
 import {IEtherPortal} from "./IEtherPortal.sol";
 import {InputEncoding} from "../common/InputEncoding.sol";
 import {Portal} from "./Portal.sol";
@@ -14,7 +14,7 @@ import {Portal} from "./Portal.sol";
 /// Ether to an application contract while informing the off-chain machine.
 contract EtherPortal is IEtherPortal, Portal {
     /// @inheritdoc IEtherPortal
-    function depositEther(IApp appContract, bytes calldata execLayerData)
+    function depositEther(Application appContract, bytes calldata execLayerData)
         external
         payable
         override

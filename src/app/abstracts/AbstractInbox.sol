@@ -4,13 +4,13 @@
 pragma solidity ^0.8.27;
 
 import {CanonicalMachine} from "../../common/CanonicalMachine.sol";
-import {IAppInbox} from "../interfaces/IAppInbox.sol";
+import {Inbox} from "../interfaces/Inbox.sol";
 import {Inputs} from "../../common/Inputs.sol";
 import {LibBinaryMerkleTree} from "../../library/LibBinaryMerkleTree.sol";
 import {LibKeccak256} from "../../library/LibKeccak256.sol";
 import {LibMath} from "../../library/LibMath.sol";
 
-abstract contract AppInbox is IAppInbox {
+abstract contract AbstractInbox is Inbox {
     using LibMath for uint256;
     using LibBinaryMerkleTree for bytes;
 
@@ -18,7 +18,7 @@ abstract contract AppInbox is IAppInbox {
     uint256 private _blockNumberOfLastSnapshot;
     uint256 private _numberOfInputsInLastSnapshot;
 
-    /// @inheritdoc IAppInbox
+    /// @inheritdoc Inbox
     function addInput(bytes calldata payload) external override returns (bytes32) {
         uint256 index = _inputMerkleRoots.length;
 
@@ -55,12 +55,12 @@ abstract contract AppInbox is IAppInbox {
         return inputMerkleRoot;
     }
 
-    /// @inheritdoc IAppInbox
+    /// @inheritdoc Inbox
     function getNumberOfInputs() public view override returns (uint256) {
         return _inputMerkleRoots.length;
     }
 
-    /// @inheritdoc IAppInbox
+    /// @inheritdoc Inbox
     function getNumberOfInputsBeforeCurrentBlock()
         public
         view
@@ -75,7 +75,7 @@ abstract contract AppInbox is IAppInbox {
         }
     }
 
-    /// @inheritdoc IAppInbox
+    /// @inheritdoc Inbox
     function getInputMerkleRoot(uint256 index) public view override returns (bytes32) {
         return _inputMerkleRoots[index];
     }

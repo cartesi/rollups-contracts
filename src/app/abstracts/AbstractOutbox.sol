@@ -6,13 +6,13 @@ pragma solidity ^0.8.27;
 import {BitMaps} from "@openzeppelin-contracts-5.2.0/utils/structs/BitMaps.sol";
 import {ReentrancyGuard} from "@openzeppelin-contracts-5.2.0/utils/ReentrancyGuard.sol";
 
-import {IAppOutbox} from "../interfaces/IAppOutbox.sol";
+import {Outbox} from "../interfaces/Outbox.sol";
 import {LibAddress} from "../../library/LibAddress.sol";
 import {LibOutputValidityProof} from "../../library/LibOutputValidityProof.sol";
 import {OutputValidityProof} from "../../common/OutputValidityProof.sol";
 import {Outputs} from "../../common/Outputs.sol";
 
-abstract contract AppOutbox is IAppOutbox, ReentrancyGuard {
+abstract contract AbstractOutbox is Outbox, ReentrancyGuard {
     using BitMaps for BitMaps.BitMap;
     using LibAddress for address;
     using LibOutputValidityProof for OutputValidityProof;
@@ -25,12 +25,12 @@ abstract contract AppOutbox is IAppOutbox, ReentrancyGuard {
     /// @dev See the `getNumberOfExecutedOutputs` function.
     uint256 private _numOfExecutedOutputs;
 
-    /// @inheritdoc IAppOutbox
+    /// @inheritdoc Outbox
     function wasOutputExecuted(uint256 outputIndex) public view override returns (bool) {
         return _executedOutputs.get(outputIndex);
     }
 
-    /// @inheritdoc IAppOutbox
+    /// @inheritdoc Outbox
     function getNumberOfExecutedOutputs() external view override returns (uint256) {
         return _numOfExecutedOutputs;
     }
@@ -43,7 +43,7 @@ abstract contract AppOutbox is IAppOutbox, ReentrancyGuard {
         virtual
         returns (bool);
 
-    /// @inheritdoc IAppOutbox
+    /// @inheritdoc Outbox
     function validateOutputHash(bytes32 outputHash, OutputValidityProof calldata proof)
         public
         view
@@ -60,7 +60,7 @@ abstract contract AppOutbox is IAppOutbox, ReentrancyGuard {
         }
     }
 
-    /// @inheritdoc IAppOutbox
+    /// @inheritdoc Outbox
     function validateOutput(bytes calldata output, OutputValidityProof calldata proof)
         public
         view
@@ -69,7 +69,7 @@ abstract contract AppOutbox is IAppOutbox, ReentrancyGuard {
         validateOutputHash(keccak256(output), proof);
     }
 
-    /// @inheritdoc IAppOutbox
+    /// @inheritdoc Outbox
     function executeOutput(bytes calldata output, OutputValidityProof calldata proof)
         external
         override

@@ -5,7 +5,7 @@ pragma solidity ^0.8.8;
 
 import {IERC721} from "@openzeppelin-contracts-5.2.0/token/ERC721/IERC721.sol";
 
-import {IApp} from "../app/interfaces/IApp.sol";
+import {Application} from "../app/interfaces/Application.sol";
 import {IERC721Portal} from "./IERC721Portal.sol";
 import {InputEncoding} from "../common/InputEncoding.sol";
 import {Portal} from "./Portal.sol";
@@ -18,7 +18,7 @@ contract ERC721Portal is IERC721Portal, Portal {
     /// @inheritdoc IERC721Portal
     function depositERC721Token(
         IERC721 token,
-        IApp appContract,
+        Application appContract,
         uint256 tokenId,
         bytes calldata baseLayerData,
         bytes calldata execLayerData

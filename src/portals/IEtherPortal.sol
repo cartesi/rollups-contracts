@@ -3,7 +3,7 @@
 
 pragma solidity ^0.8.8;
 
-import {IApp} from "../app/interfaces/IApp.sol";
+import {Application} from "../app/interfaces/Application.sol";
 import {IPortal} from "./IPortal.sol";
 
 /// @title Ether Portal interface
@@ -25,7 +25,7 @@ interface IEtherPortal is IPortal {
     /// @dev If the transfer fails, an `EtherTransferFailed` error will be raised.
     /// @dev If the application contract is from an incompatible version of Cartesi Rollups Contracts,
     /// an `IncompatibleCartesiRollupsContractsVersion` error will be raised.
-    function depositEther(IApp appContract, bytes calldata execLayerData)
+    function depositEther(Application appContract, bytes calldata execLayerData)
         external
         payable;
 }
