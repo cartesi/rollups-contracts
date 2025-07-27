@@ -3,10 +3,11 @@
 
 pragma solidity ^0.8.8;
 
+import {EventEmitter} from "./EventEmitter.sol";
 import {OutputValidityProof} from "../../common/OutputValidityProof.sol";
 
 /// @notice Allows the validation and execution of outputs.
-interface Outbox {
+interface Outbox is EventEmitter {
     /// @notice MUST trigger when an output is executed.
     /// @param outputIndex The index of the output
     /// @param output The output

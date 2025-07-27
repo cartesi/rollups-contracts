@@ -4,9 +4,10 @@
 pragma solidity ^0.8.8;
 
 import {BlockRange} from "../../common/BlockRange.sol";
+import {EventEmitter} from "./EventEmitter.sol";
 
 /// @notice Manages sealed epochs and their boundaries.
-interface EpochManager {
+interface EpochManager is EventEmitter {
     /// @notice An epoch was sealed.
     /// @param epochIndex The index of the epoch
     /// @param epochBoundaries The epoch boundaries

@@ -3,6 +3,8 @@
 
 pragma solidity ^0.8.8;
 
+import {EventEmitter} from "./EventEmitter.sol";
+
 /// @notice Provides data availability of inputs.
 /// @notice Keeps an append-only list of input Merkle roots.
 /// @notice Off-chain, inputs can be retrieved through `InputAdded` events.
@@ -15,7 +17,7 @@ pragma solidity ^0.8.8;
 /// @notice Third, the nodes of a binary Merkle tree are constructed bottom-up from the leaves.
 /// @notice Internal nodes are the Keccak-256 of the left child concatenated with the right child.
 /// @notice Once we reach the root node, we have effectively computed the input Merkle root.
-interface Inbox {
+interface Inbox is EventEmitter {
     /// @notice MUST trigger when an input is added.
     /// @param inputIndex The input index
     /// @param input The input
