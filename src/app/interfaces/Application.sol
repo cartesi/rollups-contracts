@@ -7,4 +7,7 @@ import {EpochManager} from "./EpochManager.sol";
 import {Inbox} from "./Inbox.sol";
 import {Outbox} from "./Outbox.sol";
 
+/// @notice A Cartesi Rollups application.
+/// @dev This contract is responsible for receiving direct inputs,
+/// delimiting epoch boundaries, and validating/executing outputs.
 interface Application is EpochManager, Inbox, Outbox {}

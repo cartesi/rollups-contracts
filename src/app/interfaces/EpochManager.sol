@@ -5,6 +5,7 @@ pragma solidity ^0.8.8;
 
 import {BlockRange} from "../../common/BlockRange.sol";
 
+/// @notice Manages sealed epochs and their boundaries.
 interface EpochManager {
     /// @notice An epoch was sealed.
     /// @param epochIndex The index of the epoch
