@@ -9,6 +9,7 @@ interface IAppEpochs {
     /// @notice An epoch was sealed.
     /// @param epochIndex The index of the epoch
     /// @param epochBoundaries The epoch boundaries
+    /// @dev Epoch indices are zero-based and incremental.
     event EpochSealed(uint256 indexed epochIndex, BlockRange epochBoundaries);
 
     /// @notice Get the number of sealed epochs.
@@ -16,9 +17,11 @@ interface IAppEpochs {
 
     /// @notice Get the boundaries of a sealed epoch by its index.
     /// @param epochIndex The epoch index
-    /// @dev The epoch must be sealed.
+    /// @return epochBoundaries The epoch boundaries
+    /// @dev Valid epoch indices are within the range `[0, N)`.
+    /// @dev See  `getNumberOfSealedEpochs` for the value of `N`.
     function getSealedEpochBoundaries(uint256 epochIndex)
         external
         view
-        returns (BlockRange memory);
+        returns (BlockRange memory epochBoundaries);
 }
