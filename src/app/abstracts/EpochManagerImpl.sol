@@ -8,62 +8,52 @@ import {EpochManager} from "../interfaces/EpochManager.sol";
 import {EventEmitter} from "../interfaces/EventEmitter.sol";
 
 abstract contract EpochManagerImpl is EpochManager {
-    /// @notice A sealed epoch.
-    /// @param exclusiveEnd The sealed epoch exclusive end
-    struct SealedEpoch {
+    /// @notice A closed epoch.
+    /// @param exclusiveEnd The closed epoch exclusive end
+    struct ClosedEpoch {
         uint256 exclusiveEnd;
     }
 
-    /// @notice The array of sealed epochs.
-    SealedEpoch[] private _sealedEpochs;
+    /// @notice The array of closed epochs.
+    ClosedEpoch[] private _closedEpochs;
 
     /// @inheritdoc EpochManager
-    function getNumberOfSealedEpochs() public view override returns (uint256) {
-        return _sealedEpochs.length;
+    function getNumberOfClosedEpochs() public view override returns (uint256) {
+        return _closedEpochs.length;
     }
 
     /// @inheritdoc EpochManager
-    function getSealedEpochBoundaries(uint256 epochIndex)
+    function getClosedEpochBoundaryExclusiveEnd(uint256 epochIndex)
         public
         view
         override
-        returns (BlockRange memory)
+        returns (uint256)
     {
-        return BlockRange({
-            inclusiveStart: _getSealedEpochInclusiveStart(epochIndex),
-            exclusiveEnd: _getSealedEpochExclusiveEnd(epochIndex)
-        });
+        return _closedEpochs[epochIndex].exclusiveEnd;
     }
 
-    /// @notice Seal a new epoch.
-    function _sealEpoch() internal {
-        uint256 epochIndex = getNumberOfSealedEpochs();
-        uint256 inclusiveStart = _getSealedEpochInclusiveStart(epochIndex);
-        uint256 exclusiveEnd = block.number;
-        _sealedEpochs.push(SealedEpoch(exclusiveEnd));
-        emit EpochSealed(epochIndex, BlockRange(inclusiveStart, exclusiveEnd));
-    }
-
-    /// @notice Get the sealed epoch inclusive lower bound.
-    function _getSealedEpochInclusiveStart(uint256 epochIndex)
-        internal
+    /// @inheritdoc EpochManager
+    function getEpochBoundaryInclusiveStart(uint256 epochIndex)
+        public
         view
+        override
         returns (uint256)
     {
         return (epochIndex > 0)
-            ? _sealedEpochs[epochIndex - 1].exclusiveEnd
+            ? getClosedEpochBoundaryExclusiveEnd(epochIndex - 1)
             : getDeploymentBlockNumber();
-    }
-
-    /// @notice Get the sealed epoch exclusive upper bound.
-    function _getSealedEpochExclusiveEnd(uint256 epochIndex)
-        internal
-        view
-        returns (uint256)
-    {
-        return _sealedEpochs[epochIndex].exclusiveEnd;
     }
 
     /// @inheritdoc EventEmitter
     function getDeploymentBlockNumber() public view virtual override returns (uint256);
+
+    /// @notice Close the (currently open) epoch.
+    /// @dev Emits an `EpochClosed` event.
+    function _closeEpoch() internal {
+        uint256 epochIndex = getNumberOfClosedEpochs();
+        uint256 inclusiveStart = getEpochBoundaryInclusiveStart(epochIndex);
+        uint256 exclusiveEnd = block.number;
+        _closedEpochs.push(ClosedEpoch(exclusiveEnd));
+        emit EpochClosed(epochIndex, BlockRange(inclusiveStart, exclusiveEnd));
+    }
 }
