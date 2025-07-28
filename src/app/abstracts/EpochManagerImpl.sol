@@ -8,12 +8,18 @@ import {EpochManager} from "../interfaces/EpochManager.sol";
 import {EventEmitter} from "../interfaces/EventEmitter.sol";
 
 abstract contract EpochManagerImpl is EpochManager {
-    /// @notice The block number exclusive upper bounds of each sealed epoch.
-    uint256[] private _sealedEpochEnds;
+    /// @notice A sealed epoch.
+    /// @param exclusiveEnd The sealed epoch exclusive end
+    struct SealedEpoch {
+        uint256 exclusiveEnd;
+    }
+
+    /// @notice The array of sealed epochs.
+    SealedEpoch[] private _sealedEpochs;
 
     /// @inheritdoc EpochManager
     function getNumberOfSealedEpochs() public view override returns (uint256) {
-        return _sealedEpochEnds.length;
+        return _sealedEpochs.length;
     }
 
     /// @inheritdoc EpochManager
@@ -24,32 +30,38 @@ abstract contract EpochManagerImpl is EpochManager {
         returns (BlockRange memory)
     {
         return BlockRange({
-            start: _getSealedEpochStart(epochIndex),
-            end: _getSealedEpochEnd(epochIndex)
+            inclusiveStart: _getSealedEpochInclusiveStart(epochIndex),
+            exclusiveEnd: _getSealedEpochExclusiveEnd(epochIndex)
         });
     }
 
     /// @notice Seal a new epoch.
     function _sealEpoch() internal {
         uint256 epochIndex = getNumberOfSealedEpochs();
-        uint256 start = _getSealedEpochStart(epochIndex);
-        uint256 end = block.number;
-        _sealedEpochEnds.push(end);
-        emit EpochSealed(epochIndex, BlockRange({start: start, end: end}));
+        uint256 inclusiveStart = _getSealedEpochInclusiveStart(epochIndex);
+        uint256 exclusiveEnd = block.number;
+        _sealedEpochs.push(SealedEpoch(exclusiveEnd));
+        emit EpochSealed(epochIndex, BlockRange(inclusiveStart, exclusiveEnd));
     }
 
     /// @notice Get the sealed epoch inclusive lower bound.
-    function _getSealedEpochStart(uint256 epochIndex) internal view returns (uint256) {
-        if (epochIndex > 0) {
-            return _sealedEpochEnds[epochIndex - 1];
-        } else {
-            return getDeploymentBlockNumber();
-        }
+    function _getSealedEpochInclusiveStart(uint256 epochIndex)
+        internal
+        view
+        returns (uint256)
+    {
+        return (epochIndex > 0)
+            ? _sealedEpochs[epochIndex - 1].exclusiveEnd
+            : getDeploymentBlockNumber();
     }
 
     /// @notice Get the sealed epoch exclusive upper bound.
-    function _getSealedEpochEnd(uint256 epochIndex) internal view returns (uint256) {
-        return _sealedEpochEnds[epochIndex];
+    function _getSealedEpochExclusiveEnd(uint256 epochIndex)
+        internal
+        view
+        returns (uint256)
+    {
+        return _sealedEpochs[epochIndex].exclusiveEnd;
     }
 
     /// @inheritdoc EventEmitter
