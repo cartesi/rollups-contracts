@@ -3,38 +3,29 @@
 
 pragma solidity ^0.8.8;
 
-import {BlockRange} from "../../common/BlockRange.sol";
-import {EventEmitter} from "./EventEmitter.sol";
+import {ITournament} from "prt-contracts/ITournament.sol";
 
-/// @notice Manages sealed epochs and their boundaries.
-interface EpochManager is EventEmitter {
-    /// @notice An epoch was closed.
+/// @notice Manages epochs.
+interface EpochManager {
+    /// @notice The start of an epoch has been defined.
     /// @param epochIndex The index of the epoch
-    /// @param epochBoundaries The epoch boundaries
-    /// @dev Epoch indices are zero-based and incremental.
-    /// @dev At the same time as this epoch closed, another epoch
-    /// has opened starting from the exclusive end of this epoch.
-    event EpochClosed(uint256 indexed epochIndex, BlockRange epochBoundaries);
+    /// @dev The block in which this event was emitted is
+    /// the inclusive lower bound for the epoch boundary.
+    event EpochOpened(uint256 indexed epochIndex);
 
-    /// @notice Get the number of closed epochs.
-    /// @dev Equivalent to the index of the open epoch.
-    function getNumberOfClosedEpochs() external view returns (uint256);
+    /// @notice The end of an epoch has been defined.
+    /// @param epochIndex The index of the epoch
+    /// @dev The block in which this event was emitted is
+    /// the exclusive upper bound for the epoch boundary.
+    event EpochClosed(uint256 indexed epochIndex);
 
-    /// @notice Get the boundary inclusive start of an epoch.
-    /// @param epochIndex The epoch index
-    /// @dev Valid epoch indices are within the range `[0, N]`.
-    /// @dev See  `getNumberOfClosedEpochs` for the value of `N`.
-    function getEpochBoundaryInclusiveStart(uint256 epochIndex)
-        external
-        view
-        returns (uint256);
+    /// @notice The post-state of an epoch is being disputed.
+    /// @param epochIndex The index of the epoch
+    /// @param tournament The tournament contract
+    event EpochDisputed(uint256 indexed epochIndex, ITournament tournament);
 
-    /// @notice Get the boundary exclusive end of a closed epoch.
-    /// @param epochIndex The epoch index
-    /// @dev Valid closed epoch indices are within the range `[0, N)`.
-    /// @dev See  `getNumberOfClosedEpochs` for the value of `N`.
-    function getClosedEpochBoundaryExclusiveEnd(uint256 epochIndex)
-        external
-        view
-        returns (uint256);
+    /// @notice The post-state of an epoch has been defined.
+    /// @param epochIndex The index of the epoch
+    /// @param postEpochStateRoot The post-epoch state root
+    event EpochFinalized(uint256 indexed epochIndex, bytes32 postEpochStateRoot);
 }
