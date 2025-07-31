@@ -4,7 +4,7 @@
 pragma solidity ^0.8.22;
 
 import {Application} from "src/dapp/Application.sol";
-import {Authority} from "src/consensus/authority/Authority.sol";
+import {Quorum} from "src/consensus/quorum/Quorum.sol";
 import {CanonicalMachine} from "src/common/CanonicalMachine.sol";
 import {IApplication} from "src/dapp/IApplication.sol";
 import {IOutputsMerkleRootValidator} from "src/consensus/IOutputsMerkleRootValidator.sol";
@@ -47,7 +47,7 @@ contract ApplicationTest is Test, OwnableTest {
 
     IApplication _appContract;
     EtherReceiver _etherReceiver;
-    Authority _authority;
+    Quorum _quorum; // this will be a quorum of size 1
     IERC20 _erc20Token;
     IERC721 _erc721Token;
     IERC1155 _erc1155SingleToken;
@@ -57,7 +57,7 @@ contract ApplicationTest is Test, OwnableTest {
 
     LibEmulator.State _emulator;
     address _appOwner;
-    address _authorityOwner;
+    address[] _validators;
     address _recipient;
     address _tokenOwner;
     bytes _dataAvailability;
@@ -96,7 +96,7 @@ contract ApplicationTest is Test, OwnableTest {
         vm.expectRevert(
             abi.encodeWithSelector(Ownable.OwnableInvalidOwner.selector, address(0))
         );
-        new Application(_authority, address(0), _templateHash, new bytes(0));
+        new Application(_quorum, address(0), _templateHash, new bytes(0));
     }
 
     function testConstructor(
@@ -339,7 +339,7 @@ contract ApplicationTest is Test, OwnableTest {
 
     function _initVariables() internal {
         address[] memory addresses = vm.addrs(4);
-        _authorityOwner = addresses[0];
+        _validators.push(addresses[0]);
         _appOwner = addresses[1];
         _recipient = addresses[2];
         _tokenOwner = addresses[3];
@@ -361,10 +361,10 @@ contract ApplicationTest is Test, OwnableTest {
         _erc1155BatchToken =
             new SimpleBatchERC1155(_tokenOwner, _tokenIds, _initialSupplies);
         _inputBox = new InputBox();
-        _authority = new Authority(_authorityOwner, _epochLength);
+        _quorum = new Quorum(_validators, _epochLength);
         _dataAvailability = abi.encodeCall(DataAvailability.InputBox, (_inputBox));
         _appContract =
-            new Application(_authority, _appOwner, _templateHash, _dataAvailability);
+            new Application(_quorum, _appOwner, _templateHash, _dataAvailability);
         _safeERC20Transfer = new SafeERC20Transfer();
     }
 
@@ -500,8 +500,8 @@ contract ApplicationTest is Test, OwnableTest {
 
     function _submitClaim() internal {
         bytes32 outputsMerkleRoot = _emulator.getOutputsMerkleRoot();
-        vm.prank(_authorityOwner);
-        _authority.submitClaim(address(_appContract), 0, outputsMerkleRoot);
+        vm.prank(_validators[0]);
+        _quorum.submitClaim(address(_appContract), 0, outputsMerkleRoot);
     }
 
     function _expectEmitOutputExecuted(

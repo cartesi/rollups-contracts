@@ -17,7 +17,6 @@ import {IOutputsMerkleRootValidator} from "./IOutputsMerkleRootValidator.sol";
 /// - already accepted by the consensus (see the `ClaimAccepted` event).
 /// @notice The acceptance criteria for claims may depend on the type of consensus, and is not specified by this interface.
 /// For example, a claim may be accepted if it was...
-/// - submitted by an authority or;
 /// - submitted by the majority of a quorum or;
 /// - submitted and not proven wrong after some period of time or;
 /// - submitted and proven correct through an on-chain tournament.
