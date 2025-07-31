@@ -8,8 +8,7 @@ to Ethereum, Arbitrum, Optimism, Base, and their respective testnets.
 
 Data Availability of user transactions and Consensus over their order is provided by the `InputBox` contract,
 while Settlement is provided by the `Application` contract in conjunction with a settlement module.
-Currently, we have implemented an authority-based module (`Authority`) and a quorum-based module (`Quorum`).
-In the near future, we plan to support our very own fraud proof system, [Dave].
+Currently, we have implemented a quorum-based module (`Quorum`) and our very own fraud proof system (`DaveConsensus`).
 
 The Cartesi Rollups Contracts are an integral part of the Cartesi Rollups SDK,
 and are used by the [Cartesi Rollups Node], the [Cartesi Rollups Explorer],
@@ -26,7 +25,8 @@ deposit assets, submit claims, execute asset withdrawal orders, and more.
   - [ERC-1155]: Multi-tokens, both single and batch transfers
 - Supports the validation of outputs and output hashes
 - Supports the execution of [`CALL`] and [`DELEGATECALL`] vouchers
-- Supports Quorum and Authority-based settlement models
+- Supports a quorum-based settlement model
+- Supports the Dave fraud-proof system
 - Includes factory contracts for easy deployment
 
 ## Getting started
