@@ -10,8 +10,8 @@ import {Create2} from "@openzeppelin-contracts-5.2.0/utils/Create2.sol";
 
 import {IInputBox} from "src/inputs/IInputBox.sol";
 import {InputBox} from "src/inputs/InputBox.sol";
-import {DaveConsensusFactory} from "src/consensus/dave/DaveConsensusFactory.sol";
-import {DaveConsensus} from "src/consensus/dave/DaveConsensus.sol";
+import {OneOfNFactory} from "src/consensus/dave/OneOfNFactory.sol";
+import {OneOfN} from "src/consensus/dave/OneOfN.sol";
 
 import {IDataProvider} from "prt-contracts/IDataProvider.sol";
 import {ITournamentFactory} from "prt-contracts/ITournamentFactory.sol";
@@ -37,8 +37,8 @@ contract MockTournamentFactory is ITournamentFactory {
     }
 }
 
-contract DaveConsensusFactoryTest is Test {
-    DaveConsensusFactory _factory;
+contract OneOfNFactoryTest is Test {
+    OneOfNFactory _factory;
     InputBox _inputBox;
     MockTournamentFactory _tournamentFactory;
     Machine.Hash _initialMachineStateHash;
@@ -46,20 +46,19 @@ contract DaveConsensusFactoryTest is Test {
     function setUp() public {
         _inputBox = new InputBox();
         _tournamentFactory = new MockTournamentFactory();
-        _factory = new DaveConsensusFactory(_inputBox, _tournamentFactory);
+        _factory = new OneOfNFactory(_inputBox, _tournamentFactory);
         _initialMachineStateHash = Machine.Hash.wrap(0x0);
     }
 
-    function testNewDaveConsensusDeterministic(
+    function testNewOneOfNDeterministic(
         address _tournamentAddress,
         uint256 numberOfInputs,
         bytes32 salt
     ) public {
         address appContract = address(new MockContract());
 
-        address precalculatedAddress = _factory.calculateDaveConsensusAddress(
-            appContract, _initialMachineStateHash, salt
-        );
+        address precalculatedAddress =
+            _factory.calculateOneOfNAddress(appContract, _initialMachineStateHash, salt);
 
         vm.recordLogs();
 
@@ -68,41 +67,37 @@ contract DaveConsensusFactoryTest is Test {
         for (uint256 i = 0; i < numberOfInputs; ++i) {
             _inputBox.addInput(appContract, new bytes(i));
         }
-        DaveConsensus daveConsensus =
-            _factory.newDaveConsensus(appContract, _initialMachineStateHash, salt);
+        OneOfN oneOfN = _factory.newOneOfN(appContract, _initialMachineStateHash, salt);
 
-        _testNewDaveConsensusAux(daveConsensus, _tournamentAddress, numberOfInputs);
+        _testNewOneOfNAux(oneOfN, _tournamentAddress, numberOfInputs);
 
-        assertEq(precalculatedAddress, address(daveConsensus));
+        assertEq(precalculatedAddress, address(oneOfN));
 
         // Ensure the address remains the same when recalculated
-        precalculatedAddress = _factory.calculateDaveConsensusAddress(
-            appContract, _initialMachineStateHash, salt
-        );
-        assertEq(precalculatedAddress, address(daveConsensus));
+        precalculatedAddress =
+            _factory.calculateOneOfNAddress(appContract, _initialMachineStateHash, salt);
+        assertEq(precalculatedAddress, address(oneOfN));
 
         // Cannot deploy the same contract twice with the same salt
         vm.expectRevert();
-        _factory.newDaveConsensus(appContract, _initialMachineStateHash, salt);
+        _factory.newOneOfN(appContract, _initialMachineStateHash, salt);
     }
 
-    function _testNewDaveConsensusAux(
-        DaveConsensus daveConsensus,
-        address fuzzAddress,
-        uint256 nInputs
-    ) internal {
+    function _testNewOneOfNAux(OneOfN oneOfN, address fuzzAddress, uint256 nInputs)
+        internal
+    {
         Vm.Log[] memory entries = vm.getRecordedLogs();
         uint256 numOfConsensusCreated;
 
         for (uint256 i; i < entries.length; ++i) {
             Vm.Log memory entry = entries[i];
 
-            if (entry.topics[0] == DaveConsensusFactory.DaveConsensusCreated.selector) {
+            if (entry.topics[0] == OneOfNFactory.OneOfNCreated.selector) {
                 ++numOfConsensusCreated;
                 address emittedAddress = abi.decode(entry.data, (address));
-                assertEq(emittedAddress, address(daveConsensus));
+                assertEq(emittedAddress, address(oneOfN));
             }
-            if (entry.topics[0] == DaveConsensus.EpochSealed.selector) {
+            if (entry.topics[0] == OneOfN.EpochSealed.selector) {
                 (
                     ,
                     uint256 inputIndexLowerBound,

@@ -8,37 +8,37 @@ import {Create2} from "@openzeppelin-contracts-5.2.0/utils/Create2.sol";
 import {ITournamentFactory} from "prt-contracts/ITournamentFactory.sol";
 import {Machine} from "prt-contracts/types/Machine.sol";
 
-import {DaveConsensus} from "./DaveConsensus.sol";
+import {OneOfN} from "./OneOfN.sol";
 import {IInputBox} from "../../inputs/IInputBox.sol";
 
 /// @title Dave Consensus Factory
-/// @notice Allows anyone to reliably deploy a new `DaveConsensus` contract.
-contract DaveConsensusFactory {
+/// @notice Allows anyone to reliably deploy a new `OneOfN` contract.
+contract OneOfNFactory {
     IInputBox inputBox;
     ITournamentFactory tournamentFactory;
 
-    event DaveConsensusCreated(DaveConsensus daveConsensus);
+    event OneOfNCreated(OneOfN oneOfN);
 
     constructor(IInputBox _inputBox, ITournamentFactory _tournament) {
         inputBox = _inputBox;
         tournamentFactory = _tournament;
     }
 
-    function newDaveConsensus(
+    function newOneOfN(
         address appContract,
         Machine.Hash initialMachineStateHash,
         bytes32 salt
-    ) external returns (DaveConsensus) {
-        DaveConsensus daveConsensus = new DaveConsensus{salt: salt}(
+    ) external returns (OneOfN) {
+        OneOfN oneOfN = new OneOfN{salt: salt}(
             inputBox, appContract, tournamentFactory, initialMachineStateHash
         );
 
-        emit DaveConsensusCreated(daveConsensus);
+        emit OneOfNCreated(oneOfN);
 
-        return daveConsensus;
+        return oneOfN;
     }
 
-    function calculateDaveConsensusAddress(
+    function calculateOneOfNAddress(
         address appContract,
         Machine.Hash initialMachineStateHash,
         bytes32 salt
@@ -47,7 +47,7 @@ contract DaveConsensusFactory {
             salt,
             keccak256(
                 abi.encodePacked(
-                    type(DaveConsensus).creationCode,
+                    type(OneOfN).creationCode,
                     abi.encode(
                         inputBox, appContract, tournamentFactory, initialMachineStateHash
                     )

@@ -41,7 +41,7 @@ import {LibKeccak256} from "../../library/LibKeccak256.sol";
 /// After it, the next epoch is accumulating inputs. Once this epoch is settled,
 /// the accumlating epoch is sealed, and a new accumulating epoch is created.
 ///
-contract DaveConsensus is IDataProvider, IOutputsMerkleRootValidator, ERC165 {
+contract OneOfN is IDataProvider, IOutputsMerkleRootValidator, ERC165 {
     using LibBinaryMerkleTree for bytes32[];
 
     /// @notice The input box contract
