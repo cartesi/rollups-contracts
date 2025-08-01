@@ -5,5 +5,4 @@ pragma solidity ^0.8.27;
 
 import {EpochManager} from "../interfaces/EpochManager.sol";
 
-abstract contract EpochManagerImpl is EpochManager {
-}
+abstract contract EpochManagerImpl is EpochManager {}
