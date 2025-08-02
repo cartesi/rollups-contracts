@@ -5,39 +5,19 @@ pragma solidity ^0.8.8;
 
 /// @notice Manages epochs.
 interface EpochManager {
-    /// @notice The start of an epoch has been defined.
+    /// @notice An epoch has been closed.
     /// @param epochIndex The index of the epoch
-    /// @dev The block in which this event was emitted is
-    /// the inclusive lower bound for the epoch boundary.
-    event EpochOpened(uint256 indexed epochIndex);
+    /// @param epochFinalizer The contract that makes the epoch reach finality
+    /// @dev An epoch is said to be closed if its boundaries are defined.
+    /// We define epoch boundaries in terms of base-laye
+    /// The number of the block in which this event was emitted is both
+    /// the block number exclusive upper bound of the epoch that has been closed
+    /// and the block number inclusive lower bound of the epoch following it.
+    /// The interface of the epoch finalizer contract can be inferred
+    /// from the return value of the `getEpochFinalizerInterfaceId` view function.
+    event EpochClosed(uint256 indexed epochIndex, address indexed epochFinalizer);
 
-    /// @notice The end of an epoch has been defined.
-    /// @param epochIndex The index of the epoch
-    /// @dev The block in which this event was emitted is
-    /// the exclusive upper bound for the epoch boundary.
-    event EpochClosed(uint256 indexed epochIndex);
-
-    /// @notice The post-state of an epoch has been claimed.
-    /// @param epochIndex The index of the epoch
-    /// @param claimer The address of the claimer
-    /// @param claimedPostEpochStateRoot The claimed post-epoch state root
-    event PostEpochStateClaimed(
-        uint256 indexed epochIndex,
-        address indexed claimer,
-        bytes32 indexed claimedPostEpochStateRoot
-    );
-
-    /// @notice The post-state of an epoch is being disputed.
-    /// @param epochIndex The index of the epoch
-    /// @param disputeResolutionModule The address of the dispute resolution module
-    /// @param disputeResolutionAlgorithm The dispute resolution algorithm
-    event EpochDisputed(
-        uint256 indexed epochIndex,
-        address indexed disputeResolutionModule,
-        string disputeResolutionAlgorithm
-    );
-
-    /// @notice The post-state of an epoch has been defined.
+    /// @notice An epoch has been finalized.
     /// @param epochIndex The index of the epoch
     /// @param postEpochStateRoot The post-epoch state root
     /// @param postEpochOutputsRoot The post-epoch outputs root
@@ -47,93 +27,78 @@ interface EpochManager {
         bytes32 indexed postEpochOutputsRoot
     );
 
-    /// @notice Tried to close an epoch.
-    /// @param epochIndex The index of the epoch
-    /// @param reason Why the epoch cannot be closed
-    error CannotCloseEpoch(uint256 epochIndex, string reason);
+    /// @notice Tried to close the current epoch, which is open, but it is still empty.
+    /// @param currentEpochIndex The current epoch index
+    /// @dev An epoch is said to be empty if it has no inputs.
+    error CannotCloseEmptyEpoch(uint256 currentEpochIndex);
 
-    /// @notice Tried to claim a post-epoch state.
-    /// @param epochIndex The index of the epoch
-    /// @param claimer The address of the claimer
-    /// @param reason Why the claimer cannot be claim
-    error CannotClaimPostEpochState(uint256 epochIndex, address claimer, string reason);
+    /// @notice Tried to close the current epoch, but it is already closed.
+    /// @param currentEpochIndex The current epoch index
+    error CannotCloseAlreadyClosedEpoch(uint256 currentEpochIndex);
 
-    /// @notice Tried to finalize an epoch.
-    /// @param epochIndex The index of the epoch
-    /// @param reason Why the epoch cannot be finalized
-    error CannotFinalizeEpoch(uint256 epochIndex, string reason);
+    /// @notice Tried to finalize the current epoch, but it is not closed.
+    /// @param currentEpochIndex The current epoch index
+    error CannotFinalizeOpenEpoch(uint256 currentEpochIndex);
 
-    /// @notice Check whether an epoch can be closed.
-    /// @param epochIndex The epoch index
-    /// @return canClose Whether the epoch can be closed
-    /// @return reason If the epoch cannot be closed, the reason why
-    function canCloseEpoch(uint256 epochIndex)
+    /// @notice Tried to finalize the current epoch, which is closed, but with the wrong post-epoch state.
+    /// @param currentEpochIndex The current epoch index
+    error CannotFinalizeEpochWithWrongPostEpochState(uint256 currentEpochIndex);
+
+    /// @notice Tried to interact with an epoch that is not the current one.
+    /// @param providedEpochIndex The provided epoch index
+    /// @param currentEpochIndex The current epoch index
+    error InvalidCurrentEpochIndex(uint256 providedEpochIndex, uint256 currentEpochIndex);
+
+    /// @notice Tried to prove the post-epoch outputs root, but the proof is invalid.
+    error InvalidPostEpochOutputsRootProof();
+
+    /// @notice Get the epoch finalizer interface ID.
+    /// @dev An interface ID is a bitwise XOR of function selectors.
+    function getEpochFinalizerInterfaceId() external view returns (bytes4);
+
+    /// @notice Get the current epoch index.
+    function getCurrentEpochIndex() external view returns (uint256);
+
+    /// @notice Ensure the current epoch can be closed (via `closeEpoch`).
+    /// @return currentEpochIndex The current epoch index
+    /// @dev If the current epoch can be closed, returns the current epoch index.
+    /// If the current epoch is open but still empty, raises `CannotCloseEmptyEpoch`.
+    /// If the current epoch is already close, raises `CannotCloseAlreadyClosedEpoch`.
+    function ensureCurrentEpochCanBeClosed()
         external
         view
-        returns (bool canClose, string memory reason);
+        returns (uint256 currentEpochIndex);
 
     /// @notice Close an epoch.
     /// @param epochIndex The epoch index
-    /// @dev One can check whether they can call this function
-    /// by first calling the `canCloseEpoch` view function before
-    /// and ensuring `canClose` is `true`. Otherwise, this function
-    /// will raise a `CannotCloseEpoch` error with the epoch index
-    /// and the same reason provided by `canCloseEpoch`.
-    /// @dev If successful, emits an `EpochClosed` event for the
-    /// referenced epoch and an `EpochOpened` for the epoch after it.
+    /// @dev If the epoch index is not the current epoch index, raises `InvalidCurrentEpochIndex`.
+    /// If the current epoch cannot be closed, raises an error (see `ensureCurrentEpochCanBeClosed`).
+    /// If the current epoch can be closed, emits `EpochClosed`.
     function closeEpoch(uint256 epochIndex) external;
 
-    /// @notice Check whether a claimer can claim a post-epoch state root.
-    /// @param epochIndex The epoch index
-    /// @param claimer The address of the claimer
-    /// @return canClaim Whether the claimer can claim
-    /// @return reason If the claimer cannot claim, the reason why
-    function canClaimPostEpochState(uint256 epochIndex, address claimer)
-        external
-        view
-        returns (bool canClaim, string memory reason);
-
-    /// @notice Claim a post-epoch state root.
-    /// @param epochIndex The epoch index
-    /// @param postEpochStateRoot The post-epoch state root to claim
-    /// @dev One can check whether they can call this function
-    /// by first calling the `canClaimPostEpochState` view function before
-    /// while passing the address of the account that will call this function
-    /// and ensuring `canClaim` is `true`. Otherwise, this function
-    /// will raise a `CannotClaimPostEpochState` error with the epoch index,
-    /// the claimer address, and the same reason provided by `canClaimPostEpochState`.
-    /// @dev If successful, emits a `PostEpochStateClaimed` event for the
-    /// referenced epoch, claimer, and claimed post-epoch state root.
-    function claimPostEpochState(uint256 epochIndex, bytes32 postEpochStateRoot)
-        external;
-
-    /// @notice Check whether an epoch can be finalized.
-    /// @param epochIndex The epoch index
+    /// @notice Ensure the current epoch can be finalized (via `finalizeEpoch`).
     /// @param postEpochStateRoot The post-epoch state root
     /// @param postEpochOutputsRoot The post-epoch outputs root
     /// @param proof The Merkle proof for the post-epoch outputs root
-    /// @return canFinalize Whether the epoch can be finalized
-    /// @return reason If the epoch cannot be finalized, the reason why
-    function canFinalizeEpoch(
-        uint256 epochIndex,
+    /// @return currentEpochIndex The current epoch index
+    /// @dev If the current epoch can be finalized, returns the current epoch index.
+    /// If the current epoch is not closed yet, raises `CannotFinalizeOpenEpoch`.
+    /// If the post-epoch state is not final, raises `CannotFinalizeEpochWithWrongPostEpochState`.
+    /// If the post-epoch outputs root proof is invalid, raises `InvalidPostEpochOutputsRootProof`.
+    function ensureCurrentEpochCanBeFinalized(
         bytes32 postEpochStateRoot,
         bytes32 postEpochOutputsRoot,
         bytes32[] calldata proof
-    ) external view returns (bool canFinalize, string memory reason);
+    ) external view returns (uint256 currentEpochIndex);
 
     /// @notice Finalize an epoch.
     /// @param epochIndex The epoch index
     /// @param postEpochStateRoot The post-epoch state root
     /// @param postEpochOutputsRoot The post-epoch outputs root
     /// @param proof The Merkle proof for the post-epoch outputs root
-    /// @dev One can check whether they can call this function
-    /// by first calling the `canFinalizeEpoch` view function before
-    /// and ensuring `canFinalize` is `true`. Otherwise, this function
-    /// will raise a `CannotFinalizeEpoch` error with the epoch index,
-    /// post-epoch state and output roots, and Merkle proof,
-    /// plus the same reason provided by `canFinalizeEpoch`.
-    /// @dev If successful, emits an `EpochFinalized` event for the
-    /// referenced epoch, post-epoch state and output roots.
+    /// @dev If the epoch index is not the current epoch index, raises `InvalidCurrentEpochIndex`.
+    /// If the current epoch cannot be finalized, raises an error (see `ensureCurrentEpochCanBeFinalized`).
+    /// If the current epoch can be finalized, emits `EpochFinalized`.
     function finalizeEpoch(
         uint256 epochIndex,
         bytes32 postEpochStateRoot,
