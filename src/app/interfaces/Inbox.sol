@@ -3,21 +3,19 @@
 
 pragma solidity ^0.8.8;
 
-import {EventEmitter} from "./EventEmitter.sol";
-
 /// @notice Provides data availability of inputs.
-/// @notice Keeps an append-only list of input Merkle roots.
-/// @notice Off-chain, inputs can be retrieved through `InputAdded` events.
-/// @notice On-chain, input Merkle roots can be retrieved through the `getInputMerkleRoot` function.
-/// @notice The Merkle root of an input is computed as follows:
-/// @notice First, the input is split into 256-bit data blocks from the LSB to the MSB.
-/// @notice If the last data block is not 256-bit wide, it is right-padded with zeroes.
-/// @notice Second, data blocks are hashed with Keccak-256 to become the leaves of the Merkle tree.
-/// @notice If the leaves do not amount to a power of 2, they are completed with the Keccak-256 of the zeroed data block.
-/// @notice Third, the nodes of a binary Merkle tree are constructed bottom-up from the leaves.
-/// @notice Internal nodes are the Keccak-256 of the left child concatenated with the right child.
-/// @notice Once we reach the root node, we have effectively computed the input Merkle root.
-interface Inbox is EventEmitter {
+/// @dev Keeps an append-only list of input Merkle roots.
+/// Off-chain, inputs can be retrieved through `InputAdded` events.
+/// On-chain, input Merkle roots can be retrieved through the `getInputMerkleRoot` function.
+/// The Merkle root of an input is computed as follows:
+/// First, the input is split into 256-bit data blocks from the LSB to the MSB.
+/// If the last data block is not 256-bit wide, it is right-padded with zeroes.
+/// Second, data blocks are hashed with Keccak-256 to become the leaves of the Merkle tree.
+/// If the leaves do not amount to a power of 2, they are completed with the Keccak-256 of the zeroed data block.
+/// Third, the nodes of a binary Merkle tree are constructed bottom-up from the leaves.
+/// Internal nodes are the Keccak-256 of the left child concatenated with the right child.
+/// Once we reach the root node, we have effectively computed the input Merkle root.
+interface Inbox {
     /// @notice MUST trigger when an input is added.
     /// @param inputIndex The input index
     /// @param input The input
@@ -38,15 +36,15 @@ interface Inbox is EventEmitter {
     /// @notice Get the Merkle root of an input by its index.
     /// @param inputIndex The input index
     /// @dev The provided index must be valid.
-    /// @dev Valid input indices are within the range `[0, N)`.
-    /// @dev See  `getNumberOfInputs` for the value of `N`.
+    /// Valid input indices are within the range `[0, N)`.
+    /// See  `getNumberOfInputs` for the value of `N`.
     function getInputMerkleRoot(uint256 inputIndex) external view returns (bytes32);
 
     /// @notice Send an input.
     /// @param payload The input payload
     /// @return The Merkle root of the input
     /// @dev MUST fire an `InputAdded` event.
-    /// @dev MAY raise an `InputTooLarge` error.
-    /// @dev The payload is composed with blockchain metadata to become an input.
+    /// MAY raise an `InputTooLarge` error.
+    /// The payload is composed with blockchain metadata to become an input.
     function addInput(bytes calldata payload) external returns (bytes32);
 }
