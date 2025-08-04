@@ -108,4 +108,10 @@ interface EpochManager {
         bytes32 postEpochOutputsRoot,
         bytes32[] calldata proof
     ) external;
+
+    /// @notice Check whether an outputs root has been finalized before.
+    /// @param outputsRoot The outputs Merkle tree root
+    /// @return Whether the outputs root is valid
+    /// @dev Useful for validating/executing outputs.
+    function isOutputsRootFinal(bytes32 outputsRoot) external view returns (bool);
 }
