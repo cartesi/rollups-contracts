@@ -12,6 +12,7 @@ import {EpochManager} from "./EpochManager.sol";
 /// The zero ID is reserved as sentinel value for "invalid validator ID".
 /// Votes are represented as bitmaps to save gas spent on storage operations.
 /// The i-th most significant bit is set iff the validator of ID `i` has voted.
+/// The number of bits set in the bitmap represent the number of votes.
 /// Since `N < 256`, this bitmap can be stored in a single 256-bit EVM word.
 /// Vote bitmaps are typed as `bytes32` values in Solidity.
 /// The following example bitmap represents votes from validators 7, 21, and 42:
@@ -42,13 +43,13 @@ interface QuorumEpochFinalizer is EpochManager {
 
     /// @notice Get the number of validators in the quorum.
     /// @return numOfValidators The number of validators
-    /// @dev Validator IDs range from 1 to the number of validators.
+    /// @dev Validator IDs range between 1 and the number of validators.
     function getNumberOfValidators() external view returns (uint8 numOfValidators);
 
     /// @notice Get the address of a validator by its ID.
     /// @param validatorId The validator ID
     /// @return validatorAddress The validator address
-    /// @dev Invalid IDs map to the zero address.
+    /// @dev Invalid validator IDs map to the zero address.
     function getValidatorAddressById(uint8 validatorId)
         external
         view
@@ -57,13 +58,14 @@ interface QuorumEpochFinalizer is EpochManager {
     /// @notice Get the ID of a validator by its address.
     /// @param validatorAddress The validator address
     /// @return validatorId The validator ID
-    /// @dev Invalid addresses map to the zero ID.
+    /// @dev Addresses of non-validators map to the zero ID.
     function getValidatorIdByAddress(address validatorAddress)
         external
         view
         returns (uint8 validatorId);
 
-    /// @notice Get a bitmap that captures all votes on a given post-epoch state.
+    /// @notice Get a bitmap that represents all validators that have
+    /// voted on a particular post-epoch state in the context of an epoch.
     /// @param epochIndex The epoch index
     /// @param postEpochStateRoot The post-epoch state root
     /// @return voteBitmap The vote bitmap
@@ -72,7 +74,8 @@ interface QuorumEpochFinalizer is EpochManager {
         view
         returns (bytes32 voteBitmap);
 
-    /// @notice Get a bitmap that aggregates all votes on any post-epoch state.
+    /// @notice Get a bitmap that represents all validators that have
+    /// voted on any post-epoch state in the context of an epoch.
     /// @param epochIndex The epoch index
     /// @return aggregatedVoteBitmap The aggregated vote bitmap
     function getAggregatedVoteBitmap(uint256 epochIndex)
