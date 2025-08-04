@@ -40,17 +40,25 @@ interface EpochManager {
     /// @param currentEpochIndex The current epoch index
     error CannotFinalizeOpenEpoch(uint256 currentEpochIndex);
 
-    /// @notice Tried to finalize the current epoch, which is closed, but with the wrong post-epoch state.
+    /// @notice Tried to finalize the current epoch with the provided post-epoch state.
     /// @param currentEpochIndex The current epoch index
-    error CannotFinalizeEpochWithWrongPostEpochState(uint256 currentEpochIndex);
+    /// @param postEpochStateRoot The post-epoch state root
+    error InvalidPostEpochState(uint256 currentEpochIndex, bytes32 postEpochStateRoot);
 
     /// @notice Tried to interact with an epoch that is not the current one.
     /// @param providedEpochIndex The provided epoch index
     /// @param currentEpochIndex The current epoch index
     error InvalidCurrentEpochIndex(uint256 providedEpochIndex, uint256 currentEpochIndex);
 
-    /// @notice Tried to prove the post-epoch outputs root, but the proof is invalid.
-    error InvalidPostEpochOutputsRootProof();
+    /// @notice Tried to prove the post-epoch outputs root, but the proof length is invalid.
+    /// @param proofLength The length of the provided proof
+    /// @param expectedProofLength The expected proof length
+    error InvalidOutputsRootProofLength(uint256 proofLength, uint256 expectedProofLength);
+
+    /// @notice Tried to prove a post-epoch outputs root, but the proof is invalid.
+    /// @param providedStateRoot The provided state root
+    /// @param computedStateRoot The state root computed from the proof
+    error InvalidOutputsRootProof(bytes32 providedStateRoot, bytes32 computedStateRoot);
 
     /// @notice Get the epoch finalizer interface ID.
     /// @dev An interface ID is a bitwise XOR of function selectors.
@@ -59,49 +67,44 @@ interface EpochManager {
     /// @notice Get the current epoch index.
     function getCurrentEpochIndex() external view returns (uint256);
 
-    /// @notice Ensure the current epoch can be closed (via `closeEpoch`).
-    /// @return currentEpochIndex The current epoch index
-    /// @dev If the current epoch can be closed, returns the current epoch index.
+    /// @notice Ensure the current epoch can be closed (via `closeCurrentEpoch`).
+    /// @param currentEpochIndex The current epoch index
+    /// @dev If the current epoch can be closed, returns successfully.
+    /// If the epoch index is not the current epoch index, raises `InvalidCurrentEpochIndex`.
+    /// If the current epoch is already closed, raises `CannotCloseAlreadyClosedEpoch`.
     /// If the current epoch is open but still empty, raises `CannotCloseEmptyEpoch`.
-    /// If the current epoch is already close, raises `CannotCloseAlreadyClosedEpoch`.
-    function ensureCurrentEpochCanBeClosed()
-        external
-        view
-        returns (uint256 currentEpochIndex);
+    function ensureCurrentEpochCanBeClosed(uint256 currentEpochIndex) external view;
 
-    /// @notice Close an epoch.
-    /// @param epochIndex The epoch index
-    /// @dev If the epoch index is not the current epoch index, raises `InvalidCurrentEpochIndex`.
-    /// If the current epoch cannot be closed, raises an error (see `ensureCurrentEpochCanBeClosed`).
+    /// @notice Close the current epoch.
+    /// @param currentEpochIndex The current epoch index
+    /// @dev Calls `ensureCurrentEpochCanBeClosed` internally.
     /// If the current epoch can be closed, emits `EpochClosed`.
-    function closeEpoch(uint256 epochIndex) external;
+    function closeCurrentEpoch(uint256 currentEpochIndex) external;
 
-    /// @notice Ensure the current epoch can be finalized (via `finalizeEpoch`).
-    /// @param postEpochStateRoot The post-epoch state root
+    /// @notice Ensure the current epoch can be finalized (via `finalizeCurrentEpoch`).
+    /// @param currentEpochIndex The current epoch index
     /// @param postEpochOutputsRoot The post-epoch outputs root
     /// @param proof The Merkle proof for the post-epoch outputs root
-    /// @return currentEpochIndex The current epoch index
-    /// @dev If the current epoch can be finalized, returns the current epoch index.
+    /// @dev If the current epoch can be finalized, returns successfully.
+    /// If the epoch index is not the current epoch index, raises `InvalidCurrentEpochIndex`.
+    /// If the post-epoch outputs root proof length is invalid, raises `InvalidOutputsRootProofLength`.
+    /// If the post-epoch outputs root proof is invalid, raises `InvalidOutputsRootProof`.
     /// If the current epoch is not closed yet, raises `CannotFinalizeOpenEpoch`.
-    /// If the post-epoch state is not final, raises `CannotFinalizeEpochWithWrongPostEpochState`.
-    /// If the post-epoch outputs root proof is invalid, raises `InvalidPostEpochOutputsRootProof`.
+    /// If the post-epoch state is invalid, raises `InvalidPostEpochState`.
     function ensureCurrentEpochCanBeFinalized(
-        bytes32 postEpochStateRoot,
+        uint256 currentEpochIndex,
         bytes32 postEpochOutputsRoot,
         bytes32[] calldata proof
-    ) external view returns (uint256 currentEpochIndex);
+    ) external view;
 
-    /// @notice Finalize an epoch.
-    /// @param epochIndex The epoch index
-    /// @param postEpochStateRoot The post-epoch state root
+    /// @notice Finalize the current epoch.
+    /// @param currentEpochIndex The current epoch index
     /// @param postEpochOutputsRoot The post-epoch outputs root
     /// @param proof The Merkle proof for the post-epoch outputs root
-    /// @dev If the epoch index is not the current epoch index, raises `InvalidCurrentEpochIndex`.
-    /// If the current epoch cannot be finalized, raises an error (see `ensureCurrentEpochCanBeFinalized`).
+    /// @dev Calls `ensureCurrentEpochCanBeFinalized` internally.
     /// If the current epoch can be finalized, emits `EpochFinalized`.
-    function finalizeEpoch(
-        uint256 epochIndex,
-        bytes32 postEpochStateRoot,
+    function finalizeCurrentEpoch(
+        uint256 currentEpochIndex,
         bytes32 postEpochOutputsRoot,
         bytes32[] calldata proof
     ) external;
