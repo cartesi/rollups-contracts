@@ -19,7 +19,7 @@ import {EpochManager} from "./EpochManager.sol";
 /// `0x0000000000000000000000000000000000000000000000000000040000200080`.
 /// Liveness depends on a majority of validators voting on the same post-epoch state.
 /// Security depends on a majority of validators voting on the correct post-epoch state.
-interface QuorumEpochFinalizer is EpochManager {
+interface Quorum is EpochManager {
     /// @notice This event is emitted when a validator votes on a post-epoch state.
     /// @param epochIndex The epoch index
     /// @param postEpochStateRoot The post-epoch state root

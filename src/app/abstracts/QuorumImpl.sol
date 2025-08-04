@@ -9,9 +9,9 @@ import {Memory} from "step/src/Memory.sol";
 import {Lib256Bitmap} from "../../library/Lib256Bitmap.sol";
 import {LibBinaryMerkleTree} from "../../library/LibBinaryMerkleTree.sol";
 import {LibKeccak256} from "../../library/LibKeccak256.sol";
-import {QuorumEpochFinalizer} from "../interfaces/QuorumEpochFinalizer.sol";
+import {Quorum} from "../interfaces/Quorum.sol";
 
-abstract contract QuorumEpochFinalizerImpl is QuorumEpochFinalizer {
+abstract contract QuorumImpl is Quorum {
     using Lib256Bitmap for bytes32;
     using LibBinaryMerkleTree for bytes32[];
 
@@ -54,7 +54,7 @@ abstract contract QuorumEpochFinalizerImpl is QuorumEpochFinalizer {
     }
 
     function getEpochFinalizerInterfaceId() external pure override returns (bytes4) {
-        return type(QuorumEpochFinalizer).interfaceId;
+        return type(Quorum).interfaceId;
     }
 
     function getCurrentEpochIndex() public view override returns (uint256) {
