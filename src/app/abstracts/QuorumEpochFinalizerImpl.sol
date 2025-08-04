@@ -32,7 +32,7 @@ abstract contract QuorumEpochFinalizerImpl is QuorumEpochFinalizer {
     uint256 private _currentEpochIndex;
     bool private _isCurrentEpochClosed;
     uint256 private _numberOfProcessedInputs;
-    mapping(bytes32 => bool) private _isOutputsRootValid;
+    mapping(bytes32 => bool) private _isOutputsRootFinal;
     uint8 private immutable _numOfValidators;
     mapping(address => uint8) private _validatorIdByAddress;
     mapping(uint256 => address) private _validatorAddressById;
@@ -95,8 +95,12 @@ abstract contract QuorumEpochFinalizerImpl is QuorumEpochFinalizer {
         postEpochStateRoot = _preFinalize(currentEpochIndex, postEpochOutputsRoot, proof);
         _currentEpochIndex = currentEpochIndex + 1;
         _isCurrentEpochClosed = false;
-        _isOutputsRootValid[postEpochOutputsRoot] = true;
+        _isOutputsRootFinal[postEpochOutputsRoot] = true;
         emit EpochFinalized(currentEpochIndex, postEpochStateRoot, postEpochOutputsRoot);
+    }
+
+    function isOutputsRootFinal(bytes32 outputsRoot) public view override returns (bool) {
+        return _isOutputsRootFinal[outputsRoot];
     }
 
     function getNumberOfValidators()
