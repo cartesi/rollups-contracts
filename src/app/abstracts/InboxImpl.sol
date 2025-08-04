@@ -18,7 +18,6 @@ abstract contract InboxImpl is Inbox {
     uint256 private _blockNumberOfLastSnapshot;
     uint256 private _numberOfInputsInLastSnapshot;
 
-    /// @inheritdoc Inbox
     function addInput(bytes calldata payload) external override returns (bytes32) {
         uint256 index = _inputMerkleRoots.length;
 
@@ -55,12 +54,10 @@ abstract contract InboxImpl is Inbox {
         return inputMerkleRoot;
     }
 
-    /// @inheritdoc Inbox
     function getNumberOfInputs() public view override returns (uint256) {
         return _inputMerkleRoots.length;
     }
 
-    /// @inheritdoc Inbox
     function getNumberOfInputsBeforeCurrentBlock()
         public
         view
@@ -75,7 +72,6 @@ abstract contract InboxImpl is Inbox {
         }
     }
 
-    /// @inheritdoc Inbox
     function getInputMerkleRoot(uint256 index) public view override returns (bytes32) {
         return _inputMerkleRoots[index];
     }

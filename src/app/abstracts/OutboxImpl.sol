@@ -25,12 +25,10 @@ abstract contract OutboxImpl is Outbox, ReentrancyGuard {
     /// @dev See the `getNumberOfExecutedOutputs` function.
     uint256 private _numOfExecutedOutputs;
 
-    /// @inheritdoc Outbox
     function wasOutputExecuted(uint256 outputIndex) public view override returns (bool) {
         return _executedOutputs.get(outputIndex);
     }
 
-    /// @inheritdoc Outbox
     function getNumberOfExecutedOutputs() external view override returns (uint256) {
         return _numOfExecutedOutputs;
     }
@@ -43,7 +41,6 @@ abstract contract OutboxImpl is Outbox, ReentrancyGuard {
         virtual
         returns (bool);
 
-    /// @inheritdoc Outbox
     function validateOutputHash(bytes32 outputHash, OutputValidityProof calldata proof)
         public
         view
@@ -60,7 +57,6 @@ abstract contract OutboxImpl is Outbox, ReentrancyGuard {
         }
     }
 
-    /// @inheritdoc Outbox
     function validateOutput(bytes calldata output, OutputValidityProof calldata proof)
         public
         view
@@ -69,7 +65,6 @@ abstract contract OutboxImpl is Outbox, ReentrancyGuard {
         validateOutputHash(keccak256(output), proof);
     }
 
-    /// @inheritdoc Outbox
     function executeOutput(bytes calldata output, OutputValidityProof calldata proof)
         external
         override
