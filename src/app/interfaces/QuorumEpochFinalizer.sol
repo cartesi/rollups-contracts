@@ -3,6 +3,8 @@
 
 pragma solidity ^0.8.8;
 
+import {EpochManager} from "./EpochManager.sol";
+
 /// @notice Reaches epoch finality through a quorum-based majority voting system.
 /// @dev The quorum has a fixed number of validators, `N`.
 /// The number of validators of a quorum can range from 1 up to 255.
@@ -16,7 +18,7 @@ pragma solidity ^0.8.8;
 /// `0x0000000000000000000000000000000000000000000000000000040000200080`.
 /// Liveness depends on a majority of validators voting on the same post-epoch state.
 /// Security depends on a majority of validators voting on the correct post-epoch state.
-interface QuorumEpochFinalizer {
+interface QuorumEpochFinalizer is EpochManager {
     /// @notice This event is emitted when a validator votes on a post-epoch state.
     /// @param epochIndex The epoch index
     /// @param postEpochStateRoot The post-epoch state root
@@ -27,11 +29,16 @@ interface QuorumEpochFinalizer {
         address indexed validatorAddress
     );
 
+    /// @notice This error is raised when someone
+    /// tries to vote on a post-epoch state but
+    /// they are not a validator.
+    /// @param sender The message sender
+    error MessageSenderIsNotValidator(address sender);
+
     /// @notice This error is raised when a validator
     /// tries to vote on a post-epoch state having
     /// already cast a vote for the same epoch.
-    /// @param epochIndex The epoch index
-    error VoteAlreadyCastForEpoch(uint256 epochIndex);
+    error VoteAlreadyCastForEpoch();
 
     /// @notice Get the number of validators in the quorum.
     /// @return numOfValidators The number of validators
@@ -74,7 +81,10 @@ interface QuorumEpochFinalizer {
         returns (bytes32 aggregatedVoteBitmap);
 
     /// @notice Vote on a post-epoch state.
-    /// @param epochIndex The epoch index
+    /// @param currentEpochIndex The current epoch index
     /// @param postEpochStateRoot The post-epoch state root
-    function vote(uint256 epochIndex, bytes32 postEpochStateRoot) external;
+    /// @dev If message sender is not a validator, raises `MessageSenderIsNotValidator`.
+    /// If the epoch index is not the current epoch index, raises `InvalidCurrentEpochIndex`.
+    /// If the validator has already cast a vote, raises `VoteAlreadyCastForEpoch`.
+    function vote(uint256 currentEpochIndex, bytes32 postEpochStateRoot) external;
 }
