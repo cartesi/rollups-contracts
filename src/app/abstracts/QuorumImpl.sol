@@ -99,7 +99,12 @@ abstract contract QuorumImpl is Quorum {
         emit EpochFinalized(currentEpochIndex, postEpochStateRoot, postEpochOutputsRoot);
     }
 
-    function isOutputsRootFinal(bytes32 outputsRoot) public view override returns (bool) {
+    function isOutputsRootFinal(bytes32 outputsRoot)
+        public
+        view
+        override
+        returns (bool)
+    {
         return _isOutputsRootFinal[outputsRoot];
     }
 

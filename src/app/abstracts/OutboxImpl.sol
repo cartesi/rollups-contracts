@@ -34,7 +34,12 @@ abstract contract OutboxImpl is Outbox, ReentrancyGuard, EpochManager {
         return _numOfExecutedOutputs;
     }
 
-    function isOutputsRootFinal(bytes32 outputsRoot) public view override virtual returns (bool);
+    function isOutputsRootFinal(bytes32 outputsRoot)
+        public
+        view
+        virtual
+        override
+        returns (bool);
 
     function validateOutputHash(bytes32 outputHash, OutputValidityProof calldata proof)
         public
