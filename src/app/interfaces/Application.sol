@@ -13,4 +13,7 @@ import {Outbox} from "./Outbox.sol";
 interface Application is EpochManager, Inbox, Outbox {
     /// @notice Get the number of the block in which the application contract was deployed.
     function getDeploymentBlockNumber() external view returns (uint256);
+
+    /// @notice Get the genesis state root of the application.
+    function getGenesisStateRoot() external view returns (bytes32);
 }
