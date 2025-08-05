@@ -16,19 +16,19 @@ import {OutboxImpl} from "../abstracts/OutboxImpl.sol";
 contract DaveAppImpl is App, DaveImpl, InboxImpl, OutboxImpl {
     using Clones for address;
 
-    /// @notice Arguments embedded in the proxy contract's bytecode.
+    /// @notice Arguments embedded in the contract's bytecode.
     /// @param deploymentBlockNumber The deployment block number
     /// @param genesisStateRoot The genesis state root
     /// @param tournamentFactory The tournament factory
-    struct ProxyArgs {
+    struct Args {
         uint256 deploymentBlockNumber;
         bytes32 genesisStateRoot;
         ITournamentFactory tournamentFactory;
     }
 
-    /// @notice Get the proxy arguments.
-    function _getProxyArgs() internal view returns (ProxyArgs memory) {
-        return abi.decode(address(this).fetchCloneArgs(), (ProxyArgs));
+    /// @notice Get the contract arguments.
+    function _getArgs() internal view returns (Args memory) {
+        return abi.decode(address(this).fetchCloneArgs(), (Args));
     }
 
     function getDeploymentBlockNumber()
@@ -37,7 +37,7 @@ contract DaveAppImpl is App, DaveImpl, InboxImpl, OutboxImpl {
         override
         returns (uint256 deploymentBlockNumber)
     {
-        return _getProxyArgs().deploymentBlockNumber;
+        return _getArgs().deploymentBlockNumber;
     }
 
     function getGenesisStateRoot()
@@ -46,7 +46,7 @@ contract DaveAppImpl is App, DaveImpl, InboxImpl, OutboxImpl {
         override
         returns (bytes32 genesisStateRoot)
     {
-        return _getProxyArgs().genesisStateRoot;
+        return _getArgs().genesisStateRoot;
     }
 
     function _getTournamentFactory()
@@ -55,7 +55,7 @@ contract DaveAppImpl is App, DaveImpl, InboxImpl, OutboxImpl {
         override
         returns (ITournamentFactory)
     {
-        return _getProxyArgs().tournamentFactory;
+        return _getArgs().tournamentFactory;
     }
 
     function _getGenesisStateRoot()
