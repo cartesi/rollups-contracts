@@ -15,6 +15,9 @@ abstract contract QuorumImpl is Quorum {
     using Lib256Bitmap for bytes32;
     using LibBinaryMerkleTree for bytes32[];
 
+    /// @notice The quorum was already initialized.
+    error AlreadyInitialized();
+
     /// @notice No validator was provided.
     error NoValidator();
 
@@ -33,13 +36,21 @@ abstract contract QuorumImpl is Quorum {
     bool private _isCurrentEpochClosed;
     uint256 private _numberOfProcessedInputs;
     mapping(bytes32 => bool) private _isOutputsRootFinal;
-    uint8 private immutable _numOfValidators;
+    uint8 private _numOfValidators;
     mapping(address => uint8) private _validatorIdByAddress;
     mapping(uint256 => address) private _validatorAddressById;
     mapping(uint256 => bytes32) private _aggregatedVoteBitmaps;
     mapping(uint256 => mapping(bytes32 => bytes32)) private _voteBitmaps;
 
-    constructor(address[] memory validators) {
+    /// @notice Initialize the quorum.
+    /// @param validators The array of validator addresses
+    /// @dev Should be called upon instantiation.
+    /// If the quorum was already initialized, raises `AlreadyInitialized`.
+    /// If the validators array is empty, raises `NoValidator`.
+    /// If the validator array has over 255 elements, raises `TooManyValidators`.
+    /// If the validator array has duplicate elements, raises `DuplicatedValidator`.
+    function initQuorum(address[] calldata validators) external {
+        require(_numOfValidators == 0, AlreadyInitialized());
         uint256 numOfValidators = validators.length;
         require(numOfValidators >= 1, NoValidator());
         require(numOfValidators <= 255, TooManyValidators());
@@ -74,7 +85,7 @@ abstract contract QuorumImpl is Quorum {
     function closeCurrentEpoch(uint256 currentEpochIndex) external override {
         ensureCurrentEpochCanBeClosed(currentEpochIndex);
         _isCurrentEpochClosed = true;
-        _numberOfProcessedInputs = getNumberOfInputsBeforeCurrentBlock();
+        _numberOfProcessedInputs = _getNumberOfInputsBeforeCurrentBlock();
         emit EpochClosed(_currentEpochIndex, address(this));
     }
 
@@ -171,13 +182,6 @@ abstract contract QuorumImpl is Quorum {
         emit Vote(currentEpochIndex, postEpochStateRoot, validatorAddress);
     }
 
-    /// @notice Get the number of inputs before the current block.
-    function getNumberOfInputsBeforeCurrentBlock()
-        internal
-        view
-        virtual
-        returns (uint256);
-
     /// @notice Make sure the provided epoch index is the current epoch index.
     /// @param providedEpochIndex An epoch index
     /// @dev If the provided epoch index is not the current epoch index, raises `InvalidCurrentEpochIndex`.
@@ -191,7 +195,7 @@ abstract contract QuorumImpl is Quorum {
 
     /// @notice Check whether the open epoch is empty.
     function _isOpenEpochEmpty() internal view returns (bool) {
-        uint256 numberOfInputsBeforeCurrentBlock = getNumberOfInputsBeforeCurrentBlock();
+        uint256 numberOfInputsBeforeCurrentBlock = _getNumberOfInputsBeforeCurrentBlock();
         assert(_numberOfProcessedInputs <= numberOfInputsBeforeCurrentBlock);
         return _numberOfProcessedInputs == numberOfInputsBeforeCurrentBlock;
     }
@@ -244,4 +248,11 @@ abstract contract QuorumImpl is Quorum {
             LibKeccak256.hashPair
         );
     }
+
+    /// @notice Get the number of inputs before the current block.
+    function _getNumberOfInputsBeforeCurrentBlock()
+        internal
+        view
+        virtual
+        returns (uint256);
 }

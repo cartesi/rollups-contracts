@@ -19,25 +19,17 @@ abstract contract DaveImpl is EpochManager, IDataProvider {
     using LibBinaryMerkleTree for bytes32[];
     using Machine for Machine.Hash;
 
-    ITournamentFactory private immutable _tournamentFactory;
-    bytes32 private immutable _genesisStateRoot;
     uint256 private _currentEpochIndex;
     bool private _isCurrentEpochClosed;
     uint256 private _inputIndexInclusiveLowerBound;
     uint256 private _inputIndexExclusiveUpperBound;
     ITournament private _tournament;
-    bytes32 private _preEpochStateRoot;
+    Machine.Hash private _lastFinalizedPostEpochStateRoot;
     mapping(bytes32 => bool) private _isOutputsRootFinal;
 
     uint256 constant TX_BUFFER_START = EmulatorConstants.PMA_CMIO_TX_BUFFER_START;
     uint256 constant LOG2_DATA_BLOCK_SIZE = EmulatorConstants.TREE_LOG2_WORD_SIZE;
     uint256 constant OUTPUTS_ROOT_LEAF_INDEX = TX_BUFFER_START >> LOG2_DATA_BLOCK_SIZE;
-
-    constructor(ITournamentFactory tournamentFactory, bytes32 genesisStateRoot) {
-        _tournamentFactory = tournamentFactory;
-        _genesisStateRoot = genesisStateRoot;
-        _preEpochStateRoot = genesisStateRoot;
-    }
 
     function getEpochFinalizerInterfaceId() external pure override returns (bytes4) {
         return type(ITournament).interfaceId;
@@ -61,9 +53,8 @@ abstract contract DaveImpl is EpochManager, IDataProvider {
         ensureCurrentEpochCanBeClosed(currentEpochIndex);
         _isCurrentEpochClosed = true;
         _inputIndexInclusiveLowerBound = _inputIndexExclusiveUpperBound;
-        _inputIndexExclusiveUpperBound = getNumberOfInputsBeforeCurrentBlock();
-        Machine.Hash initialMachineStateHash = Machine.Hash.wrap(_preEpochStateRoot);
-        _tournament = _tournamentFactory.instantiate(initialMachineStateHash, this);
+        _inputIndexExclusiveUpperBound = _getNumberOfInputsBeforeCurrentBlock();
+        _tournament = _getTournamentFactory().instantiate(_getPreEpochStateRoot(), this);
         emit EpochClosed(_currentEpochIndex, address(_tournament));
     }
 
@@ -84,7 +75,7 @@ abstract contract DaveImpl is EpochManager, IDataProvider {
         postEpochStateRoot = _preFinalize(currentEpochIndex, postEpochOutputsRoot, proof);
         _currentEpochIndex = currentEpochIndex + 1;
         _isCurrentEpochClosed = false;
-        _preEpochStateRoot = postEpochStateRoot;
+        _lastFinalizedPostEpochStateRoot = Machine.Hash.wrap(postEpochStateRoot);
         _isOutputsRootFinal[postEpochOutputsRoot] = true;
         emit EpochFinalized(currentEpochIndex, postEpochStateRoot, postEpochOutputsRoot);
     }
@@ -111,23 +102,8 @@ abstract contract DaveImpl is EpochManager, IDataProvider {
             return bytes32(0);
         }
 
-        return getInputMerkleRoot(inputIndex);
+        return _getInputMerkleRoot(inputIndex);
     }
-
-    /// @notice Get the number of inputs before the current block.
-    function getNumberOfInputsBeforeCurrentBlock()
-        internal
-        view
-        virtual
-        returns (uint256);
-
-    /// @notice Get the Merkle root of an input by its index.
-    /// @param inputIndex The input index
-    function getInputMerkleRoot(uint256 inputIndex)
-        internal
-        view
-        virtual
-        returns (bytes32);
 
     /// @notice Make sure the provided epoch index is the current epoch index.
     /// @param providedEpochIndex An epoch index
@@ -142,7 +118,7 @@ abstract contract DaveImpl is EpochManager, IDataProvider {
 
     /// @notice Check whether the open epoch is empty.
     function _isOpenEpochEmpty() internal view returns (bool) {
-        uint256 numberOfInputsBeforeCurrentBlock = getNumberOfInputsBeforeCurrentBlock();
+        uint256 numberOfInputsBeforeCurrentBlock = _getNumberOfInputsBeforeCurrentBlock();
         assert(_inputIndexExclusiveUpperBound <= numberOfInputsBeforeCurrentBlock);
         return _inputIndexExclusiveUpperBound == numberOfInputsBeforeCurrentBlock;
     }
@@ -196,4 +172,34 @@ abstract contract DaveImpl is EpochManager, IDataProvider {
             LibKeccak256.hashPair
         );
     }
+
+    /// @notice Get the pre-epoch state root.
+    function _getPreEpochStateRoot() internal view returns (Machine.Hash) {
+        if (_currentEpochIndex == 0) {
+            return _getGenesisStateRoot();
+        } else {
+            return _lastFinalizedPostEpochStateRoot;
+        }
+    }
+
+    /// @notice Get the number of inputs before the current block.
+    function _getNumberOfInputsBeforeCurrentBlock()
+        internal
+        view
+        virtual
+        returns (uint256);
+
+    /// @notice Get the Merkle root of an input by its index.
+    /// @param inputIndex The input index
+    function _getInputMerkleRoot(uint256 inputIndex)
+        internal
+        view
+        virtual
+        returns (bytes32);
+
+    /// @notice Get the tournament factory.
+    function _getTournamentFactory() internal view virtual returns (ITournamentFactory);
+
+    /// @notice Get the genesis state root.
+    function _getGenesisStateRoot() internal view virtual returns (Machine.Hash);
 }

@@ -6,14 +6,13 @@ pragma solidity ^0.8.27;
 import {BitMaps} from "@openzeppelin-contracts-5.2.0/utils/structs/BitMaps.sol";
 import {ReentrancyGuard} from "@openzeppelin-contracts-5.2.0/utils/ReentrancyGuard.sol";
 
-import {EpochManager} from "../interfaces/EpochManager.sol";
 import {LibAddress} from "../../library/LibAddress.sol";
 import {LibOutputValidityProof} from "../../library/LibOutputValidityProof.sol";
 import {Outbox} from "../interfaces/Outbox.sol";
 import {OutputValidityProof} from "../../common/OutputValidityProof.sol";
 import {Outputs} from "../../common/Outputs.sol";
 
-abstract contract OutboxImpl is Outbox, ReentrancyGuard, EpochManager {
+abstract contract OutboxImpl is Outbox, ReentrancyGuard {
     using BitMaps for BitMaps.BitMap;
     using LibAddress for address;
     using LibOutputValidityProof for OutputValidityProof;
@@ -34,13 +33,6 @@ abstract contract OutboxImpl is Outbox, ReentrancyGuard, EpochManager {
         return _numOfExecutedOutputs;
     }
 
-    function isOutputsRootFinal(bytes32 outputsRoot)
-        public
-        view
-        virtual
-        override
-        returns (bool);
-
     function validateOutputHash(bytes32 outputHash, OutputValidityProof calldata proof)
         public
         view
@@ -52,7 +44,7 @@ abstract contract OutboxImpl is Outbox, ReentrancyGuard, EpochManager {
 
         bytes32 outputsMerkleRoot = proof.computeOutputsMerkleRoot(outputHash);
 
-        if (!isOutputsRootFinal(outputsMerkleRoot)) {
+        if (!_isOutputsRootFinal(outputsMerkleRoot)) {
             revert InvalidOutputsMerkleRoot(outputsMerkleRoot);
         }
     }
@@ -129,4 +121,12 @@ abstract contract OutboxImpl is Outbox, ReentrancyGuard, EpochManager {
 
         destination.safeDelegateCall(payload);
     }
+
+    /// @notice Check whether an outputs root has been finalized before.
+    /// @param outputsRoot The outputs Merkle tree root
+    function _isOutputsRootFinal(bytes32 outputsRoot)
+        internal
+        view
+        virtual
+        returns (bool);
 }
