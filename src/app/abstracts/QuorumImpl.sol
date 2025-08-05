@@ -38,7 +38,6 @@ abstract contract QuorumImpl is Quorum {
     mapping(bytes32 => bool) private _isOutputsRootFinal;
     uint8 private _numOfValidators;
     mapping(address => uint8) private _validatorIdByAddress;
-    mapping(uint256 => address) private _validatorAddressById;
     mapping(uint256 => bytes32) private _aggregatedVoteBitmaps;
     mapping(uint256 => mapping(bytes32 => bytes32)) private _voteBitmaps;
 
@@ -54,14 +53,14 @@ abstract contract QuorumImpl is Quorum {
         uint256 numOfValidators = validators.length;
         require(numOfValidators >= 1, NoValidator());
         require(numOfValidators <= 255, TooManyValidators());
-        _numOfValidators = uint8(numOfValidators);
         for (uint256 i; i < numOfValidators; ++i) {
             address validator = validators[i];
             require(_validatorIdByAddress[validator] == 0, DuplicatedValidator(validator));
             uint8 id = uint8(i + 1);
             _validatorIdByAddress[validator] = id;
-            _validatorAddressById[id] = validator;
         }
+        _numOfValidators = uint8(numOfValidators);
+        emit Init(validators);
     }
 
     function getEpochFinalizerInterfaceId() external pure override returns (bytes4) {
@@ -126,15 +125,6 @@ abstract contract QuorumImpl is Quorum {
         returns (uint8 numOfValidators)
     {
         numOfValidators = _numOfValidators;
-    }
-
-    function getValidatorAddressById(uint8 validatorId)
-        external
-        view
-        override
-        returns (address validatorAddress)
-    {
-        validatorAddress = _validatorAddressById[validatorId];
     }
 
     function getValidatorIdByAddress(address validatorAddress)

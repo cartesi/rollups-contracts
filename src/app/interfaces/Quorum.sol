@@ -20,6 +20,11 @@ import {EpochManager} from "./EpochManager.sol";
 /// Liveness depends on a majority of validators voting on the same post-epoch state.
 /// Security depends on a majority of validators voting on the correct post-epoch state.
 interface Quorum is EpochManager {
+    /// @notice This event is emitted when the quorum is created.
+    /// @param validators The array of validators
+    /// @dev Validators are assigned their 1-based indices in the array as IDs.
+    event Init(address[] validators);
+
     /// @notice This event is emitted when a validator votes on a post-epoch state.
     /// @param epochIndex The epoch index
     /// @param postEpochStateRoot The post-epoch state root
@@ -45,15 +50,6 @@ interface Quorum is EpochManager {
     /// @return numOfValidators The number of validators
     /// @dev Validator IDs range between 1 and the number of validators.
     function getNumberOfValidators() external view returns (uint8 numOfValidators);
-
-    /// @notice Get the address of a validator by its ID.
-    /// @param validatorId The validator ID
-    /// @return validatorAddress The validator address
-    /// @dev Invalid validator IDs map to the zero address.
-    function getValidatorAddressById(uint8 validatorId)
-        external
-        view
-        returns (address validatorAddress);
 
     /// @notice Get the ID of a validator by its address.
     /// @param validatorAddress The validator address
