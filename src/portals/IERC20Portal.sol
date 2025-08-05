@@ -5,7 +5,7 @@ pragma solidity ^0.8.8;
 
 import {IERC20} from "@openzeppelin-contracts-5.2.0/token/ERC20/IERC20.sol";
 
-import {Application} from "../app/interfaces/Application.sol";
+import {App} from "../app/interfaces/App.sol";
 import {IPortal} from "./IPortal.sol";
 
 /// @title ERC-20 Portal interface
@@ -30,7 +30,7 @@ interface IERC20Portal is IPortal {
     /// @param execLayerData Additional data to be interpreted by the execution layer
     function depositERC20Tokens(
         IERC20 token,
-        Application appContract,
+        App appContract,
         uint256 value,
         bytes calldata execLayerData
     ) external;

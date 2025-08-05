@@ -5,7 +5,7 @@ pragma solidity ^0.8.27;
 
 import {IERC20} from "@openzeppelin-contracts-5.2.0/token/ERC20/IERC20.sol";
 
-import {Application} from "../app/interfaces/Application.sol";
+import {App} from "../app/interfaces/App.sol";
 import {IERC20Portal} from "./IERC20Portal.sol";
 import {InputEncoding} from "../common/InputEncoding.sol";
 import {Portal} from "./Portal.sol";
@@ -18,7 +18,7 @@ contract ERC20Portal is IERC20Portal, Portal {
     /// @inheritdoc IERC20Portal
     function depositERC20Tokens(
         IERC20 token,
-        Application appContract,
+        App appContract,
         uint256 value,
         bytes calldata execLayerData
     ) external override {
