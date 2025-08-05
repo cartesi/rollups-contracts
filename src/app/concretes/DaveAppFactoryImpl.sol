@@ -42,7 +42,7 @@ contract DaveAppFactoryImpl is DaveAppFactory {
         return _IMPLEMENTATION.predictDeterministicAddressWithImmutableArgs(args, salt);
     }
 
-    /// @notice ABI-encode arguments to embed in proxy contract's bytecode
+    /// @notice ABI-encode arguments to embed in proxy contract's bytecode.
     /// @param genesisStateRoot The genesis state root
     function _encodeArgs(bytes32 genesisStateRoot)
         internal
