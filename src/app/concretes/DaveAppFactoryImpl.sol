@@ -38,10 +38,7 @@ contract DaveAppFactoryImpl is DaveAppFactory {
             keccak256(
                 abi.encodePacked(
                     type(DaveAppImpl).creationCode,
-                    abi.encode(
-                        genesisStateRoot,
-                        _TOURNAMENT_FACTORY
-                    )
+                    abi.encode(genesisStateRoot, _TOURNAMENT_FACTORY)
                 )
             )
         );

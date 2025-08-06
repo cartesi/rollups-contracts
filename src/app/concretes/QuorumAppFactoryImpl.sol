@@ -29,10 +29,7 @@ contract QuorumAppFactoryImpl is QuorumAppFactory {
             keccak256(
                 abi.encodePacked(
                     type(QuorumAppImpl).creationCode,
-                    abi.encode(
-                        genesisStateRoot,
-                        validators
-                    )
+                    abi.encode(genesisStateRoot, validators)
                 )
             )
         );
