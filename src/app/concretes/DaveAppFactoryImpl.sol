@@ -3,19 +3,19 @@
 
 pragma solidity ^0.8.27;
 
-import {Clones} from "@openzeppelin-contracts-5.2.0/proxy/Clones.sol";
+import {Create2} from "@openzeppelin-contracts-5.2.0/utils/Create2.sol";
+
+import {ITournamentFactory} from "prt-contracts/ITournamentFactory.sol";
 
 import {App} from "../interfaces/App.sol";
 import {DaveAppFactory} from "../interfaces/DaveAppFactory.sol";
 import {DaveAppImpl} from "../concretes/DaveAppImpl.sol";
 
 contract DaveAppFactoryImpl is DaveAppFactory {
-    using Clones for address;
+    ITournamentFactory immutable _TOURNAMENT_FACTORY;
 
-    address immutable _IMPLEMENTATION;
-
-    constructor(DaveAppImpl implementation) {
-        _IMPLEMENTATION = address(implementation);
+    constructor(ITournamentFactory tournamentFactory) {
+        _TOURNAMENT_FACTORY = tournamentFactory;
     }
 
     function deployApp(bytes32 genesisStateRoot, bytes32 salt)
@@ -23,8 +23,7 @@ contract DaveAppFactoryImpl is DaveAppFactory {
         override
         returns (App app)
     {
-        bytes memory args = _encodeArgs(genesisStateRoot);
-        app = App(_IMPLEMENTATION.cloneDeterministicWithImmutableArgs(args, salt));
+        app = new DaveAppImpl{salt: salt}(genesisStateRoot, _TOURNAMENT_FACTORY);
         emit AppDeployed(app);
     }
 
@@ -34,22 +33,17 @@ contract DaveAppFactoryImpl is DaveAppFactory {
         override
         returns (address appAddress)
     {
-        bytes memory args = _encodeArgs(genesisStateRoot);
-        return _IMPLEMENTATION.predictDeterministicAddressWithImmutableArgs(args, salt);
-    }
-
-    /// @notice ABI-encode arguments to embed in proxy contract's bytecode.
-    /// @param genesisStateRoot The genesis state root
-    function _encodeArgs(bytes32 genesisStateRoot)
-        internal
-        view
-        returns (bytes memory args)
-    {
-        return abi.encode(
-            DaveAppImpl.Args({
-                deploymentBlockNumber: block.number,
-                genesisStateRoot: genesisStateRoot
-            })
+        return Create2.computeAddress(
+            salt,
+            keccak256(
+                abi.encodePacked(
+                    type(DaveAppImpl).creationCode,
+                    abi.encode(
+                        genesisStateRoot,
+                        _TOURNAMENT_FACTORY
+                    )
+                )
+            )
         );
     }
 }

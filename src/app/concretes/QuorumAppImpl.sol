@@ -3,27 +3,22 @@
 
 pragma solidity ^0.8.27;
 
-import {Clones} from "@openzeppelin-contracts-5.2.0/proxy/Clones.sol";
-
 import {App} from "../interfaces/App.sol";
 import {QuorumImpl} from "../abstracts/QuorumImpl.sol";
 import {InboxImpl} from "../abstracts/InboxImpl.sol";
 import {OutboxImpl} from "../abstracts/OutboxImpl.sol";
 
 contract QuorumAppImpl is App, QuorumImpl, InboxImpl, OutboxImpl {
-    using Clones for address;
+    uint256 immutable _DEPLOYMENT_BLOCK_NUMBER = block.number;
+    bytes32 immutable _GENESIS_STATE_ROOT;
 
-    /// @notice Arguments embedded in the contract's bytecode.
-    /// @param deploymentBlockNumber The deployment block number
+    /// @notice Constructs the QuorumAppImpl contract
     /// @param genesisStateRoot The genesis state root
-    struct Args {
-        uint256 deploymentBlockNumber;
-        bytes32 genesisStateRoot;
-    }
-
-    /// @notice Get the contract arguments.
-    function _getArgs() internal view returns (Args memory) {
-        return abi.decode(address(this).fetchCloneArgs(), (Args));
+    /// @param validators The validators array
+    constructor(bytes32 genesisStateRoot, address[] memory validators)
+        QuorumImpl(validators)
+    {
+        _GENESIS_STATE_ROOT = genesisStateRoot;
     }
 
     function getDeploymentBlockNumber()
@@ -32,7 +27,7 @@ contract QuorumAppImpl is App, QuorumImpl, InboxImpl, OutboxImpl {
         override
         returns (uint256 deploymentBlockNumber)
     {
-        return _getArgs().deploymentBlockNumber;
+        return _DEPLOYMENT_BLOCK_NUMBER;
     }
 
     function getGenesisStateRoot()
@@ -41,7 +36,7 @@ contract QuorumAppImpl is App, QuorumImpl, InboxImpl, OutboxImpl {
         override
         returns (bytes32 genesisStateRoot)
     {
-        return _getArgs().genesisStateRoot;
+        return _GENESIS_STATE_ROOT;
     }
 
     function _getNumberOfInputsBeforeCurrentBlock()

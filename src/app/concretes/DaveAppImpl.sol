@@ -3,8 +3,6 @@
 
 pragma solidity ^0.8.27;
 
-import {Clones} from "@openzeppelin-contracts-5.2.0/proxy/Clones.sol";
-
 import {ITournamentFactory} from "prt-contracts/ITournamentFactory.sol";
 import {Machine} from "prt-contracts/types/Machine.sol";
 
@@ -14,23 +12,16 @@ import {InboxImpl} from "../abstracts/InboxImpl.sol";
 import {OutboxImpl} from "../abstracts/OutboxImpl.sol";
 
 contract DaveAppImpl is App, DaveImpl, InboxImpl, OutboxImpl {
-    using Clones for address;
-
-    /// @notice Arguments embedded in the contract's bytecode.
-    /// @param deploymentBlockNumber The deployment block number
-    /// @param genesisStateRoot The genesis state root
-    struct Args {
-        uint256 deploymentBlockNumber;
-        bytes32 genesisStateRoot;
-    }
+    uint256 immutable _DEPLOYMENT_BLOCK_NUMBER = block.number;
+    bytes32 immutable _GENESIS_STATE_ROOT;
 
     /// @notice Constructs the DaveAppImpl contract
+    /// @param genesisStateRoot The genesis state root
     /// @param tournamentFactory The tournament factory
-    constructor(ITournamentFactory tournamentFactory) DaveImpl(tournamentFactory) {}
-
-    /// @notice Get the contract arguments.
-    function _getArgs() internal view returns (Args memory) {
-        return abi.decode(address(this).fetchCloneArgs(), (Args));
+    constructor(bytes32 genesisStateRoot, ITournamentFactory tournamentFactory)
+        DaveImpl(tournamentFactory)
+    {
+        _GENESIS_STATE_ROOT = genesisStateRoot;
     }
 
     function getDeploymentBlockNumber()
@@ -39,7 +30,7 @@ contract DaveAppImpl is App, DaveImpl, InboxImpl, OutboxImpl {
         override
         returns (uint256 deploymentBlockNumber)
     {
-        return _getArgs().deploymentBlockNumber;
+        return _DEPLOYMENT_BLOCK_NUMBER;
     }
 
     function getGenesisStateRoot()
@@ -48,7 +39,7 @@ contract DaveAppImpl is App, DaveImpl, InboxImpl, OutboxImpl {
         override
         returns (bytes32 genesisStateRoot)
     {
-        return _getArgs().genesisStateRoot;
+        return _GENESIS_STATE_ROOT;
     }
 
     function _getGenesisStateRoot()

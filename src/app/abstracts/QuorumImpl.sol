@@ -13,9 +13,6 @@ abstract contract QuorumImpl is Quorum {
     using Lib256Bitmap for bytes32;
     using LibBinaryMerkleTree for bytes32[];
 
-    /// @notice The quorum was already initialized.
-    error AlreadyInitialized();
-
     /// @notice No validator was provided.
     error NoValidator();
 
@@ -26,24 +23,22 @@ abstract contract QuorumImpl is Quorum {
     /// @param validator The duplicated validator
     error DuplicatedValidator(address validator);
 
+    uint8 immutable _NUM_OF_VALIDATORS;
+
     uint256 private _currentEpochIndex;
     bool private _isCurrentEpochClosed;
     uint256 private _numberOfProcessedInputs;
     mapping(bytes32 => bool) private _isOutputsRootFinal;
-    uint8 private _numOfValidators;
     mapping(address => uint8) private _validatorIdByAddress;
     mapping(uint256 => bytes32) private _aggregatedVoteBitmaps;
     mapping(uint256 => mapping(bytes32 => bytes32)) private _voteBitmaps;
 
     /// @notice Initialize the quorum.
     /// @param validators The array of validator addresses
-    /// @dev Should be called upon instantiation.
-    /// If the quorum was already initialized, raises `AlreadyInitialized`.
-    /// If the validators array is empty, raises `NoValidator`.
+    /// @dev If the validators array is empty, raises `NoValidator`.
     /// If the validator array has over 255 elements, raises `TooManyValidators`.
     /// If the validator array has duplicate elements, raises `DuplicatedValidator`.
-    function initQuorum(address[] calldata validators) external {
-        require(_numOfValidators == 0, AlreadyInitialized());
+    constructor(address[] memory validators) {
         uint256 numOfValidators = validators.length;
         require(numOfValidators >= 1, NoValidator());
         require(numOfValidators <= 255, TooManyValidators());
@@ -53,7 +48,7 @@ abstract contract QuorumImpl is Quorum {
             uint8 id = uint8(i + 1);
             _validatorIdByAddress[validator] = id;
         }
-        _numOfValidators = uint8(numOfValidators);
+        _NUM_OF_VALIDATORS = uint8(numOfValidators);
         emit Init(validators);
     }
 
@@ -118,7 +113,7 @@ abstract contract QuorumImpl is Quorum {
         override
         returns (uint8 numOfValidators)
     {
-        numOfValidators = _numOfValidators;
+        numOfValidators = _NUM_OF_VALIDATORS;
     }
 
     function getValidatorIdByAddress(address validatorAddress)
