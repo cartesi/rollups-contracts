@@ -22,11 +22,15 @@ contract QuorumAppFactoryImpl is QuorumAppFactory {
         bytes32 genesisStateRoot,
         address[] calldata validators,
         bytes32 salt
-    ) external override returns (App app) {
+    ) external override returns (App) {
         bytes memory args = _encodeArgs(genesisStateRoot);
         salt = _mixSalt(salt, validators);
-        app = App(_IMPLEMENTATION.cloneDeterministicWithImmutableArgs(args, salt));
+        address appAddress;
+        appAddress = _IMPLEMENTATION.cloneDeterministicWithImmutableArgs(args, salt);
+        QuorumAppImpl app = QuorumAppImpl(appAddress);
+        app.initQuorum(validators);
         emit AppDeployed(app);
+        return app;
     }
 
     function computeAppAddress(
