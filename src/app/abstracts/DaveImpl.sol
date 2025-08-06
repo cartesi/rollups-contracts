@@ -19,6 +19,8 @@ abstract contract DaveImpl is EpochManager, IDataProvider {
     using LibBinaryMerkleTree for bytes32[];
     using Machine for Machine.Hash;
 
+    ITournamentFactory immutable _TOURNAMENT_FACTORY;
+
     uint256 private _currentEpochIndex;
     bool private _isCurrentEpochClosed;
     uint256 private _inputIndexInclusiveLowerBound;
@@ -30,6 +32,10 @@ abstract contract DaveImpl is EpochManager, IDataProvider {
     uint256 constant TX_BUFFER_START = EmulatorConstants.PMA_CMIO_TX_BUFFER_START;
     uint256 constant LOG2_DATA_BLOCK_SIZE = EmulatorConstants.TREE_LOG2_WORD_SIZE;
     uint256 constant OUTPUTS_ROOT_LEAF_INDEX = TX_BUFFER_START >> LOG2_DATA_BLOCK_SIZE;
+
+    constructor(ITournamentFactory tournamentFactory) {
+        _TOURNAMENT_FACTORY = tournamentFactory;
+    }
 
     function getEpochFinalizerInterfaceId() external pure override returns (bytes4) {
         return type(ITournament).interfaceId;
@@ -54,7 +60,7 @@ abstract contract DaveImpl is EpochManager, IDataProvider {
         _isCurrentEpochClosed = true;
         _inputIndexInclusiveLowerBound = _inputIndexExclusiveUpperBound;
         _inputIndexExclusiveUpperBound = _getNumberOfInputsBeforeCurrentBlock();
-        _tournament = _getTournamentFactory().instantiate(_getPreEpochStateRoot(), this);
+        _tournament = _TOURNAMENT_FACTORY.instantiate(_getPreEpochStateRoot(), this);
         emit EpochClosed(_currentEpochIndex, address(_tournament));
     }
 
@@ -196,9 +202,6 @@ abstract contract DaveImpl is EpochManager, IDataProvider {
         view
         virtual
         returns (bytes32);
-
-    /// @notice Get the tournament factory.
-    function _getTournamentFactory() internal view virtual returns (ITournamentFactory);
 
     /// @notice Get the genesis state root.
     function _getGenesisStateRoot() internal view virtual returns (Machine.Hash);

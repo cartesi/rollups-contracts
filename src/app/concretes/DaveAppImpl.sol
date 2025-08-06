@@ -19,12 +19,14 @@ contract DaveAppImpl is App, DaveImpl, InboxImpl, OutboxImpl {
     /// @notice Arguments embedded in the contract's bytecode.
     /// @param deploymentBlockNumber The deployment block number
     /// @param genesisStateRoot The genesis state root
-    /// @param tournamentFactory The tournament factory
     struct Args {
         uint256 deploymentBlockNumber;
         bytes32 genesisStateRoot;
-        ITournamentFactory tournamentFactory;
     }
+
+    /// @notice Constructs the DaveAppImpl contract
+    /// @param tournamentFactory The tournament factory
+    constructor(ITournamentFactory tournamentFactory) DaveImpl(tournamentFactory) {}
 
     /// @notice Get the contract arguments.
     function _getArgs() internal view returns (Args memory) {
@@ -47,15 +49,6 @@ contract DaveAppImpl is App, DaveImpl, InboxImpl, OutboxImpl {
         returns (bytes32 genesisStateRoot)
     {
         return _getArgs().genesisStateRoot;
-    }
-
-    function _getTournamentFactory()
-        internal
-        view
-        override
-        returns (ITournamentFactory)
-    {
-        return _getArgs().tournamentFactory;
     }
 
     function _getGenesisStateRoot()

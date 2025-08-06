@@ -5,8 +5,6 @@ pragma solidity ^0.8.27;
 
 import {Clones} from "@openzeppelin-contracts-5.2.0/proxy/Clones.sol";
 
-import {ITournamentFactory} from "prt-contracts/ITournamentFactory.sol";
-
 import {App} from "../interfaces/App.sol";
 import {DaveAppFactory} from "../interfaces/DaveAppFactory.sol";
 import {DaveAppImpl} from "../concretes/DaveAppImpl.sol";
@@ -15,11 +13,9 @@ contract DaveAppFactoryImpl is DaveAppFactory {
     using Clones for address;
 
     address immutable _IMPLEMENTATION;
-    ITournamentFactory immutable _TOURNAMENT_FACTORY;
 
-    constructor(DaveAppImpl implementation, ITournamentFactory tournamentFactory) {
+    constructor(DaveAppImpl implementation) {
         _IMPLEMENTATION = address(implementation);
-        _TOURNAMENT_FACTORY = tournamentFactory;
     }
 
     function deployApp(bytes32 genesisStateRoot, bytes32 salt)
@@ -52,8 +48,7 @@ contract DaveAppFactoryImpl is DaveAppFactory {
         return abi.encode(
             DaveAppImpl.Args({
                 deploymentBlockNumber: block.number,
-                genesisStateRoot: genesisStateRoot,
-                tournamentFactory: _TOURNAMENT_FACTORY
+                genesisStateRoot: genesisStateRoot
             })
         );
     }
