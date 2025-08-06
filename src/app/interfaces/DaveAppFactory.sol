@@ -5,6 +5,7 @@ pragma solidity ^0.8.27;
 
 import {App} from "./App.sol";
 
+/// @notice Deploys apps validated using the Dave fraud-proof system.
 interface DaveAppFactory {
     /// @notice This event is emitted whenever an app is deployed.
     /// @param app The application contract
