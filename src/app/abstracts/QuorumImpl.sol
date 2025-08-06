@@ -3,9 +3,7 @@
 
 pragma solidity ^0.8.27;
 
-import {EmulatorConstants} from "step/src/EmulatorConstants.sol";
-import {Memory} from "step/src/Memory.sol";
-
+import {CanonicalMachine} from "../../common/CanonicalMachine.sol";
 import {Lib256Bitmap} from "../../library/Lib256Bitmap.sol";
 import {LibBinaryMerkleTree} from "../../library/LibBinaryMerkleTree.sol";
 import {LibKeccak256} from "../../library/LibKeccak256.sol";
@@ -27,10 +25,6 @@ abstract contract QuorumImpl is Quorum {
     /// @notice A duplicated validator was provided.
     /// @param validator The duplicated validator
     error DuplicatedValidator(address validator);
-
-    uint256 constant TX_BUFFER_START = EmulatorConstants.PMA_CMIO_TX_BUFFER_START;
-    uint256 constant LOG2_DATA_BLOCK_SIZE = EmulatorConstants.TREE_LOG2_WORD_SIZE;
-    uint256 constant OUTPUTS_ROOT_LEAF_INDEX = TX_BUFFER_START >> LOG2_DATA_BLOCK_SIZE;
 
     uint256 private _currentEpochIndex;
     bool private _isCurrentEpochClosed;
@@ -217,8 +211,8 @@ abstract contract QuorumImpl is Quorum {
     /// @dev If the provided proof length is not valid, raises `InvalidOutputsRootProofLength`.
     function _validateProofLength(uint256 proofLength) internal pure {
         require(
-            proofLength == Memory.LOG2_MAX_SIZE,
-            InvalidOutputsRootProofLength(proofLength, Memory.LOG2_MAX_SIZE)
+            proofLength == CanonicalMachine.TREE_HEIGHT,
+            InvalidOutputsRootProofLength(proofLength, CanonicalMachine.TREE_HEIGHT)
         );
     }
 
@@ -233,7 +227,7 @@ abstract contract QuorumImpl is Quorum {
         returns (bytes32)
     {
         return proof.merkleRootAfterReplacement(
-            OUTPUTS_ROOT_LEAF_INDEX,
+            CanonicalMachine.OUTPUTS_ROOT_LEAF_INDEX,
             LibKeccak256.hashBytes(abi.encode(outputsRoot)),
             LibKeccak256.hashPair
         );

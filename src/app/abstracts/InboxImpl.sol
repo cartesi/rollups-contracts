@@ -84,7 +84,7 @@ abstract contract InboxImpl is Inbox {
         pure
         returns (bytes32 inputMerkleRoot)
     {
-        uint256 log2DataBlockSize = CanonicalMachine.LOG2_MERKLE_TREE_DATA_BLOCK_SIZE;
+        uint256 log2DataBlockSize = CanonicalMachine.LOG2_DATA_BLOCK_SIZE;
         uint256 log2DriveSize = input.length.ceilLog2().max(log2DataBlockSize);
         return input.merkleRoot(
             log2DriveSize,
