@@ -126,7 +126,7 @@ contract InputBoxTest is Test {
                 )
             );
 
-            uint256 log2DataBlockSize = CanonicalMachine.LOG2_MERKLE_TREE_DATA_BLOCK_SIZE;
+            uint256 log2DataBlockSize = CanonicalMachine.LOG2_DATA_BLOCK_SIZE;
             uint256 log2DriveSize = input.length.ceilLog2().max(log2DataBlockSize);
 
             bytes32 inputMerkleRoot = input.merkleRoot(

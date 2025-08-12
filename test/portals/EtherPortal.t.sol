@@ -3,28 +3,23 @@
 
 pragma solidity ^0.8.22;
 
+import {Test} from "forge-std-1.9.6/src/Test.sol";
+
+import {App} from "src/app/interfaces/App.sol";
 import {EtherPortal} from "src/portals/EtherPortal.sol";
 import {IEtherPortal} from "src/portals/IEtherPortal.sol";
-import {IInputBox} from "src/inputs/IInputBox.sol";
+import {Inbox} from "src/app/interfaces/Inbox.sol";
 import {InputEncoding} from "src/common/InputEncoding.sol";
-
-import {Test} from "forge-std-1.9.6/src/Test.sol";
 
 contract EtherPortalTest is Test {
     address _alice;
-    address _appContract;
-    IInputBox _inputBox;
+    App _appContract;
     IEtherPortal _portal;
 
     function setUp() public {
         _alice = vm.addr(1);
-        _appContract = vm.addr(2);
-        _inputBox = IInputBox(vm.addr(3));
-        _portal = new EtherPortal(_inputBox);
-    }
-
-    function testGetInputBox() public view {
-        assertEq(address(_portal.getInputBox()), address(_inputBox));
+        _appContract = App(vm.addr(2));
+        _portal = new EtherPortal();
     }
 
     function testDeposit(uint256 value, bytes calldata data) public {
@@ -34,19 +29,17 @@ contract EtherPortalTest is Test {
 
         bytes memory addInput = _encodeAddInput(payload);
 
-        vm.mockCall(address(_inputBox), addInput, abi.encode(bytes32(0)));
+        vm.mockCall(address(_appContract), addInput, abi.encode(bytes32(0)));
 
-        vm.expectCall(_appContract, value, abi.encode(), 1);
+        vm.expectCall(address(_appContract), addInput, 1);
 
-        vm.expectCall(address(_inputBox), addInput, 1);
-
-        uint256 balance = _appContract.balance;
+        uint256 balance = address(_appContract).balance;
 
         vm.deal(_alice, value);
         vm.prank(_alice);
         _portal.depositEther{value: value}(_appContract, data);
 
-        assertEq(_appContract.balance, balance + value);
+        assertEq(address(_appContract).balance, balance + value);
     }
 
     function testDepositReverts(
@@ -56,13 +49,13 @@ contract EtherPortalTest is Test {
     ) public {
         value = _boundValue(value);
 
-        vm.mockCallRevert(_appContract, value, abi.encode(), errorData);
+        vm.mockCallRevert(address(_appContract), value, abi.encode(), errorData);
 
         bytes memory payload = _encodePayload(value, data);
 
         bytes memory addInput = _encodeAddInput(payload);
 
-        vm.mockCall(address(_inputBox), addInput, abi.encode(bytes32(0)));
+        vm.mockCall(address(_appContract), addInput, abi.encode(bytes32(0)));
 
         vm.expectRevert(IEtherPortal.EtherTransferFailed.selector);
 
@@ -79,8 +72,12 @@ contract EtherPortalTest is Test {
         return InputEncoding.encodeEtherDeposit(_alice, value, data);
     }
 
-    function _encodeAddInput(bytes memory payload) internal view returns (bytes memory) {
-        return abi.encodeCall(IInputBox.addInput, (_appContract, payload));
+    function _encodeAddInput(bytes memory payload)
+        internal
+        pure
+        returns (bytes memory input)
+    {
+        return abi.encodeCall(Inbox.addInput, (payload));
     }
 
     function _boundValue(uint256 value) internal view returns (uint256) {
