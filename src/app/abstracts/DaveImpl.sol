@@ -24,21 +24,21 @@ abstract contract DaveImpl is EpochManagerImpl, IDataProvider {
         return type(ITournament).interfaceId;
     }
 
-    function closeCurrentEpoch(uint256 currentEpochIndex) external override {
-        ensureCurrentEpochCanBeClosed(currentEpochIndex);
+    function closeEpoch(uint256 epochIndex) external override {
+        canEpochBeClosed(epochIndex);
         _tournament = _TOURNAMENT_FACTORY.instantiate(_getPreEpochStateRoot(), this);
-        _closeCurrentEpoch(address(_tournament));
+        _closeEpoch(address(_tournament));
     }
 
-    function finalizeCurrentEpoch(
-        uint256 currentEpochIndex,
+    function finalizeEpoch(
+        uint256 epochIndex,
         bytes32 postEpochOutputsRoot,
         bytes32[] calldata proof
     ) external override {
         bytes32 postEpochStateRoot;
-        postEpochStateRoot = _preFinalize(currentEpochIndex, postEpochOutputsRoot, proof);
+        postEpochStateRoot = _preFinalize(epochIndex, postEpochOutputsRoot, proof);
         _lastFinalizedPostEpochStateRoot = Machine.Hash.wrap(postEpochStateRoot);
-        _finalizeCurrentEpoch(postEpochStateRoot, postEpochOutputsRoot);
+        _finalizeEpoch(postEpochStateRoot, postEpochOutputsRoot);
     }
 
     function provideMerkleRootOfInput(uint256 inputIndexWithinEpoch, bytes calldata)
@@ -72,7 +72,7 @@ abstract contract DaveImpl is EpochManagerImpl, IDataProvider {
 
     /// @notice Get the pre-epoch state root.
     function _getPreEpochStateRoot() internal view returns (Machine.Hash) {
-        if (getCurrentEpochIndex() == 0) {
+        if (getFinalizedEpochCount() == 0) {
             return _getGenesisStateRoot();
         } else {
             return _lastFinalizedPostEpochStateRoot;

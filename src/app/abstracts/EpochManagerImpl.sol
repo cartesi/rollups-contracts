@@ -11,56 +11,61 @@ import {LibKeccak256} from "../../library/LibKeccak256.sol";
 abstract contract EpochManagerImpl is EpochManager {
     using LibBinaryMerkleTree for bytes32[];
 
-    uint256 private _currentEpochIndex;
-    bool _isCurrentEpochClosed;
+    uint256 private _finalizedEpochCount;
+    bool private _isFirstNonFinalizedEpochClosed;
     uint256 private _inputIndexInclusiveLowerBound;
     uint256 private _inputIndexExclusiveUpperBound;
     mapping(bytes32 => bool) private _isOutputsRootFinal;
 
-    function getCurrentEpochIndex()
+    function getFinalizedEpochCount()
         public
         view
         override
-        returns (uint256 currentEpochIndex)
+        returns (uint256 finalizedEpochCount)
     {
-        return _currentEpochIndex;
+        return _finalizedEpochCount;
     }
 
     function isOutputsRootFinal(bytes32 outputsRoot)
         public
         view
         override
-        returns (bool)
+        returns (bool isFinal)
     {
         return _isOutputsRootFinal[outputsRoot];
     }
 
-    function ensureCurrentEpochCanBeClosed(uint256 currentEpochIndex)
+    modifier isFirstNonFinalizedEpoch(uint256 epochIndex) {
+        _validateEpochIndex(epochIndex);
+        _;
+    }
+
+    function canEpochBeClosed(uint256 epochIndex)
         public
         view
         override
+        isFirstNonFinalizedEpoch(epochIndex)
     {
-        _validateCurrentEpochIndex(currentEpochIndex);
-        require(!_isCurrentEpochClosed, CannotCloseAlreadyClosedEpoch(currentEpochIndex));
-        require(!_isOpenEpochEmpty(), CannotCloseEmptyEpoch(currentEpochIndex));
+        require(!_isFirstNonFinalizedEpochClosed, EpochAlreadyClosed(epochIndex));
+        require(!_isOpenEpochEmpty(), CannotCloseEmptyEpoch(epochIndex));
     }
 
-    function ensureCurrentEpochCanBeFinalized(
-        uint256 currentEpochIndex,
+    function canEpochBeFinalized(
+        uint256 epochIndex,
         bytes32 postEpochOutputsRoot,
         bytes32[] calldata proof
     ) public view override {
-        _preFinalize(currentEpochIndex, postEpochOutputsRoot, proof);
+        _preFinalize(epochIndex, postEpochOutputsRoot, proof);
     }
 
-    /// @notice Make sure the provided epoch index is the current epoch index.
+    /// @notice Make sure the provided epoch index is the first non-finalized epoch index.
     /// @param providedEpochIndex An epoch index
-    /// @dev If the provided epoch index is not the current epoch index, raises `InvalidCurrentEpochIndex`.
-    function _validateCurrentEpochIndex(uint256 providedEpochIndex) internal view {
-        uint256 currentEpochIndex = getCurrentEpochIndex();
+    /// @dev If the provided epoch index is not valid, raises `NotFirstNonFinalizedEpoch`.
+    function _validateEpochIndex(uint256 providedEpochIndex) internal view {
+        uint256 expectedEpochIndex = getFinalizedEpochCount();
         require(
-            providedEpochIndex == currentEpochIndex,
-            InvalidCurrentEpochIndex(providedEpochIndex, currentEpochIndex)
+            providedEpochIndex == expectedEpochIndex,
+            NotFirstNonFinalizedEpoch(providedEpochIndex)
         );
     }
 
@@ -71,44 +76,48 @@ abstract contract EpochManagerImpl is EpochManager {
         return _inputIndexExclusiveUpperBound == numberOfInputsBeforeCurrentBlock;
     }
 
-    /// @notice Close the current epoch.
-    function _closeCurrentEpoch(address epochFinalizer) internal {
-        _isCurrentEpochClosed = true;
+    /// @notice Close the first non-finalized epoch.
+    function _closeEpoch(address epochFinalizer) internal {
+        _isFirstNonFinalizedEpochClosed = true;
         _inputIndexInclusiveLowerBound = _inputIndexExclusiveUpperBound;
         _inputIndexExclusiveUpperBound = _getNumberOfInputsBeforeCurrentBlock();
-        emit EpochClosed(getCurrentEpochIndex(), epochFinalizer);
+        uint256 epochIndex = getFinalizedEpochCount();
+        emit EpochClosed(epochIndex, epochFinalizer);
     }
 
-    /// @notice Similar to `ensureCurrentEpochCanBeFinalized` but returns post-epoch state root.
-    /// @param currentEpochIndex The current epoch index
+    /// @notice Similar to `canEpochBeFinalized` but returns post-epoch state root.
+    /// @param epochIndex The epoch index
     /// @param postEpochOutputsRoot The post-epoch outputs root
     /// @param proof The Merkle proof for the post-epoch outputs root
     /// @return postEpochStateRoot The post-epoch state root
     function _preFinalize(
-        uint256 currentEpochIndex,
+        uint256 epochIndex,
         bytes32 postEpochOutputsRoot,
         bytes32[] calldata proof
-    ) internal view returns (bytes32 postEpochStateRoot) {
-        _validateCurrentEpochIndex(currentEpochIndex);
+    )
+        internal
+        view
+        isFirstNonFinalizedEpoch(epochIndex)
+        returns (bytes32 postEpochStateRoot)
+    {
         _validateProofLength(proof.length);
-        require(_isCurrentEpochClosed, CannotFinalizeOpenEpoch(currentEpochIndex));
+        require(_isFirstNonFinalizedEpochClosed, CannotFinalizeOpenEpoch(epochIndex));
         postEpochStateRoot = _computeStateRoot(postEpochOutputsRoot, proof);
         require(
             _isPostEpochStateRootValid(postEpochStateRoot),
-            InvalidPostEpochState(currentEpochIndex, postEpochStateRoot)
+            InvalidPostEpochState(epochIndex, postEpochStateRoot)
         );
     }
 
-    /// @notice Finalize the current epoch.
-    function _finalizeCurrentEpoch(
-        bytes32 postEpochStateRoot,
-        bytes32 postEpochOutputsRoot
-    ) internal {
-        uint256 currentEpochIndex = _currentEpochIndex;
-        _currentEpochIndex = currentEpochIndex + 1;
-        _isCurrentEpochClosed = false;
+    /// @notice Finalize the first non-finalized epoch.
+    function _finalizeEpoch(bytes32 postEpochStateRoot, bytes32 postEpochOutputsRoot)
+        internal
+    {
+        uint256 epochIndex = _finalizedEpochCount;
+        _finalizedEpochCount = epochIndex + 1;
+        _isFirstNonFinalizedEpochClosed = false;
         _isOutputsRootFinal[postEpochOutputsRoot] = true;
-        emit EpochFinalized(currentEpochIndex, postEpochStateRoot, postEpochOutputsRoot);
+        emit EpochFinalized(epochIndex, postEpochStateRoot, postEpochOutputsRoot);
     }
 
     /// @notice Make sure the provided proof length matches the expected proof length.
@@ -163,11 +172,9 @@ abstract contract EpochManagerImpl is EpochManager {
         virtual
         returns (uint256);
 
-    /// @notice Check whether the current (closed) epoch can be
-    /// finalized with the given post-epoch state root.
+    /// @notice Check whether the first non-finalized epoch
+    /// can be finalized with the given post-epoch state root.
     /// @param postEpochStateRoot The post-epoch state root
-    /// @return Whether the current (closed) epoch can be finalized
-    /// with the given post-epoch state root.
     function _isPostEpochStateRootValid(bytes32 postEpochStateRoot)
         internal
         view
