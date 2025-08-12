@@ -4,11 +4,11 @@
 pragma solidity ^0.8.27;
 
 import {EpochManagerImpl} from "./EpochManagerImpl.sol";
-import {LibTinyBitmap} from "../../library/LibTinyBitmap.sol";
+import {LibBitmap} from "../../library/LibBitmap.sol";
 import {Quorum} from "../interfaces/Quorum.sol";
 
 abstract contract QuorumImpl is EpochManagerImpl, Quorum {
-    using LibTinyBitmap for LibTinyBitmap.State;
+    using LibBitmap for bytes32;
 
     /// @notice No validator was provided.
     error NoValidator();
@@ -23,8 +23,8 @@ abstract contract QuorumImpl is EpochManagerImpl, Quorum {
     uint8 immutable _NUM_OF_VALIDATORS;
 
     mapping(address => uint8) private _validatorIdByAddress;
-    mapping(uint256 => LibTinyBitmap.State) private _aggregatedVoteBitmaps;
-    mapping(uint256 => mapping(bytes32 => LibTinyBitmap.State)) private _voteBitmaps;
+    mapping(uint256 => bytes32) private _aggregatedVoteBitmaps;
+    mapping(uint256 => mapping(bytes32 => bytes32)) private _voteBitmaps;
 
     /// @notice Initialize the quorum.
     /// @param validators The array of validator addresses
@@ -88,7 +88,7 @@ abstract contract QuorumImpl is EpochManagerImpl, Quorum {
         override
         returns (bytes32 voteBitmap)
     {
-        voteBitmap = _getVoteBitmap(epochIndex, postEpochStateRoot).toBytes32();
+        voteBitmap = _voteBitmaps[epochIndex][postEpochStateRoot];
     }
 
     function getAggregatedVoteBitmap(uint256 epochIndex)
@@ -97,7 +97,7 @@ abstract contract QuorumImpl is EpochManagerImpl, Quorum {
         override
         returns (bytes32 aggregatedVoteBitmap)
     {
-        aggregatedVoteBitmap = _getAggregatedVoteBitmap(epochIndex).toBytes32();
+        aggregatedVoteBitmap = _aggregatedVoteBitmaps[epochIndex];
     }
 
     function vote(uint256 epochIndex, bytes32 postEpochStateRoot)
@@ -113,17 +113,17 @@ abstract contract QuorumImpl is EpochManagerImpl, Quorum {
         // Second, check whether the validator has already voted in the epoch.
         // If not, mark the validator as having already voted in the epoch.
         {
-            LibTinyBitmap.State storage epochBitmap;
-            epochBitmap = _getAggregatedVoteBitmap(epochIndex);
-            require(!epochBitmap.isBitSet(validatorId), VoteAlreadyCastForEpoch());
-            epochBitmap.setBitAt(validatorId);
+            bytes32 bitmap = getAggregatedVoteBitmap(epochIndex);
+            require(!bitmap.getBitAt(validatorId), VoteAlreadyCastForEpoch());
+            bytes32 newBitmap = bitmap.setBitAt(validatorId);
+            _aggregatedVoteBitmaps[epochIndex] = newBitmap;
         }
 
         // Third, mark the validator vote in the post-epoch state.
         {
-            LibTinyBitmap.State storage voteBitmap;
-            voteBitmap = _getVoteBitmap(epochIndex, postEpochStateRoot);
-            voteBitmap.setBitAt(validatorId);
+            bytes32 bitmap = getVoteBitmap(epochIndex, postEpochStateRoot);
+            bytes32 newBitmap = bitmap.setBitAt(validatorId);
+            _voteBitmaps[epochIndex][postEpochStateRoot] = newBitmap;
         }
 
         // Finally, emit a Vote event.
@@ -137,32 +137,8 @@ abstract contract QuorumImpl is EpochManagerImpl, Quorum {
         returns (bool)
     {
         uint256 epochIndex = getFinalizedEpochCount();
-        LibTinyBitmap.State storage voteBitmap;
-        voteBitmap = _getVoteBitmap(epochIndex, postEpochStateRoot);
-        uint256 voteCount = voteBitmap.countSetBits();
+        bytes32 bitmap = getVoteBitmap(epochIndex, postEpochStateRoot);
+        uint256 voteCount = bitmap.countSetBits();
         return voteCount > getNumberOfValidators() / 2;
-    }
-
-    /// @notice Get the vote bitmap state of an epoch and post-epoch state root.
-    /// @param epochIndex The epoch index
-    /// @param postEpochStateRoot The post-epoch state root
-    /// @return state The bitmap state in storage
-    function _getVoteBitmap(uint256 epochIndex, bytes32 postEpochStateRoot)
-        internal
-        view
-        returns (LibTinyBitmap.State storage state)
-    {
-        state = _voteBitmaps[epochIndex][postEpochStateRoot];
-    }
-
-    /// @notice Get the aggregated vote bitmap state of an epoch.
-    /// @param epochIndex The epoch index
-    /// @return state The bitmap state in storage
-    function _getAggregatedVoteBitmap(uint256 epochIndex)
-        internal
-        view
-        returns (LibTinyBitmap.State storage state)
-    {
-        state = _aggregatedVoteBitmaps[epochIndex];
     }
 }

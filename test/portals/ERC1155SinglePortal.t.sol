@@ -133,7 +133,8 @@ contract ERC1155SinglePortalTest is Test {
 
         bytes memory addInput = _encodeAddInput(payload);
 
-        bytes memory onERC1155Received = _encodeOnErc1155Received(tokenId, value, baseLayerData);
+        bytes memory onERC1155Received =
+            _encodeOnErc1155Received(tokenId, value, baseLayerData);
 
         vm.mockCall(address(_appContract), addInput, abi.encode(bytes32(0)));
 
@@ -196,11 +197,11 @@ contract ERC1155SinglePortalTest is Test {
         );
     }
 
-    function _encodeOnErc1155Received(uint256 tokenId, uint256 value, bytes calldata baseLayerData)
-        internal
-        view
-        returns (bytes memory)
-    {
+    function _encodeOnErc1155Received(
+        uint256 tokenId,
+        uint256 value,
+        bytes calldata baseLayerData
+    ) internal view returns (bytes memory) {
         return abi.encodeCall(
             IERC1155Receiver.onERC1155Received,
             (address(_portal), _alice, tokenId, value, baseLayerData)
