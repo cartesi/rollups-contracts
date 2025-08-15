@@ -3,6 +3,7 @@ libs = ["dependencies"]
 solc_version = "0.8.29"
 via_ir = true
 optimizer = true
+fs_permissions = [{ access = "read", path = "./deployments/test" }]
 remappings = [
     "step/=dependencies/cartesi-machine-solidity-step-0.13.0/",
     "prt-contracts/=dependencies/cartesi-dave-1.0.0/prt/contracts/src/",
