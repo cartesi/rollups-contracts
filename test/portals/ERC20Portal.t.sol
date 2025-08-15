@@ -24,14 +24,14 @@ contract ERC20PortalTest is Test {
     IERC20 _token;
     IERC20Portal _portal;
 
-    function setUp() public {
+    function setUp() external {
         _alice = vm.addr(1);
         _appContract = App(vm.addr(2));
         _token = IERC20(vm.addr(3));
         _portal = IERC20Portal(vm.getAddress("ERC20Portal"));
     }
 
-    function testTokenReturnsTrue(uint256 value, bytes calldata data) public {
+    function testTokenReturnsTrue(uint256 value, bytes calldata data) external {
         bytes memory transferFrom = _encodeTransferFrom(value);
 
         vm.mockCall(address(_token), transferFrom, abi.encode(true));
@@ -50,7 +50,7 @@ contract ERC20PortalTest is Test {
         _portal.depositERC20Tokens(_token, _appContract, value, data);
     }
 
-    function testTokenReturnsFalse(uint256 value, bytes calldata data) public {
+    function testTokenReturnsFalse(uint256 value, bytes calldata data) external {
         bytes memory transferFrom = _encodeTransferFrom(value);
 
         vm.mockCall(address(_token), transferFrom, abi.encode(false));
@@ -68,7 +68,7 @@ contract ERC20PortalTest is Test {
     }
 
     function testTokenReverts(uint256 value, bytes calldata data, bytes memory errorData)
-        public
+        external
     {
         bytes memory transferFrom = _encodeTransferFrom(value);
 
@@ -87,7 +87,7 @@ contract ERC20PortalTest is Test {
     }
 
     function testAppReverts(uint256 value, bytes calldata data, bytes memory errorData)
-        public
+        external
     {
         bytes memory transferFrom = _encodeTransferFrom(value);
 
@@ -105,7 +105,9 @@ contract ERC20PortalTest is Test {
         _portal.depositERC20Tokens(_token, _appContract, value, data);
     }
 
-    function testSimpleERC20(uint256 supply, uint256 value, bytes calldata data) public {
+    function testSimpleERC20(uint256 supply, uint256 value, bytes calldata data)
+        external
+    {
         value = bound(value, 0, supply);
 
         SimpleERC20 token = new SimpleERC20(_alice, supply);

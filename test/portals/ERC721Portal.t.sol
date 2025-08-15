@@ -26,7 +26,7 @@ contract ERC721PortalTest is Test {
     IERC721 _token;
     IERC721Portal _portal;
 
-    function setUp() public {
+    function setUp() external {
         _alice = vm.addr(1);
         _appContract = App(vm.addr(2));
         _token = IERC721(vm.addr(3));
@@ -37,7 +37,7 @@ contract ERC721PortalTest is Test {
         uint256 tokenId,
         bytes calldata baseLayerData,
         bytes calldata execLayerData
-    ) public {
+    ) external {
         bytes memory safeTransferFrom = _encodeSafeTransferFrom(tokenId, baseLayerData);
 
         vm.mockCall(address(_token), safeTransferFrom, abi.encode());
@@ -62,7 +62,7 @@ contract ERC721PortalTest is Test {
         bytes calldata baseLayerData,
         bytes calldata execLayerData,
         bytes memory errorData
-    ) public {
+    ) external {
         bytes memory safeTransferFrom = _encodeSafeTransferFrom(tokenId, baseLayerData);
 
         vm.mockCallRevert(address(_token), safeTransferFrom, errorData);
@@ -87,7 +87,7 @@ contract ERC721PortalTest is Test {
         bytes calldata baseLayerData,
         bytes calldata execLayerData,
         bytes memory errorData
-    ) public {
+    ) external {
         bytes memory safeTransferFrom = _encodeSafeTransferFrom(tokenId, baseLayerData);
 
         vm.mockCall(address(_token), safeTransferFrom, abi.encode());
@@ -111,7 +111,7 @@ contract ERC721PortalTest is Test {
         uint256 tokenId,
         bytes calldata baseLayerData,
         bytes calldata execLayerData
-    ) public {
+    ) external {
         SimpleERC721 token = new SimpleERC721(_alice, tokenId);
 
         vm.startPrank(_alice);

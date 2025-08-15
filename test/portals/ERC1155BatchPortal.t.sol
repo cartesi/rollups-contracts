@@ -26,7 +26,7 @@ contract ERC1155BatchPortalTest is Test {
     IERC1155 _token;
     IERC1155BatchPortal _portal;
 
-    function setUp() public {
+    function setUp() external {
         _alice = vm.addr(1);
         _appContract = App(vm.addr(2));
         _token = IERC1155(vm.addr(3));
@@ -38,7 +38,7 @@ contract ERC1155BatchPortalTest is Test {
         uint256[] calldata values,
         bytes calldata baseLayerData,
         bytes calldata execLayerData
-    ) public {
+    ) external {
         bytes memory safeBatchTransferFrom =
             _encodeSafeBatchTransferFrom(tokenIds, values, baseLayerData);
 
@@ -65,7 +65,7 @@ contract ERC1155BatchPortalTest is Test {
         bytes calldata baseLayerData,
         bytes calldata execLayerData,
         bytes memory errorData
-    ) public {
+    ) external {
         bytes memory safeBatchTransferFrom =
             _encodeSafeBatchTransferFrom(tokenIds, values, baseLayerData);
 
@@ -93,7 +93,7 @@ contract ERC1155BatchPortalTest is Test {
         bytes calldata baseLayerData,
         bytes calldata execLayerData,
         bytes memory errorData
-    ) public {
+    ) external {
         bytes memory safeBatchTransferFrom =
             _encodeSafeBatchTransferFrom(tokenIds, values, baseLayerData);
 
@@ -119,7 +119,7 @@ contract ERC1155BatchPortalTest is Test {
         uint256[] calldata supplies,
         bytes calldata baseLayerData,
         bytes calldata execLayerData
-    ) public {
+    ) external {
         // construct arrays of tokenIds and values
         uint256 numOfTokenIds = supplies.length;
         vm.assume(numOfTokenIds > 1);

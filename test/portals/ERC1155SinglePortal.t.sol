@@ -26,7 +26,7 @@ contract ERC1155SinglePortalTest is Test {
     IERC1155 _token;
     IERC1155SinglePortal _portal;
 
-    function setUp() public {
+    function setUp() external {
         _alice = vm.addr(1);
         _appContract = App(vm.addr(2));
         _token = IERC1155(vm.addr(3));
@@ -38,7 +38,7 @@ contract ERC1155SinglePortalTest is Test {
         uint256 value,
         bytes calldata baseLayerData,
         bytes calldata execLayerData
-    ) public {
+    ) external {
         bytes memory safeTransferFrom =
             _encodeSafeTransferFrom(tokenId, value, baseLayerData);
 
@@ -65,7 +65,7 @@ contract ERC1155SinglePortalTest is Test {
         bytes calldata baseLayerData,
         bytes calldata execLayerData,
         bytes memory errorData
-    ) public {
+    ) external {
         bytes memory safeTransferFrom =
             _encodeSafeTransferFrom(tokenId, value, baseLayerData);
 
@@ -93,7 +93,7 @@ contract ERC1155SinglePortalTest is Test {
         bytes calldata baseLayerData,
         bytes calldata execLayerData,
         bytes memory errorData
-    ) public {
+    ) external {
         bytes memory safeTransferFrom =
             _encodeSafeTransferFrom(tokenId, value, baseLayerData);
 
@@ -121,7 +121,7 @@ contract ERC1155SinglePortalTest is Test {
         uint256 value,
         bytes calldata baseLayerData,
         bytes calldata execLayerData
-    ) public {
+    ) external {
         value = bound(value, 0, supply);
         _token = new SimpleSingleERC1155(_alice, tokenId, supply);
 

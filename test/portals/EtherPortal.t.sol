@@ -20,13 +20,13 @@ contract EtherPortalTest is Test {
     App _appContract;
     IEtherPortal _portal;
 
-    function setUp() public {
+    function setUp() external {
         _alice = vm.addr(1);
         _appContract = App(vm.addr(2));
         _portal = IEtherPortal(vm.getAddress("EtherPortal"));
     }
 
-    function testDeposit(uint256 value, bytes calldata data) public {
+    function testDeposit(uint256 value, bytes calldata data) external {
         value = _boundValue(value);
 
         bytes memory payload = _encodePayload(value, data);
@@ -50,7 +50,7 @@ contract EtherPortalTest is Test {
         uint256 value,
         bytes calldata data,
         bytes calldata errorData
-    ) public {
+    ) external {
         value = _boundValue(value);
 
         vm.mockCallRevert(address(_appContract), value, abi.encode(), errorData);
