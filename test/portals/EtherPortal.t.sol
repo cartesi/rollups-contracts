@@ -4,14 +4,18 @@
 pragma solidity ^0.8.22;
 
 import {Test} from "forge-std-1.9.6/src/Test.sol";
+import {Vm} from "forge-std-1.9.6/src/Vm.sol";
 
 import {App} from "src/app/interfaces/App.sol";
-import {EtherPortal} from "src/portals/EtherPortal.sol";
 import {IEtherPortal} from "src/portals/IEtherPortal.sol";
 import {Inbox} from "src/app/interfaces/Inbox.sol";
 import {InputEncoding} from "src/common/InputEncoding.sol";
 
+import {LibCannon} from "test/util/LibCannon.sol";
+
 contract EtherPortalTest is Test {
+    using LibCannon for Vm;
+
     address _alice;
     App _appContract;
     IEtherPortal _portal;
@@ -19,7 +23,7 @@ contract EtherPortalTest is Test {
     function setUp() public {
         _alice = vm.addr(1);
         _appContract = App(vm.addr(2));
-        _portal = new EtherPortal();
+        _portal = IEtherPortal(vm.getAddress("EtherPortal"));
     }
 
     function testDeposit(uint256 value, bytes calldata data) public {

@@ -4,21 +4,23 @@
 pragma solidity ^0.8.22;
 
 import {Test} from "forge-std-1.9.6/src/Test.sol";
+import {Vm} from "forge-std-1.9.6/src/Vm.sol";
 
-import {ERC721} from "@openzeppelin-contracts-5.2.0/token/ERC721/ERC721.sol";
 import {IERC721} from "@openzeppelin-contracts-5.2.0/token/ERC721/IERC721.sol";
 import {IERC721Receiver} from
     "@openzeppelin-contracts-5.2.0/token/ERC721/IERC721Receiver.sol";
 
 import {App} from "src/app/interfaces/App.sol";
-import {ERC721Portal} from "src/portals/ERC721Portal.sol";
 import {IERC721Portal} from "src/portals/IERC721Portal.sol";
 import {Inbox} from "src/app/interfaces/Inbox.sol";
 import {InputEncoding} from "src/common/InputEncoding.sol";
 
-import {SimpleERC721} from "../util/SimpleERC721.sol";
+import {SimpleERC721} from "test/util/SimpleERC721.sol";
+import {LibCannon} from "test/util/LibCannon.sol";
 
 contract ERC721PortalTest is Test {
+    using LibCannon for Vm;
+
     address _alice;
     App _appContract;
     IERC721 _token;
@@ -28,7 +30,7 @@ contract ERC721PortalTest is Test {
         _alice = vm.addr(1);
         _appContract = App(vm.addr(2));
         _token = IERC721(vm.addr(3));
-        _portal = new ERC721Portal();
+        _portal = IERC721Portal(vm.getAddress("ERC721Portal"));
     }
 
     function testDeposit(

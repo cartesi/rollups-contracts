@@ -4,19 +4,21 @@
 pragma solidity ^0.8.22;
 
 import {Test} from "forge-std-1.9.6/src/Test.sol";
+import {Vm} from "forge-std-1.9.6/src/Vm.sol";
 
 import {IERC20} from "@openzeppelin-contracts-5.2.0/token/ERC20/IERC20.sol";
-import {ERC20} from "@openzeppelin-contracts-5.2.0/token/ERC20/ERC20.sol";
 
 import {App} from "src/app/interfaces/App.sol";
-import {ERC20Portal} from "src/portals/ERC20Portal.sol";
 import {IERC20Portal} from "src/portals/IERC20Portal.sol";
 import {Inbox} from "src/app/interfaces/Inbox.sol";
 import {InputEncoding} from "src/common/InputEncoding.sol";
 
-import {SimpleERC20} from "../util/SimpleERC20.sol";
+import {SimpleERC20} from "test/util/SimpleERC20.sol";
+import {LibCannon} from "test/util/LibCannon.sol";
 
 contract ERC20PortalTest is Test {
+    using LibCannon for Vm;
+
     address _alice;
     App _appContract;
     IERC20 _token;
@@ -26,7 +28,7 @@ contract ERC20PortalTest is Test {
         _alice = vm.addr(1);
         _appContract = App(vm.addr(2));
         _token = IERC20(vm.addr(3));
-        _portal = new ERC20Portal();
+        _portal = IERC20Portal(vm.getAddress("ERC20Portal"));
     }
 
     function testTokenReturnsTrue(uint256 value, bytes calldata data) public {
