@@ -7,8 +7,9 @@ import {App} from "../interfaces/App.sol";
 import {QuorumImpl} from "../abstracts/QuorumImpl.sol";
 import {InboxImpl} from "../abstracts/InboxImpl.sol";
 import {OutboxImpl} from "../abstracts/OutboxImpl.sol";
+import {TokenReceiverImpl} from "../abstracts/TokenReceiverImpl.sol";
 
-contract QuorumAppImpl is App, QuorumImpl, InboxImpl, OutboxImpl {
+contract QuorumAppImpl is App, QuorumImpl, InboxImpl, OutboxImpl, TokenReceiverImpl {
     uint256 immutable _DEPLOYMENT_BLOCK_NUMBER = block.number;
     bytes32 immutable _GENESIS_STATE_ROOT;
 
