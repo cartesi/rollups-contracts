@@ -9,15 +9,23 @@ import {Vm} from "forge-std-1.9.6/src/Vm.sol";
 import {App} from "src/app/interfaces/App.sol";
 import {CanonicalMachine} from "src/common/CanonicalMachine.sol";
 import {EpochManager} from "src/app/interfaces/EpochManager.sol";
+import {IEtherPortal} from "src/portals/IEtherPortal.sol";
 import {Inbox} from "src/app/interfaces/Inbox.sol";
+import {InputEncoding} from "src/common/InputEncoding.sol";
 import {Inputs} from "src/common/Inputs.sol";
 import {LibBinaryMerkleTree} from "src/library/LibBinaryMerkleTree.sol";
 import {LibKeccak256} from "src/library/LibKeccak256.sol";
 
+import {LibCannon} from "test/util/LibCannon.sol";
+
 /// @notice Tests an application contract.
 /// @dev Should be inherited for a specific app contract implementation.
 abstract contract AppTest is Test {
+    using LibCannon for Vm;
     using LibBinaryMerkleTree for bytes32[];
+
+    /// @notice The Ether portal
+    IEtherPortal _etherPortal;
 
     /// @notice The application contract used in the tests.
     /// @dev Inheriting contracts should initialize this variable on setup.
@@ -26,6 +34,14 @@ abstract contract AppTest is Test {
     /// @notice The epoch finalizer interface ID used in the tests.
     /// @dev Inheriting contracts should initialize this variable on setup.
     bytes4 _epochFinalizerInterfaceId;
+
+    // -----
+    // Setup
+    // -----
+
+    function setUp() public virtual {
+        _etherPortal = IEtherPortal(vm.getAddress("EtherPortal"));
+    }
 
     // -----------
     // Inbox tests
@@ -86,6 +102,54 @@ abstract contract AppTest is Test {
             )
         );
         _app.addInput(payload);
+    }
+
+    // ------------
+    // Portal tests
+    // ------------
+
+    function testEtherDepositToEoaReverts(
+        uint256 eoaPk,
+        address sender,
+        uint256 value,
+        bytes calldata data
+    ) external {
+        eoaPk = boundPrivateKey(eoaPk);
+        address eoa = vm.addr(eoaPk);
+        vm.assume(eoa.code.length == 0);
+
+        value = bound(value, 0, address(this).balance);
+        vm.deal(sender, value);
+
+        // Depositing Ether in an EOA's account reverts
+        // because the call to `addInput` returns nothing,
+        // when a `bytes32` value was expected.
+        vm.expectRevert();
+        _etherPortal.depositEther{value: value}(App(eoa), data);
+    }
+
+    function testEtherDepositToAppSucceeds(
+        address sender,
+        uint256 value,
+        bytes calldata data
+    ) external {
+        value = bound(value, 0, address(this).balance);
+        vm.deal(sender, value);
+
+        bytes memory payload = InputEncoding.encodeEtherDeposit(sender, value, data);
+        bytes memory input = _encodeInput(0, address(_etherPortal), payload);
+
+        uint256 appBalanceBefore = address(_app).balance;
+
+        vm.prank(sender);
+        vm.expectEmit(true, false, false, true, address(_app));
+        emit Inbox.InputAdded(0, input);
+        _etherPortal.depositEther{value: value}(_app, data);
+
+        uint256 appBalanceAfter = address(_app).balance;
+
+        assertEq(appBalanceAfter, appBalanceBefore + value);
+        assertEq(_app.getNumberOfInputs(), 1);
     }
 
     // -------------------
