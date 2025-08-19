@@ -20,8 +20,7 @@ contract QuorumAppFactoryImplTest is AppTest {
 
     QuorumAppFactory _quorumAppFactory;
 
-    function setUp() public override {
-        super.setUp();
+    function setUp() external {
         _quorumAppFactory = QuorumAppFactory(vm.getAddress("QuorumAppFactoryImpl"));
         _app = _deployOrRecoverApp(keccak256("genesis"), vm.addrs(3), keccak256("salt"));
         _epochFinalizerInterfaceId = type(Quorum).interfaceId;

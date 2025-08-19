@@ -6,9 +6,12 @@ pragma solidity ^0.8.8;
 import {Test} from "forge-std-1.10.0/src/Test.sol";
 import {Vm} from "forge-std-1.10.0/src/Vm.sol";
 
+import {IERC20} from "@openzeppelin-contracts-5.2.0/token/ERC20/IERC20.sol";
+
 import {App} from "src/app/interfaces/App.sol";
 import {CanonicalMachine} from "src/common/CanonicalMachine.sol";
 import {EpochManager} from "src/app/interfaces/EpochManager.sol";
+import {IERC20Portal} from "src/portals/IERC20Portal.sol";
 import {IEtherPortal} from "src/portals/IEtherPortal.sol";
 import {Inbox} from "src/app/interfaces/Inbox.sol";
 import {InputEncoding} from "src/common/InputEncoding.sol";
@@ -24,8 +27,17 @@ abstract contract AppTest is Test {
     using LibCannon for Vm;
     using LibBinaryMerkleTree for bytes32[];
 
+    /// @notice An externally-owned account
+    address immutable EOA;
+
+    /// @notice A token contract address (to be mocked)
+    address immutable TOKEN_MOCK;
+
     /// @notice The Ether portal
-    IEtherPortal _etherPortal;
+    IEtherPortal immutable ETHER_PORTAL;
+
+    /// @notice The ERC-20 portal
+    IERC20Portal immutable ERC20_PORTAL;
 
     /// @notice The application contract used in the tests.
     /// @dev Inheriting contracts should initialize this variable on setup.
@@ -35,12 +47,15 @@ abstract contract AppTest is Test {
     /// @dev Inheriting contracts should initialize this variable on setup.
     bytes4 _epochFinalizerInterfaceId;
 
-    // -----
-    // Setup
-    // -----
+    // -----------
+    // Constructor
+    // -----------
 
-    function setUp() public virtual {
-        _etherPortal = IEtherPortal(vm.getAddress("EtherPortal"));
+    constructor() {
+        EOA = _eoaFromString("EOA");
+        TOKEN_MOCK = _eoaFromString("TokenMock");
+        ETHER_PORTAL = IEtherPortal(vm.getAddress("EtherPortal"));
+        ERC20_PORTAL = IERC20Portal(vm.getAddress("ERC20Portal"));
     }
 
     // -----------
@@ -104,29 +119,29 @@ abstract contract AppTest is Test {
         _app.addInput(payload);
     }
 
-    // ------------
-    // Portal tests
-    // ------------
+    // ------------------
+    // Ether Portal tests
+    // ------------------
 
     function testEtherDepositToEoaReverts(
-        uint256 eoaPk,
         address sender,
         uint256 value,
         bytes calldata data
     ) external {
-        eoaPk = boundPrivateKey(eoaPk);
-        address eoa = vm.addr(eoaPk);
-        vm.assume(eoa != sender);
-        vm.assume(eoa.code.length == 0);
-
+        // First, we bound the value by the current contract balance.
         value = bound(value, 0, address(this).balance);
+
+        // Then, we deal the value to the sender.
         vm.deal(sender, value);
+
+        // And then, we impersonate the sender.
+        vm.prank(sender);
 
         // Depositing Ether in an EOA's account reverts
         // because the call to `addInput` returns nothing,
         // when a `bytes32` value was expected.
         vm.expectRevert();
-        _etherPortal.depositEther{value: value}(App(eoa), data);
+        ETHER_PORTAL.depositEther{value: value}(App(EOA), data);
     }
 
     function testEtherDepositToAppSucceeds(
@@ -134,24 +149,95 @@ abstract contract AppTest is Test {
         uint256 value,
         bytes calldata data
     ) external {
-        value = bound(value, 0, address(this).balance);
-        vm.deal(sender, value);
+        // We need to assume the sender is not the application contract
+        // so that our accounting of tokens before and after makes sense.
+        // It is also a fair assumption given that an application transfer
+        // tokens to itself is a no-op.
         vm.assume(sender != address(_app));
 
-        bytes memory payload = InputEncoding.encodeEtherDeposit(sender, value, data);
-        bytes memory input = _encodeInput(0, address(_etherPortal), payload);
+        // First, we bound the value by the current contract balance.
+        value = bound(value, 0, address(this).balance);
+
+        // Then, we deal the value to the sender.
+        vm.deal(sender, value);
+
+        // We get the number of inputs as the expected input index
+        // and also to check that the input count increases by 1.
+        uint256 numOfInputsBefore = _app.getNumberOfInputs();
+
+        // We encode the input to check against the InputAdded event to be emitted.
+        bytes memory input = _encodeInput(
+            numOfInputsBefore,
+            address(ETHER_PORTAL),
+            InputEncoding.encodeEtherDeposit(sender, value, data)
+        );
 
         uint256 appBalanceBefore = address(_app).balance;
 
+        // And then, we impersonate the sender.
         vm.prank(sender);
+
+        // We make sure an InputAdded event is emitted
         vm.expectEmit(true, false, false, true, address(_app));
         emit Inbox.InputAdded(0, input);
-        _etherPortal.depositEther{value: value}(_app, data);
+
+        // Finally, we make the deposit
+        ETHER_PORTAL.depositEther{value: value}(_app, data);
 
         uint256 appBalanceAfter = address(_app).balance;
+        uint256 numOfInputsAfter = _app.getNumberOfInputs();
 
+        // Make sure that the app balance has increased by the transfer value
+        // and that only one input was added in the deposit tx
         assertEq(appBalanceAfter, appBalanceBefore + value);
-        assertEq(_app.getNumberOfInputs(), 1);
+        assertEq(numOfInputsAfter, numOfInputsBefore + 1);
+    }
+
+    // -------------------
+    // ERC-20 Portal tests
+    // -------------------
+
+    function testErc20DepositSucceedsWhenTransferFromReturnsTrue(
+        address sender,
+        uint256 value,
+        bytes calldata data
+    ) external {
+        // First, we encode the `transferFrom` call to be mocked.
+        bytes memory transferFrom = _encodeErc20TransferFrom(sender, value);
+
+        // Second, we make the token mock return `true` when
+        // called with the expected arguments (`from`, `to`, and `value`).
+        vm.mockCall(TOKEN_MOCK, transferFrom, abi.encode(true));
+
+        // We cast the token mock as a ERC-20 token contract
+        // to signal that it implements the interface (although partially).
+        IERC20 token = IERC20(TOKEN_MOCK);
+
+        // We get the number of inputs as the expected input index
+        // and also to check that the input count increases by 1.
+        uint256 numOfInputsBefore = _app.getNumberOfInputs();
+
+        // We encode the input to check against the InputAdded event to be emitted.
+        bytes memory input = _encodeInput(
+            numOfInputsBefore,
+            address(ERC20_PORTAL),
+            InputEncoding.encodeERC20Deposit(token, sender, value, data)
+        );
+
+        // And then, we impersonate the sender.
+        vm.prank(sender);
+
+        // We make sure an InputAdded event is emitted.
+        vm.expectEmit(true, false, false, true, address(_app));
+        emit Inbox.InputAdded(numOfInputsBefore, input);
+
+        // Finally, we make the deposit.
+        ERC20_PORTAL.depositERC20Tokens(token, _app, value, data);
+
+        uint256 numOfInputsAfter = _app.getNumberOfInputs();
+
+        // Make sure that the app has received exactly one input.
+        assertEq(numOfInputsAfter, numOfInputsBefore + 1);
     }
 
     // -------------------
@@ -313,7 +399,9 @@ abstract contract AppTest is Test {
         );
     }
 
-    /// @notice Encode a `CannotCloseEmptyEpoch` event.
+    /// @notice Encode a `CannotCloseEmptyEpoch` error.
+    /// @param epochIndex The epoch index
+    /// @return The encoded error
     function _encodeCannotCloseEmptyEpoch(uint256 epochIndex)
         internal
         pure
@@ -324,7 +412,10 @@ abstract contract AppTest is Test {
         );
     }
 
-    /// @notice Encode a `InvalidPostEpochState` event.
+    /// @notice Encode an `InvalidPostEpochState` error.
+    /// @param epochIndex The epoch index
+    /// @param postEpochStateRoot The invalid post-epoch state root
+    /// @return The encoded error
     function _encodeInvalidPostEpochState(uint256 epochIndex, bytes32 postEpochStateRoot)
         internal
         pure
@@ -341,6 +432,8 @@ abstract contract AppTest is Test {
     }
 
     /// @notice Generates a random proof with a given length.
+    /// @param length The length of the proof array
+    /// @return proof An array of the given length with random `bytes32` values
     function _randomProof(uint256 length)
         internal
         view
@@ -353,6 +446,11 @@ abstract contract AppTest is Test {
     }
 
     /// @notice Compute a Merkle root after replacement from a proof in memory.
+    /// @param sibs The siblings of the node in bottom-up order
+    /// @param nodeIndex The index of the node
+    /// @param node The new node
+    /// @param nodeFromChildren The function that computes nodes from their children
+    /// @return The root hash of the new Merkle tree
     function _merkleRootAfterReplacement(
         bytes32[] memory sibs,
         uint256 nodeIndex,
@@ -371,6 +469,10 @@ abstract contract AppTest is Test {
         return node;
     }
 
+    /// @notice Compute a post-epoch state root from a post-epoch outputs root and a proof.
+    /// @param proof A Merkle proof of the post-epoch outputs root
+    /// @param postEpochOutputsRoot The post-epoch outputs root
+    /// @return The post-epoch state root
     function _computePostEpochStateRoot(
         bytes32[] memory proof,
         bytes32 postEpochOutputsRoot
@@ -381,5 +483,24 @@ abstract contract AppTest is Test {
             LibKeccak256.hashBytes(abi.encode(postEpochOutputsRoot)),
             LibKeccak256.hashPair
         );
+    }
+
+    /// @notice Computes the address of an EOA from a descriptive string
+    /// @param str The string used as seed for the EOA's private key
+    /// @return The EOA's address
+    function _eoaFromString(string memory str) internal pure returns (address) {
+        return vm.addr(boundPrivateKey(uint256(keccak256(abi.encode(str)))));
+    }
+
+    /// @notice Encode an ERC-20 `transferFrom` call from the application contract.
+    /// @param sender The sender address
+    /// @param value The transfer value
+    /// @return The encoded Solidity function call
+    function _encodeErc20TransferFrom(address sender, uint256 value)
+        internal
+        view
+        returns (bytes memory)
+    {
+        return abi.encodeCall(IERC20.transferFrom, (sender, address(_app), value));
     }
 }

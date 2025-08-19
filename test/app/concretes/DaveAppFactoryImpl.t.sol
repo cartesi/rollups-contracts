@@ -22,8 +22,7 @@ contract DaveAppFactoryImplTest is AppTest {
 
     DaveAppFactory _daveAppFactory;
 
-    function setUp() public override {
-        super.setUp();
+    function setUp() external {
         _daveAppFactory = DaveAppFactory(vm.getAddress("DaveAppFactoryImpl"));
         _app = _deployOrRecoverApp(keccak256("genesis"), keccak256("salt"));
         _epochFinalizerInterfaceId = type(ITournament).interfaceId;
