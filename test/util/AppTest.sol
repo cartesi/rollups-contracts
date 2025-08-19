@@ -116,6 +116,7 @@ abstract contract AppTest is Test {
     ) external {
         eoaPk = boundPrivateKey(eoaPk);
         address eoa = vm.addr(eoaPk);
+        vm.assume(eoa != sender);
         vm.assume(eoa.code.length == 0);
 
         value = bound(value, 0, address(this).balance);
@@ -135,6 +136,7 @@ abstract contract AppTest is Test {
     ) external {
         value = bound(value, 0, address(this).balance);
         vm.deal(sender, value);
+        vm.assume(sender != address(_app));
 
         bytes memory payload = InputEncoding.encodeEtherDeposit(sender, value, data);
         bytes memory input = _encodeInput(0, address(_etherPortal), payload);
