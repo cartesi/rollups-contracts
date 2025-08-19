@@ -7,6 +7,7 @@ import {Test} from "forge-std-1.10.0/src/Test.sol";
 import {Vm} from "forge-std-1.10.0/src/Vm.sol";
 
 import {IERC20} from "@openzeppelin-contracts-5.2.0/token/ERC20/IERC20.sol";
+import {IERC20Errors} from "@openzeppelin-contracts-5.2.0/interfaces/draft-IERC6093.sol";
 
 import {App} from "src/app/interfaces/App.sol";
 import {CanonicalMachine} from "src/common/CanonicalMachine.sol";
@@ -20,6 +21,7 @@ import {LibBinaryMerkleTree} from "src/library/LibBinaryMerkleTree.sol";
 import {LibKeccak256} from "src/library/LibKeccak256.sol";
 
 import {LibCannon} from "test/util/LibCannon.sol";
+import {SimpleERC20} from "test/util/SimpleERC20.sol";
 
 /// @notice Tests an application contract.
 /// @dev Should be inherited for a specific app contract implementation.
@@ -33,11 +35,20 @@ abstract contract AppTest is Test {
     /// @notice A token contract address (to be mocked)
     address immutable TOKEN_MOCK;
 
+    /// @notice The token owner
+    address immutable TOKEN_OWNER;
+
+    /// @notice The token supply
+    uint256 constant TOKEN_SUPPLY = 1e18;
+
     /// @notice The Ether portal
     IEtherPortal immutable ETHER_PORTAL;
 
     /// @notice The ERC-20 portal
     IERC20Portal immutable ERC20_PORTAL;
+
+    /// @notice An OpenZeppelin ERC-20 token contract
+    IERC20 immutable OZ_ERC20_TOKEN;
 
     /// @notice The application contract used in the tests.
     /// @dev Inheriting contracts should initialize this variable on setup.
@@ -54,8 +65,10 @@ abstract contract AppTest is Test {
     constructor() {
         EOA = _eoaFromString("EOA");
         TOKEN_MOCK = _eoaFromString("TokenMock");
+        TOKEN_OWNER = _eoaFromString("TokenOwner");
         ETHER_PORTAL = IEtherPortal(vm.getAddress("EtherPortal"));
         ERC20_PORTAL = IERC20Portal(vm.getAddress("ERC20Portal"));
+        OZ_ERC20_TOKEN = new SimpleERC20(TOKEN_OWNER, TOKEN_SUPPLY);
     }
 
     // -----------
@@ -233,6 +246,157 @@ abstract contract AppTest is Test {
 
         // Finally, we make the deposit.
         ERC20_PORTAL.depositERC20Tokens(token, _app, value, data);
+
+        uint256 numOfInputsAfter = _app.getNumberOfInputs();
+
+        // Make sure that the app has received exactly one input.
+        assertEq(numOfInputsAfter, numOfInputsBefore + 1);
+    }
+
+    function testErc20DepositRevertsWhenTransferFromReturnsFalse(
+        address sender,
+        uint256 value,
+        bytes calldata data
+    ) external {
+        // First, we encode the `transferFrom` call to be mocked.
+        bytes memory transferFrom = _encodeErc20TransferFrom(sender, value);
+
+        // Second, we make the token mock return `false` when
+        // called with the expected arguments (`from`, `to`, and `value`).
+        vm.mockCall(TOKEN_MOCK, transferFrom, abi.encode(false));
+
+        // We cast the token mock as a ERC-20 token contract
+        // to signal that it implements the interface (although partially).
+        IERC20 token = IERC20(TOKEN_MOCK);
+
+        // And then, we impersonate the sender.
+        vm.prank(sender);
+
+        // Finally, we try to make the deposit, expecting it to revert.
+        vm.expectRevert(IERC20Portal.ERC20TransferFailed.selector);
+        ERC20_PORTAL.depositERC20Tokens(token, _app, value, data);
+    }
+
+    function testErc20DepositRevertsWhenTransferFromReverts(
+        address sender,
+        uint256 value,
+        bytes calldata data,
+        bytes calldata errorData
+    ) external {
+        // First, we encode the `transferFrom` call to be mocked.
+        bytes memory transferFrom = _encodeErc20TransferFrom(sender, value);
+
+        // Second, we make the token mock revert when
+        // called with the expected arguments (`from`, `to`, and `value`).
+        vm.mockCallRevert(TOKEN_MOCK, transferFrom, errorData);
+
+        // We cast the token mock as a ERC-20 token contract
+        // to signal that it implements the interface (although partially).
+        IERC20 token = IERC20(TOKEN_MOCK);
+
+        // And then, we impersonate the sender.
+        vm.prank(sender);
+
+        // Finally, we try to make the deposit, expecting it to revert
+        // with the same error raised by `transferFrom`.
+        vm.expectRevert(errorData);
+        ERC20_PORTAL.depositERC20Tokens(token, _app, value, data);
+    }
+
+    function testOpenZeppelinErc20DepositRevertsWhenSenderHasInsufficientAllowance(
+        address sender,
+        uint256 allowance,
+        uint256 value,
+        uint256 balance,
+        bytes calldata data
+    ) external {
+        // Bound the value, allowance, and balance.
+        allowance = bound(allowance, 0, TOKEN_SUPPLY - 1);
+        value = bound(value, allowance + 1, TOKEN_SUPPLY);
+        balance = bound(balance, value, TOKEN_SUPPLY);
+
+        // Transfer tokens to the sender
+        vm.prank(TOKEN_OWNER);
+        OZ_ERC20_TOKEN.transfer(sender, balance);
+
+        // Give allowance to the ERC-20 portal
+        vm.prank(sender);
+        OZ_ERC20_TOKEN.approve(address(ERC20_PORTAL), allowance);
+
+        // Finally, the sender tries to deposit the tokens.
+        // We expect it to fail because the sender has given insufficient allowance to the portal.
+        vm.prank(sender);
+        vm.expectRevert(_encodeErc20InsufficientAllowance(allowance, value));
+        ERC20_PORTAL.depositERC20Tokens(OZ_ERC20_TOKEN, _app, value, data);
+    }
+
+    function testOpenZeppelinErc20DepositRevertsWhenSenderHasInsufficientBalance(
+        address sender,
+        uint256 allowance,
+        uint256 value,
+        uint256 balance,
+        bytes calldata data
+    ) external {
+        // Bound the value, allowance, and balance.
+        balance = bound(balance, 0, TOKEN_SUPPLY - 1);
+        value = bound(value, balance + 1, TOKEN_SUPPLY);
+        allowance = bound(allowance, value, TOKEN_SUPPLY);
+
+        // Transfer tokens to the sender
+        vm.prank(TOKEN_OWNER);
+        OZ_ERC20_TOKEN.transfer(sender, balance);
+
+        // Give allowance to the ERC-20 portal
+        vm.prank(sender);
+        OZ_ERC20_TOKEN.approve(address(ERC20_PORTAL), allowance);
+
+        // Finally, the sender tries to deposit the tokens.
+        // We expect it to fail because the sender has given insufficient allowance to the portal.
+        vm.prank(sender);
+        vm.expectRevert(_encodeErc20InsufficientBalance(sender, balance, value));
+        ERC20_PORTAL.depositERC20Tokens(OZ_ERC20_TOKEN, _app, value, data);
+    }
+
+    function testOpenZeppelinErc20DepositSucceeds(
+        address sender,
+        uint256 value,
+        uint256 allowance,
+        uint256 balance,
+        bytes calldata data
+    ) external {
+        // Bound the value, allowance, and balance.
+        value = bound(value, 0, TOKEN_SUPPLY);
+        allowance = bound(allowance, value, TOKEN_SUPPLY);
+        balance = bound(balance, value, TOKEN_SUPPLY);
+
+        // Transfer tokens to the sender
+        vm.prank(TOKEN_OWNER);
+        OZ_ERC20_TOKEN.transfer(sender, balance);
+
+        // Give allowance to the ERC-20 portal
+        vm.prank(sender);
+        OZ_ERC20_TOKEN.approve(address(ERC20_PORTAL), allowance);
+
+        // We get the number of inputs as the expected input index
+        // and also to check that the input count increases by 1.
+        uint256 numOfInputsBefore = _app.getNumberOfInputs();
+
+        // We encode the input to check against the InputAdded event to be emitted.
+        bytes memory input = _encodeInput(
+            numOfInputsBefore,
+            address(ERC20_PORTAL),
+            InputEncoding.encodeERC20Deposit(OZ_ERC20_TOKEN, sender, value, data)
+        );
+
+        // And then, we impersonate the sender.
+        vm.prank(sender);
+
+        // We make sure an InputAdded event is emitted.
+        vm.expectEmit(true, false, false, true, address(_app));
+        emit Inbox.InputAdded(numOfInputsBefore, input);
+
+        // Finally, we make the deposit.
+        ERC20_PORTAL.depositERC20Tokens(OZ_ERC20_TOKEN, _app, value, data);
 
         uint256 numOfInputsAfter = _app.getNumberOfInputs();
 
@@ -502,5 +666,39 @@ abstract contract AppTest is Test {
         returns (bytes memory)
     {
         return abi.encodeCall(IERC20.transferFrom, (sender, address(_app), value));
+    }
+
+    /// @notice Encode an `ERC20InsufficientAllowance` error related to the ERC-20 portal.
+    /// @param insufficientAllowance The insufficient allowance
+    /// @param neededAllowance The needed allowance
+    /// @return The encoded Solidity error
+    function _encodeErc20InsufficientAllowance(
+        uint256 insufficientAllowance,
+        uint256 neededAllowance
+    ) internal view returns (bytes memory) {
+        return abi.encodeWithSelector(
+            IERC20Errors.ERC20InsufficientAllowance.selector,
+            address(ERC20_PORTAL),
+            insufficientAllowance,
+            neededAllowance
+        );
+    }
+
+    /// @notice Encode an `ERC20InsufficientBalance` error.
+    /// @param tokenSender The token sender
+    /// @param insufficientBalance The insufficient balance
+    /// @param neededBalance The needed balance
+    /// @return The encoded Solidity error
+    function _encodeErc20InsufficientBalance(
+        address tokenSender,
+        uint256 insufficientBalance,
+        uint256 neededBalance
+    ) internal pure returns (bytes memory) {
+        return abi.encodeWithSelector(
+            IERC20Errors.ERC20InsufficientBalance.selector,
+            tokenSender,
+            insufficientBalance,
+            neededBalance
+        );
     }
 }
