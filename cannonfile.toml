@@ -148,3 +148,9 @@ args = ["<%= contracts.MultiLevelTournamentFactory.address %>"]
 create2 = true
 salt = "<%= zeroHash %>"
 ifExists = "continue"
+
+[deploy.QuorumAppFactoryImpl]
+artifact = "QuorumAppFactoryImpl"
+create2 = true
+salt = "<%= zeroHash %>"
+ifExists = "continue"
