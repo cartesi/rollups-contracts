@@ -9,8 +9,8 @@ import {IApplicationFactory} from "src/dapp/IApplicationFactory.sol";
 import {IApplication} from "src/dapp/IApplication.sol";
 import {IOutputsMerkleRootValidator} from "src/consensus/IOutputsMerkleRootValidator.sol";
 
-import {Test} from "forge-std-1.9.6/src/Test.sol";
-import {Vm} from "forge-std-1.9.6/src/Vm.sol";
+import {Test} from "forge-std-1.10.0/src/Test.sol";
+import {Vm} from "forge-std-1.10.0/src/Vm.sol";
 
 contract ApplicationFactoryTest is Test {
     ApplicationFactory _factory;

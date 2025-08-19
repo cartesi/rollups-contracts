@@ -5,7 +5,7 @@ pragma solidity ^0.8.8;
 
 import {IERC165} from "@openzeppelin-contracts-5.2.0/utils/introspection/IERC165.sol";
 
-import {Test} from "forge-std-1.9.6/src/Test.sol";
+import {Test} from "forge-std-1.10.0/src/Test.sol";
 
 /// @notice Tests contracts that implement ERC-165
 abstract contract ERC165Test is Test {

@@ -3,7 +3,7 @@
 
 pragma solidity ^0.8.27;
 
-import {Vm} from "forge-std-1.9.6/src/Vm.sol";
+import {Vm} from "forge-std-1.10.0/src/Vm.sol";
 
 import {ITournament} from "prt-contracts/ITournament.sol";
 import {Machine} from "prt-contracts/types/Machine.sol";

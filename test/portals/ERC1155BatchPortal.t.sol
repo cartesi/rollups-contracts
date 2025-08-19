@@ -3,8 +3,8 @@
 
 pragma solidity ^0.8.22;
 
-import {Test} from "forge-std-1.9.6/src/Test.sol";
-import {Vm} from "forge-std-1.9.6/src/Vm.sol";
+import {Test} from "forge-std-1.10.0/src/Test.sol";
+import {Vm} from "forge-std-1.10.0/src/Vm.sol";
 
 import {IERC1155} from "@openzeppelin-contracts-5.2.0/token/ERC1155/IERC1155.sol";
 import {IERC1155Receiver} from

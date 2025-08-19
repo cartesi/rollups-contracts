@@ -3,8 +3,8 @@
 
 pragma solidity ^0.8.8;
 
-import {Test} from "forge-std-1.9.6/src/Test.sol";
-import {Vm} from "forge-std-1.9.6/src/Vm.sol";
+import {Test} from "forge-std-1.10.0/src/Test.sol";
+import {Vm} from "forge-std-1.10.0/src/Vm.sol";
 
 import {App} from "src/app/interfaces/App.sol";
 import {CanonicalMachine} from "src/common/CanonicalMachine.sol";
@@ -339,7 +339,11 @@ abstract contract AppTest is Test {
     }
 
     /// @notice Generates a random proof with a given length.
-    function _randomProof(uint256 length) internal returns (bytes32[] memory proof) {
+    function _randomProof(uint256 length)
+        internal
+        view
+        returns (bytes32[] memory proof)
+    {
         proof = new bytes32[](length);
         for (uint256 i; i < proof.length; ++i) {
             proof[i] = bytes32(vm.randomUint());

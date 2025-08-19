@@ -22,7 +22,7 @@ fail_on_revert = true
 
 [dependencies]
 "@openzeppelin-contracts" = "5.2.0"
-forge-std = "1.9.6"
+forge-std = "1.10.0"
 cartesi-dave = { version = "1.0.0", git = "https://github.com/cartesi/dave.git", tag = "v1.0.0" }
 cartesi-machine-solidity-step = { version = "0.13.0", git = "https://github.com/cartesi/machine-solidity-step.git", tag = "v0.13.0" }
 

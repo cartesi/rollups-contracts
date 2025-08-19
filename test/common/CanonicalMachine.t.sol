@@ -3,7 +3,7 @@
 
 pragma solidity ^0.8.27;
 
-import {Test} from "forge-std-1.9.6/src/Test.sol";
+import {Test} from "forge-std-1.10.0/src/Test.sol";
 import {CanonicalMachine} from "src/common/CanonicalMachine.sol";
 
 import {EvmAdvanceEncoder} from "../util/EvmAdvanceEncoder.sol";

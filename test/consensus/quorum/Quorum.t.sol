@@ -13,8 +13,8 @@ import {ERC165Test} from "../../util/ERC165Test.sol";
 import {LibAddressArray} from "../../util/LibAddressArray.sol";
 import {LibTopic} from "../../util/LibTopic.sol";
 
-import {Test} from "forge-std-1.9.6/src/Test.sol";
-import {Vm} from "forge-std-1.9.6/src/Vm.sol";
+import {Test} from "forge-std-1.10.0/src/Test.sol";
+import {Vm} from "forge-std-1.10.0/src/Vm.sol";
 
 struct Claim {
     address appContract;

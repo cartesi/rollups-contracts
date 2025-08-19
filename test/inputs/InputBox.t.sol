@@ -3,7 +3,7 @@
 
 pragma solidity ^0.8.22;
 
-import {Test} from "forge-std-1.9.6/src/Test.sol";
+import {Test} from "forge-std-1.10.0/src/Test.sol";
 
 import {Create2} from "@openzeppelin-contracts-5.2.0/utils/Create2.sol";
 
