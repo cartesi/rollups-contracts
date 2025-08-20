@@ -8,6 +8,7 @@ import {Vm} from "forge-std-1.10.0/src/Vm.sol";
 
 import {IERC20Errors} from "@openzeppelin-contracts-5.2.0/interfaces/draft-IERC6093.sol";
 import {IERC20} from "@openzeppelin-contracts-5.2.0/token/ERC20/IERC20.sol";
+import {IERC721Errors} from "@openzeppelin-contracts-5.2.0/interfaces/draft-IERC6093.sol";
 import {IERC721} from "@openzeppelin-contracts-5.2.0/token/ERC721/IERC721.sol";
 
 import {App} from "src/app/interfaces/App.sol";
@@ -24,6 +25,7 @@ import {LibKeccak256} from "src/library/LibKeccak256.sol";
 
 import {LibCannon} from "test/util/LibCannon.sol";
 import {SimpleERC20} from "test/util/SimpleERC20.sol";
+import {SimpleERC721} from "test/util/SimpleERC721.sol";
 
 /// @notice Tests an application contract.
 /// @dev Should be inherited for a specific app contract implementation.
@@ -306,6 +308,8 @@ abstract contract AppTest is Test {
         bytes calldata data
     ) external {
         // Assume sender is not the zero address.
+        // Otherwise, the token contract raises `ERC20InvalidReceiver`.
+        // This is a fair assumption, given that the private key of zero address is unknown.
         vm.assume(sender != address(0));
 
         // Bound the value, allowance, and balance.
@@ -336,6 +340,8 @@ abstract contract AppTest is Test {
         bytes calldata data
     ) external {
         // Assume sender is not the zero address.
+        // Otherwise, the token contract raises `ERC20InvalidReceiver`.
+        // This is a fair assumption, given that the private key of zero address is unknown.
         vm.assume(sender != address(0));
 
         // Bound the value, allowance, and balance.
@@ -372,6 +378,8 @@ abstract contract AppTest is Test {
         vm.assume(sender != address(_app));
 
         // Assume sender is not the zero address.
+        // Otherwise, the token contract raises `ERC20InvalidReceiver`.
+        // This is a fair assumption, given that the private key of zero address is unknown.
         vm.assume(sender != address(0));
 
         // Bound the value, allowance, and balance.
@@ -499,6 +507,173 @@ abstract contract AppTest is Test {
         ERC721_PORTAL.depositERC721Token(
             token, _app, tokenId, baseLayerData, execLayerData
         );
+    }
+
+    function testOpenZeppelinErc721DepositRevertsWhenSenderHasInsufficientApproval(
+        address sender,
+        uint256 tokenId,
+        bytes calldata baseLayerData,
+        bytes calldata execLayerData
+    ) external {
+        // Assume sender is not the zero address.
+        // Otherwise, the token contract raises `ERC721InvalidReceiver`.
+        // This is a fair assumption, given that the private key of zero address is unknown.
+        vm.assume(sender != address(0));
+
+        // Deploy an OpenZeppelin ERC-721 token contract.
+        IERC721 token = _deployOpenZeppelinErc721Token(sender, tokenId);
+
+        // Finally, the sender tries to deposit the token.
+        // We expect it to fail because the sender hasn't approved the indirect transfer.
+        vm.prank(sender);
+        vm.expectRevert(_encodeErc721InsufficientApproval(tokenId));
+        ERC721_PORTAL.depositERC721Token(
+            token, _app, tokenId, baseLayerData, execLayerData
+        );
+    }
+
+    function testOpenZeppelinErc721DepositRevertsWhenSenderIsNotTokenOwner(
+        address sender,
+        address owner,
+        uint256 tokenId,
+        bool setApprovalForAll,
+        bytes calldata baseLayerData,
+        bytes calldata execLayerData
+    ) external {
+        // Assume sender is not the zero address.
+        // Otherwise, the token contract raises `ERC721InvalidReceiver`.
+        // This is a fair assumption, given that the private key of zero address is unknown.
+        vm.assume(sender != address(0));
+
+        // Assume sender and owner are different.
+        // This ensures that one has the token, but the other doesn't.
+        vm.assume(sender != owner);
+
+        // Deploy an OpenZeppelin ERC-721 token contract.
+        IERC721 token = _deployOpenZeppelinErc721Token(owner, tokenId);
+
+        vm.prank(owner);
+        if (setApprovalForAll) {
+            // Make the owner approve any transfer from the portal.
+            token.setApprovalForAll(address(ERC721_PORTAL), true);
+        } else {
+            // Make the owner approve the token transfer from the portal.
+            token.approve(address(ERC721_PORTAL), tokenId);
+        }
+
+        // Finally, the sender tries to deposit the token it doesn't own.
+        // We expect it to fail because the sender doesn't own the token.
+        vm.prank(sender);
+        vm.expectRevert(_encodeErc721IncorrectOwner(sender, tokenId, owner));
+        ERC721_PORTAL.depositERC721Token(
+            token, _app, tokenId, baseLayerData, execLayerData
+        );
+    }
+
+    function testOpenZeppelinErc721DepositRevertsWhenTokenIsNonexistent(
+        address sender,
+        uint256 tokenId,
+        uint256 otherTokenId,
+        bytes calldata baseLayerData,
+        bytes calldata execLayerData
+    ) external {
+        // Assume sender is not the zero address.
+        // Otherwise, the token contract raises `ERC721InvalidReceiver`.
+        // This is a fair assumption, given that the private key of zero address is unknown.
+        vm.assume(sender != address(0));
+
+        // We assume the token IDs are different,
+        // so that we can mine one and have the other as nonexistent.
+        vm.assume(tokenId != otherTokenId);
+
+        // Deploy an OpenZeppelin ERC-721 token contract.
+        // We mine a token with ID `otherTokenId` and use `tokenId` for the transfer.
+        IERC721 token = _deployOpenZeppelinErc721Token(sender, otherTokenId);
+
+        // Make the sender approve any transfer from the portal.
+        // Here, we cannot call `approve` because the token we are going to
+        // transfer doesn't exist, so it would raise `ERC721NonexistentToken` here.
+        vm.prank(sender);
+        token.setApprovalForAll(address(ERC721_PORTAL), true);
+
+        // Finally, the sender tries to deposit a nonexistent token.
+        // We expect it to fail because the token doesn't exist.
+        vm.prank(sender);
+        vm.expectRevert(_encodeErc721NonexistentToken(tokenId));
+        ERC721_PORTAL.depositERC721Token(
+            token, _app, tokenId, baseLayerData, execLayerData
+        );
+    }
+
+    function testOpenZeppelinErc721DepositSucceeds(
+        address sender,
+        uint256 tokenId,
+        bool setApprovalForAll,
+        bytes calldata baseLayerData,
+        bytes calldata execLayerData
+    ) external {
+        // We need to assume the sender is not the application contract
+        // so that our accounting of tokens before and after makes sense.
+        // It is also a fair assumption given that an application transfer
+        // tokens to itself is a no-op.
+        vm.assume(sender != address(_app));
+
+        // Assume sender is not the zero address.
+        // Otherwise, the token contract raises `ERC721InvalidReceiver`.
+        // This is a fair assumption, given that the private key of zero address is unknown.
+        vm.assume(sender != address(0));
+
+        // Deploy an OpenZeppelin ERC-721 token contract.
+        IERC721 token = _deployOpenZeppelinErc721Token(sender, tokenId);
+
+        vm.prank(sender);
+        if (setApprovalForAll) {
+            // Make the sender approve any transfer from the portal.
+            token.setApprovalForAll(address(ERC721_PORTAL), true);
+        } else {
+            // Make the sender approve the token transfer from the portal.
+            token.approve(address(ERC721_PORTAL), tokenId);
+        }
+
+        // We get the number of inputs as the expected input index
+        // and also to check that the input count increases by 1.
+        uint256 numOfInputsBefore = _app.getNumberOfInputs();
+
+        // We encode the input to check against the InputAdded event to be emitted.
+        bytes memory input = _encodeInput(
+            numOfInputsBefore,
+            address(ERC721_PORTAL),
+            InputEncoding.encodeERC721Deposit(
+                token, sender, tokenId, baseLayerData, execLayerData
+            )
+        );
+
+        uint256 appBalanceBefore = token.balanceOf(address(_app));
+
+        // Prior to the transfer, we make sure the sender owns the token.
+        assertEq(token.ownerOf(tokenId), sender);
+
+        // And then, we impersonate the sender.
+        vm.prank(sender);
+
+        // We make sure an InputAdded event is emitted.
+        vm.expectEmit(true, false, false, true, address(_app));
+        emit Inbox.InputAdded(numOfInputsBefore, input);
+
+        // Finally, we make the deposit.
+        ERC721_PORTAL.depositERC721Token(
+            token, _app, tokenId, baseLayerData, execLayerData
+        );
+
+        uint256 appBalanceAfter = token.balanceOf(address(_app));
+        uint256 numOfInputsAfter = _app.getNumberOfInputs();
+
+        // Make sure that the app balance has increased by the transfer value
+        // and that only one input was added in the deposit tx;
+        // We also ensure that the app now owns the token.
+        assertEq(appBalanceAfter, appBalanceBefore + 1);
+        assertEq(numOfInputsAfter, numOfInputsBefore + 1);
+        assertEq(token.ownerOf(tokenId), address(_app));
     }
 
     // -------------------
@@ -784,7 +959,7 @@ abstract contract AppTest is Test {
         );
     }
 
-    /// @notice Encode an `ERC721InsufficientAllowance` error related to the ERC-721 portal.
+    /// @notice Encode an `ERC20InsufficientAllowance` error related to the ERC-20 portal.
     /// @param insufficientAllowance The insufficient allowance
     /// @param neededAllowance The needed allowance
     /// @return The encoded Solidity error
@@ -818,6 +993,48 @@ abstract contract AppTest is Test {
         );
     }
 
+    /// @notice Encode an `ERC721InsufficientApproval` error related to the ERC-721 portal.
+    /// @param tokenId The token ID
+    /// @return The encoded Solidity error
+    function _encodeErc721InsufficientApproval(uint256 tokenId)
+        internal
+        view
+        returns (bytes memory)
+    {
+        return abi.encodeWithSelector(
+            IERC721Errors.ERC721InsufficientApproval.selector,
+            address(ERC721_PORTAL),
+            tokenId
+        );
+    }
+
+    /// @notice Encode an `ERC721IncorrectOwner` error related to the ERC-721 portal.
+    /// @param sender The token sender
+    /// @param tokenId The token ID
+    /// @param owner The token owner
+    /// @return The encoded Solidity error
+    function _encodeErc721IncorrectOwner(address sender, uint256 tokenId, address owner)
+        internal
+        pure
+        returns (bytes memory)
+    {
+        return abi.encodeWithSelector(
+            IERC721Errors.ERC721IncorrectOwner.selector, sender, tokenId, owner
+        );
+    }
+
+    /// @notice Encode an `ERC721NonexistentToken` error.
+    /// @param tokenId The nonexistent token ID
+    /// @return The encoded Solidity error
+    function _encodeErc721NonexistentToken(uint256 tokenId)
+        internal
+        pure
+        returns (bytes memory)
+    {
+        return
+            abi.encodeWithSelector(IERC721Errors.ERC721NonexistentToken.selector, tokenId);
+    }
+
     /// @notice Deploy an OpenZeppelin's ERC-20 token contract.
     /// @param tokenOwner The account that holds all the token supply initially
     /// @param tokenSupply The token supply
@@ -827,5 +1044,16 @@ abstract contract AppTest is Test {
         returns (IERC20)
     {
         return new SimpleERC20(tokenOwner, tokenSupply);
+    }
+
+    /// @notice Deploy an OpenZeppelin's ERC-721 token contract.
+    /// @param tokenOwner The account that holds all the token supply initially
+    /// @param tokenId The token ID
+    /// @return The ERC-721 token contract
+    function _deployOpenZeppelinErc721Token(address tokenOwner, uint256 tokenId)
+        internal
+        returns (IERC721)
+    {
+        return new SimpleERC721(tokenOwner, tokenId);
     }
 }
