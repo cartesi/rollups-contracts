@@ -37,12 +37,6 @@ abstract contract AppTest is Test {
     /// @notice A token contract address (to be mocked)
     address immutable TOKEN_MOCK;
 
-    /// @notice The token owner
-    address immutable TOKEN_OWNER;
-
-    /// @notice The token supply
-    uint256 constant TOKEN_SUPPLY = 1e18;
-
     /// @notice The Ether portal
     IEtherPortal immutable ETHER_PORTAL;
 
@@ -51,9 +45,6 @@ abstract contract AppTest is Test {
 
     /// @notice The ERC-721 portal
     IERC721Portal immutable ERC721_PORTAL;
-
-    /// @notice An OpenZeppelin ERC-20 token contract
-    IERC20 immutable OZ_ERC20_TOKEN;
 
     /// @notice The application contract used in the tests.
     /// @dev Inheriting contracts should initialize this variable on setup.
@@ -70,11 +61,9 @@ abstract contract AppTest is Test {
     constructor() {
         EOA = _eoaFromString("EOA");
         TOKEN_MOCK = _eoaFromString("TokenMock");
-        TOKEN_OWNER = _eoaFromString("TokenOwner");
         ETHER_PORTAL = IEtherPortal(vm.getAddress("EtherPortal"));
         ERC20_PORTAL = IERC20Portal(vm.getAddress("ERC20Portal"));
         ERC721_PORTAL = IERC721Portal(vm.getAddress("ERC721Portal"));
-        OZ_ERC20_TOKEN = new SimpleERC20(TOKEN_OWNER, TOKEN_SUPPLY);
     }
 
     // -----------
@@ -320,23 +309,23 @@ abstract contract AppTest is Test {
         vm.assume(sender != address(0));
 
         // Bound the value, allowance, and balance.
-        allowance = bound(allowance, 0, TOKEN_SUPPLY - 1);
-        value = bound(value, allowance + 1, TOKEN_SUPPLY);
-        balance = bound(balance, value, TOKEN_SUPPLY);
+        // We need 0 <= allowance < value <= balance <= type(uint256).max
+        allowance = bound(allowance, 0, type(uint256).max - 1);
+        value = bound(value, allowance + 1, type(uint256).max);
+        balance = bound(balance, value, type(uint256).max);
 
-        // Transfer tokens to the sender
-        vm.prank(TOKEN_OWNER);
-        OZ_ERC20_TOKEN.transfer(sender, balance);
+        // Deploy an OpenZeppelin ERC-20 token contract.
+        IERC20 token = _deployOpenZeppelinErc20Token(sender, balance);
 
         // Give allowance to the ERC-20 portal
         vm.prank(sender);
-        OZ_ERC20_TOKEN.approve(address(ERC20_PORTAL), allowance);
+        token.approve(address(ERC20_PORTAL), allowance);
 
         // Finally, the sender tries to deposit the tokens.
         // We expect it to fail because the sender has given insufficient allowance to the portal.
         vm.prank(sender);
         vm.expectRevert(_encodeErc20InsufficientAllowance(allowance, value));
-        ERC20_PORTAL.depositERC20Tokens(OZ_ERC20_TOKEN, _app, value, data);
+        ERC20_PORTAL.depositERC20Tokens(token, _app, value, data);
     }
 
     function testOpenZeppelinErc20DepositRevertsWhenSenderHasInsufficientBalance(
@@ -350,23 +339,23 @@ abstract contract AppTest is Test {
         vm.assume(sender != address(0));
 
         // Bound the value, allowance, and balance.
-        balance = bound(balance, 0, TOKEN_SUPPLY - 1);
-        value = bound(value, balance + 1, TOKEN_SUPPLY);
-        allowance = bound(allowance, value, TOKEN_SUPPLY);
+        // We need 0 <= balance < value <= allowance <= type(uint256).max
+        balance = bound(balance, 0, type(uint256).max - 1);
+        value = bound(value, balance + 1, type(uint256).max);
+        allowance = bound(allowance, value, type(uint256).max);
 
-        // Transfer tokens to the sender
-        vm.prank(TOKEN_OWNER);
-        OZ_ERC20_TOKEN.transfer(sender, balance);
+        // Deploy an OpenZeppelin ERC-20 token contract.
+        IERC20 token = _deployOpenZeppelinErc20Token(sender, balance);
 
         // Give allowance to the ERC-20 portal
         vm.prank(sender);
-        OZ_ERC20_TOKEN.approve(address(ERC20_PORTAL), allowance);
+        token.approve(address(ERC20_PORTAL), allowance);
 
         // Finally, the sender tries to deposit the tokens.
         // We expect it to fail because the sender has given insufficient allowance to the portal.
         vm.prank(sender);
         vm.expectRevert(_encodeErc20InsufficientBalance(sender, balance, value));
-        ERC20_PORTAL.depositERC20Tokens(OZ_ERC20_TOKEN, _app, value, data);
+        ERC20_PORTAL.depositERC20Tokens(token, _app, value, data);
     }
 
     function testOpenZeppelinErc20DepositSucceeds(
@@ -380,17 +369,16 @@ abstract contract AppTest is Test {
         vm.assume(sender != address(0));
 
         // Bound the value, allowance, and balance.
-        value = bound(value, 0, TOKEN_SUPPLY);
-        allowance = bound(allowance, value, TOKEN_SUPPLY);
-        balance = bound(balance, value, TOKEN_SUPPLY);
+        // We need 0 <= value <= allowance, balance <= type(uint256).max
+        allowance = bound(allowance, value, type(uint256).max);
+        balance = bound(balance, value, type(uint256).max);
 
-        // Transfer tokens to the sender
-        vm.prank(TOKEN_OWNER);
-        OZ_ERC20_TOKEN.transfer(sender, balance);
+        // Deploy an OpenZeppelin ERC-20 token contract.
+        IERC20 token = _deployOpenZeppelinErc20Token(sender, balance);
 
         // Give allowance to the ERC-20 portal
         vm.prank(sender);
-        OZ_ERC20_TOKEN.approve(address(ERC20_PORTAL), allowance);
+        token.approve(address(ERC20_PORTAL), allowance);
 
         // We get the number of inputs as the expected input index
         // and also to check that the input count increases by 1.
@@ -400,7 +388,7 @@ abstract contract AppTest is Test {
         bytes memory input = _encodeInput(
             numOfInputsBefore,
             address(ERC20_PORTAL),
-            InputEncoding.encodeERC20Deposit(OZ_ERC20_TOKEN, sender, value, data)
+            InputEncoding.encodeERC20Deposit(token, sender, value, data)
         );
 
         // And then, we impersonate the sender.
@@ -411,7 +399,7 @@ abstract contract AppTest is Test {
         emit Inbox.InputAdded(numOfInputsBefore, input);
 
         // Finally, we make the deposit.
-        ERC20_PORTAL.depositERC20Tokens(OZ_ERC20_TOKEN, _app, value, data);
+        ERC20_PORTAL.depositERC20Tokens(token, _app, value, data);
 
         uint256 numOfInputsAfter = _app.getNumberOfInputs();
 
@@ -817,5 +805,16 @@ abstract contract AppTest is Test {
             insufficientBalance,
             neededBalance
         );
+    }
+
+    /// @notice Deploy an OpenZeppelin's ERC-20 token contract.
+    /// @param tokenOwner The account that holds all the token supply initially
+    /// @param tokenSupply The token supply
+    /// @return The ERC-20 token contract
+    function _deployOpenZeppelinErc20Token(address tokenOwner, uint256 tokenSupply)
+        internal
+        returns (IERC20)
+    {
+        return new SimpleERC20(tokenOwner, tokenSupply);
     }
 }
