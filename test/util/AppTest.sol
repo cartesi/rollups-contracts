@@ -6,13 +6,15 @@ pragma solidity ^0.8.8;
 import {Test} from "forge-std-1.10.0/src/Test.sol";
 import {Vm} from "forge-std-1.10.0/src/Vm.sol";
 
-import {IERC20} from "@openzeppelin-contracts-5.2.0/token/ERC20/IERC20.sol";
 import {IERC20Errors} from "@openzeppelin-contracts-5.2.0/interfaces/draft-IERC6093.sol";
+import {IERC20} from "@openzeppelin-contracts-5.2.0/token/ERC20/IERC20.sol";
+import {IERC721} from "@openzeppelin-contracts-5.2.0/token/ERC721/IERC721.sol";
 
 import {App} from "src/app/interfaces/App.sol";
 import {CanonicalMachine} from "src/common/CanonicalMachine.sol";
 import {EpochManager} from "src/app/interfaces/EpochManager.sol";
 import {IERC20Portal} from "src/portals/IERC20Portal.sol";
+import {IERC721Portal} from "src/portals/IERC721Portal.sol";
 import {IEtherPortal} from "src/portals/IEtherPortal.sol";
 import {Inbox} from "src/app/interfaces/Inbox.sol";
 import {InputEncoding} from "src/common/InputEncoding.sol";
@@ -47,6 +49,9 @@ abstract contract AppTest is Test {
     /// @notice The ERC-20 portal
     IERC20Portal immutable ERC20_PORTAL;
 
+    /// @notice The ERC-721 portal
+    IERC721Portal immutable ERC721_PORTAL;
+
     /// @notice An OpenZeppelin ERC-20 token contract
     IERC20 immutable OZ_ERC20_TOKEN;
 
@@ -68,6 +73,7 @@ abstract contract AppTest is Test {
         TOKEN_OWNER = _eoaFromString("TokenOwner");
         ETHER_PORTAL = IEtherPortal(vm.getAddress("EtherPortal"));
         ERC20_PORTAL = IERC20Portal(vm.getAddress("ERC20Portal"));
+        ERC721_PORTAL = IERC721Portal(vm.getAddress("ERC721Portal"));
         OZ_ERC20_TOKEN = new SimpleERC20(TOKEN_OWNER, TOKEN_SUPPLY);
     }
 
@@ -310,6 +316,9 @@ abstract contract AppTest is Test {
         uint256 balance,
         bytes calldata data
     ) external {
+        // Assume sender is not the zero address.
+        vm.assume(sender != address(0));
+
         // Bound the value, allowance, and balance.
         allowance = bound(allowance, 0, TOKEN_SUPPLY - 1);
         value = bound(value, allowance + 1, TOKEN_SUPPLY);
@@ -337,6 +346,9 @@ abstract contract AppTest is Test {
         uint256 balance,
         bytes calldata data
     ) external {
+        // Assume sender is not the zero address.
+        vm.assume(sender != address(0));
+
         // Bound the value, allowance, and balance.
         balance = bound(balance, 0, TOKEN_SUPPLY - 1);
         value = bound(value, balance + 1, TOKEN_SUPPLY);
@@ -364,6 +376,9 @@ abstract contract AppTest is Test {
         uint256 balance,
         bytes calldata data
     ) external {
+        // Assume sender is not the zero address.
+        vm.assume(sender != address(0));
+
         // Bound the value, allowance, and balance.
         value = bound(value, 0, TOKEN_SUPPLY);
         allowance = bound(allowance, value, TOKEN_SUPPLY);
@@ -402,6 +417,89 @@ abstract contract AppTest is Test {
 
         // Make sure that the app has received exactly one input.
         assertEq(numOfInputsAfter, numOfInputsBefore + 1);
+    }
+
+    // --------------------
+    // ERC-721 Portal tests
+    // --------------------
+
+    function testErc721DepositWhenSafeTransferFromReturns(
+        address sender,
+        uint256 tokenId,
+        bytes calldata baseLayerData,
+        bytes calldata execLayerData
+    ) external {
+        // First, we encode the `safeTransferFrom` call to be mocked.
+        bytes memory safeTransferFrom =
+            _encodeErc721SafeTransferFrom(sender, tokenId, baseLayerData);
+
+        // Second, we make the token mock return when
+        // called with the expected arguments (`from`, `to`, `tokenId`, and `data`).
+        vm.mockCall(TOKEN_MOCK, safeTransferFrom, abi.encode());
+
+        // We cast the token mock as a ERC-721 token contract
+        // to signal that it implements the interface (although partially).
+        IERC721 token = IERC721(TOKEN_MOCK);
+
+        // We get the number of inputs as the expected input index
+        // and also to check that the input count increases by 1.
+        uint256 numOfInputsBefore = _app.getNumberOfInputs();
+
+        // We encode the input to check against the InputAdded event to be emitted.
+        bytes memory input = _encodeInput(
+            numOfInputsBefore,
+            address(ERC721_PORTAL),
+            InputEncoding.encodeERC721Deposit(
+                token, sender, tokenId, baseLayerData, execLayerData
+            )
+        );
+
+        // And then, we impersonate the sender.
+        vm.prank(sender);
+
+        // We make sure an InputAdded event is emitted.
+        vm.expectEmit(true, false, false, true, address(_app));
+        emit Inbox.InputAdded(numOfInputsBefore, input);
+
+        // Finally, we make the deposit.
+        ERC721_PORTAL.depositERC721Token(
+            token, _app, tokenId, baseLayerData, execLayerData
+        );
+
+        uint256 numOfInputsAfter = _app.getNumberOfInputs();
+
+        // Make sure that the app has received exactly one input.
+        assertEq(numOfInputsAfter, numOfInputsBefore + 1);
+    }
+
+    function testErc721DepositWhenSafeTransferFromReverts(
+        address sender,
+        uint256 tokenId,
+        bytes calldata baseLayerData,
+        bytes calldata execLayerData,
+        bytes calldata errorData
+    ) external {
+        // First, we encode the `safeTransferFrom` call to be mocked.
+        bytes memory safeTransferFrom =
+            _encodeErc721SafeTransferFrom(sender, tokenId, baseLayerData);
+
+        // Second, we make the token mock return when
+        // called with the expected arguments (`from`, `to`, `tokenId`, and `data`).
+        vm.mockCallRevert(TOKEN_MOCK, safeTransferFrom, errorData);
+
+        // We cast the token mock as a ERC-721 token contract
+        // to signal that it implements the interface (although partially).
+        IERC721 token = IERC721(TOKEN_MOCK);
+
+        // And then, we impersonate the sender.
+        vm.prank(sender);
+
+        // Finally, we try to make the deposit, expecting it to revert
+        // with the same error raised by `safeTransferFrom`.
+        vm.expectRevert(errorData);
+        ERC721_PORTAL.depositERC721Token(
+            token, _app, tokenId, baseLayerData, execLayerData
+        );
     }
 
     // -------------------
@@ -668,7 +766,26 @@ abstract contract AppTest is Test {
         return abi.encodeCall(IERC20.transferFrom, (sender, address(_app), value));
     }
 
-    /// @notice Encode an `ERC20InsufficientAllowance` error related to the ERC-20 portal.
+    /// @notice Encode an ERC-721 `safeTransferFrom` call from the application contract.
+    /// @param sender The sender address
+    /// @param tokenId The token ID
+    /// @param data The extra data argument
+    /// @return The encoded Solidity function call
+    function _encodeErc721SafeTransferFrom(
+        address sender,
+        uint256 tokenId,
+        bytes calldata data
+    ) internal view returns (bytes memory) {
+        return abi.encodeWithSignature(
+            "safeTransferFrom(address,address,uint256,bytes)",
+            sender,
+            address(_app),
+            tokenId,
+            data
+        );
+    }
+
+    /// @notice Encode an `ERC721InsufficientAllowance` error related to the ERC-721 portal.
     /// @param insufficientAllowance The insufficient allowance
     /// @param neededAllowance The needed allowance
     /// @return The encoded Solidity error
