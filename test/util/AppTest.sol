@@ -365,6 +365,12 @@ abstract contract AppTest is Test {
         uint256 balance,
         bytes calldata data
     ) external {
+        // We need to assume the sender is not the application contract
+        // so that our accounting of tokens before and after makes sense.
+        // It is also a fair assumption given that an application transfer
+        // tokens to itself is a no-op.
+        vm.assume(sender != address(_app));
+
         // Assume sender is not the zero address.
         vm.assume(sender != address(0));
 
@@ -391,6 +397,8 @@ abstract contract AppTest is Test {
             InputEncoding.encodeERC20Deposit(token, sender, value, data)
         );
 
+        uint256 appBalanceBefore = token.balanceOf(address(_app));
+
         // And then, we impersonate the sender.
         vm.prank(sender);
 
@@ -401,9 +409,12 @@ abstract contract AppTest is Test {
         // Finally, we make the deposit.
         ERC20_PORTAL.depositERC20Tokens(token, _app, value, data);
 
+        uint256 appBalanceAfter = token.balanceOf(address(_app));
         uint256 numOfInputsAfter = _app.getNumberOfInputs();
 
-        // Make sure that the app has received exactly one input.
+        // Make sure that the app balance has increased by the transfer value
+        // and that only one input was added in the deposit tx
+        assertEq(appBalanceAfter, appBalanceBefore + value);
         assertEq(numOfInputsAfter, numOfInputsBefore + 1);
     }
 
