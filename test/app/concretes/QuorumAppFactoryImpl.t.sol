@@ -103,12 +103,7 @@ contract QuorumAppFactoryImplTest is AppTest {
     uint256 constant DISAGREER = uint256(keccak256("disagreer"));
     uint256 constant NON_VOTER = uint256(keccak256("non-voter"));
 
-    /// @notice Make a post-epoch state valid.
-    /// @param epochIndex The epoch index
-    /// @param epochFinalizer The epoch finalizer (in this case, the app contract)
-    /// @param postEpochStateRoot The post-epoch state root that `AppTest` wants to be valid
-    /// @dev This virtual function is used by `AppTest` to test the epoch manager.
-    function _makePostEpochStateValid(
+    function _preFinalizeEpoch(
         uint256 epochIndex,
         address epochFinalizer,
         bytes32 postEpochStateRoot
@@ -123,13 +118,12 @@ contract QuorumAppFactoryImplTest is AppTest {
         // Second, we randomly assign roles to each validator.
         uint256[] memory validatorKinds;
         validatorKinds = _validatorKinds(numOfValidators, numOfAgreers, numOfDisagreers);
-        vm.shuffle(validatorKinds);
+        validatorKinds = vm.shuffle(validatorKinds);
 
         // Third, we make voting validators vote in a random order.
         // We know that validator IDs are their private keys (see the `setUp` function).
         // So, we can recompute their addresses from their PKs.
-        uint256[] memory validatorIds = _range(1, numOfValidators + 1);
-        vm.shuffle(validatorIds);
+        uint256[] memory validatorIds = vm.shuffle(_range(1, numOfValidators + 1));
         for (uint256 i; i < numOfValidators; ++i) {
             uint256 validatorId = validatorIds[i];
             address validator = vm.addr(validatorId);
@@ -202,22 +196,6 @@ contract QuorumAppFactoryImplTest is AppTest {
         return _quorumAppFactory.computeAppAddress(genesisStateRoot, validators, salt);
     }
 
-    /// @notice Build an array containing all integers from `min` to `max`.
-    /// @param min The minimum value
-    /// @param max The maximum value
-    /// @return arr An array of integers [min, max]
-    /// @dev Assumes `min <= max`.
-    function _range(uint256 min, uint256 max)
-        internal
-        pure
-        returns (uint256[] memory arr)
-    {
-        arr = new uint256[]((max - min) + 1);
-        for (uint256 i; i < arr.length; ++i) {
-            arr[i] = min + i;
-        }
-    }
-
     /// @notice Returns the validator kind for a given index in an sorted array.
     /// @param index The array index
     /// @param numOfAgreers The number of agreeing validators
@@ -237,7 +215,7 @@ contract QuorumAppFactoryImplTest is AppTest {
         }
     }
 
-    /// @notice Returns an sorted array of validator kinds.
+    /// @notice Returns a sorted array of validator kinds.
     /// @param numOfValidators The number of validators
     /// @param numOfAgreers The number of agreeing validators
     /// @param numOfDisagreers The number of disagreeing validators

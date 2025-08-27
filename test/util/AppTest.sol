@@ -16,18 +16,24 @@ import {IERC721} from "@openzeppelin-contracts-5.2.0/token/ERC721/IERC721.sol";
 import {App} from "src/app/interfaces/App.sol";
 import {CanonicalMachine} from "src/common/CanonicalMachine.sol";
 import {EpochManager} from "src/app/interfaces/EpochManager.sol";
+import {IERC1155BatchPortal} from "src/portals/IERC1155BatchPortal.sol";
+import {IERC1155SinglePortal} from "src/portals/IERC1155SinglePortal.sol";
 import {IERC20Portal} from "src/portals/IERC20Portal.sol";
 import {IERC721Portal} from "src/portals/IERC721Portal.sol";
-import {IERC1155SinglePortal} from "src/portals/IERC1155SinglePortal.sol";
-import {IERC1155BatchPortal} from "src/portals/IERC1155BatchPortal.sol";
 import {IEtherPortal} from "src/portals/IEtherPortal.sol";
+import {ISafeERC20Transfer} from "src/delegatecall/ISafeERC20Transfer.sol";
 import {Inbox} from "src/app/interfaces/Inbox.sol";
 import {InputEncoding} from "src/common/InputEncoding.sol";
 import {Inputs} from "src/common/Inputs.sol";
 import {LibBinaryMerkleTree} from "src/library/LibBinaryMerkleTree.sol";
 import {LibKeccak256} from "src/library/LibKeccak256.sol";
+import {LibOutputValidityProof} from "src/library/LibOutputValidityProof.sol";
+import {Outbox} from "src/app/interfaces/Outbox.sol";
+import {OutputValidityProof} from "src/common/OutputValidityProof.sol";
+import {Outputs} from "src/common/Outputs.sol";
 
 import {LibCannon} from "test/util/LibCannon.sol";
+import {LibEmulator} from "test/util/LibEmulator.sol";
 import {SimpleBatchERC1155} from "test/util/SimpleERC1155.sol";
 import {SimpleERC20} from "test/util/SimpleERC20.sol";
 import {SimpleERC721} from "test/util/SimpleERC721.sol";
@@ -51,11 +57,38 @@ library ExternalInputEncoding {
     }
 }
 
+library LibExternalOutputValidityProof {
+    function computeOutputsMerkleRoot(OutputValidityProof calldata v, bytes32 outputHash)
+        external
+        pure
+        returns (bytes32)
+    {
+        return LibOutputValidityProof.computeOutputsMerkleRoot(v, outputHash);
+    }
+}
+
+library LibExternalBinaryKeccak256MerkleTree {
+    function merkleRootAfterReplacement(
+        bytes32[] calldata sibs,
+        uint256 nodeIndex,
+        bytes32 node
+    ) external pure returns (bytes32) {
+        return LibBinaryMerkleTree.merkleRootAfterReplacement(
+            sibs, nodeIndex, node, LibKeccak256.hashPair
+        );
+    }
+}
+
 /// @notice Tests an application contract.
 /// @dev Should be inherited for a specific app contract implementation.
 abstract contract AppTest is Test {
     using LibCannon for Vm;
-    using LibBinaryMerkleTree for bytes32[];
+    using LibEmulator for LibEmulator.State;
+    using LibExternalBinaryKeccak256MerkleTree for bytes32[];
+    using LibExternalOutputValidityProof for OutputValidityProof;
+
+    /// @notice A limit on the number of outputs used in fuzzy test cases.
+    uint256 constant MAX_FUZZY_OUTPUTS = 32;
 
     /// @notice An externally-owned account
     address immutable EOA;
@@ -78,6 +111,9 @@ abstract contract AppTest is Test {
     /// @notice The ERC-1155 batch portal
     IERC1155BatchPortal immutable ERC1155_BATCH_PORTAL;
 
+    /// @notice The safe ERC-20 transfer contract (for DELEGATECALL vouchers).
+    ISafeERC20Transfer immutable SAFE_ERC20_TRANSFER;
+
     /// @notice The application contract used in the tests.
     /// @dev Inheriting contracts should initialize this variable on setup.
     App _app;
@@ -85,6 +121,10 @@ abstract contract AppTest is Test {
     /// @notice The epoch finalizer interface ID used in the tests.
     /// @dev Inheriting contracts should initialize this variable on setup.
     bytes4 _epochFinalizerInterfaceId;
+
+    /// @notice The emulator state, used to add outputs
+    /// and generate validity proofs for them.
+    LibEmulator.State _emulator;
 
     // -----------
     // Constructor
@@ -98,6 +138,7 @@ abstract contract AppTest is Test {
         ERC721_PORTAL = IERC721Portal(vm.getAddress("ERC721Portal"));
         ERC1155_SINGLE_PORTAL = IERC1155SinglePortal(vm.getAddress("ERC1155SinglePortal"));
         ERC1155_BATCH_PORTAL = IERC1155BatchPortal(vm.getAddress("ERC1155BatchPortal"));
+        SAFE_ERC20_TRANSFER = ISafeERC20Transfer(vm.getAddress("SafeERC20Transfer"));
     }
 
     // -----------
@@ -470,7 +511,7 @@ abstract contract AppTest is Test {
     ) external {
         // First, we encode the `safeTransferFrom` call to be mocked.
         bytes memory safeTransferFrom =
-            _encodeErc721SafeTransferFrom(sender, tokenId, baseLayerData);
+            _encodeErc721SafeTransferFrom(sender, address(_app), tokenId, baseLayerData);
 
         // Second, we make the token mock return when
         // called with the expected arguments (`from`, `to`, `tokenId`, and `data`).
@@ -520,7 +561,7 @@ abstract contract AppTest is Test {
     ) external {
         // First, we encode the `safeTransferFrom` call to be mocked.
         bytes memory safeTransferFrom =
-            _encodeErc721SafeTransferFrom(sender, tokenId, baseLayerData);
+            _encodeErc721SafeTransferFrom(sender, address(_app), tokenId, baseLayerData);
 
         // Second, we make the token mock return when
         // called with the expected arguments (`from`, `to`, `tokenId`, and `data`).
@@ -563,7 +604,9 @@ abstract contract AppTest is Test {
         // Finally, the sender tries to deposit the token.
         // We expect it to fail because the sender hasn't approved the indirect transfer.
         vm.prank(sender);
-        vm.expectRevert(_encodeErc721InsufficientApproval(tokenId));
+        vm.expectRevert(
+            _encodeErc721InsufficientApproval(address(ERC721_PORTAL), tokenId)
+        );
         ERC721_PORTAL.depositERC721Token(
             token, _app, tokenId, baseLayerData, execLayerData
         );
@@ -740,8 +783,9 @@ abstract contract AppTest is Test {
         bytes calldata execLayerData
     ) external {
         // First, we encode the `safeTransferFrom` call to be mocked.
-        bytes memory safeTransferFrom =
-            _encodeErc1155SafeTransferFrom(sender, tokenId, value, baseLayerData);
+        bytes memory safeTransferFrom = _encodeErc1155SafeTransferFrom(
+            sender, address(_app), tokenId, value, baseLayerData
+        );
 
         // Second, we make the token mock return when
         // called with the expected arguments (`from`, `to`, `tokenId`, `value`, and `data`).
@@ -791,8 +835,9 @@ abstract contract AppTest is Test {
         bytes calldata errorData
     ) external {
         // First, we encode the `safeTransferFrom` call to be mocked.
-        bytes memory safeTransferFrom =
-            _encodeErc1155SafeTransferFrom(sender, tokenId, value, baseLayerData);
+        bytes memory safeTransferFrom = _encodeErc1155SafeTransferFrom(
+            sender, address(_app), tokenId, value, baseLayerData
+        );
 
         // Second, we make the token mock return when
         // called with the expected arguments (`from`, `to`, `tokenId`, `value`, and `data`).
@@ -987,8 +1032,9 @@ abstract contract AppTest is Test {
         bytes calldata execLayerData
     ) external {
         // First, we encode the `safeBatchTransferFrom` call to be mocked.
-        bytes memory safeBatchTransferFrom =
-            _encodeErc1155SafeBatchTransferFrom(sender, tokenIds, values, baseLayerData);
+        bytes memory safeBatchTransferFrom = _encodeErc1155SafeBatchTransferFrom(
+            sender, address(_app), tokenIds, values, baseLayerData
+        );
 
         // Second, we make the token mock return when
         // called with the expected arguments (`from`, `to`, `tokenIds`, `values`, and `data`).
@@ -1038,8 +1084,9 @@ abstract contract AppTest is Test {
         bytes calldata errorData
     ) external {
         // First, we encode the `safeBatchTransferFrom` call to be mocked.
-        bytes memory safeBatchTransferFrom =
-            _encodeErc1155SafeBatchTransferFrom(sender, tokenIds, values, baseLayerData);
+        bytes memory safeBatchTransferFrom = _encodeErc1155SafeBatchTransferFrom(
+            sender, address(_app), tokenIds, values, baseLayerData
+        );
 
         // Second, we make the token mock return when
         // called with the expected arguments (`from`, `to`, `tokenIds`, `values`, and `data`).
@@ -1179,11 +1226,7 @@ abstract contract AppTest is Test {
 
         // Create an array with just the app address so that we can query the
         // app contract balance for each token in a single batch call.
-        address[] memory appAddresses = new address[](tokenIds.length);
-        for (uint256 i; i < tokenIds.length; ++i) {
-            appAddresses[i] = address(_app);
-        }
-
+        address[] memory appAddresses = _repeat(address(_app), tokenIds.length);
         uint256[] memory appBalancesBefore = token.balanceOfBatch(appAddresses, tokenIds);
 
         // We make sure an InputAdded event is emitted.
@@ -1235,7 +1278,7 @@ abstract contract AppTest is Test {
 
             // Right after adding an input, the epoch is still empty.
 
-            _app.addInput(new bytes(0));
+            _addEmptyInput();
 
             vm.expectRevert(_encodeCannotCloseEmptyEpoch(epochIndex));
             _app.canEpochBeClosed(epochIndex);
@@ -1248,36 +1291,12 @@ abstract contract AppTest is Test {
             _mineBlock();
 
             // This call should not revert, signaling that the epoch can be closed.
+
             _app.canEpochBeClosed(epochIndex);
 
-            vm.recordLogs();
+            // Close the epoch and get the epoch finalizer.
 
-            _app.closeEpoch(epochIndex);
-
-            // Retrieve the epoch finalizer from the logs.
-
-            Vm.Log[] memory entries = vm.getRecordedLogs();
-
-            uint256 numOfEpochsClosed;
-            address epochFinalizer;
-
-            for (uint256 i; i < entries.length; ++i) {
-                Vm.Log memory entry = entries[i];
-
-                if (
-                    entry.emitter == address(_app)
-                        && entry.topics[0] == EpochManager.EpochClosed.selector
-                ) {
-                    ++numOfEpochsClosed;
-
-                    epochFinalizer = address(uint160(uint256(entry.topics[2])));
-
-                    assertEq(uint256(entry.topics[1]), epochIndex);
-                }
-            }
-
-            assertEq(numOfEpochsClosed, 1);
-            assertGt(epochFinalizer.code.length, 0);
+            address epochFinalizer = _closeEpoch(epochIndex);
 
             // Generate the post-epoch state root
 
@@ -1285,16 +1304,17 @@ abstract contract AppTest is Test {
             bytes32 postEpochStateRoot;
             bytes32 postEpochOutputsRoot;
 
-            proof = _randomProof(CanonicalMachine.TREE_HEIGHT);
+            proof = _randomOutputsRootProof();
             postEpochOutputsRoot = postEpochOutputsRoots[epochIndex];
             postEpochStateRoot = _computePostEpochStateRoot(proof, postEpochOutputsRoot);
 
             vm.expectRevert(_encodeInvalidPostEpochState(epochIndex, postEpochStateRoot));
             _app.canEpochBeFinalized(epochIndex, postEpochOutputsRoot, proof);
 
-            _makePostEpochStateValid(epochIndex, epochFinalizer, postEpochStateRoot);
+            _preFinalizeEpoch(epochIndex, epochFinalizer, postEpochStateRoot);
 
             // This call should not revert, signaling that the epoch can be finalized.
+
             _app.canEpochBeFinalized(epochIndex, postEpochOutputsRoot, proof);
 
             _app.finalizeEpoch(epochIndex, postEpochOutputsRoot, proof);
@@ -1304,11 +1324,631 @@ abstract contract AppTest is Test {
         }
     }
 
+    // ------------
+    // Outbox tests
+    // ------------
+
+    function testGetNumberOfExecutedOutputs() external view {
+        assertEq(_app.getNumberOfExecutedOutputs(), 0);
+    }
+
+    function testWasOutputExecuted(uint256 outputIndex) external view {
+        assertFalse(_app.wasOutputExecuted(outputIndex));
+    }
+
+    function testValidateOutputHashWithInvalidOutputsMerkleRoot(bytes32 outputHash)
+        external
+    {
+        // Generate a random outputs validity proof and compute the outputs root
+        OutputValidityProof memory proof = _randomOutputValidityProof();
+        bytes32 outputsRoot = proof.computeOutputsMerkleRoot(outputHash);
+
+        // Validating the output hash should fail
+        vm.expectRevert(_encodeInvalidOutputsMerkleRoot(outputsRoot));
+        _app.validateOutputHash(outputHash, proof);
+    }
+
+    function testValidateOrExecuteOutputWithInvalidOutputsMerkleRoot(
+        bytes calldata output
+    ) external {
+        // Generate a random outputs validity proof and compute the outputs root
+        OutputValidityProof memory proof = _randomOutputValidityProof();
+        bytes32 outputsRoot = proof.computeOutputsMerkleRoot(keccak256(output));
+
+        // Validating the output should fail
+        vm.expectRevert(_encodeInvalidOutputsMerkleRoot(outputsRoot));
+        _app.validateOutput(output, proof);
+
+        // Executing the output should fail
+        vm.expectRevert(_encodeInvalidOutputsMerkleRoot(outputsRoot));
+        _app.executeOutput(output, proof);
+    }
+
+    function testOutboxWithInvalidOutputHashesSiblingsArrayLength(
+        bytes32 outputHash,
+        bytes calldata output,
+        bytes32[] calldata outputHashesSiblings
+    ) external {
+        // Use an array of siblings with invalid length to construct
+        // an output validity proof with a random output index
+        vm.assume(outputHashesSiblings.length != CanonicalMachine.LOG2_MAX_OUTPUTS);
+        OutputValidityProof memory proof = OutputValidityProof({
+            outputIndex: _randomOutputIndex(),
+            outputHashesSiblings: outputHashesSiblings
+        });
+
+        // Validating the output hash should fail
+        vm.expectRevert(Outbox.InvalidOutputHashesSiblingsArrayLength.selector);
+        _app.validateOutputHash(outputHash, proof);
+
+        // Validating the output should fail
+        vm.expectRevert(Outbox.InvalidOutputHashesSiblingsArrayLength.selector);
+        _app.validateOutput(output, proof);
+
+        // Executing the output should fail
+        vm.expectRevert(Outbox.InvalidOutputHashesSiblingsArrayLength.selector);
+        _app.executeOutput(output, proof);
+    }
+
+    function testValidateOutputAndOutputHash(bytes[] calldata outputs) external {
+        // We limit the number of outputs as not to slow down the tests too much.
+        vm.assume(outputs.length <= MAX_FUZZY_OUTPUTS);
+
+        // We add all outputs to the emulator state.
+        _addOutputs(outputs);
+
+        // We finalize the current epoch with a post-epoch outputs root that allows
+        // the validation of the outputs provided.
+        _makeOutputsValid();
+
+        // Finally, we validate each output and their hashes
+        for (uint64 i; i < outputs.length; ++i) {
+            OutputValidityProof memory proof = _getOutputValidityProof(i);
+            _app.validateOutputHash(keccak256(outputs[i]), proof);
+            _app.validateOutput(outputs[i], proof);
+        }
+    }
+
+    uint256 constant NOTICE = uint256(keccak256("notice"));
+    uint256 constant CALL_VOUCHER = uint256(keccak256("call voucher"));
+    uint256 constant DELEGATECALL_VOUCHER = uint256(keccak256("delegatecall voucher"));
+
+    struct TypedOutput {
+        uint256 kind;
+        address destination; // if `kind` is `CALL_VOUCHER` or `DELEGATECALL_VOUCHER`
+        uint256 value; // if `kind` is `CALL_VOUCHER`
+        bytes payload;
+    }
+
+    function testTypedOutputs(uint256 outputCount) external {
+        // We bound the number of outputs so that the test doesn't take too long.
+        outputCount = bound(outputCount, 0, MAX_FUZZY_OUTPUTS);
+
+        // We allocate an array of typed outputs (as structured data)
+        // and an array of outputs (as encoded byte arrays)
+        TypedOutput[] memory typedOutputs = new TypedOutput[](outputCount);
+        bytes[] memory outputs = new bytes[](outputCount);
+
+        // We also keep a counter for the required balance of the application
+        // contract for all the call vouchers that carry Ether
+        uint256 requiredBalance;
+
+        // Populate the array of outputs with random data.
+        for (uint256 i; i < outputs.length; ++i) {
+            // We choose the output kind.
+            uint256 kind = _randomTypedOutputKind();
+
+            // We pick a random EOA address as the destination so that
+            // we don't accidentally call an existing contract.
+            address destination = _randomEoaAddress();
+
+            // We pick a random value that still gives the application contract
+            // enough balance to execute all vouchers (limited by the max uint256 value).
+            uint256 value = vm.randomUint(0, type(uint256).max - requiredBalance);
+
+            /// We pick a random payload that is not too long.
+            bytes memory payload = vm.randomBytes(vm.randomUint(0, 1024));
+
+            // We structure and encode the typed output
+            typedOutputs[i] = TypedOutput(kind, destination, value, payload);
+            outputs[i] = _encodeTypedOutput(typedOutputs[i]);
+
+            // We increment the required balance counter
+            requiredBalance += value;
+        }
+
+        // We add all outputs to the emulator state.
+        // We shuffle the output indices to make the order of execution random
+        uint64[] memory outputIndices = _shuffle(_addOutputs(outputs));
+
+        // We finalize the current epoch with a post-epoch outputs root that allows
+        // the validation of the outputs provided.
+        _makeOutputsValid();
+
+        // First, we try to execute the vouchers with more value than the app contract
+        // balance to ensure it raises the `InsufficientFunds` error.
+        for (uint64 i; i < outputIndices.length; ++i) {
+            // Retrieve the output index, the output, the proof, and typed output struct
+            uint64 outputIndex = uint64(outputIndices[i]);
+            bytes memory output = outputs[outputIndex];
+            OutputValidityProof memory proof = _getOutputValidityProof(outputIndex);
+            TypedOutput memory typedOutput = typedOutputs[outputIndex];
+
+            // We can validate these outputs regardless of there being
+            // enough Ether to execute them or not.
+            _app.validateOutput(output, proof);
+            _app.validateOutputHash(keccak256(output), proof);
+
+            uint256 value = typedOutput.value;
+            uint256 balance = address(_app).balance;
+
+            // Then we filter only the vouchers with more value than the app contract balance
+            if (typedOutput.kind == CALL_VOUCHER && value > balance) {
+                // Trying to execute the output reverts with an `InsufficientFunds` error
+                // with the voucher value and the app contract balance as arguments.
+                vm.expectRevert(_encodeInsufficientFunds(value, balance));
+                _app.executeOutput(output, proof);
+            }
+        }
+
+        // We give the app enough balance to execute all vouchers
+        vm.deal(address(_app), requiredBalance);
+
+        // Finally, we validate/execute the typed outputs in a random order
+        for (uint64 i; i < outputIndices.length; ++i) {
+            // Retrieve the output index, the output, the proof, and typed output struct
+            uint64 outputIndex = uint64(outputIndices[i]);
+            bytes memory output = outputs[outputIndex];
+            OutputValidityProof memory proof = _getOutputValidityProof(outputIndex);
+            TypedOutput memory typedOutput = typedOutputs[outputIndex];
+
+            // We can validate the output and its hash beforehand.
+            _app.validateOutput(output, proof);
+            _app.validateOutputHash(keccak256(output), proof);
+
+            // If the typed output is executable, execute it.
+            if (_isTypedOutputExecutable(typedOutput)) {
+                // Get the number of executed output before calling `executeOutput`.
+                // This will be used to check later whether this number was incremented by 1.
+                uint256 numOfExecutedOutputs = _app.getNumberOfExecutedOutputs();
+
+                // Make sure the output was not executed yet.
+                assertFalse(_app.wasOutputExecuted(outputIndex));
+
+                // Expect the destination to be called once with the given value and payload
+                if (typedOutput.kind == DELEGATECALL_VOUCHER) {
+                    address destination = typedOutput.destination;
+                    bytes memory payload = typedOutput.payload;
+                    // We don't pass a value here, otherwise Forge will expect a CALL to occurr,
+                    // but actually it is a DELEGATECALL that occurrs.
+                    vm.expectCall(destination, payload, 1);
+                } else if (typedOutput.kind == CALL_VOUCHER) {
+                    address destination = typedOutput.destination;
+                    uint256 value = typedOutput.value;
+                    bytes memory payload = typedOutput.payload;
+                    vm.expectCall(destination, value, payload, 1);
+                }
+
+                // Expect an `OutputExecuted` event to be emitted with the right index and output args
+                vm.expectEmit(false, false, false, true, address(_app));
+                emit Outbox.OutputExecuted(outputIndex, output);
+
+                // Finally, call `executeOutput`.
+                _app.executeOutput(output, proof);
+
+                // Check whether the output was marked as executed.
+                assertTrue(_app.wasOutputExecuted(outputIndex));
+
+                // Check whether the number of executed outputs was incremented by 1.
+                assertEq(_app.getNumberOfExecutedOutputs(), numOfExecutedOutputs + 1);
+
+                // Trying to execute the output again reverts.
+                vm.expectRevert(_encodeOutputNotReexecutable(output));
+                _app.executeOutput(output, proof);
+
+                // We can still validate the output and its hash afterhand.
+                _app.validateOutput(output, proof);
+                _app.validateOutputHash(keccak256(output), proof);
+            } else {
+                // If, otherwise, the typed output is not executable,
+                // then trying to execute the output will fail.
+                vm.expectRevert(_encodeOutputNotExecutable(output));
+                _app.executeOutput(output, proof);
+            }
+        }
+    }
+
+    function testEtherWithdrawal(uint256 value, uint256 supply, bytes calldata payload)
+        external
+    {
+        // Bound the Ether supply.
+        // We need 0 <= value <= supply <= type(uint256).max
+        supply = bound(supply, value, type(uint256).max);
+
+        // Generate a random EOA address to be the voucher destination.
+        // This avoids vouchers to existing contracts that might revert.
+        address destination = _randomEoaAddress();
+
+        // We encode the call voucher directly
+        bytes memory output = _encodeCallVoucher(destination, value, payload);
+
+        // We then add the output to the emulator state.
+        uint64 outputIndex = _addOutput(output);
+
+        // We make the output valid and ready for execution
+        _makeOutputsValid();
+
+        // Get the output validity proof ready
+        OutputValidityProof memory proof = _getOutputValidityProof(outputIndex);
+
+        // Get the app contract balance to check whether
+        // we need to deal it some Ether before executing the voucher.
+        uint256 balance = address(_app).balance;
+
+        if (value > balance) {
+            // If value is greater than the app contract balance,
+            // then executing the voucher right away will fail
+            // with an `InsufficientFunds` error.
+            vm.expectRevert(_encodeInsufficientFunds(value, balance));
+            _app.executeOutput(output, proof);
+        }
+
+        // In order to successfully execute the voucher,
+        // we need to deal the app contract some Ether.
+        vm.deal(address(_app), supply);
+
+        // Get the app contract balance before the withdrawal.
+        uint256 appBalanceBefore = address(_app).balance;
+
+        // We get the balance of the destination before the withdrawal.
+        uint256 destBalanceBefore = destination.balance;
+
+        // Finally, we execute the output
+        _executeOutput(output, proof);
+
+        // Get the app contract balance after the withdrawal.
+        uint256 appBalanceAfter = address(_app).balance;
+
+        // We get the balance of the destination after the withdrawal.
+        uint256 destBalanceAfter = destination.balance;
+
+        // Make sure the value has moved from the app contract
+        // to the destination account.
+        assertEq(destBalanceAfter, destBalanceBefore + value);
+        assertEq(appBalanceAfter, appBalanceBefore - value);
+    }
+
+    function testOpenZeppelinErc20Withdrawal(uint256 supply, uint256 value, bool safe)
+        external
+    {
+        // Bound the token supply.
+        // We need 0 <= value <= supply <= type(uint256).max
+        supply = bound(supply, value, type(uint256).max);
+
+        // Generate an EOA address for the token owner and token recipient
+        // This avoids undesired side effects if the address is zero
+        // or if it points to an existing contract.
+        address tokenOwner = _randomEoaAddress();
+        address destination = _randomEoaAddress();
+
+        // Deploy an OpenZeppelin ERC-20 token contract.
+        IERC20 token = _deployOpenZeppelinErc20Token(tokenOwner, supply);
+
+        // We encode the voucher differently depending on the value of the `safe` parameter
+        // If `safe` is `true`, encode a DELEGATECALL voucher to the SafeERC20Transfer contract.
+        // Otherwise, encode a regular CALL voucher to the token contract itself.
+        bytes memory output = safe
+            ? _encodeDelegateCallVoucher(
+                address(SAFE_ERC20_TRANSFER),
+                _encodeErc20SafeTransfer(token, destination, value)
+            )
+            : _encodeCallVoucher(address(token), 0, _encodeErc20Transfer(destination, value));
+
+        // We then add the output to the emulator state.
+        uint64 outputIndex = _addOutput(output);
+
+        // We make the output valid and ready for execution
+        _makeOutputsValid();
+
+        // Get the output validity proof ready
+        OutputValidityProof memory proof = _getOutputValidityProof(outputIndex);
+
+        // Get the app contract token balance to check whether
+        // we need to deal it some tokens before executing the voucher.
+        uint256 balance = token.balanceOf(address(_app));
+
+        if (value > balance) {
+            // If value is greater than the app contract balance,
+            // then executing the voucher right away will fail
+            // with an `ERC20InsufficientBalance` error.
+            vm.expectRevert(
+                _encodeErc20InsufficientBalance(address(_app), balance, value)
+            );
+            _app.executeOutput(output, proof);
+        }
+
+        // In order to successfully execute the voucher,
+        // we need to deal the app contract some tokens.
+        vm.prank(tokenOwner);
+        token.transfer(address(_app), supply);
+
+        // Get the app contract balance before the withdrawal.
+        uint256 appBalanceBefore = token.balanceOf(address(_app));
+
+        // We get the balance of the destination before the withdrawal.
+        uint256 destBalanceBefore = token.balanceOf(destination);
+
+        // Finally, we execute the output
+        _executeOutput(output, proof);
+
+        // Get the app contract balance after the withdrawal.
+        uint256 appBalanceAfter = token.balanceOf(address(_app));
+
+        // We get the balance of the destination after the withdrawal.
+        uint256 destBalanceAfter = token.balanceOf(destination);
+
+        // Make sure the value has moved from the app contract
+        // to the destination account.
+        assertEq(destBalanceAfter, destBalanceBefore + value);
+        assertEq(appBalanceAfter, appBalanceBefore - value);
+    }
+
+    function testOpenZeppelinErc721Withdrawal(uint256 tokenId, bytes calldata data)
+        external
+    {
+        // Generate an EOA address for the token owner and token recipient
+        // This avoids undesired side effects if the address is zero
+        // or if it points to an existing contract.
+        address tokenOwner = _randomEoaAddress();
+        address destination = _randomEoaAddress();
+
+        // Deploy an OpenZeppelin ERC-721 token contract.
+        IERC721 token = _deployOpenZeppelinErc721Token(tokenOwner, tokenId);
+
+        // We encode the call voucher directly
+        bytes memory output = _encodeCallVoucher(
+            address(token),
+            0,
+            _encodeErc721SafeTransferFrom(address(_app), destination, tokenId, data)
+        );
+
+        // We then add the output to the emulator state.
+        uint64 outputIndex = _addOutput(output);
+
+        // We make the output valid and ready for execution
+        _makeOutputsValid();
+
+        // Get the output validity proof ready
+        OutputValidityProof memory proof = _getOutputValidityProof(outputIndex);
+
+        // If the app contract balance doesn't own the token,
+        // then executing the voucher right away will fail
+        // with an `ERC721InsufficientApproval` error.
+        vm.expectRevert(_encodeErc721InsufficientApproval(address(_app), tokenId));
+        _app.executeOutput(output, proof);
+
+        // In order to successfully execute the voucher,
+        // we need to transfer the token to the app contract.
+        vm.prank(tokenOwner);
+        token.safeTransferFrom(tokenOwner, address(_app), tokenId);
+
+        // Make sure the token is owned by the app contract before.
+        assertEq(token.ownerOf(tokenId), address(_app));
+
+        // Get the app contract balance before the withdrawal.
+        uint256 appBalanceBefore = token.balanceOf(address(_app));
+
+        // We get the balance of the destination before the withdrawal.
+        uint256 destBalanceBefore = token.balanceOf(destination);
+
+        // Finally, we execute the output
+        _executeOutput(output, proof);
+
+        // Get the app contract balance after the withdrawal.
+        uint256 appBalanceAfter = token.balanceOf(address(_app));
+
+        // We get the balance of the destination after the withdrawal.
+        uint256 destBalanceAfter = token.balanceOf(destination);
+
+        // Make sure the token has moved from the app contract
+        // to the destination account.
+        assertEq(token.ownerOf(tokenId), destination);
+        assertEq(destBalanceAfter, destBalanceBefore + 1);
+        assertEq(appBalanceAfter, appBalanceBefore - 1);
+    }
+
+    function testOpenZeppelinErc1155SingleWithdrawal(
+        uint256 tokenId,
+        uint256 value,
+        uint256 supply,
+        bytes calldata data
+    ) external {
+        // Bound the token supply.
+        // We need 0 <= value <= supply <= type(uint256).max
+        supply = bound(supply, value, type(uint256).max);
+
+        // Generate an EOA address for the token owner and token recipient
+        // This avoids undesired side effects if the address is zero
+        // or if it points to an existing contract.
+        address tokenOwner = _randomEoaAddress();
+        address destination = _randomEoaAddress();
+
+        // Deploy an OpenZeppelin ERC-1155 token contract.
+        IERC1155 token = _deployOpenZeppelinErc1155Token(tokenOwner, tokenId, supply);
+
+        // We encode the call voucher directly
+        bytes memory output = _encodeCallVoucher(
+            address(token),
+            0,
+            _encodeErc1155SafeTransferFrom(
+                address(_app), destination, tokenId, value, data
+            )
+        );
+
+        // We then add the output to the emulator state.
+        uint64 outputIndex = _addOutput(output);
+
+        // We make the output valid and ready for execution
+        _makeOutputsValid();
+
+        // Get the output validity proof ready
+        OutputValidityProof memory proof = _getOutputValidityProof(outputIndex);
+
+        // Get the app contract token balance to check whether
+        // we need to deal it some tokens before executing the voucher.
+        uint256 balance = token.balanceOf(address(_app), tokenId);
+
+        if (value > balance) {
+            // If value is greater than the app contract balance,
+            // then executing the voucher right away will fail
+            // with an `ERC1155InsufficientBalance` error.
+            vm.expectRevert(
+                _encodeErc1155InsufficientBalance(address(_app), balance, value, tokenId)
+            );
+            _app.executeOutput(output, proof);
+        }
+
+        // In order to successfully execute the voucher,
+        // we need to transfer some tokens to the app contract.
+        vm.prank(tokenOwner);
+        token.safeTransferFrom(tokenOwner, address(_app), tokenId, value, new bytes(0));
+
+        // Get the app contract balance before the withdrawal.
+        uint256 appBalanceBefore = token.balanceOf(address(_app), tokenId);
+
+        // We get the balance of the destination before the withdrawal.
+        uint256 destBalanceBefore = token.balanceOf(destination, tokenId);
+
+        // Finally, we execute the output
+        _executeOutput(output, proof);
+
+        // Get the app contract balance after the withdrawal.
+        uint256 appBalanceAfter = token.balanceOf(address(_app), tokenId);
+
+        // We get the balance of the destination after the withdrawal.
+        uint256 destBalanceAfter = token.balanceOf(destination, tokenId);
+
+        // Make sure the tokens has moved from the app contract
+        // to the destination account.
+        assertEq(destBalanceAfter, destBalanceBefore + value);
+        assertEq(appBalanceAfter, appBalanceBefore - value);
+    }
+
+    function testOpenZeppelinErc1155BatchWithdrawal(
+        bytes32 tokenIdSeed,
+        uint256[] calldata balances,
+        bytes calldata data
+    ) external {
+        // Generate an EOA address for the token owner and token recipient
+        // This avoids undesired side effects if the address is zero
+        // or if it points to an existing contract.
+        address tokenOwner = _randomEoaAddress();
+        address destination = _randomEoaAddress();
+
+        // Generate an array of token IDs and values.
+        uint256[] memory tokenIds = _generateTokenIds(balances, tokenIdSeed);
+        uint256[] memory values = _generateTokenValues(balances);
+
+        // Deploy an OpenZeppelin ERC-1155 token contract.
+        IERC1155 token = _deployOpenZeppelinErc1155Token(tokenOwner, tokenIds, balances);
+
+        // We encode the call voucher directly
+        bytes memory output = _encodeCallVoucher(
+            address(token),
+            0,
+            _encodeErc1155SafeBatchTransferFrom(
+                address(_app), destination, tokenIds, values, data
+            )
+        );
+
+        // We then add the output to the emulator state.
+        uint64 outputIndex = _addOutput(output);
+
+        // We make the output valid and ready for execution
+        _makeOutputsValid();
+
+        // Get the output validity proof ready
+        OutputValidityProof memory proof = _getOutputValidityProof(outputIndex);
+
+        // Create an array with just the app address so that we can query the
+        // app contract balance for each token in a single batch call.
+        address[] memory appAddresses = _repeat(address(_app), tokenIds.length);
+        uint256[] memory appInitialBalances = token.balanceOfBatch(appAddresses, tokenIds);
+
+        // We check whether the app has enough tokens to make the batch transfer right away.
+        // If, for some token, the app doesn't have enough balance, we store the array index
+        // so that we can later retrieve the token ID, balance, and value
+        // to check for an `ERC1155InsufficientBalance` error.
+        // We know that we need to scan the array from index `0` to `length-1`
+        // because we know we are dealing with an OpenZeppelin ERC-1155 token contract
+        // and are able to inspect its source code. :-)
+        bool hasInsufficientBalance;
+        uint256 insufficientBalanceIndex;
+        for (uint256 i; i < appInitialBalances.length; ++i) {
+            if (appInitialBalances[i] < values[i]) {
+                hasInsufficientBalance = true;
+                insufficientBalanceIndex = i;
+                break;
+            }
+        }
+
+        if (hasInsufficientBalance) {
+            // If, for some token, the value is greater than the app contract balance,
+            // then executing the voucher right away will fail
+            // with an `ERC1155InsufficientBalance` error.
+            vm.expectRevert(
+                _encodeErc1155InsufficientBalance(
+                    address(_app),
+                    appInitialBalances[insufficientBalanceIndex],
+                    values[insufficientBalanceIndex],
+                    tokenIds[insufficientBalanceIndex]
+                )
+            );
+            _app.executeOutput(output, proof);
+        }
+
+        // In order to successfully execute the voucher,
+        // we need to transfer some tokens to the app contract.
+        vm.prank(tokenOwner);
+        token.safeBatchTransferFrom(
+            tokenOwner, address(_app), tokenIds, values, new bytes(0)
+        );
+
+        // Get the app contract balances before the withdrawal.
+        uint256[] memory appBalancesBefore = token.balanceOfBatch(appAddresses, tokenIds);
+
+        // We get the balances of the destination before the withdrawal.
+        address[] memory destinations = _repeat(destination, tokenIds.length);
+        uint256[] memory destBalancesBefore = token.balanceOfBatch(destinations, tokenIds);
+
+        // Finally, we execute the output
+        _executeOutput(output, proof);
+
+        // Get the app contract balances after the withdrawal.
+        uint256[] memory appBalancesAfter = token.balanceOfBatch(appAddresses, tokenIds);
+
+        // We get the balances of the destination after the withdrawal.
+        uint256[] memory destBalancesAfter = token.balanceOfBatch(destinations, tokenIds);
+
+        // Make sure the tokens has moved from the app contract to the destination account.
+        for (uint256 i; i < tokenIds.length; ++i) {
+            uint256 value = values[i];
+            assertEq(destBalancesAfter[i], destBalancesBefore[i] + value);
+            assertEq(appBalancesAfter[i], appBalancesBefore[i] - value);
+        }
+    }
+
     // -----------------
     // Virtual functions
     // -----------------
 
-    function _makePostEpochStateValid(
+    /// @notice Prepare for an epoch to be finalized.
+    /// @param epochIndex The epoch index
+    /// @param epochFinalizer The epoch finalizer
+    /// @param postEpochStateRoot The post-epoch state root that `AppTest` wants to be valid
+    /// @dev This virtual function is used by `AppTest` to test the epoch manager and outbox.
+    /// @dev `AppTest` should be able to call `finalizeEpoch` with the given post-epoch state afterwards.
+    function _preFinalizeEpoch(
         uint256 epochIndex,
         address epochFinalizer,
         bytes32 postEpochStateRoot
@@ -1399,6 +2039,29 @@ abstract contract AppTest is Test {
         vm.roll(vm.getBlockNumber() + 1);
     }
 
+    /// @notice Generates a random outputs root proof.
+    /// @return proof A random outputs root proof
+    function _randomOutputsRootProof() internal view returns (bytes32[] memory) {
+        return _randomProof(CanonicalMachine.TREE_HEIGHT);
+    }
+
+    /// @notice Generates a random output proof with a given siblings array length.
+    /// @return proof A random output proof
+    function _randomOutputValidityProof()
+        internal
+        view
+        returns (OutputValidityProof memory)
+    {
+        return OutputValidityProof({
+            outputIndex: _randomOutputIndex(),
+            outputHashesSiblings: _randomProof(CanonicalMachine.LOG2_MAX_OUTPUTS)
+        });
+    }
+
+    function _randomOutputIndex() internal view returns (uint64) {
+        return uint64(vm.randomUint(CanonicalMachine.LOG2_MAX_OUTPUTS));
+    }
+
     /// @notice Generates a random proof with a given length.
     /// @param length The length of the proof array
     /// @return proof An array of the given length with random `bytes32` values
@@ -1413,30 +2076,6 @@ abstract contract AppTest is Test {
         }
     }
 
-    /// @notice Compute a Merkle root after replacement from a proof in memory.
-    /// @param sibs The siblings of the node in bottom-up order
-    /// @param nodeIndex The index of the node
-    /// @param node The new node
-    /// @param nodeFromChildren The function that computes nodes from their children
-    /// @return The root hash of the new Merkle tree
-    function _merkleRootAfterReplacement(
-        bytes32[] memory sibs,
-        uint256 nodeIndex,
-        bytes32 node,
-        function(bytes32, bytes32) pure returns (bytes32) nodeFromChildren
-    ) internal pure returns (bytes32) {
-        uint256 height = sibs.length;
-        require((nodeIndex >> height) == 0, LibBinaryMerkleTree.InvalidNodeIndex());
-        for (uint256 i; i < height; ++i) {
-            bool isNodeLeftChild = ((nodeIndex >> i) & 1 == 0);
-            bytes32 nodeSibling = sibs[i];
-            node = isNodeLeftChild
-                ? nodeFromChildren(node, nodeSibling)
-                : nodeFromChildren(nodeSibling, node);
-        }
-        return node;
-    }
-
     /// @notice Compute a post-epoch state root from a post-epoch outputs root and a proof.
     /// @param proof A Merkle proof of the post-epoch outputs root
     /// @param postEpochOutputsRoot The post-epoch outputs root
@@ -1445,11 +2084,9 @@ abstract contract AppTest is Test {
         bytes32[] memory proof,
         bytes32 postEpochOutputsRoot
     ) internal pure returns (bytes32) {
-        return _merkleRootAfterReplacement(
-            proof,
+        return proof.merkleRootAfterReplacement(
             CanonicalMachine.OUTPUTS_ROOT_LEAF_INDEX,
-            LibKeccak256.hashBytes(abi.encode(postEpochOutputsRoot)),
-            LibKeccak256.hashPair
+            LibKeccak256.hashBytes(abi.encode(postEpochOutputsRoot))
         );
     }
 
@@ -1458,6 +2095,31 @@ abstract contract AppTest is Test {
     /// @return The EOA's address
     function _eoaFromString(string memory str) internal pure returns (address) {
         return vm.addr(boundPrivateKey(uint256(keccak256(abi.encode(str)))));
+    }
+
+    /// @notice Encode an ERC-20 `transfer` call.
+    /// @param to The token recipient
+    /// @param value The transfer value
+    /// @return The encoded Solidity function call
+    function _encodeErc20Transfer(address to, uint256 value)
+        internal
+        pure
+        returns (bytes memory)
+    {
+        return abi.encodeCall(IERC20.transfer, (to, value));
+    }
+
+    /// @notice Encode an ERC-20 `safeTransfer` call.
+    /// @param token The token contract
+    /// @param to The token recipient
+    /// @param value The transfer value
+    /// @return The encoded Solidity function call
+    function _encodeErc20SafeTransfer(IERC20 token, address to, uint256 value)
+        internal
+        pure
+        returns (bytes memory)
+    {
+        return abi.encodeCall(ISafeERC20Transfer.safeTransfer, (token, to, value));
     }
 
     /// @notice Encode an ERC-20 `transferFrom` call from the application contract.
@@ -1472,57 +2134,56 @@ abstract contract AppTest is Test {
         return abi.encodeCall(IERC20.transferFrom, (sender, address(_app), value));
     }
 
-    /// @notice Encode an ERC-721 `safeTransferFrom` call from the application contract.
-    /// @param sender The sender address
+    /// @notice Encode an ERC-721 `safeTransferFrom` call.
+    /// @param from The token owner
+    /// @param to The token recipient
     /// @param tokenId The token ID
     /// @param data The extra data argument
     /// @return The encoded Solidity function call
     function _encodeErc721SafeTransferFrom(
-        address sender,
+        address from,
+        address to,
         uint256 tokenId,
         bytes calldata data
-    ) internal view returns (bytes memory) {
+    ) internal pure returns (bytes memory) {
         return abi.encodeWithSignature(
-            "safeTransferFrom(address,address,uint256,bytes)",
-            sender,
-            address(_app),
-            tokenId,
-            data
+            "safeTransferFrom(address,address,uint256,bytes)", from, to, tokenId, data
         );
     }
 
     /// @notice Encode an ERC-1155 `safeTransferFrom` call from the application contract.
-    /// @param sender The sender address
+    /// @param from The token owner
+    /// @param to The token receiver
     /// @param tokenId The token ID
     /// @param value The amount of tokens
     /// @param data The extra data argument
     /// @return The encoded Solidity function call
     function _encodeErc1155SafeTransferFrom(
-        address sender,
+        address from,
+        address to,
         uint256 tokenId,
         uint256 value,
         bytes calldata data
-    ) internal view returns (bytes memory) {
-        return abi.encodeCall(
-            IERC1155.safeTransferFrom, (sender, address(_app), tokenId, value, data)
-        );
+    ) internal pure returns (bytes memory) {
+        return abi.encodeCall(IERC1155.safeTransferFrom, (from, to, tokenId, value, data));
     }
 
     /// @notice Encode an ERC-1155 `safeBatchTransferFrom` call from the application contract.
-    /// @param sender The sender address
+    /// @param from The token owner
+    /// @param to The token receiver
     /// @param tokenIds The token IDs
     /// @param values The amounts for each token
     /// @param data The extra data argument
     /// @return The encoded Solidity function call
     function _encodeErc1155SafeBatchTransferFrom(
-        address sender,
-        uint256[] calldata tokenIds,
-        uint256[] calldata values,
+        address from,
+        address to,
+        uint256[] memory tokenIds,
+        uint256[] memory values,
         bytes calldata data
-    ) internal view returns (bytes memory) {
+    ) internal pure returns (bytes memory) {
         return abi.encodeCall(
-            IERC1155.safeBatchTransferFrom,
-            (sender, address(_app), tokenIds, values, data)
+            IERC1155.safeBatchTransferFrom, (from, to, tokenIds, values, data)
         );
     }
 
@@ -1560,18 +2221,17 @@ abstract contract AppTest is Test {
         );
     }
 
-    /// @notice Encode an `ERC721InsufficientApproval` error related to the ERC-721 portal.
+    /// @notice Encode an `ERC721InsufficientApproval` error.
+    /// @param operator The transfer operator
     /// @param tokenId The token ID
     /// @return The encoded Solidity error
-    function _encodeErc721InsufficientApproval(uint256 tokenId)
+    function _encodeErc721InsufficientApproval(address operator, uint256 tokenId)
         internal
-        view
+        pure
         returns (bytes memory)
     {
         return abi.encodeWithSelector(
-            IERC721Errors.ERC721InsufficientApproval.selector,
-            address(ERC721_PORTAL),
-            tokenId
+            IERC721Errors.ERC721InsufficientApproval.selector, operator, tokenId
         );
     }
 
@@ -1652,6 +2312,52 @@ abstract contract AppTest is Test {
         );
     }
 
+    /// @notice Encode an `InvalidOutputsMerkleRoot` error.
+    /// @param outputsRoot The invalid outputs Merkle root
+    /// @return The encoded Solidity error
+    function _encodeInvalidOutputsMerkleRoot(bytes32 outputsRoot)
+        internal
+        pure
+        returns (bytes memory)
+    {
+        return
+            abi.encodeWithSelector(Outbox.InvalidOutputsMerkleRoot.selector, outputsRoot);
+    }
+
+    /// @notice Encode an `OutputNotReexecutable` error.
+    /// @param output The output
+    /// @return The encoded Solidity error
+    function _encodeOutputNotReexecutable(bytes memory output)
+        internal
+        pure
+        returns (bytes memory)
+    {
+        return abi.encodeWithSelector(Outbox.OutputNotReexecutable.selector, output);
+    }
+
+    /// @notice Encode an `OutputNotExecutable` error.
+    /// @param output The output
+    /// @return The encoded Solidity error
+    function _encodeOutputNotExecutable(bytes memory output)
+        internal
+        pure
+        returns (bytes memory)
+    {
+        return abi.encodeWithSelector(Outbox.OutputNotExecutable.selector, output);
+    }
+
+    /// @notice Encode an `InsufficientFunds` error.
+    /// @param value The value being attempted to be transferred
+    /// @param balance The contract balance
+    /// @return The encoded Solidity error
+    function _encodeInsufficientFunds(uint256 value, uint256 balance)
+        internal
+        pure
+        returns (bytes memory)
+    {
+        return abi.encodeWithSelector(Outbox.InsufficientFunds.selector, value, balance);
+    }
+
     /// @notice Deploy an OpenZeppelin's ERC-20 token contract.
     /// @param tokenOwner The account that holds all the token supply initially
     /// @param tokenSupply The token supply
@@ -1724,6 +2430,291 @@ abstract contract AppTest is Test {
         tokenValues = new uint256[](balances.length);
         for (uint256 i; i < balances.length; ++i) {
             tokenValues[i] = vm.randomUint(0, balances[i]);
+        }
+    }
+
+    /// @notice Close a given epoch and return the epoch finalizer.
+    /// @param epochIndex The epoch index
+    /// @return epochFinalizer The epoch finalizer
+    /// @dev Assumes the epoch can be closed.
+    function _closeEpoch(uint256 epochIndex) internal returns (address epochFinalizer) {
+        // Start recording logs so that we can capture
+        // the emission of the `EpochClosed` event.
+        vm.recordLogs();
+
+        // We close the epoch given its index.
+        _app.closeEpoch(epochIndex);
+
+        // We retrieve the logs emitted
+        // during the `closeEpoch` function call.
+        Vm.Log[] memory entries = vm.getRecordedLogs();
+
+        uint256 numOfEpochsClosed;
+
+        for (uint256 i; i < entries.length; ++i) {
+            Vm.Log memory entry = entries[i];
+
+            // We check if the log was emitted by the app contract
+            // and whether its topic 0 matches the `EpochClosed` selector.
+            if (
+                entry.emitter == address(_app)
+                    && entry.topics[0] == EpochManager.EpochClosed.selector
+            ) {
+                ++numOfEpochsClosed;
+
+                // We extract the epoch finalizer from the topic 2 of the `EpochClosed` event.
+                epochFinalizer = address(uint160(uint256(entry.topics[2])));
+
+                // We extract the epoch index from the topic 1 of the `EpochClosed` event
+                // and compare it against the one provided to the `closeEpoch` function.
+                assertEq(uint256(entry.topics[1]), epochIndex);
+            }
+        }
+
+        // We ensure only one epoch was closed.
+        assertEq(numOfEpochsClosed, 1);
+
+        // We ensure the epoch finalizer address has code.
+        assertGt(epochFinalizer.code.length, 0);
+    }
+
+    /// @notice Add an empty input.
+    function _addEmptyInput() internal {
+        _app.addInput(new bytes(0));
+    }
+
+    /// @notice Add an output to the emulator state.
+    /// @param output The output
+    /// @return index The output index
+    function _addOutput(bytes memory output) internal returns (uint64 index) {
+        return _emulator.addOutput(output);
+    }
+
+    /// @notice Add a list of outputs to the emulator state.
+    /// @param outputs The list of outputs
+    /// @return indices The output indices
+    function _addOutputs(bytes[] memory outputs)
+        internal
+        returns (uint64[] memory indices)
+    {
+        indices = new uint64[](outputs.length);
+        for (uint256 i; i < outputs.length; ++i) {
+            indices[i] = _addOutput(outputs[i]);
+        }
+    }
+
+    /// @notice Make the current set of outputs valid.
+    /// @dev Assumes the last non-finalized epoch is open.
+    function _makeOutputsValid() internal {
+        // Add a single empty input just so that we can close the epoch
+        // We store the epoch finalizer so that we can finalize the epoch later
+        _addEmptyInput();
+        _mineBlock();
+        uint256 epochIndex = _app.getFinalizedEpochCount();
+        address epochFinalizer = _closeEpoch(epochIndex);
+
+        // We then compute the outputs root
+        bytes32 outputsRoot = _emulator.getOutputsMerkleRoot();
+
+        // And then we finalize the epoch
+        bytes32[] memory proof = _randomOutputsRootProof();
+        bytes32 postEpochStateRoot = _computePostEpochStateRoot(proof, outputsRoot);
+        _preFinalizeEpoch(epochIndex, epochFinalizer, postEpochStateRoot);
+        _app.finalizeEpoch(epochIndex, outputsRoot, proof);
+        assertTrue(_app.isOutputsRootFinal(outputsRoot));
+    }
+
+    /// @notice Generate a random typed output kind.
+    function _randomTypedOutputKind() internal view returns (uint256) {
+        uint256 x = vm.randomUint(0, 2);
+        if (x == 0) {
+            return NOTICE;
+        } else if (x == 1) {
+            return CALL_VOUCHER;
+        } else if (x == 2) {
+            return DELEGATECALL_VOUCHER;
+        } else {
+            revert("invalid random uint");
+        }
+    }
+
+    /// @notice Check whether a typed output is executable by its kind.
+    /// @param typedOutput The typed output
+    function _isTypedOutputExecutable(TypedOutput memory typedOutput)
+        internal
+        pure
+        returns (bool)
+    {
+        uint256 kind = typedOutput.kind;
+        return kind == CALL_VOUCHER || kind == DELEGATECALL_VOUCHER;
+    }
+
+    /// @notice This error is raised when one tries to encode a typed
+    /// output with an unknown kind field.
+    /// @param kind The unknown kind
+    error UnknownTypedOutputKind(uint256 kind);
+
+    /// @notice Encode a typed output
+    /// @param typedOutput The typed output struct
+    /// @return output The encoded typed output
+    function _encodeTypedOutput(TypedOutput memory typedOutput)
+        internal
+        pure
+        returns (bytes memory output)
+    {
+        uint256 kind = typedOutput.kind;
+        address destination = typedOutput.destination;
+        uint256 value = typedOutput.value;
+        bytes memory payload = typedOutput.payload;
+        if (kind == NOTICE) {
+            return _encodeNotice(payload);
+        } else if (kind == CALL_VOUCHER) {
+            return _encodeCallVoucher(destination, value, payload);
+        } else if (kind == DELEGATECALL_VOUCHER) {
+            return _encodeDelegateCallVoucher(destination, payload);
+        } else {
+            revert UnknownTypedOutputKind(kind);
+        }
+    }
+
+    /// @notice Encode a notice
+    /// @param payload The notice payload
+    /// @return output The encoded notice
+    function _encodeNotice(bytes memory payload)
+        internal
+        pure
+        returns (bytes memory output)
+    {
+        return abi.encodeCall(Outputs.Notice, (payload));
+    }
+
+    /// @notice Encode a CALL voucher
+    /// @param destination The CALL destination
+    /// @param value The CALL value in Wei
+    /// @param payload The CALL payload
+    /// @return output The encoded CALL voucher
+    function _encodeCallVoucher(address destination, uint256 value, bytes memory payload)
+        internal
+        pure
+        returns (bytes memory output)
+    {
+        return abi.encodeCall(Outputs.Voucher, (destination, value, payload));
+    }
+
+    /// @notice Encode a DELEGATECALL voucher
+    /// @param destination The DELEGATECALL destination
+    /// @param payload The DELEGATECALL payload
+    /// @return output The encoded DELEGATECALL voucher
+    function _encodeDelegateCallVoucher(address destination, bytes memory payload)
+        internal
+        pure
+        returns (bytes memory output)
+    {
+        return abi.encodeCall(Outputs.DelegateCallVoucher, (destination, payload));
+    }
+
+    /// @notice Get a validity proof for a given output.
+    /// @param outputIndex The output index
+    /// @return The output validity proof
+    function _getOutputValidityProof(uint64 outputIndex)
+        internal
+        view
+        returns (OutputValidityProof memory)
+    {
+        return _emulator.getOutputValidityProof(outputIndex);
+    }
+
+    /// @notice Generate a random EOA address
+    function _randomEoaAddress() internal view returns (address) {
+        return vm.addr(boundPrivateKey(vm.randomUint()));
+    }
+
+    /// @notice Shuffles an array of `uint64` values.
+    /// @param inputArray The input array
+    /// @return outputArray The output array
+    function _shuffle(uint64[] memory inputArray)
+        internal
+        returns (uint64[] memory outputArray)
+    {
+        uint256[] memory indices = vm.shuffle(_range(0, inputArray.length));
+        assert(indices.length == inputArray.length);
+        outputArray = new uint64[](inputArray.length);
+        for (uint256 i; i < outputArray.length; ++i) {
+            assert(indices[i] >= 0 && indices[i] < inputArray.length);
+            outputArray[i] = inputArray[indices[i]];
+        }
+    }
+
+    /// @notice Create a sorted array with all elements in the interval [inclusiveStart, exclusiveEnd).
+    /// @param inclusiveStart The inclusive start of the interval
+    /// @param exclusiveEnd The exclusive end of the interval
+    /// @return arr The output array
+    function _range(uint256 inclusiveStart, uint256 exclusiveEnd)
+        internal
+        pure
+        returns (uint256[] memory arr)
+    {
+        if (inclusiveStart < exclusiveEnd) {
+            arr = new uint256[](exclusiveEnd - inclusiveStart);
+            for (uint256 i; i < arr.length; ++i) {
+                arr[i] = inclusiveStart + i;
+                assert(inclusiveStart <= arr[i] && arr[i] < exclusiveEnd);
+            }
+        } else {
+            arr = new uint256[](0);
+        }
+    }
+
+    /// @notice Execute an output while checking whether it emits an `OutputExecuted` event,
+    /// whether the value returned by the `wasOutputExecuted` function goes from `false` to `true`,
+    /// and whether the value returned by the `getNumberOfExecutedOutputs` function increases by 1.
+    /// It also checks whether trying to execute the output again raises `OutputNotReexecutable`,
+    /// and that it can still be validated after execution.
+    /// @param output The output
+    /// @param proof The output validity proof
+    function _executeOutput(bytes memory output, OutputValidityProof memory proof)
+        internal
+    {
+        // Get the number of executed outputs before the execution
+        uint256 numOfExecutedOutputs = _app.getNumberOfExecutedOutputs();
+
+        // Make sure the output was not executed yet
+        assertFalse(_app.wasOutputExecuted(proof.outputIndex));
+
+        // Expect an `OutputExecuted` event to be emitted with the right index and output args
+        vm.expectEmit(false, false, false, true, address(_app));
+        emit Outbox.OutputExecuted(proof.outputIndex, output);
+
+        // Finally, we execute the output
+        _app.executeOutput(output, proof);
+
+        // Make sure the output was executed
+        assertTrue(_app.wasOutputExecuted(proof.outputIndex));
+
+        // Make sure the number of executed output has increased by 1
+        assertEq(_app.getNumberOfExecutedOutputs(), numOfExecutedOutputs + 1);
+
+        // Trying to execute the output again reverts.
+        vm.expectRevert(_encodeOutputNotReexecutable(output));
+        _app.executeOutput(output, proof);
+
+        // We can still validate the output and its hash afterhand.
+        _app.validateOutput(output, proof);
+        _app.validateOutputHash(keccak256(output), proof);
+    }
+
+    /// @notice Crete an array with `n` elements, all of which are `addr`.
+    /// @param addr The address value to be repeated `n` times
+    /// @param n The number of elements in the array
+    /// @return addrs The array of addresses
+    function _repeat(address addr, uint256 n)
+        internal
+        pure
+        returns (address[] memory addrs)
+    {
+        addrs = new address[](n);
+        for (uint256 i; i < n; ++i) {
+            addrs[i] = addr;
         }
     }
 }

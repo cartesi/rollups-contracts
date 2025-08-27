@@ -82,11 +82,7 @@ contract DaveAppFactoryImplTest is AppTest {
     // Virtual functions
     // -----------------
 
-    /// @notice Make a post-epoch state valid.
-    /// @param epochFinalizer The epoch finalizer (in this case, the tournament contract)
-    /// @param postEpochStateRoot The post-epoch state root that `AppTest` wants to be valid
-    /// @dev This virtual function is used by `AppTest` to test the epoch manager.
-    function _makePostEpochStateValid(
+    function _preFinalizeEpoch(
         uint256,
         address epochFinalizer,
         bytes32 postEpochStateRoot
