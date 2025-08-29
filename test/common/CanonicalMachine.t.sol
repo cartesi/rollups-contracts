@@ -4,14 +4,34 @@
 pragma solidity ^0.8.27;
 
 import {Test} from "forge-std-1.10.0/src/Test.sol";
-import {CanonicalMachine} from "src/common/CanonicalMachine.sol";
 
-import {EvmAdvanceEncoder} from "../util/EvmAdvanceEncoder.sol";
+import {CanonicalMachine} from "src/common/CanonicalMachine.sol";
+import {Inputs} from "src/common/Inputs.sol";
 
 contract CanonicalMachineTest is Test {
-    function testInputConstants() external view {
+    function testInputConstants(
+        uint256 chainId,
+        address appAddress,
+        address msgSender,
+        uint256 blockNumber,
+        uint256 blockTimestamp,
+        uint256 prevRandao,
+        uint256 index
+    ) external pure {
         assertLe(
-            EvmAdvanceEncoder.encode(0, address(0), address(0), 0, new bytes(0)).length,
+            abi.encodeCall(
+                Inputs.EvmAdvance,
+                (
+                    chainId,
+                    appAddress,
+                    msgSender,
+                    blockNumber,
+                    blockTimestamp,
+                    prevRandao,
+                    index,
+                    new bytes(0)
+                )
+            ).length,
             CanonicalMachine.INPUT_MAX_SIZE,
             "The smallest input should be within the size limits"
         );

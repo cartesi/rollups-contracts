@@ -114,6 +114,8 @@ contract DaveAppFactoryImplTest is AppTest {
     {
         address appAddress = _daveAppFactory.computeAppAddress(genesisStateRoot, salt);
         if (appAddress.code.length == 0) {
+            vm.expectEmit(true, false, false, false, address(_daveAppFactory));
+            emit DaveAppFactory.AppDeployed(App(appAddress));
             App app = _daveAppFactory.deployApp(genesisStateRoot, salt);
             assertEq(address(app), appAddress);
             assertGt(appAddress.code.length, 0);

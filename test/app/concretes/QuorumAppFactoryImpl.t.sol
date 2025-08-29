@@ -172,6 +172,8 @@ contract QuorumAppFactoryImplTest is AppTest {
     ) internal returns (App) {
         address appAddress = _computeAppAddress(genesisStateRoot, validators, salt);
         if (appAddress.code.length == 0) {
+            vm.expectEmit(true, false, false, false, address(_quorumAppFactory));
+            emit QuorumAppFactory.AppDeployed(App(appAddress));
             App app = _quorumAppFactory.deployApp(genesisStateRoot, validators, salt);
             assertEq(address(app), appAddress);
             assertGt(appAddress.code.length, 0);
