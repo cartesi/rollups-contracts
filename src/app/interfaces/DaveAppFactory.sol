@@ -3,27 +3,27 @@
 
 pragma solidity ^0.8.27;
 
-import {App} from "./App.sol";
+import {DaveApp} from "./DaveApp.sol";
 
 /// @notice Deploys apps that use the Dave fraud-proof system as epoch manager.
 interface DaveAppFactory {
     /// @notice This event is emitted whenever an app is deployed.
     /// @param app The application contract
-    event AppDeployed(App indexed app);
+    event DaveAppDeployed(DaveApp indexed app);
 
-    /// @notice Deploy a new application.
+    /// @notice Deploy a new Dave-validated application.
     /// @param genesisStateRoot The genesis state root
     /// @param salt A 32-byte value used to generate the application address
     /// @return app The newly-deployed application
-    function deployApp(bytes32 genesisStateRoot, bytes32 salt)
+    function deployDaveApp(bytes32 genesisStateRoot, bytes32 salt)
         external
-        returns (App app);
+        returns (DaveApp app);
 
-    /// @notice Compute an application address.
+    /// @notice Compute a Dave-validated application address.
     /// @param genesisStateRoot The genesis state root
     /// @param salt A 32-byte value used to generate the application address
     /// @return appAddress The application address
-    function computeAppAddress(bytes32 genesisStateRoot, bytes32 salt)
+    function computeDaveAppAddress(bytes32 genesisStateRoot, bytes32 salt)
         external
         view
         returns (address appAddress);

@@ -10,7 +10,7 @@ import {Machine} from "prt-contracts/types/Machine.sol";
 import {Tournament} from "prt-contracts/tournament/abstracts/Tournament.sol";
 import {Tree} from "prt-contracts/types/Tree.sol";
 
-import {App} from "src/app/interfaces/App.sol";
+import {DaveApp} from "src/app/interfaces/DaveApp.sol";
 import {DaveAppFactory} from "src/app/interfaces/DaveAppFactory.sol";
 
 import {AppTest} from "test/util/AppTest.sol";
@@ -50,16 +50,16 @@ contract DaveAppFactoryImplTest is AppTest {
         vm.roll(bound(blockNumber, vm.getBlockNumber(), type(uint256).max));
 
         // Deploy an app with the first genesis state root and salt.
-        App app1 = _deployOrRecoverApp(genesisStateRoots[0], salts[0]);
+        DaveApp app1 = _deployOrRecoverApp(genesisStateRoots[0], salts[0]);
 
         // Deploying an app with the same args should fail.
         // The EVM error is low-level, raised by the `CREATE2` opcode.
         vm.expectRevert(new bytes(0));
-        _daveAppFactory.deployApp(genesisStateRoots[0], salts[0]);
+        _daveAppFactory.deployDaveApp(genesisStateRoots[0], salts[0]);
 
         // Deploy an app with the first genesis state root and the second salt.
         // This should yield a different app address, and, therefore, not fail.
-        App app2 = _deployOrRecoverApp(genesisStateRoots[0], salts[1]);
+        DaveApp app2 = _deployOrRecoverApp(genesisStateRoots[0], salts[1]);
 
         assertNotEq(
             address(app1),
@@ -69,7 +69,7 @@ contract DaveAppFactoryImplTest is AppTest {
 
         // Deploy an app with the second genesis state root and the first salt.
         // This should yield a different app address, and, therefore, not fail.
-        App app3 = _deployOrRecoverApp(genesisStateRoots[1], salts[0]);
+        DaveApp app3 = _deployOrRecoverApp(genesisStateRoots[1], salts[0]);
 
         assertNotEq(
             address(app1),
@@ -110,20 +110,20 @@ contract DaveAppFactoryImplTest is AppTest {
     /// @return A newly-deployed app or a recovered one
     function _deployOrRecoverApp(bytes32 genesisStateRoot, bytes32 salt)
         internal
-        returns (App)
+        returns (DaveApp)
     {
-        address appAddress = _daveAppFactory.computeAppAddress(genesisStateRoot, salt);
+        address appAddress = _daveAppFactory.computeDaveAppAddress(genesisStateRoot, salt);
         if (appAddress.code.length == 0) {
             vm.expectEmit(true, false, false, false, address(_daveAppFactory));
-            emit DaveAppFactory.AppDeployed(App(appAddress));
-            App app = _daveAppFactory.deployApp(genesisStateRoot, salt);
+            emit DaveAppFactory.DaveAppDeployed(DaveApp(appAddress));
+            DaveApp app = _daveAppFactory.deployDaveApp(genesisStateRoot, salt);
             assertEq(address(app), appAddress);
             assertGt(appAddress.code.length, 0);
             assertEq(app.getGenesisStateRoot(), genesisStateRoot);
             assertEq(app.getDeploymentBlockNumber(), vm.getBlockNumber());
             return app;
         } else {
-            return App(appAddress); // recover already-deployed app
+            return DaveApp(appAddress); // recover already-deployed app
         }
     }
 

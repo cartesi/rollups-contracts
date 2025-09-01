@@ -7,7 +7,7 @@ import {Create2} from "@openzeppelin-contracts-5.2.0/utils/Create2.sol";
 
 import {ITournamentFactory} from "prt-contracts/ITournamentFactory.sol";
 
-import {App} from "../interfaces/App.sol";
+import {DaveApp} from "../interfaces/DaveApp.sol";
 import {DaveAppFactory} from "../interfaces/DaveAppFactory.sol";
 import {DaveAppImpl} from "../concretes/DaveAppImpl.sol";
 
@@ -18,16 +18,16 @@ contract DaveAppFactoryImpl is DaveAppFactory {
         _TOURNAMENT_FACTORY = tournamentFactory;
     }
 
-    function deployApp(bytes32 genesisStateRoot, bytes32 salt)
+    function deployDaveApp(bytes32 genesisStateRoot, bytes32 salt)
         external
         override
-        returns (App app)
+        returns (DaveApp app)
     {
         app = new DaveAppImpl{salt: salt}(genesisStateRoot, _TOURNAMENT_FACTORY);
-        emit AppDeployed(app);
+        emit DaveAppDeployed(app);
     }
 
-    function computeAppAddress(bytes32 genesisStateRoot, bytes32 salt)
+    function computeDaveAppAddress(bytes32 genesisStateRoot, bytes32 salt)
         external
         view
         override
