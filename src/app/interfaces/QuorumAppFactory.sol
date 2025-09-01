@@ -3,31 +3,31 @@
 
 pragma solidity ^0.8.27;
 
-import {App} from "./App.sol";
+import {QuorumApp} from "./QuorumApp.sol";
 
-/// @notice Deploys Quorum-validated apps.
+/// @notice Deploys quorum-validated apps.
 interface QuorumAppFactory {
     /// @notice This event is emitted whenever an app is deployed.
     /// @param app The application contract
-    event AppDeployed(App indexed app);
+    event QuorumAppDeployed(QuorumApp indexed app);
 
-    /// @notice Deploy a new application.
+    /// @notice Deploy a new quorum-validated application.
     /// @param genesisStateRoot The genesis state root
     /// @param validators The array of validators
     /// @param salt A 32-byte value used to generate the application address
     /// @return app The newly-deployed application
-    function deployApp(
+    function deployQuorumApp(
         bytes32 genesisStateRoot,
         address[] calldata validators,
         bytes32 salt
-    ) external returns (App app);
+    ) external returns (QuorumApp app);
 
-    /// @notice Compute an application address.
+    /// @notice Compute a quorum-validated application address.
     /// @param genesisStateRoot The genesis state root
     /// @param validators The array of validators
     /// @param salt A 32-byte value used to generate the application address
     /// @return appAddress The application address
-    function computeAppAddress(
+    function computeQuorumAppAddress(
         bytes32 genesisStateRoot,
         address[] calldata validators,
         bytes32 salt

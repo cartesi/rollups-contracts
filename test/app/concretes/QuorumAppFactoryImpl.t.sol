@@ -5,7 +5,7 @@ pragma solidity ^0.8.27;
 
 import {Vm} from "forge-std-1.10.0/src/Vm.sol";
 
-import {App} from "src/app/interfaces/App.sol";
+import {QuorumApp} from "src/app/interfaces/QuorumApp.sol";
 import {Quorum} from "src/app/interfaces/Quorum.sol";
 import {QuorumAppFactory} from "src/app/interfaces/QuorumAppFactory.sol";
 
@@ -20,9 +20,12 @@ contract QuorumAppFactoryImplTest is AppTest {
 
     QuorumAppFactory _quorumAppFactory;
 
+    bytes32 constant GENESIS_STATE_ROOT = keccak256("genesis");
+    bytes32 constant SALT = keccak256("salt");
+
     function setUp() external {
         _quorumAppFactory = QuorumAppFactory(vm.getAddress("QuorumAppFactoryImpl"));
-        _app = _deployOrRecoverApp(keccak256("genesis"), vm.addrs(3), keccak256("salt"));
+        _app = _deployOrRecoverQuorumApp(GENESIS_STATE_ROOT, vm.addrs(5), SALT);
         _epochFinalizerInterfaceId = type(Quorum).interfaceId;
     }
 
@@ -57,16 +60,18 @@ contract QuorumAppFactoryImplTest is AppTest {
         vm.roll(bound(blockNumber, vm.getBlockNumber(), type(uint256).max));
 
         // Deploy an app with the first genesis state root, validator array, and salt.
-        App app1 = _deployOrRecoverApp(genesisStateRoots[0], validators[0], salts[0]);
+        QuorumApp app1 =
+            _deployOrRecoverQuorumApp(genesisStateRoots[0], validators[0], salts[0]);
 
         // Deploying an app with the same args should fail.
         // The EVM error is low-level, raised by the `CREATE2` opcode.
         vm.expectRevert(new bytes(0));
-        _quorumAppFactory.deployApp(genesisStateRoots[0], validators[0], salts[0]);
+        _quorumAppFactory.deployQuorumApp(genesisStateRoots[0], validators[0], salts[0]);
 
         // Deploy an app with a different salt.
         // This should yield a different app address, and, therefore, not fail.
-        App app2 = _deployOrRecoverApp(genesisStateRoots[0], validators[0], salts[1]);
+        QuorumApp app2 =
+            _deployOrRecoverQuorumApp(genesisStateRoots[0], validators[0], salts[1]);
 
         assertNotEq(
             address(app1),
@@ -76,7 +81,8 @@ contract QuorumAppFactoryImplTest is AppTest {
 
         // Deploy an app with a different genesis state root.
         // This should yield a different app address, and, therefore, not fail.
-        App app3 = _deployOrRecoverApp(genesisStateRoots[1], validators[0], salts[0]);
+        QuorumApp app3 =
+            _deployOrRecoverQuorumApp(genesisStateRoots[1], validators[0], salts[0]);
 
         assertNotEq(
             address(app1),
@@ -86,7 +92,8 @@ contract QuorumAppFactoryImplTest is AppTest {
 
         // Deploy an app with a different validator array.
         // This should yield a different app address, and, therefore, not fail.
-        App app4 = _deployOrRecoverApp(genesisStateRoots[1], validators[1], salts[0]);
+        QuorumApp app4 =
+            _deployOrRecoverQuorumApp(genesisStateRoots[1], validators[1], salts[0]);
 
         assertNotEq(
             address(app1),
@@ -110,15 +117,11 @@ contract QuorumAppFactoryImplTest is AppTest {
     ) internal override {
         Quorum quorum = Quorum(epochFinalizer);
 
-        // First, we need to decide the number of agreers and disagreers.
+        // First, we retrieve the total numbe of validators.
         uint256 numOfValidators = quorum.getNumberOfValidators();
-        uint256 numOfAgreers = vm.randomUint((numOfValidators + 1) / 2, numOfValidators);
-        uint256 numOfDisagreers = vm.randomUint(0, numOfValidators - numOfAgreers);
 
         // Second, we randomly assign roles to each validator.
-        uint256[] memory validatorKinds;
-        validatorKinds = _validatorKinds(numOfValidators, numOfAgreers, numOfDisagreers);
-        validatorKinds = vm.shuffle(validatorKinds);
+        uint256[] memory validatorRoles = _randomValidatorRoles(numOfValidators);
 
         // Third, we make voting validators vote in a random order.
         // We know that validator IDs are their private keys (see the `setUp` function).
@@ -132,15 +135,15 @@ contract QuorumAppFactoryImplTest is AppTest {
                 validatorId,
                 "validator ID is not validator PK"
             );
-            uint256 kind = validatorKinds[validatorId - 1];
-            if (kind == AGREER) {
+            uint256 role = validatorRoles[validatorId - 1];
+            if (role == AGREER) {
                 bytes32 claim = postEpochStateRoot;
                 vm.startPrank(validator);
                 vm.expectEmit(true, true, true, false, epochFinalizer);
                 emit Quorum.Vote(epochIndex, claim, validator);
                 quorum.vote(epochIndex, claim);
                 vm.stopPrank();
-            } else if (kind == DISAGREER) {
+            } else if (role == DISAGREER) {
                 bytes32 claim = bytes32(vm.randomUint());
                 vm.startPrank(validator);
                 vm.expectEmit(true, true, true, false, epochFinalizer);
@@ -148,7 +151,7 @@ contract QuorumAppFactoryImplTest is AppTest {
                 quorum.vote(epochIndex, claim);
                 vm.stopPrank();
             } else {
-                vm.assertEq(kind, NON_VOTER); // do nothing :-)
+                vm.assertEq(role, NON_VOTER); // do nothing :-)
             }
         }
     }
@@ -164,24 +167,25 @@ contract QuorumAppFactoryImplTest is AppTest {
     /// @param genesisStateRoot The genesis state root
     /// @param validators The array of validators
     /// @param salt The salt used to calculate the app address
-    /// @return A newly-deployed app or a recovered one
-    function _deployOrRecoverApp(
+    /// @return app A newly-deployed app or a recovered one
+    function _deployOrRecoverQuorumApp(
         bytes32 genesisStateRoot,
         address[] memory validators,
         bytes32 salt
-    ) internal returns (App) {
-        address appAddress = _computeAppAddress(genesisStateRoot, validators, salt);
+    ) internal returns (QuorumApp app) {
+        address appAddress = _computeQuorumAppAddress(genesisStateRoot, validators, salt);
         if (appAddress.code.length == 0) {
+            vm.expectEmit(false, false, false, true, appAddress);
+            emit Quorum.Init(validators);
             vm.expectEmit(true, false, false, false, address(_quorumAppFactory));
-            emit QuorumAppFactory.AppDeployed(App(appAddress));
-            App app = _quorumAppFactory.deployApp(genesisStateRoot, validators, salt);
+            emit QuorumAppFactory.QuorumAppDeployed(QuorumApp(appAddress));
+            app = _quorumAppFactory.deployQuorumApp(genesisStateRoot, validators, salt);
             assertEq(address(app), appAddress);
             assertGt(appAddress.code.length, 0);
             assertEq(app.getGenesisStateRoot(), genesisStateRoot);
             assertEq(app.getDeploymentBlockNumber(), vm.getBlockNumber());
-            return app;
         } else {
-            return App(appAddress); // recover already-deployed app
+            app = QuorumApp(appAddress); // recover already-deployed app
         }
     }
 
@@ -190,46 +194,45 @@ contract QuorumAppFactoryImplTest is AppTest {
     /// @param validators The array of validators
     /// @param salt The salt used to calculate the app address
     /// @return The application contract address
-    function _computeAppAddress(
+    function _computeQuorumAppAddress(
         bytes32 genesisStateRoot,
         address[] memory validators,
         bytes32 salt
     ) internal view returns (address) {
-        return _quorumAppFactory.computeAppAddress(genesisStateRoot, validators, salt);
+        return
+            _quorumAppFactory.computeQuorumAppAddress(genesisStateRoot, validators, salt);
     }
 
-    /// @notice Returns the validator kind for a given index in an sorted array.
-    /// @param index The array index
-    /// @param numOfAgreers The number of agreeing validators
-    /// @param numOfDisagreers The number of disagreeing validators
-    /// @return The validator kind (AGREER, DISAGREER, or NON_VOTER);
-    function _validatorKind(uint256 index, uint256 numOfAgreers, uint256 numOfDisagreers)
-        internal
-        pure
-        returns (uint256)
-    {
-        if (index < numOfAgreers) {
-            return AGREER;
-        } else if (index < numOfAgreers + numOfDisagreers) {
-            return DISAGREER;
-        } else {
-            return NON_VOTER;
-        }
-    }
-
-    /// @notice Returns a sorted array of validator kinds.
+    /// @notice Generate a random array of validator roles.
     /// @param numOfValidators The number of validators
-    /// @param numOfAgreers The number of agreeing validators
-    /// @param numOfDisagreers The number of disagreeing validators
-    /// @return validatorKinds An array of validator kinds
-    function _validatorKinds(
-        uint256 numOfValidators,
-        uint256 numOfAgreers,
-        uint256 numOfDisagreers
-    ) internal pure returns (uint256[] memory validatorKinds) {
-        validatorKinds = new uint256[](numOfValidators);
+    /// @return A random array of validator roles
+    /// @dev Guarantees that agreers make up the majority.
+    function _randomValidatorRoles(uint256 numOfValidators)
+        internal
+        returns (uint256[] memory)
+    {
+        uint256[] memory validatorRoles = new uint256[](numOfValidators);
+
+        // First, we pick a random number between ceil(n/2) and n.
+        // This will be the number of agreeing validators.
+        uint256 numOfAgreers = vm.randomUint((numOfValidators + 1) / 2, numOfValidators);
+        vm.assertLe(numOfAgreers, numOfValidators, "more agreers than validators");
+
+        // Second, we pick a random number of disagreeing validators
+        // so that the total number of voters (agreeing + disagreeing) is <= n.
+        uint256 numOfDisagreers = vm.randomUint(0, numOfValidators - numOfAgreers);
+        vm.assertLe(numOfDisagreers, numOfValidators, "more disagreers than validators");
+        uint256 numOfVoters = numOfAgreers + numOfDisagreers;
+        vm.assertLe(numOfVoters, numOfValidators, "more voters than validators");
+
+        // Third, we create an array of roles using these two numbers.
         for (uint256 i; i < numOfValidators; ++i) {
-            validatorKinds[i] = _validatorKind(i, numOfAgreers, numOfDisagreers);
+            bool isVoter = (i < numOfVoters);
+            bool isAgreer = (i < numOfAgreers);
+            validatorRoles[i] = isVoter ? (isAgreer ? AGREER : DISAGREER) : NON_VOTER;
         }
+
+        // Finally, we shuffle the array to add some entropy to the tests.
+        return vm.shuffle(validatorRoles);
     }
 }

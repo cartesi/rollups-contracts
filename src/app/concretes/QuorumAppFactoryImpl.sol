@@ -5,21 +5,21 @@ pragma solidity ^0.8.27;
 
 import {Create2} from "@openzeppelin-contracts-5.2.0/utils/Create2.sol";
 
-import {App} from "../interfaces/App.sol";
+import {QuorumApp} from "../interfaces/QuorumApp.sol";
 import {QuorumAppFactory} from "../interfaces/QuorumAppFactory.sol";
 import {QuorumAppImpl} from "../concretes/QuorumAppImpl.sol";
 
 contract QuorumAppFactoryImpl is QuorumAppFactory {
-    function deployApp(
+    function deployQuorumApp(
         bytes32 genesisStateRoot,
         address[] calldata validators,
         bytes32 salt
-    ) external override returns (App app) {
+    ) external override returns (QuorumApp app) {
         app = new QuorumAppImpl{salt: salt}(genesisStateRoot, validators);
-        emit AppDeployed(app);
+        emit QuorumAppDeployed(app);
     }
 
-    function computeAppAddress(
+    function computeQuorumAppAddress(
         bytes32 genesisStateRoot,
         address[] calldata validators,
         bytes32 salt
