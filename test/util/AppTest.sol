@@ -1393,6 +1393,8 @@ abstract contract AppTest is Test {
 
         // We finalize the current epoch with a post-epoch outputs root that allows
         // the validation of the outputs provided.
+        _addEmptyInput();
+        _mineBlock();
         _makeOutputsValid();
 
         // Finally, we validate each output and their hashes
@@ -1457,6 +1459,8 @@ abstract contract AppTest is Test {
 
         // We finalize the current epoch with a post-epoch outputs root that allows
         // the validation of the outputs provided.
+        _addEmptyInput();
+        _mineBlock();
         _makeOutputsValid();
 
         // First, we try to execute the vouchers with more value than the app contract
@@ -1570,6 +1574,8 @@ abstract contract AppTest is Test {
         uint64 outputIndex = _addOutput(output);
 
         // We make the output valid and ready for execution
+        _addEmptyInput();
+        _mineBlock();
         _makeOutputsValid();
 
         // Get the output validity proof ready
@@ -1642,6 +1648,8 @@ abstract contract AppTest is Test {
         uint64 outputIndex = _addOutput(output);
 
         // We make the output valid and ready for execution
+        _addEmptyInput();
+        _mineBlock();
         _makeOutputsValid();
 
         // Get the output validity proof ready
@@ -1710,6 +1718,8 @@ abstract contract AppTest is Test {
         uint64 outputIndex = _addOutput(output);
 
         // We make the output valid and ready for execution
+        _addEmptyInput();
+        _mineBlock();
         _makeOutputsValid();
 
         // Get the output validity proof ready
@@ -1783,6 +1793,8 @@ abstract contract AppTest is Test {
         uint64 outputIndex = _addOutput(output);
 
         // We make the output valid and ready for execution
+        _addEmptyInput();
+        _mineBlock();
         _makeOutputsValid();
 
         // Get the output validity proof ready
@@ -1859,6 +1871,8 @@ abstract contract AppTest is Test {
         uint64 outputIndex = _addOutput(output);
 
         // We make the output valid and ready for execution
+        _addEmptyInput();
+        _mineBlock();
         _makeOutputsValid();
 
         // Get the output validity proof ready
@@ -2498,12 +2512,9 @@ abstract contract AppTest is Test {
     }
 
     /// @notice Make the current set of outputs valid.
-    /// @dev Assumes the last non-finalized epoch is open.
+    /// @dev Assumes the last non-finalized epoch is open and non-empty.
     function _makeOutputsValid() internal {
-        // Add a single empty input just so that we can close the epoch
         // We store the epoch finalizer so that we can finalize the epoch later
-        _addEmptyInput();
-        _mineBlock();
         uint256 epochIndex = _app.getFinalizedEpochCount();
         address epochFinalizer = _closeEpoch(epochIndex);
 

@@ -21,10 +21,15 @@ contract DaveAppFactoryImplTest is AppTest {
     using Tree for Tree.Node;
 
     DaveAppFactory _daveAppFactory;
+    DaveApp _daveApp;
+
+    bytes32 constant GENESIS_STATE_ROOT = keccak256("genesis");
+    bytes32 constant SALT = keccak256("salt");
 
     function setUp() external {
         _daveAppFactory = DaveAppFactory(vm.getAddress("DaveAppFactoryImpl"));
-        _app = _deployOrRecoverApp(keccak256("genesis"), keccak256("salt"));
+        _daveApp = _deployOrRecoverApp(GENESIS_STATE_ROOT, SALT);
+        _app = _daveApp; // We downcast the Dave app for the generic app tests
         _epochFinalizerInterfaceId = type(ITournament).interfaceId;
     }
 
@@ -76,6 +81,63 @@ contract DaveAppFactoryImplTest is AppTest {
             address(app3),
             "different genesis states should yield different app contracts"
         );
+    }
+
+    // -------------------
+    // Data provider tests
+    // -------------------
+
+    function testProvideMerkleRootOfInput(
+        bytes[][2] calldata payloads,
+        bytes calldata extra
+    ) external {
+        // First, we add some inputs just to test that the `provideMerkleRootOfInput`
+        // accepts input indices relative to the current epoch. We also store their
+        // Merkle roots for later checking.
+        bytes32[] memory inputMerkleRoots0 = new bytes32[](payloads[0].length);
+        for (uint256 i; i < inputMerkleRoots0.length; ++i) {
+            inputMerkleRoots0[i] = _app.addInput(payloads[0][i]);
+        }
+
+        // If we add at least one input, we close and finalize the epoch.
+        // We cannot do that when `preInputCount = 0` because empty epochs cannot be closed.
+        if (inputMerkleRoots0.length > 0) {
+            _mineBlock();
+            _makeOutputsValid();
+        }
+
+        // Now, we add the inputs we received as fuzzy arguments
+        // and store their Merkle roots to compare with the values
+        // returned by `provideMerkleRootOfInput`.
+        bytes32[] memory inputMerkleRoots1 = new bytes32[](payloads[1].length);
+        for (uint256 i; i < inputMerkleRoots1.length; ++i) {
+            inputMerkleRoots1[i] = _app.addInput(payloads[1][i]);
+        }
+
+        // Before we close the epoch, `provideMerkleRootOfInput`
+        // will return the Merkle roots of the previous (now finalized) epoch.
+        for (uint256 i; i < inputMerkleRoots0.length; ++i) {
+            assertEq(_daveApp.provideMerkleRootOfInput(i, extra), inputMerkleRoots0[i]);
+        }
+
+        // If we added at least one input, we can close the current epoch.
+        // And then, we can query the Merkle roots from those inputs.
+        if (inputMerkleRoots1.length > 0) {
+            _mineBlock();
+            _app.closeEpoch(_app.getFinalizedEpochCount());
+            for (uint256 i; i < inputMerkleRoots1.length; ++i) {
+                assertEq(
+                    _daveApp.provideMerkleRootOfInput(i, extra), inputMerkleRoots1[i]
+                );
+            }
+        }
+
+        // For input indices beyond the current epoch boundaries,
+        // the `provideMerkleRootOfInput` function returns zero.
+        {
+            uint256 i = vm.randomUint(inputMerkleRoots1.length, type(uint256).max);
+            assertEq(_daveApp.provideMerkleRootOfInput(i, extra), bytes32(0));
+        }
     }
 
     // -----------------
