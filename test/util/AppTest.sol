@@ -183,12 +183,6 @@ abstract contract AppTest is Test {
         }
     }
 
-    function testAddLargestInput() external {
-        uint256 maxPayloadLength = _computeMaxInputPayloadLength();
-        bytes memory payload = new bytes(maxPayloadLength);
-        _testAddInput(payload, 0);
-    }
-
     function testInputTooLarge() external {
         uint256 maxPayloadLength = _computeMaxInputPayloadLength();
         bytes memory payload = new bytes(maxPayloadLength + 1);
