@@ -26,7 +26,7 @@ contract QuorumAppFactoryImplTest is AppTest {
 
     function setUp() external {
         _quorumAppFactory = QuorumAppFactory(vm.getAddress("QuorumAppFactoryImpl"));
-        _quorumApp = _deployOrRecoverQuorumApp(GENESIS_STATE_ROOT, vm.addrs(5), SALT);
+        _quorumApp = _deployOrRecoverQuorumApp(GENESIS_STATE_ROOT, vm.addrs(7), SALT);
         _app = _quorumApp; // We downcast the Quorum app for the generic app tests
         _epochFinalizerInterfaceId = type(Quorum).interfaceId;
     }
