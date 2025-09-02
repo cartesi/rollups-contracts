@@ -19,13 +19,15 @@ contract QuorumAppFactoryImplTest is AppTest {
     using LibAddressArray for address[];
 
     QuorumAppFactory _quorumAppFactory;
+    QuorumApp _quorumApp;
 
     bytes32 constant GENESIS_STATE_ROOT = keccak256("genesis");
     bytes32 constant SALT = keccak256("salt");
 
     function setUp() external {
         _quorumAppFactory = QuorumAppFactory(vm.getAddress("QuorumAppFactoryImpl"));
-        _app = _deployOrRecoverQuorumApp(GENESIS_STATE_ROOT, vm.addrs(5), SALT);
+        _quorumApp = _deployOrRecoverQuorumApp(GENESIS_STATE_ROOT, vm.addrs(5), SALT);
+        _app = _quorumApp; // We downcast the Quorum app for the generic app tests
         _epochFinalizerInterfaceId = type(Quorum).interfaceId;
     }
 
@@ -182,10 +184,15 @@ contract QuorumAppFactoryImplTest is AppTest {
             app = _quorumAppFactory.deployQuorumApp(genesisStateRoot, validators, salt);
             assertEq(address(app), appAddress);
             assertGt(appAddress.code.length, 0);
-            assertEq(app.getGenesisStateRoot(), genesisStateRoot);
             assertEq(app.getDeploymentBlockNumber(), vm.getBlockNumber());
         } else {
             app = QuorumApp(appAddress); // recover already-deployed app
+            assertLe(app.getDeploymentBlockNumber(), vm.getBlockNumber());
+        }
+        assertEq(app.getGenesisStateRoot(), genesisStateRoot);
+        assertEq(app.getNumberOfValidators(), validators.length);
+        for (uint256 i; i < validators.length; ++i) {
+            assertEq(app.getValidatorIdByAddress(validators[i]), i + 1);
         }
     }
 

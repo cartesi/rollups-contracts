@@ -169,24 +169,24 @@ contract DaveAppFactoryImplTest is AppTest {
     /// recovered app was also instantiated with the same arguments.
     /// @param genesisStateRoot The genesis state root
     /// @param salt The salt used to calculate the app address
-    /// @return A newly-deployed app or a recovered one
+    /// @return app A newly-deployed app or a recovered one
     function _deployOrRecoverApp(bytes32 genesisStateRoot, bytes32 salt)
         internal
-        returns (DaveApp)
+        returns (DaveApp app)
     {
         address appAddress = _daveAppFactory.computeDaveAppAddress(genesisStateRoot, salt);
         if (appAddress.code.length == 0) {
             vm.expectEmit(true, false, false, false, address(_daveAppFactory));
             emit DaveAppFactory.DaveAppDeployed(DaveApp(appAddress));
-            DaveApp app = _daveAppFactory.deployDaveApp(genesisStateRoot, salt);
+            app = _daveAppFactory.deployDaveApp(genesisStateRoot, salt);
             assertEq(address(app), appAddress);
             assertGt(appAddress.code.length, 0);
-            assertEq(app.getGenesisStateRoot(), genesisStateRoot);
             assertEq(app.getDeploymentBlockNumber(), vm.getBlockNumber());
-            return app;
         } else {
-            return DaveApp(appAddress); // recover already-deployed app
+            app = DaveApp(appAddress); // recover already-deployed app
+            assertLe(app.getDeploymentBlockNumber(), vm.getBlockNumber());
         }
+        assertEq(app.getGenesisStateRoot(), genesisStateRoot);
     }
 
     /// @notice Compute the left node of a top-level commitment from
