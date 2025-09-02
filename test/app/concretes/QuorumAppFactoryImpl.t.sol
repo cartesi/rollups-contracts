@@ -5,16 +5,18 @@ pragma solidity ^0.8.27;
 
 import {Vm} from "forge-std-1.10.0/src/Vm.sol";
 
+import {LibBitmap} from "src/library/LibBitmap.sol";
+import {QuorumAppFactory} from "src/app/interfaces/QuorumAppFactory.sol";
 import {QuorumApp} from "src/app/interfaces/QuorumApp.sol";
 import {Quorum} from "src/app/interfaces/Quorum.sol";
-import {QuorumAppFactory} from "src/app/interfaces/QuorumAppFactory.sol";
 
 import {AppTest} from "test/util/AppTest.sol";
-import {LibCannon} from "test/util/LibCannon.sol";
 import {LibAddressArray} from "test/util/LibAddressArray.sol";
+import {LibCannon} from "test/util/LibCannon.sol";
 
 contract QuorumAppFactoryImplTest is AppTest {
     using LibCannon for Vm;
+    using LibBitmap for bytes32;
     using LibAddressArray for Vm;
     using LibAddressArray for address[];
 
@@ -139,21 +141,14 @@ contract QuorumAppFactoryImplTest is AppTest {
             );
             uint256 role = validatorRoles[validatorId - 1];
             if (role == AGREER) {
-                bytes32 claim = postEpochStateRoot;
-                vm.startPrank(validator);
-                vm.expectEmit(true, true, true, false, epochFinalizer);
-                emit Quorum.Vote(epochIndex, claim, validator);
-                quorum.vote(epochIndex, claim);
-                vm.stopPrank();
+                // vote on the post-epoch state agreed upon by the majority
+                _vote(quorum, validator, epochIndex, postEpochStateRoot);
             } else if (role == DISAGREER) {
-                bytes32 claim = bytes32(vm.randomUint());
-                vm.startPrank(validator);
-                vm.expectEmit(true, true, true, false, epochFinalizer);
-                emit Quorum.Vote(epochIndex, claim, validator);
-                quorum.vote(epochIndex, claim);
-                vm.stopPrank();
+                // vote on a random post-epoch state
+                _vote(quorum, validator, epochIndex, bytes32(vm.randomUint()));
             } else {
-                vm.assertEq(role, NON_VOTER); // do nothing :-)
+                // do nothing :-)
+                vm.assertEq(role, NON_VOTER);
             }
         }
     }
@@ -241,5 +236,54 @@ contract QuorumAppFactoryImplTest is AppTest {
 
         // Finally, we shuffle the array to add some entropy to the tests.
         return vm.shuffle(validatorRoles);
+    }
+
+    /// @notice Make quorum validator vote on post-epoch state root.
+    /// @param quorum The quorum contract
+    /// @param validator The validator address
+    /// @param epochIndex The epoch index
+    /// @param postEpochStateRoot The post-epoch state root
+    /// @dev This function also checks the votes before and after.
+    function _vote(
+        Quorum quorum,
+        address validator,
+        uint256 epochIndex,
+        bytes32 postEpochStateRoot
+    ) internal {
+        uint8 numOfValidators = quorum.getNumberOfValidators();
+        uint8 validatorId = quorum.getValidatorIdByAddress(validator);
+        assertGe(validatorId, 1, "not validator");
+        assertLe(validatorId, numOfValidators, "invalid validator ID");
+
+        bytes32 voteBitmapBefore = quorum.getVoteBitmap(epochIndex, postEpochStateRoot);
+        uint256 votesBefore = voteBitmapBefore.countSetBits();
+        bytes32 aggrVoteBitmapBefore = quorum.getAggregatedVoteBitmap(epochIndex);
+        uint256 aggrVotesBefore = aggrVoteBitmapBefore.countSetBits();
+
+        assertFalse(voteBitmapBefore.getBitAt(validatorId));
+        assertFalse(aggrVoteBitmapBefore.getBitAt(validatorId));
+        assertLe(votesBefore, aggrVotesBefore);
+        assertLe(aggrVotesBefore, numOfValidators);
+
+        vm.startPrank(validator);
+        vm.expectEmit(true, true, true, false, address(quorum));
+        emit Quorum.Vote(epochIndex, postEpochStateRoot, validator);
+        quorum.vote(epochIndex, postEpochStateRoot);
+        vm.stopPrank();
+
+        bytes32 voteBitmapAfter = quorum.getVoteBitmap(epochIndex, postEpochStateRoot);
+        uint256 votesAfter = voteBitmapAfter.countSetBits();
+        bytes32 aggrVoteBitmapAfter = quorum.getAggregatedVoteBitmap(epochIndex);
+        uint256 aggrVotesAfter = aggrVoteBitmapAfter.countSetBits();
+
+        assertTrue(voteBitmapAfter.getBitAt(validatorId));
+        assertTrue(aggrVoteBitmapAfter.getBitAt(validatorId));
+        assertEq(voteBitmapAfter, voteBitmapBefore.setBitAt(validatorId));
+        assertEq(aggrVoteBitmapAfter, aggrVoteBitmapBefore.setBitAt(validatorId));
+        assertLe(votesAfter, aggrVotesAfter);
+        assertLe(aggrVotesAfter, numOfValidators);
+
+        assertEq(votesAfter, votesBefore + 1);
+        assertEq(aggrVotesAfter, aggrVotesBefore + 1);
     }
 }
