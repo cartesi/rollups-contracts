@@ -106,6 +106,39 @@ contract QuorumAppFactoryImplTest is AppTest {
         );
     }
 
+    // ------------
+    // Quorum tests
+    // ------------
+
+    function testVoteRevertsWhenSenderIsNotValidator(
+        bytes32 genesisStateRoot,
+        uint8 numOfValidators,
+        bytes32 salt,
+        bytes32 postEpochStateRoot
+    ) external {
+        // We first deploy a quorum-validated application with a random non-empty validator set.
+        vm.assume(numOfValidators >= 1);
+        address[] memory validators = vm.randomAddresses(numOfValidators);
+        QuorumApp app = _deployOrRecoverQuorumApp(genesisStateRoot, validators, salt);
+
+        // Then we add an input, mine a block, and close the first epoch (so that we can vote).
+        // The contents of the input are not relevant, so we just add an empty input.
+        _addEmptyInput();
+        _mineBlock();
+        app.closeEpoch(0);
+
+        // Now that validators can vote, we pick a random address that is not that of a validator.
+        // We check this last condition by querying the quorum contract for its ID.
+        // If zero, we know that this address is not in the validator set.
+        address notValidator = vm.randomAddress();
+        vm.assume(app.getValidatorIdByAddress(notValidator) == 0);
+
+        // We then prank this non-validator and make them attempt to vote for some random post-epoch state.
+        vm.expectRevert(_encodeMessageSenderIsNotValidator(notValidator));
+        vm.prank(notValidator);
+        app.vote(0, postEpochStateRoot);
+    }
+
     // -----------------
     // Virtual functions
     // -----------------
@@ -285,5 +318,16 @@ contract QuorumAppFactoryImplTest is AppTest {
 
         assertEq(votesAfter, votesBefore + 1);
         assertEq(aggrVotesAfter, aggrVotesBefore + 1);
+    }
+
+    /// @notice Encode a `MessageSenderIsNotValidator` error.
+    /// @param sender The message sender
+    /// @return The encoded Solidity error
+    function _encodeMessageSenderIsNotValidator(address sender)
+        internal
+        pure
+        returns (bytes memory)
+    {
+        return abi.encodeWithSelector(Quorum.MessageSenderIsNotValidator.selector, sender);
     }
 }
