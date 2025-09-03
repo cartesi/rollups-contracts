@@ -105,6 +105,8 @@ abstract contract QuorumImpl is EpochManagerImpl, Quorum {
         override
         isFirstNonFinalizedEpoch(epochIndex)
     {
+        require(_isFirstNonFinalizedEpochClosed(), CannotCastVoteForOpenEpoch());
+
         // First, make sure the message sender is a validator.
         address validatorAddress = msg.sender;
         uint8 validatorId = getValidatorIdByAddress(validatorAddress);

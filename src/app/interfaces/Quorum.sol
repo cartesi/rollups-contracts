@@ -46,6 +46,11 @@ interface Quorum is EpochManager {
     /// already cast a vote for the same epoch.
     error VoteAlreadyCastForEpoch();
 
+    /// @notice This error is raised when a validator
+    /// tries to vote on a post-epoch state while
+    /// the epoch is still open.
+    error CannotCastVoteForOpenEpoch();
+
     /// @notice Get the number of validators in the quorum.
     /// @return numOfValidators The number of validators
     /// @dev Validator IDs range between 1 and the number of validators.

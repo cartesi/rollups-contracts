@@ -12,7 +12,7 @@ abstract contract EpochManagerImpl is EpochManager {
     using LibBinaryMerkleTree for bytes32[];
 
     uint256 private _finalizedEpochCount;
-    bool private _isFirstNonFinalizedEpochClosed;
+    bool private __isFirstNonFinalizedEpochClosed;
     uint256 private _inputIndexInclusiveLowerBound;
     uint256 private _inputIndexExclusiveUpperBound;
     mapping(bytes32 => bool) private _isOutputsRootFinal;
@@ -46,7 +46,7 @@ abstract contract EpochManagerImpl is EpochManager {
         override
         isFirstNonFinalizedEpoch(epochIndex)
     {
-        require(!_isFirstNonFinalizedEpochClosed, EpochAlreadyClosed(epochIndex));
+        require(!_isFirstNonFinalizedEpochClosed(), EpochAlreadyClosed(epochIndex));
         require(!_isOpenEpochEmpty(), CannotCloseEmptyEpoch(epochIndex));
     }
 
@@ -78,7 +78,7 @@ abstract contract EpochManagerImpl is EpochManager {
 
     /// @notice Close the first non-finalized epoch.
     function _closeEpoch(address epochFinalizer) internal {
-        _isFirstNonFinalizedEpochClosed = true;
+        __isFirstNonFinalizedEpochClosed = true;
         _inputIndexInclusiveLowerBound = _inputIndexExclusiveUpperBound;
         _inputIndexExclusiveUpperBound = _getNumberOfInputsBeforeCurrentBlock();
         uint256 epochIndex = getFinalizedEpochCount();
@@ -101,7 +101,7 @@ abstract contract EpochManagerImpl is EpochManager {
         returns (bytes32 postEpochStateRoot)
     {
         _validateProofLength(proof.length);
-        require(_isFirstNonFinalizedEpochClosed, CannotFinalizeOpenEpoch(epochIndex));
+        require(_isFirstNonFinalizedEpochClosed(), CannotFinalizeOpenEpoch(epochIndex));
         postEpochStateRoot = _computeStateRoot(postEpochOutputsRoot, proof);
         require(
             _isPostEpochStateRootValid(postEpochStateRoot),
@@ -115,7 +115,7 @@ abstract contract EpochManagerImpl is EpochManager {
     {
         uint256 epochIndex = _finalizedEpochCount;
         _finalizedEpochCount = epochIndex + 1;
-        _isFirstNonFinalizedEpochClosed = false;
+        __isFirstNonFinalizedEpochClosed = false;
         _isOutputsRootFinal[postEpochOutputsRoot] = true;
         emit EpochFinalized(epochIndex, postEpochStateRoot, postEpochOutputsRoot);
     }
@@ -163,6 +163,15 @@ abstract contract EpochManagerImpl is EpochManager {
         returns (uint256 inputIndexExclusiveUpperBound)
     {
         return _inputIndexExclusiveUpperBound;
+    }
+
+    /// @notice Check whether the first non-finalized epoch is closed.
+    function _isFirstNonFinalizedEpochClosed()
+        internal
+        view
+        returns (bool isFirstNonFinalizedEpochClosed)
+    {
+        return __isFirstNonFinalizedEpochClosed;
     }
 
     /// @notice Get the number of inputs before the current block.
