@@ -79,4 +79,7 @@ interface IConsensus is IOutputsMerkleRootValidator {
     /// @dev The epoch number of a block is defined as
     /// the integer division of the block number by the epoch length.
     function getEpochLength() external view returns (uint256);
+
+    /// @notice Get the number of claims accepted by the consensus.
+    function getNumberOfAcceptedClaims() external view returns (uint256);
 }

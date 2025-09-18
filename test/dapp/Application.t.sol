@@ -508,6 +508,22 @@ contract ApplicationTest is Test, OwnableTest {
         );
     }
 
+    function _expectNumberOfExecutedOutputsIncrement(uint256 before) internal {
+        assertEq(
+            _appContract.getNumberOfExecutedOutputs(),
+            before + 1,
+            "Should increment number of executed outputs on revert"
+        );
+    }
+
+    function _expectNumberOfExecutedOutputsSame(uint256 before) internal {
+        assertEq(
+            _appContract.getNumberOfExecutedOutputs(),
+            before,
+            "Should not increment number of executed outputs on revert"
+        );
+    }
+
     function _expectRevertInvalidOutputHashesSiblingsArrayLength() internal {
         vm.expectRevert(IApplication.InvalidOutputHashesSiblingsArrayLength.selector);
     }
@@ -531,19 +547,19 @@ contract ApplicationTest is Test, OwnableTest {
     function _testEtherTransfer(bytes memory output, OutputValidityProof memory proof)
         internal
     {
+        uint256 numberOfExecutedOutputsBefore = _appContract.getNumberOfExecutedOutputs();
         assertLt(
             address(_appContract).balance,
             _transferAmount,
             "Application contract does not have enough Ether"
         );
-
         vm.expectRevert(
             abi.encodeWithSelector(
                 IApplication.InsufficientFunds.selector, _transferAmount, 0
             )
         );
         _appContract.executeOutput(output, proof);
-
+        _expectNumberOfExecutedOutputsSame(numberOfExecutedOutputsBefore);
         vm.deal(address(_appContract), _transferAmount);
 
         uint256 recipientBalance = _recipient.balance;
@@ -566,7 +582,7 @@ contract ApplicationTest is Test, OwnableTest {
         );
 
         assertTrue(_wasOutputExecuted(proof), "Output should be marked as executed");
-
+        _expectNumberOfExecutedOutputsIncrement(numberOfExecutedOutputsBefore);
         _expectRevertOutputNotReexecutable(output);
         _appContract.executeOutput(output, proof);
     }
@@ -574,6 +590,7 @@ contract ApplicationTest is Test, OwnableTest {
     function _testEtherMint(bytes memory output, OutputValidityProof memory proof)
         internal
     {
+        uint256 numberOfExecutedOutputsBefore = _appContract.getNumberOfExecutedOutputs();
         assertLt(
             address(_appContract).balance,
             _transferAmount,
@@ -583,6 +600,7 @@ contract ApplicationTest is Test, OwnableTest {
         vm.expectRevert();
         _appContract.executeOutput(output, proof);
 
+        _expectNumberOfExecutedOutputsSame(numberOfExecutedOutputsBefore);
         vm.deal(address(_appContract), _transferAmount);
 
         uint256 recipientBalance = address(_etherReceiver).balance;
@@ -611,6 +629,7 @@ contract ApplicationTest is Test, OwnableTest {
         );
 
         assertTrue(_wasOutputExecuted(proof), "Output should be marked as executed");
+        _expectNumberOfExecutedOutputsIncrement(numberOfExecutedOutputsBefore);
 
         _expectRevertOutputNotReexecutable(output);
         _appContract.executeOutput(output, proof);
@@ -619,6 +638,7 @@ contract ApplicationTest is Test, OwnableTest {
     function _testERC721Transfer(bytes memory output, OutputValidityProof memory proof)
         internal
     {
+        uint256 numberOfExecutedOutputsBefore = _appContract.getNumberOfExecutedOutputs();
         assertEq(
             _erc721Token.ownerOf(_tokenId),
             _tokenOwner,
@@ -633,6 +653,7 @@ contract ApplicationTest is Test, OwnableTest {
             )
         );
         _appContract.executeOutput(output, proof);
+        _expectNumberOfExecutedOutputsSame(numberOfExecutedOutputsBefore);
 
         vm.prank(_tokenOwner);
         _erc721Token.safeTransferFrom(_tokenOwner, address(_appContract), _tokenId);
@@ -647,6 +668,7 @@ contract ApplicationTest is Test, OwnableTest {
         );
 
         assertTrue(_wasOutputExecuted(proof), "Output should be marked as executed");
+        _expectNumberOfExecutedOutputsIncrement(numberOfExecutedOutputsBefore);
 
         _expectRevertOutputNotReexecutable(output);
         _appContract.executeOutput(output, proof);
@@ -655,6 +677,7 @@ contract ApplicationTest is Test, OwnableTest {
     function _testERC20Fail(bytes memory output, OutputValidityProof memory proof)
         internal
     {
+        uint256 numberOfExecutedOutputsBefore = _appContract.getNumberOfExecutedOutputs();
         // test revert
 
         assertLt(
@@ -672,6 +695,7 @@ contract ApplicationTest is Test, OwnableTest {
             )
         );
         _appContract.executeOutput(output, proof);
+        _expectNumberOfExecutedOutputsSame(numberOfExecutedOutputsBefore);
 
         // test return false
 
@@ -686,12 +710,14 @@ contract ApplicationTest is Test, OwnableTest {
             )
         );
         _appContract.executeOutput(output, proof);
+        _expectNumberOfExecutedOutputsSame(numberOfExecutedOutputsBefore);
         vm.clearMockedCalls();
     }
 
     function _testERC20Success(bytes memory output, OutputValidityProof memory proof)
         internal
     {
+        uint256 numberOfExecutedOutputsBefore = _appContract.getNumberOfExecutedOutputs();
         vm.prank(_tokenOwner);
         _erc20Token.transfer(address(_appContract), _transferAmount);
 
@@ -714,6 +740,7 @@ contract ApplicationTest is Test, OwnableTest {
         );
 
         assertTrue(_wasOutputExecuted(proof), "Output should be marked as executed");
+        _expectNumberOfExecutedOutputsIncrement(numberOfExecutedOutputsBefore);
 
         _expectRevertOutputNotReexecutable(output);
         _appContract.executeOutput(output, proof);
@@ -723,6 +750,7 @@ contract ApplicationTest is Test, OwnableTest {
         bytes memory output,
         OutputValidityProof memory proof
     ) internal {
+        uint256 numberOfExecutedOutputsBefore = _appContract.getNumberOfExecutedOutputs();
         vm.expectRevert(
             abi.encodeWithSelector(
                 IERC1155Errors.ERC1155InsufficientBalance.selector,
@@ -733,6 +761,7 @@ contract ApplicationTest is Test, OwnableTest {
             )
         );
         _appContract.executeOutput(output, proof);
+        _expectNumberOfExecutedOutputsSame(numberOfExecutedOutputsBefore);
 
         vm.prank(_tokenOwner);
         _erc1155SingleToken.safeTransferFrom(
@@ -758,6 +787,7 @@ contract ApplicationTest is Test, OwnableTest {
         );
 
         assertTrue(_wasOutputExecuted(proof), "Output should be marked as executed");
+        _expectNumberOfExecutedOutputsIncrement(numberOfExecutedOutputsBefore);
 
         _expectRevertOutputNotReexecutable(output);
         _appContract.executeOutput(output, proof);
@@ -767,6 +797,7 @@ contract ApplicationTest is Test, OwnableTest {
         bytes memory output,
         OutputValidityProof memory proof
     ) internal {
+        uint256 numberOfExecutedOutputsBefore = _appContract.getNumberOfExecutedOutputs();
         vm.expectRevert(
             abi.encodeWithSelector(
                 IERC1155Errors.ERC1155InsufficientBalance.selector,
@@ -777,6 +808,7 @@ contract ApplicationTest is Test, OwnableTest {
             )
         );
         _appContract.executeOutput(output, proof);
+        _expectNumberOfExecutedOutputsSame(numberOfExecutedOutputsBefore);
 
         vm.prank(_tokenOwner);
         _erc1155BatchToken.safeBatchTransferFrom(
@@ -809,6 +841,7 @@ contract ApplicationTest is Test, OwnableTest {
         }
 
         assertTrue(_wasOutputExecuted(proof), "Output should be marked as executed");
+        _expectNumberOfExecutedOutputsIncrement(numberOfExecutedOutputsBefore);
 
         _expectRevertOutputNotReexecutable(output);
         _appContract.executeOutput(output, proof);

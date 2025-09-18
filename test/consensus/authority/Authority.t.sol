@@ -118,6 +118,24 @@ contract AuthorityTest is Test, ERC165Test, OwnableTest {
         authority.submitClaim(appContract, lastProcessedBlockNumber, claim);
     }
 
+    function testSubmitMultipleValidClaims(bytes32[] calldata claims) public {
+        address owner = vm.addr(1);
+        address app = vm.addr(2);
+        uint256 epochLength = 5;
+
+        IAuthority authority = new Authority(owner, epochLength);
+
+        for (uint256 i; i < claims.length; ++i) {
+            uint256 blockNum = (i + 1) * epochLength;
+            vm.roll(blockNum);
+
+            vm.prank(owner);
+            authority.submitClaim(app, blockNum - 1, claims[i]);
+
+            assertEq(authority.getNumberOfAcceptedClaims(), i + 1);
+        }
+    }
+
     function testSubmitClaimNotFirstClaim(
         address owner,
         uint256 epochLength,
@@ -152,6 +170,8 @@ contract AuthorityTest is Test, ERC165Test, OwnableTest {
         );
         vm.prank(owner);
         authority.submitClaim(appContract, lastProcessedBlockNumber, claim2);
+
+        assertEq(authority.getNumberOfAcceptedClaims(), 1);
     }
 
     function testSubmitClaimNotEpochFinalBlock(
@@ -185,6 +205,7 @@ contract AuthorityTest is Test, ERC165Test, OwnableTest {
         );
         vm.prank(owner);
         authority.submitClaim(appContract, lastProcessedBlockNumber, claim);
+        assertEq(authority.getNumberOfAcceptedClaims(), 0);
     }
 
     function testSubmitClaimNotPastBlock(
@@ -214,6 +235,7 @@ contract AuthorityTest is Test, ERC165Test, OwnableTest {
         );
         vm.prank(owner);
         authority.submitClaim(appContract, lastProcessedBlockNumber, claim);
+        assertEq(authority.getNumberOfAcceptedClaims(), 0);
     }
 
     function testIsOutputsMerkleRootValid(

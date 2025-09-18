@@ -51,6 +51,10 @@ contract Application is
     /// @dev See the `getDataAvailability` function.
     bytes internal _dataAvailability;
 
+    /// @notice The number of outputs executed by the application.
+    /// @dev See the `numberOfOutputsExecuted` function.
+    uint256 _numOfExecutedOutputs;
+
     /// @notice Creates an `Application` contract.
     /// @param outputsMerkleRootValidator The initial outputs Merkle root validator contract
     /// @param initialOwner The initial application owner
@@ -104,6 +108,7 @@ contract Application is
         }
 
         _executed.set(outputIndex);
+        ++_numOfExecutedOutputs;
         emit OutputExecuted(outputIndex, output);
     }
 
@@ -174,6 +179,11 @@ contract Application is
     /// @inheritdoc IApplication
     function getDeploymentBlockNumber() external view override returns (uint256) {
         return _deploymentBlockNumber;
+    }
+
+    /// @inheritdoc IApplication
+    function getNumberOfExecutedOutputs() external view override returns (uint256) {
+        return _numOfExecutedOutputs;
     }
 
     /// @inheritdoc Ownable

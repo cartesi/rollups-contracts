@@ -429,6 +429,35 @@ contract QuorumTest is Test, ERC165Test {
         quorum.submitClaim(claim);
     }
 
+    function testMultipleClaimsAcceptedCounter(bytes32[] calldata claims) external {
+        uint256 epochLength = 5;
+        uint256 numOfValidators = 3;
+
+        IQuorum quorum = _deployQuorum(numOfValidators, epochLength);
+
+        Claim memory claim;
+        claim.appContract = vm.addr(1);
+
+        uint256 blockNum = epochLength;
+        vm.roll(blockNum);
+
+        for (uint256 i = 0; i < claims.length; ++i) {
+            claim.lastProcessedBlockNumber = blockNum - 1;
+            claim.outputsMerkleRoot = claims[i];
+
+            // submit claim with majority validators
+            for (uint256 id = 1; id <= (numOfValidators / 2 + 1); ++id) {
+                vm.prank(quorum.validatorById(id));
+                quorum.submitClaim(claim);
+            }
+
+            assertTrue(quorum.isOutputsMerkleRootValid(claim));
+            assertEq(quorum.getNumberOfAcceptedClaims(), i + 1);
+
+            blockNum += epochLength;
+            vm.roll(blockNum);
+        }
+    }
     // Internal functions
     // ------------------
 

@@ -16,6 +16,9 @@ abstract contract AbstractConsensus is IConsensus, ERC165 {
 
     /// @notice Indexes accepted claims by application contract address.
     mapping(address => mapping(bytes32 => bool)) private _validOutputsMerkleRoots;
+    /// @notice Number of claims accepted by the consensus.
+    /// @dev Must be monotonically non-decreasing in time
+    uint256 _numOfAcceptedClaims;
 
     /// @param epochLength The epoch length
     /// @dev Reverts if the epoch length is zero.
@@ -37,6 +40,11 @@ abstract contract AbstractConsensus is IConsensus, ERC165 {
     /// @inheritdoc IConsensus
     function getEpochLength() public view override returns (uint256) {
         return _epochLength;
+    }
+
+    /// @inheritdoc IConsensus
+    function getNumberOfAcceptedClaims() external view override returns (uint256) {
+        return _numOfAcceptedClaims;
     }
 
     /// @inheritdoc ERC165
@@ -83,5 +91,6 @@ abstract contract AbstractConsensus is IConsensus, ERC165 {
     ) internal {
         _validOutputsMerkleRoots[appContract][outputsMerkleRoot] = true;
         emit ClaimAccepted(appContract, lastProcessedBlockNumber, outputsMerkleRoot);
+        ++_numOfAcceptedClaims;
     }
 }
