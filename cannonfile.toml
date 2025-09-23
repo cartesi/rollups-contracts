@@ -43,12 +43,6 @@ create2 = true
 salt = "0x0000000000000000000000000000000000000000ec0f56adf9d34103e58a5f15"
 ifExists = "continue"
 
-[deploy.AuthorityFactory]
-artifact = "AuthorityFactory"
-create2 = true
-salt = "0x0000000000000000000000000000000000000000dacfd4ba82e0a901d92dfa57"
-ifExists = "continue"
-
 [deploy.QuorumFactory]
 artifact = "QuorumFactory"
 create2 = true
@@ -59,16 +53,6 @@ ifExists = "continue"
 artifact = "ApplicationFactory"
 create2 = true
 salt = "0x0000000000000000000000000000000000000000381c2f62d29c55017736a80e"
-ifExists = "continue"
-
-[deploy.SelfHostedApplicationFactory]
-artifact = "SelfHostedApplicationFactory"
-args = [
-    "<%= contracts.AuthorityFactory.address %>",
-    "<%= contracts.ApplicationFactory.address %>",
-]
-create2 = true
-salt = "0x000000000000000000000000000000000000000080a213e9ec68fb034117851c"
 ifExists = "continue"
 
 [deploy.SafeERC20Transfer]
