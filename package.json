@@ -13,8 +13,8 @@
         "start": "cannon build --keep-alive --write-deployments deployments --private-key 0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80 --anvil.port 8545"
     },
     "devDependencies": {
-        "@changesets/cli": "^2.29.4",
-        "@usecannon/cli": "^2.22.0"
+        "@changesets/cli": "^2.29.5",
+        "@usecannon/cli": "^2.24.2"
     },
     "files": [
         "out"
