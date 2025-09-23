@@ -30,4 +30,12 @@ library CanonicalMachine {
     ///      = log_2 (memorySize / dataBlockSize)
     ///      = log_2 memorySize - log_2 dataBlockSize
     uint64 constant TREE_HEIGHT = LOG2_MEMORY_SIZE - LOG2_DATA_BLOCK_SIZE;
+
+    /// @notice The start address of the tx buffer.
+    /// @dev Used to write outputs and the outputs Merkle root.
+    uint64 constant TX_BUFFER_START = EmulatorConstants.PMA_CMIO_TX_BUFFER_START;
+
+    /// @notice The leaf index of the outputs Merkle root (tx buffer start).
+    /// @dev Useful for validating the outputs Merkle root from the machine root.
+    uint64 constant OUTPUTS_ROOT_LEAF_INDEX = TX_BUFFER_START >> LOG2_DATA_BLOCK_SIZE;
 }
