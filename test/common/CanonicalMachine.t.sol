@@ -52,7 +52,7 @@ contract CanonicalMachineTest is Test {
 
     function testMerkleTreeConstants() external pure {
         assertLe(
-            CanonicalMachine.LOG2_MERKLE_TREE_DATA_BLOCK_SIZE,
+            CanonicalMachine.LOG2_DATA_BLOCK_SIZE,
             CanonicalMachine.LOG2_MEMORY_SIZE,
             "Data block is larger than the whole machine memory"
         );

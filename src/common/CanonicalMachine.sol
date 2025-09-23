@@ -22,13 +22,12 @@ library CanonicalMachine {
 
     /// @notice Log2 of Merkle tree data block size.
     /// @dev Used when computing the the machine memory Merkle root.
-    uint64 constant LOG2_MERKLE_TREE_DATA_BLOCK_SIZE = EmulatorConstants.TREE_LOG2_WORD_SIZE;
+    uint64 constant LOG2_DATA_BLOCK_SIZE = EmulatorConstants.TREE_LOG2_WORD_SIZE;
 
     /// @notice Merkle tree height.
     /// @dev height
     ///      = log_2 #leaves
     ///      = log_2 (memorySize / dataBlockSize)
     ///      = log_2 memorySize - log_2 dataBlockSize
-    uint64 constant MERKLE_TREE_HEIGHT =
-        LOG2_MEMORY_SIZE - LOG2_MERKLE_TREE_DATA_BLOCK_SIZE;
+    uint64 constant TREE_HEIGHT = LOG2_MEMORY_SIZE - LOG2_DATA_BLOCK_SIZE;
 }
