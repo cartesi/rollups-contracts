@@ -52,11 +52,4 @@ library LibAddress {
             returndata.raise();
         }
     }
-
-    /// @notice Check whether an account has any code.
-    /// @param account The account address
-    /// @return Whether the account has any code.
-    function hasCode(address account) internal view returns (bool) {
-        return account.code.length > 0;
-    }
 }
