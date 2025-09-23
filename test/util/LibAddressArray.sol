@@ -3,7 +3,7 @@
 
 pragma solidity ^0.8.22;
 
-import {Vm} from "forge-std-1.9.6/src/Vm.sol";
+import {Vm} from "forge-std-1.10.0/src/Vm.sol";
 
 library LibAddressArray {
     function contains(address[] memory array, address elem)
