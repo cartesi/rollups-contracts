@@ -32,20 +32,125 @@ create2 = true
 salt = "<%= zeroHash %>"
 ifExists = "continue"
 
-[deploy.QuorumFactory]
-artifact = "QuorumFactory"
-create2 = true
-salt = "0x0000000000000000000000000000000000000000d5556a1a1397890355d302fb"
-ifExists = "continue"
-
-[deploy.ApplicationFactory]
-artifact = "ApplicationFactory"
-create2 = true
-salt = "0x0000000000000000000000000000000000000000381c2f62d29c55017736a80e"
-ifExists = "continue"
-
 [deploy.SafeERC20Transfer]
 artifact = "SafeERC20Transfer"
 create2 = true
-salt = "0x0000000000000000000000000000000000000000c541f1309937da01e896d02c"
+salt = "<%= zeroHash %>"
+ifExists = "continue"
+
+[var.MainnetTournamentConstants]
+mainnetMatchEffort = "<%= 60 * 5 * 92 %>"
+mainnetMaxAllowance = "<%= 60 * 60 * 24 * 7 + 60 * 60 %>"
+
+[var.TestnetTournamentConstants]
+testnetMatchEffort = "<%= 60 * 5 * 92 %>"
+testnetMaxAllowance = "<%= 60 * 60 * 8 + 60 * 60 %>"
+
+[var.DevnetTournamentConstants]
+devnetMatchEffort = "<%= 60 * 5 * 92 %>"
+devnetMaxAllowance = "<%= 60 * 60 %>"
+
+[var.Chain]
+chainType = "<%= ({1: 'mainnet', 13370: 'devnet', 31337: 'devnet', 11155111: 'testnet'})[chainId] %>"
+chainAvgBlockTime = "<%= ({1: 12, 13370: 12, 31337: 12, 11155111: 12})[chainId] %>"
+
+[var.TournamentParameters]
+matchEffort = "<%= BigInt({mainnet: settings.mainnetMatchEffort, testnet: settings.testnetMatchEffort, devnet: settings.devnetMatchEffort}[settings.chainType]) / BigInt(settings.chainAvgBlockTime) %>"
+maxAllowance = "<%= BigInt({mainnet: settings.mainnetMaxAllowance, testnet: settings.testnetMaxAllowance, devnet: settings.devnetMaxAllowance}[settings.chainType]) / BigInt(settings.chainAvgBlockTime) %>"
+
+[deploy.RiscVStateTransition]
+artifact = "RiscVStateTransition"
+create2 = true
+salt = "<%= zeroHash %>"
+ifExists = "continue"
+
+[deploy.CmioStateTransition]
+artifact = "CmioStateTransition"
+create2 = true
+salt = "<%= zeroHash %>"
+ifExists = "continue"
+
+[deploy.CartesiStateTransition]
+artifact = "CartesiStateTransition"
+args = [
+    "<%= contracts.RiscVStateTransition.address %>",
+    "<%= contracts.CmioStateTransition.address %>",
+]
+create2 = true
+salt = "<%= zeroHash %>"
+ifExists = "continue"
+
+[deploy.TopTournament]
+artifact = "TopTournament"
+create2 = true
+salt = "<%= zeroHash %>"
+ifExists = "continue"
+
+[deploy.TopTournamentFactory]
+artifact = "TopTournamentFactory"
+args = ["<%= contracts.TopTournament.address %>"]
+create2 = true
+salt = "<%= zeroHash %>"
+ifExists = "continue"
+
+[deploy.MiddleTournament]
+artifact = "MiddleTournament"
+create2 = true
+salt = "<%= zeroHash %>"
+ifExists = "continue"
+
+[deploy.MiddleTournamentFactory]
+artifact = "MiddleTournamentFactory"
+args = ["<%= contracts.MiddleTournament.address %>"]
+create2 = true
+salt = "<%= zeroHash %>"
+ifExists = "continue"
+
+[deploy.BottomTournament]
+artifact = "BottomTournament"
+create2 = true
+salt = "<%= zeroHash %>"
+ifExists = "continue"
+
+[deploy.BottomTournamentFactory]
+artifact = "BottomTournamentFactory"
+args = ["<%= contracts.BottomTournament.address %>"]
+create2 = true
+salt = "<%= zeroHash %>"
+ifExists = "continue"
+
+[deploy.CanonicalTournamentParametersProvider]
+artifact = "CanonicalTournamentParametersProvider"
+args = [
+    "<%= settings.matchEffort %>",
+    "<%= settings.maxAllowance %>",
+]
+create2 = true
+salt = "<%= zeroHash %>"
+ifExists = "continue"
+
+[deploy.MultiLevelTournamentFactory]
+artifact = "MultiLevelTournamentFactory"
+args = [
+    "<%= contracts.TopTournamentFactory.address %>",
+    "<%= contracts.MiddleTournamentFactory.address %>",
+    "<%= contracts.BottomTournamentFactory.address %>",
+    "<%= contracts.CanonicalTournamentParametersProvider.address %>",
+    "<%= contracts.CartesiStateTransition.address %>",
+]
+create2 = true
+salt = "<%= zeroHash %>"
+ifExists = "continue"
+
+[deploy.DaveAppFactoryImpl]
+artifact = "DaveAppFactoryImpl"
+args = ["<%= contracts.MultiLevelTournamentFactory.address %>"]
+create2 = true
+salt = "<%= zeroHash %>"
+ifExists = "continue"
+
+[deploy.QuorumAppFactoryImpl]
+artifact = "QuorumAppFactoryImpl"
+create2 = true
+salt = "<%= zeroHash %>"
 ifExists = "continue"
