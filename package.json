@@ -10,7 +10,8 @@
         "fmt:check": "forge fmt --check",
         "fmt:write": "forge fmt",
         "prepack": "pnpm clean && pnpm build:contracts",
-        "start": "cannon build --keep-alive --write-deployments deployments --private-key 0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80 --anvil.port 8545"
+        "start": "cannon build --keep-alive --write-deployments deployments --private-key 0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80 --anvil.port 8545",
+        "test": "cannon test --forge.vvv"
     },
     "devDependencies": {
         "@changesets/cli": "^2.29.5",
