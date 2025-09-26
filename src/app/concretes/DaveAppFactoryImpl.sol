@@ -7,11 +7,12 @@ import {Create2} from "@openzeppelin-contracts-5.2.0/utils/Create2.sol";
 
 import {ITournamentFactory} from "prt-contracts/ITournamentFactory.sol";
 
-import {DaveApp} from "../interfaces/DaveApp.sol";
 import {DaveAppFactory} from "../interfaces/DaveAppFactory.sol";
 import {DaveAppImpl} from "../concretes/DaveAppImpl.sol";
+import {DaveApp} from "../interfaces/DaveApp.sol";
+import {EventEmitterImpl} from "../abstracts/EventEmitterImpl.sol";
 
-contract DaveAppFactoryImpl is DaveAppFactory {
+contract DaveAppFactoryImpl is DaveAppFactory, EventEmitterImpl {
     ITournamentFactory immutable _TOURNAMENT_FACTORY;
 
     constructor(ITournamentFactory tournamentFactory) {

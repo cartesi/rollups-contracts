@@ -4,9 +4,10 @@
 pragma solidity ^0.8.27;
 
 import {QuorumApp} from "./QuorumApp.sol";
+import {EventEmitter} from "./EventEmitter.sol";
 
 /// @notice Deploys quorum-validated apps.
-interface QuorumAppFactory {
+interface QuorumAppFactory is EventEmitter {
     /// @notice This event is emitted whenever an app is deployed.
     /// @param app The application contract
     event QuorumAppDeployed(QuorumApp indexed app);

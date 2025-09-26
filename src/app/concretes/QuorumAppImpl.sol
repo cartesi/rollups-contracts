@@ -16,7 +16,6 @@ contract QuorumAppImpl is
     OutboxImpl,
     TokenReceiverImpl
 {
-    uint256 immutable _DEPLOYMENT_BLOCK_NUMBER = block.number;
     bytes32 immutable _GENESIS_STATE_ROOT;
 
     /// @notice Constructs the QuorumAppImpl contract
@@ -26,15 +25,6 @@ contract QuorumAppImpl is
         QuorumImpl(validators)
     {
         _GENESIS_STATE_ROOT = genesisStateRoot;
-    }
-
-    function getDeploymentBlockNumber()
-        external
-        view
-        override
-        returns (uint256 deploymentBlockNumber)
-    {
-        return _DEPLOYMENT_BLOCK_NUMBER;
     }
 
     function getGenesisStateRoot()

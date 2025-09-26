@@ -4,13 +4,14 @@
 pragma solidity ^0.8.27;
 
 import {CanonicalMachine} from "../../common/CanonicalMachine.sol";
+import {EventEmitterImpl} from "../abstracts/EventEmitterImpl.sol";
 import {Inbox} from "../interfaces/Inbox.sol";
 import {Inputs} from "../../common/Inputs.sol";
 import {LibBinaryMerkleTree} from "../../library/LibBinaryMerkleTree.sol";
 import {LibKeccak256} from "../../library/LibKeccak256.sol";
 import {LibMath} from "../../library/LibMath.sol";
 
-abstract contract InboxImpl is Inbox {
+abstract contract InboxImpl is Inbox, EventEmitterImpl {
     using LibMath for uint256;
     using LibBinaryMerkleTree for bytes;
 

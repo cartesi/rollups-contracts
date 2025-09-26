@@ -3,6 +3,8 @@
 
 pragma solidity ^0.8.8;
 
+import {EventEmitter} from "./EventEmitter.sol";
+
 /// @notice Manages epochs.
 ///
 /// @dev We divide the input stream into epochs to guarantee the liveness of applications.
@@ -67,7 +69,7 @@ pragma solidity ^0.8.8;
 ///    to close and finalize epochs, the app state will progress, and users will be
 ///    able to validate/execute new outputs.
 ///
-interface EpochManager {
+interface EpochManager is EventEmitter {
     /// @notice An epoch has been closed.
     /// @param epochIndex The index of the epoch
     /// @param epochFinalizer The contract that makes the epoch reach finality
