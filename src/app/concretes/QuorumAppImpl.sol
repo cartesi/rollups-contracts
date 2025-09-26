@@ -3,19 +3,12 @@
 
 pragma solidity ^0.8.27;
 
-import {InboxImpl} from "../abstracts/InboxImpl.sol";
 import {OutboxImpl} from "../abstracts/OutboxImpl.sol";
 import {QuorumApp} from "../interfaces/QuorumApp.sol";
 import {QuorumImpl} from "../abstracts/QuorumImpl.sol";
 import {TokenReceiverImpl} from "../abstracts/TokenReceiverImpl.sol";
 
-contract QuorumAppImpl is
-    QuorumApp,
-    QuorumImpl,
-    InboxImpl,
-    OutboxImpl,
-    TokenReceiverImpl
-{
+contract QuorumAppImpl is QuorumApp, QuorumImpl, OutboxImpl, TokenReceiverImpl {
     bytes32 immutable _GENESIS_STATE_ROOT;
 
     /// @notice Constructs the QuorumAppImpl contract
@@ -34,15 +27,6 @@ contract QuorumAppImpl is
         returns (bytes32 genesisStateRoot)
     {
         return _GENESIS_STATE_ROOT;
-    }
-
-    function _getNumberOfInputsBeforeCurrentBlock()
-        internal
-        view
-        override
-        returns (uint256)
-    {
-        return getNumberOfInputsBeforeCurrentBlock();
     }
 
     function _isOutputsRootFinal(bytes32 outputsRoot)

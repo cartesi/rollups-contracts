@@ -5,10 +5,11 @@ pragma solidity ^0.8.27;
 
 import {CanonicalMachine} from "../../common/CanonicalMachine.sol";
 import {EpochManager} from "../interfaces/EpochManager.sol";
+import {InboxImpl} from "./InboxImpl.sol";
 import {LibBinaryMerkleTree} from "../../library/LibBinaryMerkleTree.sol";
 import {LibKeccak256} from "../../library/LibKeccak256.sol";
 
-abstract contract EpochManagerImpl is EpochManager {
+abstract contract EpochManagerImpl is EpochManager, InboxImpl {
     using LibBinaryMerkleTree for bytes32[];
 
     uint256 private _finalizedEpochCount;
@@ -71,7 +72,7 @@ abstract contract EpochManagerImpl is EpochManager {
 
     /// @notice Check whether the open epoch is empty.
     function _isOpenEpochEmpty() internal view returns (bool) {
-        uint256 numberOfInputsBeforeCurrentBlock = _getNumberOfInputsBeforeCurrentBlock();
+        uint256 numberOfInputsBeforeCurrentBlock = getNumberOfInputsBeforeCurrentBlock();
         assert(_inputIndexExclusiveUpperBound <= numberOfInputsBeforeCurrentBlock);
         return _inputIndexExclusiveUpperBound == numberOfInputsBeforeCurrentBlock;
     }
@@ -80,7 +81,7 @@ abstract contract EpochManagerImpl is EpochManager {
     function _closeEpoch(address epochFinalizer) internal {
         __isFirstNonFinalizedEpochClosed = true;
         _inputIndexInclusiveLowerBound = _inputIndexExclusiveUpperBound;
-        _inputIndexExclusiveUpperBound = _getNumberOfInputsBeforeCurrentBlock();
+        _inputIndexExclusiveUpperBound = getNumberOfInputsBeforeCurrentBlock();
         uint256 epochIndex = getFinalizedEpochCount();
         emit EpochClosed(epochIndex, epochFinalizer);
     }
@@ -173,13 +174,6 @@ abstract contract EpochManagerImpl is EpochManager {
     {
         return __isFirstNonFinalizedEpochClosed;
     }
-
-    /// @notice Get the number of inputs before the current block.
-    function _getNumberOfInputsBeforeCurrentBlock()
-        internal
-        view
-        virtual
-        returns (uint256);
 
     /// @notice Check whether the first non-finalized epoch
     /// can be finalized with the given post-epoch state root.

@@ -8,11 +8,10 @@ import {Machine} from "prt-contracts/types/Machine.sol";
 
 import {DaveApp} from "../interfaces/DaveApp.sol";
 import {DaveImpl} from "../abstracts/DaveImpl.sol";
-import {InboxImpl} from "../abstracts/InboxImpl.sol";
 import {OutboxImpl} from "../abstracts/OutboxImpl.sol";
 import {TokenReceiverImpl} from "../abstracts/TokenReceiverImpl.sol";
 
-contract DaveAppImpl is DaveApp, DaveImpl, InboxImpl, OutboxImpl, TokenReceiverImpl {
+contract DaveAppImpl is DaveApp, DaveImpl, OutboxImpl, TokenReceiverImpl {
     bytes32 immutable _GENESIS_STATE_ROOT;
 
     /// @notice Constructs the DaveAppImpl contract
@@ -40,15 +39,6 @@ contract DaveAppImpl is DaveApp, DaveImpl, InboxImpl, OutboxImpl, TokenReceiverI
         returns (Machine.Hash genesisStateRoot)
     {
         return Machine.Hash.wrap(getGenesisStateRoot());
-    }
-
-    function _getNumberOfInputsBeforeCurrentBlock()
-        internal
-        view
-        override
-        returns (uint256)
-    {
-        return getNumberOfInputsBeforeCurrentBlock();
     }
 
     function _getInputMerkleRoot(uint256 inputIndex)
