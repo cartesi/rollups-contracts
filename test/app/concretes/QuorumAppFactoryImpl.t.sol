@@ -9,7 +9,6 @@ import {EpochManager} from "src/app/interfaces/EpochManager.sol";
 import {LibBitmap} from "src/library/LibBitmap.sol";
 import {QuorumAppFactory} from "src/app/interfaces/QuorumAppFactory.sol";
 import {QuorumApp} from "src/app/interfaces/QuorumApp.sol";
-import {QuorumImpl} from "src/app/abstracts/QuorumImpl.sol";
 import {Quorum} from "src/app/interfaces/Quorum.sol";
 
 import {AppTest} from "test/util/AppTest.sol";
