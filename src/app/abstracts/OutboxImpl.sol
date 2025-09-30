@@ -6,13 +6,14 @@ pragma solidity ^0.8.27;
 import {BitMaps} from "@openzeppelin-contracts-5.2.0/utils/structs/BitMaps.sol";
 import {ReentrancyGuard} from "@openzeppelin-contracts-5.2.0/utils/ReentrancyGuard.sol";
 
+import {EpochManagerImpl} from "./EpochManagerImpl.sol";
 import {LibAddress} from "../../library/LibAddress.sol";
 import {LibOutputValidityProof} from "../../library/LibOutputValidityProof.sol";
 import {Outbox} from "../interfaces/Outbox.sol";
 import {OutputValidityProof} from "../../common/OutputValidityProof.sol";
 import {Outputs} from "../../common/Outputs.sol";
 
-abstract contract OutboxImpl is Outbox, ReentrancyGuard {
+abstract contract OutboxImpl is Outbox, EpochManagerImpl, ReentrancyGuard {
     using BitMaps for BitMaps.BitMap;
     using LibAddress for address;
     using LibOutputValidityProof for OutputValidityProof;
@@ -44,7 +45,7 @@ abstract contract OutboxImpl is Outbox, ReentrancyGuard {
 
         bytes32 outputsMerkleRoot = proof.computeOutputsMerkleRoot(outputHash);
 
-        if (!_isOutputsRootFinal(outputsMerkleRoot)) {
+        if (!isOutputsRootFinal(outputsMerkleRoot)) {
             revert InvalidOutputsMerkleRoot(outputsMerkleRoot);
         }
     }
@@ -121,12 +122,4 @@ abstract contract OutboxImpl is Outbox, ReentrancyGuard {
 
         destination.safeDelegateCall(payload);
     }
-
-    /// @notice Check whether an outputs root has been finalized before.
-    /// @param outputsRoot The outputs Merkle tree root
-    function _isOutputsRootFinal(bytes32 outputsRoot)
-        internal
-        view
-        virtual
-        returns (bool);
 }

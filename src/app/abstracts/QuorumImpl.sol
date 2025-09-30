@@ -3,11 +3,11 @@
 
 pragma solidity ^0.8.27;
 
-import {EpochManagerImpl} from "./EpochManagerImpl.sol";
 import {LibBitmap} from "../../library/LibBitmap.sol";
+import {OutboxImpl} from "./OutboxImpl.sol";
 import {Quorum} from "../interfaces/Quorum.sol";
 
-abstract contract QuorumImpl is EpochManagerImpl, Quorum {
+contract QuorumImpl is OutboxImpl, Quorum {
     using LibBitmap for bytes32;
 
     uint8 immutable _NUM_OF_VALIDATORS;

@@ -8,9 +8,9 @@ import {ITournamentFactory} from "prt-contracts/ITournamentFactory.sol";
 import {ITournament} from "prt-contracts/ITournament.sol";
 import {Machine} from "prt-contracts/types/Machine.sol";
 
-import {EpochManagerImpl} from "./EpochManagerImpl.sol";
+import {OutboxImpl} from "./OutboxImpl.sol";
 
-abstract contract DaveImpl is EpochManagerImpl, IDataProvider {
+abstract contract DaveImpl is OutboxImpl, IDataProvider {
     ITournamentFactory immutable _TOURNAMENT_FACTORY;
 
     ITournament private _tournament;
@@ -54,7 +54,7 @@ abstract contract DaveImpl is EpochManagerImpl, IDataProvider {
             return bytes32(0);
         }
 
-        return _getInputMerkleRoot(inputIndex);
+        return getInputMerkleRoot(inputIndex);
     }
 
     function _isPostEpochStateRootValid(bytes32 postEpochStateRoot)
@@ -78,14 +78,6 @@ abstract contract DaveImpl is EpochManagerImpl, IDataProvider {
             return _lastFinalizedPostEpochStateRoot;
         }
     }
-
-    /// @notice Get the Merkle root of an input by its index.
-    /// @param inputIndex The input index
-    function _getInputMerkleRoot(uint256 inputIndex)
-        internal
-        view
-        virtual
-        returns (bytes32);
 
     /// @notice Get the genesis state root.
     function _getGenesisStateRoot() internal view virtual returns (Machine.Hash);

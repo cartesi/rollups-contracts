@@ -10,7 +10,7 @@ import {Outbox} from "./Outbox.sol";
 /// @notice The on-chain embodiment of a Cartesi Rollups application.
 /// @dev This contract receives inputs, manages epochs, and validates/executes outputs.
 /// Deposits (in Ether, ERC-20, ERC-721, and ERC-1155) must be made through portal contracts.
-interface App is EpochManager, Inbox, Outbox {
+interface App is Outbox, EpochManager, Inbox {
     /// @notice Get the genesis state root of the application.
     /// @dev This information is useful to off-chain components to validate the genesis state
     /// of applications provided by third parties, since this state is be used by

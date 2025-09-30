@@ -3,12 +3,11 @@
 
 pragma solidity ^0.8.27;
 
-import {OutboxImpl} from "../abstracts/OutboxImpl.sol";
 import {QuorumApp} from "../interfaces/QuorumApp.sol";
 import {QuorumImpl} from "../abstracts/QuorumImpl.sol";
 import {TokenReceiverImpl} from "../abstracts/TokenReceiverImpl.sol";
 
-contract QuorumAppImpl is QuorumApp, QuorumImpl, OutboxImpl, TokenReceiverImpl {
+contract QuorumAppImpl is QuorumApp, QuorumImpl, TokenReceiverImpl {
     bytes32 immutable _GENESIS_STATE_ROOT;
 
     /// @notice Constructs the QuorumAppImpl contract
@@ -27,14 +26,5 @@ contract QuorumAppImpl is QuorumApp, QuorumImpl, OutboxImpl, TokenReceiverImpl {
         returns (bytes32 genesisStateRoot)
     {
         return _GENESIS_STATE_ROOT;
-    }
-
-    function _isOutputsRootFinal(bytes32 outputsRoot)
-        internal
-        view
-        override
-        returns (bool)
-    {
-        return isOutputsRootFinal(outputsRoot);
     }
 }

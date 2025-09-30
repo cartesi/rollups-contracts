@@ -8,10 +8,9 @@ import {Machine} from "prt-contracts/types/Machine.sol";
 
 import {DaveApp} from "../interfaces/DaveApp.sol";
 import {DaveImpl} from "../abstracts/DaveImpl.sol";
-import {OutboxImpl} from "../abstracts/OutboxImpl.sol";
 import {TokenReceiverImpl} from "../abstracts/TokenReceiverImpl.sol";
 
-contract DaveAppImpl is DaveApp, DaveImpl, OutboxImpl, TokenReceiverImpl {
+contract DaveAppImpl is DaveApp, DaveImpl, TokenReceiverImpl {
     bytes32 immutable _GENESIS_STATE_ROOT;
 
     /// @notice Constructs the DaveAppImpl contract
@@ -39,23 +38,5 @@ contract DaveAppImpl is DaveApp, DaveImpl, OutboxImpl, TokenReceiverImpl {
         returns (Machine.Hash genesisStateRoot)
     {
         return Machine.Hash.wrap(getGenesisStateRoot());
-    }
-
-    function _getInputMerkleRoot(uint256 inputIndex)
-        internal
-        view
-        override
-        returns (bytes32)
-    {
-        return getInputMerkleRoot(inputIndex);
-    }
-
-    function _isOutputsRootFinal(bytes32 outputsRoot)
-        internal
-        view
-        override
-        returns (bool)
-    {
-        return isOutputsRootFinal(outputsRoot);
     }
 }
