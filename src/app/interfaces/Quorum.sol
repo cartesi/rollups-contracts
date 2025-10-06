@@ -49,10 +49,10 @@ interface Quorum is EpochManager {
     error CannotCastVoteForOpenEpoch();
 
     /// @notice Get the number of validators in the quorum.
-    /// @return numOfValidators The number of validators
+    /// @return validatorCount The number of validators
     /// @dev Validator IDs range between 1 and the number of validators.
     /// @dev The quorum is guaranteed to have a non-zero number of validators.
-    function getNumberOfValidators() external view returns (uint8 numOfValidators);
+    function getValidatorCount() external view returns (uint8 validatorCount);
 
     /// @notice Get the address of a validator by its ID.
     /// @param validatorId The validator ID

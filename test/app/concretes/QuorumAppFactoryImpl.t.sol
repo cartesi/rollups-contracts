@@ -45,14 +45,14 @@ contract QuorumAppFactoryImplTest is AppTest {
     function testDeployQuorumApp(
         uint256 blockNumber,
         bytes32[2] calldata genesisStateRoots,
-        uint8[2] memory numOfValidators,
+        uint8[2] memory validatorCount,
         bytes32[2] calldata salts
     ) external {
         // Generate the array of validators.
         address[][2] memory validators;
         for (uint256 i; i < 2; ++i) {
-            numOfValidators[i] = _boundNumOfValidators(numOfValidators[i]);
-            validators[i] = vm.randomAddresses(numOfValidators[i]);
+            validatorCount[i] = _boundValidatorCount(validatorCount[i]);
+            validators[i] = vm.randomAddresses(validatorCount[i]);
         }
 
         // Ensure the salts and constructor arguments are different from each other.
@@ -121,13 +121,13 @@ contract QuorumAppFactoryImplTest is AppTest {
 
     function testVoteRevertsWhenSenderIsNotValidator(
         bytes32 genesisStateRoot,
-        uint8 numOfValidators,
+        uint8 validatorCount,
         bytes32 salt,
         bytes32 postEpochStateRoot
     ) external {
         // We first deploy a quorum-validated application with a random non-empty validator set.
-        numOfValidators = _boundNumOfValidators(numOfValidators);
-        address[] memory validators = vm.randomAddresses(numOfValidators);
+        validatorCount = _boundValidatorCount(validatorCount);
+        address[] memory validators = vm.randomAddresses(validatorCount);
         QuorumApp app = _deployOrRecoverQuorumApp(genesisStateRoot, validators, salt);
 
         // Then we add an input, mine a block, and close the first epoch (so that we can vote).
@@ -151,13 +151,13 @@ contract QuorumAppFactoryImplTest is AppTest {
 
     function testVoteRevertsWhenVoteWasAlreadyCast(
         bytes32 genesisStateRoot,
-        uint8 numOfValidators,
+        uint8 validatorCount,
         bytes32 salt,
         bytes32[2] calldata postEpochStateRoots
     ) external {
         // We first deploy a quorum-validated application with a random non-empty validator set.
-        numOfValidators = _boundNumOfValidators(numOfValidators);
-        address[] memory validators = vm.randomAddresses(numOfValidators);
+        validatorCount = _boundValidatorCount(validatorCount);
+        address[] memory validators = vm.randomAddresses(validatorCount);
         QuorumApp app = _deployOrRecoverQuorumApp(genesisStateRoot, validators, salt);
 
         // Then we add an input, mine a block, and close the first epoch (so that we can vote).
@@ -167,7 +167,7 @@ contract QuorumAppFactoryImplTest is AppTest {
         app.closeEpoch(0);
 
         // We pick a random validator from the set.
-        address validator = validators[vm.randomUint(0, numOfValidators - 1)];
+        address validator = validators[vm.randomUint(0, validatorCount - 1)];
 
         // We then prank this validator and make them vote for some random post-epoch state.
         vm.prank(validator);
@@ -182,17 +182,17 @@ contract QuorumAppFactoryImplTest is AppTest {
 
     function testVoteRevertsWhenEpochIsOpen(
         bytes32 genesisStateRoot,
-        uint8 numOfValidators,
+        uint8 validatorCount,
         bytes32 salt,
         bytes32 postEpochStateRoot
     ) external {
         // We first deploy a quorum-validated application with a random non-empty validator set.
-        numOfValidators = _boundNumOfValidators(numOfValidators);
-        address[] memory validators = vm.randomAddresses(numOfValidators);
+        validatorCount = _boundValidatorCount(validatorCount);
+        address[] memory validators = vm.randomAddresses(validatorCount);
         QuorumApp app = _deployOrRecoverQuorumApp(genesisStateRoot, validators, salt);
 
         // We pick a random validator from the set.
-        address validator = validators[vm.randomUint(0, numOfValidators - 1)];
+        address validator = validators[vm.randomUint(0, validatorCount - 1)];
 
         // We then prank this validator and make them attempt to vote for some random post-epoch state.
         // It should fail because the epoch is still open.
@@ -203,14 +203,14 @@ contract QuorumAppFactoryImplTest is AppTest {
 
     function testVoteRevertsWhenEpochIndexIsInvalid(
         bytes32 genesisStateRoot,
-        uint8 numOfValidators,
+        uint8 validatorCount,
         bytes32 salt,
         bytes32 postEpochStateRoot,
         uint256 finalizedEpochCount
     ) external {
         // We first deploy a quorum-validated application with a random non-empty validator set.
-        numOfValidators = _boundNumOfValidators(numOfValidators);
-        address[] memory validators = vm.randomAddresses(numOfValidators);
+        validatorCount = _boundValidatorCount(validatorCount);
+        address[] memory validators = vm.randomAddresses(validatorCount);
         QuorumApp app = _deployOrRecoverQuorumApp(genesisStateRoot, validators, salt);
 
         // We finalize some epochs just to test epoch indices too low later.
@@ -231,7 +231,7 @@ contract QuorumAppFactoryImplTest is AppTest {
         app.closeEpoch(app.getFinalizedEpochCount());
 
         // We pick a random validator from the set.
-        address validator = validators[vm.randomUint(0, numOfValidators - 1)];
+        address validator = validators[vm.randomUint(0, validatorCount - 1)];
 
         // We then prank this validator and make them attempt to vote for some random post-epoch state
         // for an epoch that has already past (because finalizedEpochCount >= 1).
@@ -268,16 +268,16 @@ contract QuorumAppFactoryImplTest is AppTest {
         Quorum quorum = Quorum(epochFinalizer);
 
         // First, we retrieve the total numbe of validators.
-        uint256 numOfValidators = quorum.getNumberOfValidators();
+        uint256 validatorCount = quorum.getValidatorCount();
 
         // Second, we randomly assign roles to each validator.
-        uint256[] memory validatorRoles = _randomValidatorRoles(numOfValidators);
+        uint256[] memory validatorRoles = _randomValidatorRoles(validatorCount);
 
         // Third, we make voting validators vote in a random order.
         // We know that validator IDs are their private keys (see the `setUp` function).
         // So, we can recompute their addresses from their PKs.
-        uint256[] memory validatorIds = vm.shuffle(_range(1, numOfValidators + 1));
-        for (uint256 i; i < numOfValidators; ++i) {
+        uint256[] memory validatorIds = vm.shuffle(_range(1, validatorCount + 1));
+        for (uint256 i; i < validatorCount; ++i) {
             uint256 validatorId = validatorIds[i];
             address validator = quorum.getValidatorAddressById(validatorId);
             assertNotEq(validator, address(0));
@@ -326,14 +326,14 @@ contract QuorumAppFactoryImplTest is AppTest {
             assertLe(app.getDeploymentBlockNumber(), vm.getBlockNumber());
         }
         assertEq(app.getGenesisStateRoot(), genesisStateRoot);
-        uint8 numOfValidators = app.getNumberOfValidators();
-        assertLe(1, numOfValidators);
-        assertLe(numOfValidators, validators.length);
+        uint8 validatorCount = app.getValidatorCount();
+        assertLe(1, validatorCount);
+        assertLe(validatorCount, validators.length);
         uint8[] memory validatorIds = new uint8[](validators.length);
         for (uint256 i; i < validators.length; ++i) {
             validatorIds[i] = app.getValidatorIdByAddress(validators[i]);
             assertLe(1, validatorIds[i]);
-            assertLe(validatorIds[i], numOfValidators);
+            assertLe(validatorIds[i], validatorCount);
         }
     }
 
@@ -352,31 +352,31 @@ contract QuorumAppFactoryImplTest is AppTest {
     }
 
     /// @notice Generate a random array of validator roles.
-    /// @param numOfValidators The number of validators
+    /// @param validatorCount The number of validators
     /// @return A random array of validator roles
     /// @dev Guarantees that agreers make up the majority.
-    function _randomValidatorRoles(uint256 numOfValidators)
+    function _randomValidatorRoles(uint256 validatorCount)
         internal
         returns (uint256[] memory)
     {
-        uint256[] memory validatorRoles = new uint256[](numOfValidators);
+        uint256[] memory validatorRoles = new uint256[](validatorCount);
 
         // First, we pick a random number between 1 + floor(n/2) and n.
         // This will be the number of agreeing validators.
-        uint256 numOfAgreers = vm.randomUint(1 + numOfValidators / 2, numOfValidators);
-        vm.assertLe(numOfAgreers, numOfValidators, "more agreers than validators");
+        uint256 agreerCount = vm.randomUint(1 + validatorCount / 2, validatorCount);
+        vm.assertLe(agreerCount, validatorCount, "more agreers than validators");
 
         // Second, we pick a random number of disagreeing validators
         // so that the total number of voters (agreeing + disagreeing) is <= n.
-        uint256 numOfDisagreers = vm.randomUint(0, numOfValidators - numOfAgreers);
-        vm.assertLe(numOfDisagreers, numOfValidators, "more disagreers than validators");
-        uint256 numOfVoters = numOfAgreers + numOfDisagreers;
-        vm.assertLe(numOfVoters, numOfValidators, "more voters than validators");
+        uint256 diagreerCount = vm.randomUint(0, validatorCount - agreerCount);
+        vm.assertLe(diagreerCount, validatorCount, "more disagreers than validators");
+        uint256 voterCount = agreerCount + diagreerCount;
+        vm.assertLe(voterCount, validatorCount, "more voters than validators");
 
         // Third, we create an array of roles using these two numbers.
-        for (uint256 i; i < numOfValidators; ++i) {
-            bool isVoter = (i < numOfVoters);
-            bool isAgreer = (i < numOfAgreers);
+        for (uint256 i; i < validatorCount; ++i) {
+            bool isVoter = (i < voterCount);
+            bool isAgreer = (i < agreerCount);
             validatorRoles[i] = isVoter ? (isAgreer ? AGREER : DISAGREER) : NON_VOTER;
         }
 
@@ -396,10 +396,10 @@ contract QuorumAppFactoryImplTest is AppTest {
         uint256 epochIndex,
         bytes32 postEpochStateRoot
     ) internal {
-        uint8 numOfValidators = quorum.getNumberOfValidators();
+        uint8 validatorCount = quorum.getValidatorCount();
         uint8 validatorId = quorum.getValidatorIdByAddress(validator);
         assertGe(validatorId, 1, "not validator");
-        assertLe(validatorId, numOfValidators, "invalid validator ID");
+        assertLe(validatorId, validatorCount, "invalid validator ID");
 
         bytes32 voteBitmapBefore = quorum.getVoteBitmap(epochIndex, postEpochStateRoot);
         uint256 votesBefore = voteBitmapBefore.countSetBits();
@@ -409,7 +409,7 @@ contract QuorumAppFactoryImplTest is AppTest {
         assertFalse(voteBitmapBefore.getBitAt(validatorId));
         assertFalse(aggrVoteBitmapBefore.getBitAt(validatorId));
         assertLe(votesBefore, aggrVotesBefore);
-        assertLe(aggrVotesBefore, numOfValidators);
+        assertLe(aggrVotesBefore, validatorCount);
 
         vm.startPrank(validator);
         vm.expectEmit(true, true, true, false, address(quorum));
@@ -427,7 +427,7 @@ contract QuorumAppFactoryImplTest is AppTest {
         assertEq(voteBitmapAfter, voteBitmapBefore.setBitAt(validatorId));
         assertEq(aggrVoteBitmapAfter, aggrVoteBitmapBefore.setBitAt(validatorId));
         assertLe(votesAfter, aggrVotesAfter);
-        assertLe(aggrVotesAfter, numOfValidators);
+        assertLe(aggrVotesAfter, validatorCount);
 
         assertEq(votesAfter, votesBefore + 1);
         assertEq(aggrVotesAfter, aggrVotesBefore + 1);
@@ -460,12 +460,12 @@ contract QuorumAppFactoryImplTest is AppTest {
     /// @notice Bound the number of validators to a value that is not only
     /// valid (between 1 and 255) but also practical (a value that doesn't
     /// make deployment run out of gas).
-    /// @param numOfValidators The number of validators received as fuzzy argument.
-    function _boundNumOfValidators(uint8 numOfValidators)
+    /// @param validatorCount The number of validators received as fuzzy argument.
+    function _boundValidatorCount(uint8 validatorCount)
         internal
         pure
-        returns (uint8 boundedNumOfValidators)
+        returns (uint8 boundedValidatorCount)
     {
-        return uint8(bound(numOfValidators, 1, 10));
+        return uint8(bound(validatorCount, 1, 10));
     }
 }

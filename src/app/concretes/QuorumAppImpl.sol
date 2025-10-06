@@ -13,7 +13,7 @@ contract QuorumAppImpl is QuorumApp, OutboxImpl, TokenReceiverImpl {
     using LibBitmap for bytes32;
 
     bytes32 immutable _GENESIS_STATE_ROOT;
-    uint8 immutable _NUM_OF_VALIDATORS;
+    uint8 immutable _VALIDATOR_COUNT;
 
     mapping(uint256 => address) private _validatorAddressById;
     mapping(address => uint8) private _validatorIdByAddress;
@@ -27,17 +27,17 @@ contract QuorumAppImpl is QuorumApp, OutboxImpl, TokenReceiverImpl {
     constructor(bytes32 genesisStateRoot, address[] memory validators) {
         _GENESIS_STATE_ROOT = genesisStateRoot;
 
-        uint8 n;
+        uint8 validatorCount;
         for (uint256 i; i < validators.length; ++i) {
             address validator = validators[i];
             if (_validatorIdByAddress[validator] == 0) {
-                uint8 id = ++n; // reverts in case of overflow
+                uint8 id = ++validatorCount; // reverts in case of overflow
                 _validatorIdByAddress[validator] = id;
                 _validatorAddressById[id] = validator;
             }
         }
-        require(n >= 1, "quorum must not be empty");
-        _NUM_OF_VALIDATORS = n;
+        require(validatorCount >= 1, "quorum must not be empty");
+        _VALIDATOR_COUNT = validatorCount;
     }
 
     function getGenesisStateRoot()
@@ -68,13 +68,8 @@ contract QuorumAppImpl is QuorumApp, OutboxImpl, TokenReceiverImpl {
         _finalizeEpoch(postEpochStateRoot, postEpochOutputsRoot);
     }
 
-    function getNumberOfValidators()
-        public
-        view
-        override
-        returns (uint8 numOfValidators)
-    {
-        numOfValidators = _NUM_OF_VALIDATORS;
+    function getValidatorCount() public view override returns (uint8 validatorCount) {
+        validatorCount = _VALIDATOR_COUNT;
     }
 
     function getValidatorAddressById(uint256 validatorId)
@@ -154,6 +149,6 @@ contract QuorumAppImpl is QuorumApp, OutboxImpl, TokenReceiverImpl {
         uint256 epochIndex = getFinalizedEpochCount();
         bytes32 bitmap = getVoteBitmap(epochIndex, postEpochStateRoot);
         uint256 voteCount = bitmap.countSetBits();
-        return voteCount > getNumberOfValidators() / 2;
+        return voteCount > getValidatorCount() / 2;
     }
 }
