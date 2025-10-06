@@ -2458,7 +2458,7 @@ abstract contract AppTest is Test {
         // during the `closeEpoch` function call.
         Vm.Log[] memory entries = vm.getRecordedLogs();
 
-        uint256 numOfEpochsClosed;
+        uint256 closedEpochCount;
 
         for (uint256 i; i < entries.length; ++i) {
             Vm.Log memory entry = entries[i];
@@ -2469,7 +2469,7 @@ abstract contract AppTest is Test {
                 entry.emitter == address(app)
                     && entry.topics[0] == EpochManager.EpochClosed.selector
             ) {
-                ++numOfEpochsClosed;
+                ++closedEpochCount;
 
                 // We extract the epoch finalizer from the topic 2 of the `EpochClosed` event.
                 epochFinalizer = address(uint160(uint256(entry.topics[2])));
@@ -2481,7 +2481,7 @@ abstract contract AppTest is Test {
         }
 
         // We ensure only one epoch was closed.
-        assertEq(numOfEpochsClosed, 1);
+        assertEq(closedEpochCount, 1);
 
         // We ensure the epoch finalizer address has code.
         assertGt(epochFinalizer.code.length, 0);
