@@ -18,6 +18,18 @@ abstract contract EpochManagerImpl is EpochManager, InboxImpl {
     uint256 private _inputIndexExclusiveUpperBound;
     mapping(bytes32 => bool) private _isOutputsRootFinal;
 
+    function getClosedEpochCount()
+        public
+        view
+        override
+        returns (uint256 closedEpochCount)
+    {
+        // All finalized epochs are closed.
+        // The first non-finalized epoch might or might not be closed.
+        // All following epochs are open.
+        return getFinalizedEpochCount() + (_isFirstNonFinalizedEpochClosed() ? 1 : 0);
+    }
+
     function getFinalizedEpochCount()
         public
         view

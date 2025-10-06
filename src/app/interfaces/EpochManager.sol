@@ -124,6 +124,9 @@ interface EpochManager is EventEmitter {
     /// @dev An interface ID is a bitwise XOR of function selectors.
     function getEpochFinalizerInterfaceId() external view returns (bytes4);
 
+    /// @notice Get the number of closed epochs.
+    function getClosedEpochCount() external view returns (uint256 closedEpochCount);
+
     /// @notice Get the number of finalized epochs.
     /// @dev Equivalent to the index of the first non-finalized epoch.
     function getFinalizedEpochCount()

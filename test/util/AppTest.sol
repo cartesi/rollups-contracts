@@ -1250,6 +1250,10 @@ abstract contract AppTest is Test {
         assertEq(_app.getEpochFinalizerInterfaceId(), _epochFinalizerInterfaceId);
     }
 
+    function testGetClosedEpochCount() external view {
+        assertEq(_app.getClosedEpochCount(), 0);
+    }
+
     function testGetFinalizedEpochCount() external view {
         assertEq(_app.getFinalizedEpochCount(), 0);
     }
@@ -1310,6 +1314,7 @@ abstract contract AppTest is Test {
 
             _app.finalizeEpoch(epochIndex, postEpochOutputsRoot, proof);
 
+            assertEq(_app.getClosedEpochCount(), 1 + epochIndex);
             assertEq(_app.getFinalizedEpochCount(), 1 + epochIndex);
             assertTrue(_app.isOutputsRootFinal(postEpochOutputsRoot));
         }
@@ -2447,12 +2452,18 @@ abstract contract AppTest is Test {
         internal
         returns (address epochFinalizer)
     {
+        // Closed epoch count should be equal to the epoch index before.
+        assertEq(app.getClosedEpochCount(), epochIndex);
+
         // Start recording logs so that we can capture
         // the emission of the `EpochClosed` event.
         vm.recordLogs();
 
         // We close the epoch given its index.
         app.closeEpoch(epochIndex);
+
+        // Closed epoch count should be incremented.
+        assertEq(app.getClosedEpochCount(), epochIndex + 1);
 
         // We retrieve the logs emitted
         // during the `closeEpoch` function call.
