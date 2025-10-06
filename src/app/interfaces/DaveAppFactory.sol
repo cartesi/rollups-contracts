@@ -3,11 +3,12 @@
 
 pragma solidity ^0.8.27;
 
+import {AppFactory} from "./AppFactory.sol";
 import {DaveApp} from "./DaveApp.sol";
 import {EventEmitter} from "./EventEmitter.sol";
 
 /// @notice Deploys apps that use the Dave fraud-proof system as epoch manager.
-interface DaveAppFactory is EventEmitter {
+interface DaveAppFactory is AppFactory, EventEmitter {
     /// @notice This event is emitted whenever an app is deployed.
     /// @param app The application contract
     event DaveAppDeployed(DaveApp indexed app);

@@ -11,13 +11,25 @@ import {QuorumAppImpl} from "../concretes/QuorumAppImpl.sol";
 import {QuorumApp} from "../interfaces/QuorumApp.sol";
 
 contract QuorumAppFactoryImpl is QuorumAppFactory, EventEmitterImpl {
+    uint256 private _deployedAppCount;
+
     function deployQuorumApp(
         bytes32 genesisStateRoot,
         address[] calldata validators,
         bytes32 salt
     ) external override returns (QuorumApp app) {
         app = new QuorumAppImpl{salt: salt}(genesisStateRoot, validators);
+        ++_deployedAppCount;
         emit QuorumAppDeployed(app);
+    }
+
+    function getDeployedAppCount()
+        external
+        view
+        override
+        returns (uint256 deployedAppCount)
+    {
+        return _deployedAppCount;
     }
 
     function computeQuorumAppAddress(

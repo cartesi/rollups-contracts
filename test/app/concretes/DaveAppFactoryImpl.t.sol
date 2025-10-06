@@ -28,6 +28,7 @@ contract DaveAppFactoryImplTest is AppTest {
 
     function setUp() external {
         _daveAppFactory = DaveAppFactory(vm.getAddress("DaveAppFactoryImpl"));
+        assertEq(_daveAppFactory.getDeployedAppCount(), 0);
         _daveApp = _deployOrRecoverApp(GENESIS_STATE_ROOT, SALT);
         _app = _daveApp; // We downcast the Dave app for the generic app tests
         _epochFinalizerInterfaceId = type(ITournament).interfaceId;
@@ -176,12 +177,14 @@ contract DaveAppFactoryImplTest is AppTest {
     {
         address appAddress = _daveAppFactory.computeDaveAppAddress(genesisStateRoot, salt);
         if (appAddress.code.length == 0) {
+            uint256 deployedAppCount = _daveAppFactory.getDeployedAppCount();
             vm.expectEmit(true, false, false, false, address(_daveAppFactory));
             emit DaveAppFactory.DaveAppDeployed(DaveApp(appAddress));
             app = _daveAppFactory.deployDaveApp(genesisStateRoot, salt);
             assertEq(address(app), appAddress);
             assertGt(appAddress.code.length, 0);
             assertEq(app.getDeploymentBlockNumber(), vm.getBlockNumber());
+            assertEq(_daveAppFactory.getDeployedAppCount(), deployedAppCount + 1);
         } else {
             app = DaveApp(appAddress); // recover already-deployed app
             assertLe(app.getDeploymentBlockNumber(), vm.getBlockNumber());

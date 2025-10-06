@@ -14,6 +14,7 @@ import {EventEmitterImpl} from "../abstracts/EventEmitterImpl.sol";
 
 contract DaveAppFactoryImpl is DaveAppFactory, EventEmitterImpl {
     ITournamentFactory immutable _TOURNAMENT_FACTORY;
+    uint256 private _deployedAppCount;
 
     constructor(ITournamentFactory tournamentFactory) {
         _TOURNAMENT_FACTORY = tournamentFactory;
@@ -25,7 +26,17 @@ contract DaveAppFactoryImpl is DaveAppFactory, EventEmitterImpl {
         returns (DaveApp app)
     {
         app = new DaveAppImpl{salt: salt}(genesisStateRoot, _TOURNAMENT_FACTORY);
+        ++_deployedAppCount;
         emit DaveAppDeployed(app);
+    }
+
+    function getDeployedAppCount()
+        external
+        view
+        override
+        returns (uint256 deployedAppCount)
+    {
+        return _deployedAppCount;
     }
 
     function computeDaveAppAddress(bytes32 genesisStateRoot, bytes32 salt)

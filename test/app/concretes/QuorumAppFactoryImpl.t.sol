@@ -29,6 +29,7 @@ contract QuorumAppFactoryImplTest is AppTest {
 
     function setUp() external {
         _quorumAppFactory = QuorumAppFactory(vm.getAddress("QuorumAppFactoryImpl"));
+        assertEq(_quorumAppFactory.getDeployedAppCount(), 0);
         _quorumApp = _deployOrRecoverQuorumApp(GENESIS_STATE_ROOT, vm.addrs(7), SALT);
         _app = _quorumApp; // We downcast the Quorum app for the generic app tests
         _epochFinalizerInterfaceId = type(Quorum).interfaceId;
@@ -315,12 +316,14 @@ contract QuorumAppFactoryImplTest is AppTest {
     ) internal returns (QuorumApp app) {
         address appAddress = _computeQuorumAppAddress(genesisStateRoot, validators, salt);
         if (appAddress.code.length == 0) {
+            uint256 deployedAppCount = _quorumAppFactory.getDeployedAppCount();
             vm.expectEmit(true, false, false, false, address(_quorumAppFactory));
             emit QuorumAppFactory.QuorumAppDeployed(QuorumApp(appAddress));
             app = _quorumAppFactory.deployQuorumApp(genesisStateRoot, validators, salt);
             assertEq(address(app), appAddress);
             assertGt(appAddress.code.length, 0);
             assertEq(app.getDeploymentBlockNumber(), vm.getBlockNumber());
+            assertEq(_quorumAppFactory.getDeployedAppCount(), deployedAppCount + 1);
         } else {
             app = QuorumApp(appAddress); // recover already-deployed app
             assertLe(app.getDeploymentBlockNumber(), vm.getBlockNumber());
