@@ -30,16 +30,16 @@ interface Inbox is EventEmitter {
     error InputTooLarge(uint256 inputLength, uint256 maxInputLength);
 
     /// @notice Get the number of inputs.
-    function getNumberOfInputs() external view returns (uint256);
+    function getInputCount() external view returns (uint256);
 
     /// @notice Get the number of inputs before the current block.
-    function getNumberOfInputsBeforeCurrentBlock() external view returns (uint256);
+    function getInputCountBeforeCurrentBlock() external view returns (uint256);
 
     /// @notice Get the Merkle root of an input by its index.
     /// @param inputIndex The input index
     /// @dev The provided index must be valid.
     /// Valid input indices are within the range `[0, N)`.
-    /// See  `getNumberOfInputs` for the value of `N`.
+    /// See  `getInputCount` for the value of `N`.
     function getInputMerkleRoot(uint256 inputIndex) external view returns (bytes32);
 
     /// @notice Send an input.

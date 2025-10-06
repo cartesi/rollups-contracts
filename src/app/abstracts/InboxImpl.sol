@@ -17,14 +17,14 @@ abstract contract InboxImpl is Inbox, EventEmitterImpl {
 
     bytes32[] private _inputMerkleRoots;
     uint256 private _blockNumberOfLastSnapshot;
-    uint256 private _numberOfInputsInLastSnapshot;
+    uint256 private _inputCountInLastSnapshot;
 
     function addInput(bytes calldata payload) external override returns (bytes32) {
         uint256 index = _inputMerkleRoots.length;
 
         // update snapshot if first input of current block
         if (_blockNumberOfLastSnapshot < block.number) {
-            _numberOfInputsInLastSnapshot = index;
+            _inputCountInLastSnapshot = index;
             _blockNumberOfLastSnapshot = block.number;
         }
 
@@ -55,21 +55,16 @@ abstract contract InboxImpl is Inbox, EventEmitterImpl {
         return inputMerkleRoot;
     }
 
-    function getNumberOfInputs() public view override returns (uint256) {
+    function getInputCount() public view override returns (uint256) {
         return _inputMerkleRoots.length;
     }
 
-    function getNumberOfInputsBeforeCurrentBlock()
-        public
-        view
-        override
-        returns (uint256)
-    {
+    function getInputCountBeforeCurrentBlock() public view override returns (uint256) {
         if (_blockNumberOfLastSnapshot == block.number) {
-            return _numberOfInputsInLastSnapshot;
+            return _inputCountInLastSnapshot;
         } else {
             // _blockNumberOfLastSnapshot < block.number
-            return getNumberOfInputs();
+            return getInputCount();
         }
     }
 

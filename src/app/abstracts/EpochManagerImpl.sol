@@ -72,16 +72,16 @@ abstract contract EpochManagerImpl is EpochManager, InboxImpl {
 
     /// @notice Check whether the open epoch is empty.
     function _isOpenEpochEmpty() internal view returns (bool) {
-        uint256 numberOfInputsBeforeCurrentBlock = getNumberOfInputsBeforeCurrentBlock();
-        assert(_inputIndexExclusiveUpperBound <= numberOfInputsBeforeCurrentBlock);
-        return _inputIndexExclusiveUpperBound == numberOfInputsBeforeCurrentBlock;
+        uint256 inputCountBeforeCurrentBlock = getInputCountBeforeCurrentBlock();
+        assert(_inputIndexExclusiveUpperBound <= inputCountBeforeCurrentBlock);
+        return _inputIndexExclusiveUpperBound == inputCountBeforeCurrentBlock;
     }
 
     /// @notice Close the first non-finalized epoch.
     function _closeEpoch(address epochFinalizer) internal {
         __isFirstNonFinalizedEpochClosed = true;
         _inputIndexInclusiveLowerBound = _inputIndexExclusiveUpperBound;
-        _inputIndexExclusiveUpperBound = getNumberOfInputsBeforeCurrentBlock();
+        _inputIndexExclusiveUpperBound = getInputCountBeforeCurrentBlock();
         uint256 epochIndex = getFinalizedEpochCount();
         emit EpochClosed(epochIndex, epochFinalizer);
     }

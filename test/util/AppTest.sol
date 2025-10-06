@@ -146,8 +146,8 @@ abstract contract AppTest is Test {
     // -----------
 
     function testInboxInitialState() external view {
-        assertEq(_app.getNumberOfInputs(), 0);
-        assertEq(_app.getNumberOfInputsBeforeCurrentBlock(), 0);
+        assertEq(_app.getInputCount(), 0);
+        assertEq(_app.getInputCountBeforeCurrentBlock(), 0);
     }
 
     /// @notice An inbox action
@@ -159,27 +159,24 @@ abstract contract AppTest is Test {
     }
 
     function testInboxActions(InboxAction[] calldata actions) external {
-        uint256 numberOfInputs;
-        uint256 numberOfInputsBeforeCurrentBlock;
+        uint256 inputCount;
+        uint256 inputCountBeforeCurrentBlock;
         uint256 maxPayloadLength = _computeMaxInputPayloadLength();
         for (uint256 i; i < actions.length; ++i) {
             InboxAction calldata action = actions[i];
             if (action.isAddInput) {
                 bytes calldata payload = action.payload;
                 if (payload.length <= maxPayloadLength) {
-                    uint256 inputIndex = numberOfInputs;
+                    uint256 inputIndex = inputCount;
                     _testAddInput(payload, inputIndex);
-                    ++numberOfInputs;
+                    ++inputCount;
                 }
             } else {
                 _mineBlock();
-                numberOfInputsBeforeCurrentBlock = numberOfInputs;
+                inputCountBeforeCurrentBlock = inputCount;
             }
-            assertEq(_app.getNumberOfInputs(), numberOfInputs);
-            assertEq(
-                _app.getNumberOfInputsBeforeCurrentBlock(),
-                numberOfInputsBeforeCurrentBlock
-            );
+            assertEq(_app.getInputCount(), inputCount);
+            assertEq(_app.getInputCountBeforeCurrentBlock(), inputCountBeforeCurrentBlock);
         }
     }
 
@@ -240,11 +237,11 @@ abstract contract AppTest is Test {
 
         // We get the number of inputs as the expected input index
         // and also to check that the input count increases by 1.
-        uint256 numOfInputsBefore = _app.getNumberOfInputs();
+        uint256 inputCountBefore = _app.getInputCount();
 
         // We encode the input to check against the InputAdded event to be emitted.
         bytes memory input = _encodeInput(
-            numOfInputsBefore,
+            inputCountBefore,
             address(ETHER_PORTAL),
             InputEncoding.encodeEtherDeposit(sender, value, data)
         );
@@ -262,12 +259,12 @@ abstract contract AppTest is Test {
         ETHER_PORTAL.depositEther{value: value}(_app, data);
 
         uint256 appBalanceAfter = address(_app).balance;
-        uint256 numOfInputsAfter = _app.getNumberOfInputs();
+        uint256 inputCountAfter = _app.getInputCount();
 
         // Make sure that the app balance has increased by the transfer value
         // and that only one input was added in the deposit tx
         assertEq(appBalanceAfter, appBalanceBefore + value);
-        assertEq(numOfInputsAfter, numOfInputsBefore + 1);
+        assertEq(inputCountAfter, inputCountBefore + 1);
     }
 
     // -------------------
@@ -292,11 +289,11 @@ abstract contract AppTest is Test {
 
         // We get the number of inputs as the expected input index
         // and also to check that the input count increases by 1.
-        uint256 numOfInputsBefore = _app.getNumberOfInputs();
+        uint256 inputCountBefore = _app.getInputCount();
 
         // We encode the input to check against the InputAdded event to be emitted.
         bytes memory input = _encodeInput(
-            numOfInputsBefore,
+            inputCountBefore,
             address(ERC20_PORTAL),
             InputEncoding.encodeERC20Deposit(token, sender, value, data)
         );
@@ -306,15 +303,15 @@ abstract contract AppTest is Test {
 
         // We make sure an InputAdded event is emitted.
         vm.expectEmit(true, false, false, true, address(_app));
-        emit Inbox.InputAdded(numOfInputsBefore, input);
+        emit Inbox.InputAdded(inputCountBefore, input);
 
         // Finally, we make the deposit.
         ERC20_PORTAL.depositERC20Tokens(token, _app, value, data);
 
-        uint256 numOfInputsAfter = _app.getNumberOfInputs();
+        uint256 inputCountAfter = _app.getInputCount();
 
         // Make sure that the app has received exactly one input.
-        assertEq(numOfInputsAfter, numOfInputsBefore + 1);
+        assertEq(inputCountAfter, inputCountBefore + 1);
     }
 
     function testErc20DepositRevertsWhenTransferFromReturnsFalse(
@@ -463,11 +460,11 @@ abstract contract AppTest is Test {
 
         // We get the number of inputs as the expected input index
         // and also to check that the input count increases by 1.
-        uint256 numOfInputsBefore = _app.getNumberOfInputs();
+        uint256 inputCountBefore = _app.getInputCount();
 
         // We encode the input to check against the InputAdded event to be emitted.
         bytes memory input = _encodeInput(
-            numOfInputsBefore,
+            inputCountBefore,
             address(ERC20_PORTAL),
             InputEncoding.encodeERC20Deposit(token, sender, value, data)
         );
@@ -479,18 +476,18 @@ abstract contract AppTest is Test {
 
         // We make sure an InputAdded event is emitted.
         vm.expectEmit(true, false, false, true, address(_app));
-        emit Inbox.InputAdded(numOfInputsBefore, input);
+        emit Inbox.InputAdded(inputCountBefore, input);
 
         // Finally, we make the deposit.
         ERC20_PORTAL.depositERC20Tokens(token, _app, value, data);
 
         uint256 appBalanceAfter = token.balanceOf(address(_app));
-        uint256 numOfInputsAfter = _app.getNumberOfInputs();
+        uint256 inputCountAfter = _app.getInputCount();
 
         // Make sure that the app balance has increased by the transfer value
         // and that only one input was added in the deposit tx
         assertEq(appBalanceAfter, appBalanceBefore + value);
-        assertEq(numOfInputsAfter, numOfInputsBefore + 1);
+        assertEq(inputCountAfter, inputCountBefore + 1);
     }
 
     // --------------------
@@ -517,11 +514,11 @@ abstract contract AppTest is Test {
 
         // We get the number of inputs as the expected input index
         // and also to check that the input count increases by 1.
-        uint256 numOfInputsBefore = _app.getNumberOfInputs();
+        uint256 inputCountBefore = _app.getInputCount();
 
         // We encode the input to check against the InputAdded event to be emitted.
         bytes memory input = _encodeInput(
-            numOfInputsBefore,
+            inputCountBefore,
             address(ERC721_PORTAL),
             InputEncoding.encodeERC721Deposit(
                 token, sender, tokenId, baseLayerData, execLayerData
@@ -533,17 +530,17 @@ abstract contract AppTest is Test {
 
         // We make sure an InputAdded event is emitted.
         vm.expectEmit(true, false, false, true, address(_app));
-        emit Inbox.InputAdded(numOfInputsBefore, input);
+        emit Inbox.InputAdded(inputCountBefore, input);
 
         // Finally, we make the deposit.
         ERC721_PORTAL.depositERC721Token(
             token, _app, tokenId, baseLayerData, execLayerData
         );
 
-        uint256 numOfInputsAfter = _app.getNumberOfInputs();
+        uint256 inputCountAfter = _app.getInputCount();
 
         // Make sure that the app has received exactly one input.
-        assertEq(numOfInputsAfter, numOfInputsBefore + 1);
+        assertEq(inputCountAfter, inputCountBefore + 1);
     }
 
     function testErc721DepositWhenSafeTransferFromReverts(
@@ -726,11 +723,11 @@ abstract contract AppTest is Test {
 
         // We get the number of inputs as the expected input index
         // and also to check that the input count increases by 1.
-        uint256 numOfInputsBefore = _app.getNumberOfInputs();
+        uint256 inputCountBefore = _app.getInputCount();
 
         // We encode the input to check against the InputAdded event to be emitted.
         bytes memory input = _encodeInput(
-            numOfInputsBefore,
+            inputCountBefore,
             address(ERC721_PORTAL),
             InputEncoding.encodeERC721Deposit(
                 token, sender, tokenId, baseLayerData, execLayerData
@@ -747,7 +744,7 @@ abstract contract AppTest is Test {
 
         // We make sure an InputAdded event is emitted.
         vm.expectEmit(true, false, false, true, address(_app));
-        emit Inbox.InputAdded(numOfInputsBefore, input);
+        emit Inbox.InputAdded(inputCountBefore, input);
 
         // Finally, we make the deposit.
         ERC721_PORTAL.depositERC721Token(
@@ -755,13 +752,13 @@ abstract contract AppTest is Test {
         );
 
         uint256 appBalanceAfter = token.balanceOf(address(_app));
-        uint256 numOfInputsAfter = _app.getNumberOfInputs();
+        uint256 inputCountAfter = _app.getInputCount();
 
         // Make sure that the app balance has increased by the transfer value
         // and that only one input was added in the deposit tx;
         // We also ensure that the app now owns the token.
         assertEq(appBalanceAfter, appBalanceBefore + 1);
-        assertEq(numOfInputsAfter, numOfInputsBefore + 1);
+        assertEq(inputCountAfter, inputCountBefore + 1);
         assertEq(token.ownerOf(tokenId), address(_app));
     }
 
@@ -791,11 +788,11 @@ abstract contract AppTest is Test {
 
         // We get the number of inputs as the expected input index
         // and also to check that the input count increases by 1.
-        uint256 numOfInputsBefore = _app.getNumberOfInputs();
+        uint256 inputCountBefore = _app.getInputCount();
 
         // We encode the input to check against the InputAdded event to be emitted.
         bytes memory input = _encodeInput(
-            numOfInputsBefore,
+            inputCountBefore,
             address(ERC1155_SINGLE_PORTAL),
             InputEncoding.encodeSingleERC1155Deposit(
                 token, sender, tokenId, value, baseLayerData, execLayerData
@@ -807,17 +804,17 @@ abstract contract AppTest is Test {
 
         // We make sure an InputAdded event is emitted.
         vm.expectEmit(true, false, false, true, address(_app));
-        emit Inbox.InputAdded(numOfInputsBefore, input);
+        emit Inbox.InputAdded(inputCountBefore, input);
 
         // Finally, we make the deposit.
         ERC1155_SINGLE_PORTAL.depositSingleERC1155Token(
             token, _app, tokenId, value, baseLayerData, execLayerData
         );
 
-        uint256 numOfInputsAfter = _app.getNumberOfInputs();
+        uint256 inputCountAfter = _app.getInputCount();
 
         // Make sure that the app has received exactly one input.
-        assertEq(numOfInputsAfter, numOfInputsBefore + 1);
+        assertEq(inputCountAfter, inputCountBefore + 1);
     }
 
     function testErc1155SingleDepositWhenSafeTransferFromReverts(
@@ -982,11 +979,11 @@ abstract contract AppTest is Test {
 
         // We get the number of inputs as the expected input index
         // and also to check that the input count increases by 1.
-        uint256 numOfInputsBefore = _app.getNumberOfInputs();
+        uint256 inputCountBefore = _app.getInputCount();
 
         // We encode the input to check against the InputAdded event to be emitted.
         bytes memory input = _encodeInput(
-            numOfInputsBefore,
+            inputCountBefore,
             address(ERC1155_SINGLE_PORTAL),
             InputEncoding.encodeSingleERC1155Deposit(
                 token, sender, tokenId, value, baseLayerData, execLayerData
@@ -997,7 +994,7 @@ abstract contract AppTest is Test {
 
         // We make sure an InputAdded event is emitted.
         vm.expectEmit(true, false, false, true, address(_app));
-        emit Inbox.InputAdded(numOfInputsBefore, input);
+        emit Inbox.InputAdded(inputCountBefore, input);
 
         // Finally, the sender tries to deposit the tokens.
         vm.prank(sender);
@@ -1006,12 +1003,12 @@ abstract contract AppTest is Test {
         );
 
         uint256 appBalanceAfter = token.balanceOf(address(_app), tokenId);
-        uint256 numOfInputsAfter = _app.getNumberOfInputs();
+        uint256 inputCountAfter = _app.getInputCount();
 
         // Make sure that the app balance has increased by the transfer value
         // and that only one input was added in the deposit tx
         assertEq(appBalanceAfter, appBalanceBefore + value);
-        assertEq(numOfInputsAfter, numOfInputsBefore + 1);
+        assertEq(inputCountAfter, inputCountBefore + 1);
     }
 
     // ---------------------------
@@ -1040,11 +1037,11 @@ abstract contract AppTest is Test {
 
         // We get the number of inputs as the expected input index
         // and also to check that the input count increases by 1.
-        uint256 numOfInputsBefore = _app.getNumberOfInputs();
+        uint256 inputCountBefore = _app.getInputCount();
 
         // We encode the input to check against the InputAdded event to be emitted.
         bytes memory input = _encodeInput(
-            numOfInputsBefore,
+            inputCountBefore,
             address(ERC1155_BATCH_PORTAL),
             InputEncoding.encodeBatchERC1155Deposit(
                 token, sender, tokenIds, values, baseLayerData, execLayerData
@@ -1056,17 +1053,17 @@ abstract contract AppTest is Test {
 
         // We make sure an InputAdded event is emitted.
         vm.expectEmit(true, false, false, true, address(_app));
-        emit Inbox.InputAdded(numOfInputsBefore, input);
+        emit Inbox.InputAdded(inputCountBefore, input);
 
         // Finally, we make the deposit.
         ERC1155_BATCH_PORTAL.depositBatchERC1155Token(
             token, _app, tokenIds, values, baseLayerData, execLayerData
         );
 
-        uint256 numOfInputsAfter = _app.getNumberOfInputs();
+        uint256 inputCountAfter = _app.getInputCount();
 
         // Make sure that the app has received exactly one input.
-        assertEq(numOfInputsAfter, numOfInputsBefore + 1);
+        assertEq(inputCountAfter, inputCountBefore + 1);
     }
 
     function testErc1155BatchDepositWhenSafeBatchTransferFromReverts(
@@ -1207,11 +1204,11 @@ abstract contract AppTest is Test {
 
         // We get the number of inputs as the expected input index
         // and also to check that the input count increases by 1.
-        uint256 numOfInputsBefore = _app.getNumberOfInputs();
+        uint256 inputCountBefore = _app.getInputCount();
 
         // We encode the input to check against the InputAdded event to be emitted.
         bytes memory input = _encodeInput(
-            numOfInputsBefore,
+            inputCountBefore,
             address(ERC1155_BATCH_PORTAL),
             ExternalInputEncoding.encodeBatchERC1155Deposit(
                 token, sender, tokenIds, values, baseLayerData, execLayerData
@@ -1225,7 +1222,7 @@ abstract contract AppTest is Test {
 
         // We make sure an InputAdded event is emitted.
         vm.expectEmit(true, false, false, true, address(_app));
-        emit Inbox.InputAdded(numOfInputsBefore, input);
+        emit Inbox.InputAdded(inputCountBefore, input);
 
         // Finally, the sender deposits the tokens.
         vm.prank(sender);
@@ -1241,8 +1238,8 @@ abstract contract AppTest is Test {
         }
 
         // Make sure that only one input was added in the deposit tx
-        uint256 numOfInputsAfter = _app.getNumberOfInputs();
-        assertEq(numOfInputsAfter, numOfInputsBefore + 1);
+        uint256 inputCountAfter = _app.getInputCount();
+        assertEq(inputCountAfter, inputCountBefore + 1);
     }
 
     // -------------------
