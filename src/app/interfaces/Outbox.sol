@@ -38,7 +38,7 @@ interface Outbox is EventEmitter {
     /// @notice Get the number of outputs that have been executed.
     /// @dev Outputs can be executed in any order, so do not assume that
     /// all executed outputs have indices smaller than this value.
-    function getNumberOfExecutedOutputs() external view returns (uint256);
+    function getOutputExecutionCount() external view returns (uint256);
 
     /// @notice Check whether an output has been executed.
     /// @param outputIndex The output index

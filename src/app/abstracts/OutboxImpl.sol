@@ -23,15 +23,15 @@ abstract contract OutboxImpl is Outbox, EpochManagerImpl, ReentrancyGuard {
     BitMaps.BitMap private _executedOutputs;
 
     /// @notice Keeps track of the number of outputs that have been executed.
-    /// @dev See the `getNumberOfExecutedOutputs` function.
-    uint256 private _numOfExecutedOutputs;
+    /// @dev See the `getOutputExecutionCount` function.
+    uint256 private _outputExecutionCount;
 
     function wasOutputExecuted(uint256 outputIndex) public view override returns (bool) {
         return _executedOutputs.get(outputIndex);
     }
 
-    function getNumberOfExecutedOutputs() external view override returns (uint256) {
-        return _numOfExecutedOutputs;
+    function getOutputExecutionCount() external view override returns (uint256) {
+        return _outputExecutionCount;
     }
 
     function validateOutputHash(bytes32 outputHash, OutputValidityProof calldata proof)
@@ -89,7 +89,7 @@ abstract contract OutboxImpl is Outbox, EpochManagerImpl, ReentrancyGuard {
         }
 
         _executedOutputs.set(outputIndex);
-        ++_numOfExecutedOutputs;
+        ++_outputExecutionCount;
         emit OutputExecuted(outputIndex, output);
     }
 

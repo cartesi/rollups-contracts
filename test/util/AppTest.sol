@@ -1319,8 +1319,8 @@ abstract contract AppTest is Test {
     // Outbox tests
     // ------------
 
-    function testGetNumberOfExecutedOutputs() external view {
-        assertEq(_app.getNumberOfExecutedOutputs(), 0);
+    function testGetOutputExecutionCount() external view {
+        assertEq(_app.getOutputExecutionCount(), 0);
     }
 
     function testWasOutputExecuted(uint256 outputIndex) external view {
@@ -1505,7 +1505,7 @@ abstract contract AppTest is Test {
             if (_isTypedOutputExecutable(typedOutput)) {
                 // Get the number of executed output before calling `executeOutput`.
                 // This will be used to check later whether this number was incremented by 1.
-                uint256 numOfExecutedOutputs = _app.getNumberOfExecutedOutputs();
+                uint256 outputExecutionCount = _app.getOutputExecutionCount();
 
                 // Make sure the output was not executed yet.
                 assertFalse(_app.wasOutputExecuted(outputIndex));
@@ -1535,7 +1535,7 @@ abstract contract AppTest is Test {
                 assertTrue(_app.wasOutputExecuted(outputIndex));
 
                 // Check whether the number of executed outputs was incremented by 1.
-                assertEq(_app.getNumberOfExecutedOutputs(), numOfExecutedOutputs + 1);
+                assertEq(_app.getOutputExecutionCount(), outputExecutionCount + 1);
 
                 // Trying to execute the output again reverts.
                 vm.expectRevert(_encodeOutputNotReexecutable(output));
@@ -2674,7 +2674,7 @@ abstract contract AppTest is Test {
 
     /// @notice Execute an output while checking whether it emits an `OutputExecuted` event,
     /// whether the value returned by the `wasOutputExecuted` function goes from `false` to `true`,
-    /// and whether the value returned by the `getNumberOfExecutedOutputs` function increases by 1.
+    /// and whether the value returned by the `getOutputExecutionCount` function increases by 1.
     /// It also checks whether trying to execute the output again raises `OutputNotReexecutable`,
     /// and that it can still be validated after execution.
     /// @param output The output
@@ -2683,7 +2683,7 @@ abstract contract AppTest is Test {
         internal
     {
         // Get the number of executed outputs before the execution
-        uint256 numOfExecutedOutputs = _app.getNumberOfExecutedOutputs();
+        uint256 outputExecutionCount = _app.getOutputExecutionCount();
 
         // Make sure the output was not executed yet
         assertFalse(_app.wasOutputExecuted(proof.outputIndex));
@@ -2699,7 +2699,7 @@ abstract contract AppTest is Test {
         assertTrue(_app.wasOutputExecuted(proof.outputIndex));
 
         // Make sure the number of executed output has increased by 1
-        assertEq(_app.getNumberOfExecutedOutputs(), numOfExecutedOutputs + 1);
+        assertEq(_app.getOutputExecutionCount(), outputExecutionCount + 1);
 
         // Trying to execute the output again reverts.
         vm.expectRevert(_encodeOutputNotReexecutable(output));
