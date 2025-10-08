@@ -6,10 +6,9 @@ pragma solidity ^0.8.8;
 import {IERC1155} from "@openzeppelin-contracts-5.2.0/token/ERC1155/IERC1155.sol";
 
 import {App} from "../app/interfaces/App.sol";
-import {IPortal} from "./IPortal.sol";
 
 /// @title ERC-1155 Single Transfer Portal interface
-interface IERC1155SinglePortal is IPortal {
+interface IERC1155SinglePortal {
     // Permissionless functions
 
     /// @notice Transfer ERC-1155 tokens of a single type to an application contract

@@ -8,13 +8,12 @@ import {IERC721} from "@openzeppelin-contracts-5.2.0/token/ERC721/IERC721.sol";
 import {App} from "../app/interfaces/App.sol";
 import {IERC721Portal} from "./IERC721Portal.sol";
 import {InputEncoding} from "../common/InputEncoding.sol";
-import {Portal} from "./Portal.sol";
 
 /// @title ERC-721 Portal
 ///
 /// @notice This contract allows anyone to perform transfers of
 /// ERC-721 tokens to an application contract while informing the off-chain machine.
-contract ERC721Portal is IERC721Portal, Portal {
+contract ERC721Portal is IERC721Portal {
     /// @inheritdoc IERC721Portal
     function depositERC721Token(
         IERC721 token,

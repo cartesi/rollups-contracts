@@ -6,13 +6,12 @@ pragma solidity ^0.8.27;
 import {App} from "../app/interfaces/App.sol";
 import {IEtherPortal} from "./IEtherPortal.sol";
 import {InputEncoding} from "../common/InputEncoding.sol";
-import {Portal} from "./Portal.sol";
 
 /// @title Ether Portal
 ///
 /// @notice This contract allows anyone to perform transfers of
 /// Ether to an application contract while informing the off-chain machine.
-contract EtherPortal is IEtherPortal, Portal {
+contract EtherPortal is IEtherPortal {
     /// @inheritdoc IEtherPortal
     function depositEther(App appContract, bytes calldata execLayerData)
         external

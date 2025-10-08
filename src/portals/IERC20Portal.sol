@@ -6,10 +6,9 @@ pragma solidity ^0.8.8;
 import {IERC20} from "@openzeppelin-contracts-5.2.0/token/ERC20/IERC20.sol";
 
 import {App} from "../app/interfaces/App.sol";
-import {IPortal} from "./IPortal.sol";
 
 /// @title ERC-20 Portal interface
-interface IERC20Portal is IPortal {
+interface IERC20Portal {
     // Errors
 
     /// @notice Failed to transfer ERC-20 tokens to application
