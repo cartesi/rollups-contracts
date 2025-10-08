@@ -5,12 +5,12 @@ pragma solidity ^0.8.27;
 
 import {Create2} from "@openzeppelin-contracts-5.2.0/utils/Create2.sol";
 
-import {EventEmitterImpl} from "../abstracts/EventEmitterImpl.sol";
+import {DeploymentInfoProviderImpl} from "../abstracts/DeploymentInfoProviderImpl.sol";
 import {QuorumAppFactory} from "../interfaces/QuorumAppFactory.sol";
 import {QuorumAppImpl} from "../concretes/QuorumAppImpl.sol";
 import {QuorumApp} from "../interfaces/QuorumApp.sol";
 
-contract QuorumAppFactoryImpl is QuorumAppFactory, EventEmitterImpl {
+contract QuorumAppFactoryImpl is QuorumAppFactory, DeploymentInfoProviderImpl {
     uint256 private _deployedAppCount;
 
     function deployQuorumApp(

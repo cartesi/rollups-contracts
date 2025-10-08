@@ -10,9 +10,9 @@ import {ITournamentFactory} from "prt-contracts/ITournamentFactory.sol";
 import {DaveAppFactory} from "../interfaces/DaveAppFactory.sol";
 import {DaveAppImpl} from "../concretes/DaveAppImpl.sol";
 import {DaveApp} from "../interfaces/DaveApp.sol";
-import {EventEmitterImpl} from "../abstracts/EventEmitterImpl.sol";
+import {DeploymentInfoProviderImpl} from "../abstracts/DeploymentInfoProviderImpl.sol";
 
-contract DaveAppFactoryImpl is DaveAppFactory, EventEmitterImpl {
+contract DaveAppFactoryImpl is DaveAppFactory, DeploymentInfoProviderImpl {
     ITournamentFactory immutable _TOURNAMENT_FACTORY;
     uint256 private _deployedAppCount;
 

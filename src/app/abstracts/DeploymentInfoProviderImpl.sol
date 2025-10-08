@@ -3,9 +3,9 @@
 
 pragma solidity ^0.8.27;
 
-import {EventEmitter} from "../interfaces/EventEmitter.sol";
+import {DeploymentInfoProvider} from "../interfaces/DeploymentInfoProvider.sol";
 
-abstract contract EventEmitterImpl is EventEmitter {
+abstract contract DeploymentInfoProviderImpl is DeploymentInfoProvider {
     uint256 private immutable _DEPLOYMENT_BLOCK_NUMBER = block.number;
 
     function getDeploymentBlockNumber()

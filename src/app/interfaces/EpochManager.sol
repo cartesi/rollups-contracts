@@ -3,7 +3,7 @@
 
 pragma solidity ^0.8.8;
 
-import {EventEmitter} from "./EventEmitter.sol";
+import {DeploymentInfoProvider} from "./DeploymentInfoProvider.sol";
 
 /// @notice Manages epochs.
 ///
@@ -69,7 +69,7 @@ import {EventEmitter} from "./EventEmitter.sol";
 ///    to close and finalize epochs, the app state will progress, and users will be
 ///    able to validate/execute new outputs.
 ///
-interface EpochManager is EventEmitter {
+interface EpochManager is DeploymentInfoProvider {
     /// @notice An epoch has been closed.
     /// @param epochIndex The index of the epoch
     /// @param epochFinalizer The contract that makes the epoch reach finality

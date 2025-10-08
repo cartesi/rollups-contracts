@@ -6,7 +6,7 @@ pragma solidity ^0.8.8;
 /// @notice An interface that provides the deployment block number
 /// of the contract for off-chain components to have a lower bound
 /// when listening to events.
-interface EventEmitter {
+interface DeploymentInfoProvider {
     /// @notice Get the number of the block in which the contract was deployed.
     /// @dev This information is useful to off-chain components that need to listen to events
     /// emitted by contracts but use web3 providers that limit block ranges of
