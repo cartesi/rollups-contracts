@@ -20,8 +20,11 @@ jobs:
 
       - uses: ./.github/actions/setup
 
+      - name: Build contracts
+        run: forge build
+
       - name: Run tests
-        run: forge test -vvv
+        run: pnpm test
 
       - name: Upload signatures
         run: forge selectors upload --all

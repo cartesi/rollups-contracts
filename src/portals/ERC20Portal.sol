@@ -1,39 +1,32 @@
 // (c) Cartesi and individual authors (see AUTHORS)
 // SPDX-License-Identifier: Apache-2.0 (see LICENSE)
 
-pragma solidity ^0.8.8;
+pragma solidity ^0.8.27;
 
 import {IERC20} from "@openzeppelin-contracts-5.2.0/token/ERC20/IERC20.sol";
 
+import {App} from "../app/interfaces/App.sol";
 import {IERC20Portal} from "./IERC20Portal.sol";
-import {Portal} from "./Portal.sol";
-import {IInputBox} from "../inputs/IInputBox.sol";
 import {InputEncoding} from "../common/InputEncoding.sol";
 
 /// @title ERC-20 Portal
 ///
 /// @notice This contract allows anyone to perform transfers of
 /// ERC-20 tokens to an application contract while informing the off-chain machine.
-contract ERC20Portal is IERC20Portal, Portal {
-    /// @notice Constructs the portal.
-    /// @param inputBox The input box used by the portal
-    constructor(IInputBox inputBox) Portal(inputBox) {}
-
+contract ERC20Portal is IERC20Portal {
+    /// @inheritdoc IERC20Portal
     function depositERC20Tokens(
         IERC20 token,
-        address appContract,
+        App appContract,
         uint256 value,
         bytes calldata execLayerData
     ) external override {
-        bool success = token.transferFrom(msg.sender, appContract, value);
+        bool success = token.transferFrom(msg.sender, address(appContract), value);
 
-        if (!success) {
-            revert ERC20TransferFailed();
-        }
+        require(success, ERC20TransferFailed());
 
-        bytes memory payload =
-            InputEncoding.encodeERC20Deposit(token, msg.sender, value, execLayerData);
-
-        _inputBox.addInput(appContract, payload);
+        appContract.addInput(
+            InputEncoding.encodeERC20Deposit(token, msg.sender, value, execLayerData)
+        );
     }
 }

@@ -3,11 +3,12 @@
 
 pragma solidity ^0.8.8;
 
-import {IPortal} from "./IPortal.sol";
 import {IERC721} from "@openzeppelin-contracts-5.2.0/token/ERC721/IERC721.sol";
 
+import {App} from "../app/interfaces/App.sol";
+
 /// @title ERC-721 Portal interface
-interface IERC721Portal is IPortal {
+interface IERC721Portal {
     // Permissionless functions
 
     /// @notice Transfer an ERC-721 token to an application contract
@@ -24,7 +25,7 @@ interface IERC721Portal is IPortal {
     /// @param execLayerData Additional data to be interpreted by the execution layer
     function depositERC721Token(
         IERC721 token,
-        address appContract,
+        App appContract,
         uint256 tokenId,
         bytes calldata baseLayerData,
         bytes calldata execLayerData

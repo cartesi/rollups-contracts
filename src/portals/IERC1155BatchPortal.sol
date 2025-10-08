@@ -3,11 +3,12 @@
 
 pragma solidity ^0.8.8;
 
-import {IPortal} from "./IPortal.sol";
 import {IERC1155} from "@openzeppelin-contracts-5.2.0/token/ERC1155/IERC1155.sol";
 
+import {App} from "../app/interfaces/App.sol";
+
 /// @title ERC-1155 Batch Transfer Portal interface
-interface IERC1155BatchPortal is IPortal {
+interface IERC1155BatchPortal {
     // Permissionless functions
 
     /// @notice Transfer a batch of ERC-1155 tokens of multiple types to an application contract
@@ -26,7 +27,7 @@ interface IERC1155BatchPortal is IPortal {
     /// @dev Please make sure the arrays `tokenIds` and `values` have the same length.
     function depositBatchERC1155Token(
         IERC1155 token,
-        address appContract,
+        App appContract,
         uint256[] calldata tokenIds,
         uint256[] calldata values,
         bytes calldata baseLayerData,
