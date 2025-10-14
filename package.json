@@ -1,6 +1,6 @@
 {
     "name": "@cartesi/rollups",
-    "version": "2.0.1",
+    "version": "2.1.0-alpha.0",
     "scripts": {
         "build:contracts": "forge build src",
         "build:devnet": "cannon build --write-deployments deployments --anvil.dump-state state.json",

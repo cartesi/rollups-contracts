@@ -1,5 +1,13 @@
 # @cartesi/rollups
 
+## 2.1.0-alpha.0
+
+### Minor Changes
+
+- 335414a:
+  - Add `getNumberOfExecutedOutputs()` view function to **IApplication** interface and implementation.
+  - Add `getNumberOfAcceptedClaims()` view function to **IConsensus** interface and implementations.
+
 ## 2.0.1
 
 ### Patch Changes
