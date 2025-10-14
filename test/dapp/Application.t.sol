@@ -508,7 +508,7 @@ contract ApplicationTest is Test, OwnableTest {
         );
     }
 
-    function _expectNumberOfExecutedOutputsIncrement(uint256 before) internal {
+    function _expectNumberOfExecutedOutputsIncrement(uint256 before) internal view {
         assertEq(
             _appContract.getNumberOfExecutedOutputs(),
             before + 1,
@@ -516,7 +516,7 @@ contract ApplicationTest is Test, OwnableTest {
         );
     }
 
-    function _expectNumberOfExecutedOutputsSame(uint256 before) internal {
+    function _expectNumberOfExecutedOutputsSame(uint256 before) internal view {
         assertEq(
             _appContract.getNumberOfExecutedOutputs(),
             before,
