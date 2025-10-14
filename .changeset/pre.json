@@ -4,5 +4,7 @@
   "initialVersions": {
     "@cartesi/rollups": "2.0.1"
   },
-  "changesets": []
+  "changesets": [
+    "fresh-brooms-build"
+  ]
 }
