@@ -34,7 +34,7 @@ deposit assets, submit claims, execute asset withdrawal orders, and more.
 First, please ensure the following dependencies are installed:
 
 - [corepack]
-- [foundry] 1.1.0
+- [foundry] 1.4.2
 
 Then, you may clone the repository...
 
