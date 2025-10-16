@@ -9,6 +9,9 @@ on:
 
 concurrency: ${{ github.workflow }}-${{ github.ref }}
 
+permissions:
+  id-token: write
+
 jobs:
   version_or_publish:
     name: Version packages or publish them to npmjs.com
@@ -33,4 +36,3 @@ jobs:
           publish: pnpm changeset publish
         env:
           GITHUB_TOKEN: ${{ secrets.BOT_TOKEN }}
-          NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
