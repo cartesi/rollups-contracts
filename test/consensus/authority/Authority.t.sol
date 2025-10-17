@@ -4,16 +4,16 @@
 /// @title Authority Test
 pragma solidity ^0.8.22;
 
-import {Vm} from "forge-std-1.9.6/src/Vm.sol";
 import {Test} from "forge-std-1.9.6/src/Test.sol";
+import {Vm} from "forge-std-1.9.6/src/Vm.sol";
 
-import {IERC165} from "@openzeppelin-contracts-5.2.0/utils/introspection/IERC165.sol";
 import {Ownable} from "@openzeppelin-contracts-5.2.0/access/Ownable.sol";
+import {IERC165} from "@openzeppelin-contracts-5.2.0/utils/introspection/IERC165.sol";
 
+import {IOwnable} from "src/access/IOwnable.sol";
+import {IConsensus} from "src/consensus/IConsensus.sol";
 import {Authority} from "src/consensus/authority/Authority.sol";
 import {IAuthority} from "src/consensus/authority/IAuthority.sol";
-import {IConsensus} from "src/consensus/IConsensus.sol";
-import {IOwnable} from "src/access/IOwnable.sol";
 
 import {ERC165Test} from "../../util/ERC165Test.sol";
 import {LibTopic} from "../../util/LibTopic.sol";

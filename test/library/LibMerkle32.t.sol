@@ -255,9 +255,11 @@ contract LibMerkle32Test is Test {
         leaves.siblings(1, 0);
     }
 
-    function testSiblingsHeightOne(bytes32 leftLeaf, bytes32 rightLeaf, bytes32 extraLeaf)
-        external
-    {
+    function testSiblingsHeightOne(
+        bytes32 leftLeaf,
+        bytes32 rightLeaf,
+        bytes32 extraLeaf
+    ) external {
         bytes32[] memory siblings;
         bytes32[] memory leaves;
 

@@ -3,9 +3,9 @@
 
 pragma solidity ^0.8.18;
 
-import {IInputBox} from "./IInputBox.sol";
 import {CanonicalMachine} from "../common/CanonicalMachine.sol";
 import {Inputs} from "../common/Inputs.sol";
+import {IInputBox} from "./IInputBox.sol";
 
 contract InputBox is IInputBox {
     /// @notice Deployment block number

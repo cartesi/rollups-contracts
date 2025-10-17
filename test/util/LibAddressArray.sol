@@ -6,11 +6,7 @@ pragma solidity ^0.8.22;
 import {Vm} from "forge-std-1.9.6/src/Vm.sol";
 
 library LibAddressArray {
-    function contains(address[] memory array, address elem)
-        internal
-        pure
-        returns (bool)
-    {
+    function contains(address[] memory array, address elem) internal pure returns (bool) {
         for (uint256 i; i < array.length; ++i) {
             if (array[i] == elem) {
                 return true;

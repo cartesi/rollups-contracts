@@ -3,8 +3,8 @@
 
 pragma solidity ^0.8.8;
 
-import {IApplication} from "./IApplication.sol";
 import {IOutputsMerkleRootValidator} from "../consensus/IOutputsMerkleRootValidator.sol";
+import {IApplication} from "./IApplication.sol";
 
 /// @title Application Factory interface
 interface IApplicationFactory {

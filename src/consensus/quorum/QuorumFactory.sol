@@ -5,8 +5,8 @@ pragma solidity ^0.8.8;
 
 import {Create2} from "@openzeppelin-contracts-5.2.0/utils/Create2.sol";
 
-import {IQuorumFactory} from "./IQuorumFactory.sol";
 import {IQuorum} from "./IQuorum.sol";
+import {IQuorumFactory} from "./IQuorumFactory.sol";
 import {Quorum} from "./Quorum.sol";
 
 /// @title Quorum Factory
