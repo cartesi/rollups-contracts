@@ -3,14 +3,14 @@
 
 pragma solidity ^0.8.8;
 
-import {BitMaps} from "@openzeppelin-contracts-5.2.0/utils/structs/BitMaps.sol";
-import {IERC165} from "@openzeppelin-contracts-5.2.0/utils/introspection/IERC165.sol";
 import {Ownable} from "@openzeppelin-contracts-5.2.0/access/Ownable.sol";
+import {IERC165} from "@openzeppelin-contracts-5.2.0/utils/introspection/IERC165.sol";
+import {BitMaps} from "@openzeppelin-contracts-5.2.0/utils/structs/BitMaps.sol";
 
-import {IAuthority} from "./IAuthority.sol";
-import {IConsensus} from "../IConsensus.sol";
-import {AbstractConsensus} from "../AbstractConsensus.sol";
 import {IOwnable} from "../../access/IOwnable.sol";
+import {AbstractConsensus} from "../AbstractConsensus.sol";
+import {IConsensus} from "../IConsensus.sol";
+import {IAuthority} from "./IAuthority.sol";
 
 /// @notice A consensus contract controlled by a single address, the owner.
 /// @dev This contract inherits from OpenZeppelin's `Ownable` contract.

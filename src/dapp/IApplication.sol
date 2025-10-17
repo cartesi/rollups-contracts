@@ -4,8 +4,8 @@
 pragma solidity ^0.8.8;
 
 import {IOwnable} from "../access/IOwnable.sol";
-import {IOutputsMerkleRootValidator} from "../consensus/IOutputsMerkleRootValidator.sol";
 import {OutputValidityProof} from "../common/OutputValidityProof.sol";
+import {IOutputsMerkleRootValidator} from "../consensus/IOutputsMerkleRootValidator.sol";
 
 /// @notice The base layer incarnation of an application running on the execution layer.
 /// @notice The state of the application advances through inputs sent to an `IInputBox` contract.
@@ -29,9 +29,7 @@ interface IApplication is IOwnable {
 
     /// @notice MUST trigger when a new outputs Merkle root validator is chosen.
     /// @param newOutputsMerkleRootValidator The new outputs Merkle root validator
-    event OutputsMerkleRootValidatorChanged(
-        IOutputsMerkleRootValidator newOutputsMerkleRootValidator
-    );
+    event OutputsMerkleRootValidatorChanged(IOutputsMerkleRootValidator newOutputsMerkleRootValidator);
 
     /// @notice MUST trigger when an output is executed.
     /// @param outputIndex The index of the output
@@ -65,9 +63,8 @@ interface IApplication is IOwnable {
     /// @notice Migrate the application to a new outputs Merkle root validator.
     /// @param newOutputsMerkleRootValidator The new outputs Merkle root validator
     /// @dev Can only be called by the application owner.
-    function migrateToOutputsMerkleRootValidator(
-        IOutputsMerkleRootValidator newOutputsMerkleRootValidator
-    ) external;
+    function migrateToOutputsMerkleRootValidator(IOutputsMerkleRootValidator newOutputsMerkleRootValidator)
+        external;
 
     // Permissionless functions
 

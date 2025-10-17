@@ -5,10 +5,10 @@ pragma solidity ^0.8.8;
 
 import {IERC1155} from "@openzeppelin-contracts-5.2.0/token/ERC1155/IERC1155.sol";
 
+import {InputEncoding} from "../common/InputEncoding.sol";
+import {IInputBox} from "../inputs/IInputBox.sol";
 import {IERC1155BatchPortal} from "./IERC1155BatchPortal.sol";
 import {Portal} from "./Portal.sol";
-import {IInputBox} from "../inputs/IInputBox.sol";
-import {InputEncoding} from "../common/InputEncoding.sol";
 
 /// @title ERC-1155 Batch Transfer Portal
 ///

@@ -3,11 +3,11 @@
 
 pragma solidity ^0.8.8;
 
-import {BitMaps} from "@openzeppelin-contracts-5.2.0/utils/structs/BitMaps.sol";
 import {IERC165} from "@openzeppelin-contracts-5.2.0/utils/introspection/IERC165.sol";
+import {BitMaps} from "@openzeppelin-contracts-5.2.0/utils/structs/BitMaps.sol";
 
-import {IQuorum} from "./IQuorum.sol";
 import {AbstractConsensus} from "../AbstractConsensus.sol";
+import {IQuorum} from "./IQuorum.sol";
 
 contract Quorum is IQuorum, AbstractConsensus {
     using BitMaps for BitMaps.BitMap;
@@ -140,7 +140,7 @@ contract Quorum is IQuorum, AbstractConsensus {
         bytes32 outputsMerkleRoot
     ) external view override returns (uint256) {
         return _getVotes(appContract, lastProcessedBlockNumber, outputsMerkleRoot)
-            .inFavorCount;
+        .inFavorCount;
     }
 
     function isValidatorInFavorOf(
@@ -150,8 +150,7 @@ contract Quorum is IQuorum, AbstractConsensus {
         uint256 id
     ) external view override returns (bool) {
         return _getVotes(appContract, lastProcessedBlockNumber, outputsMerkleRoot)
-            .inFavorById
-            .get(id);
+            .inFavorById.get(id);
     }
 
     /// @notice Get a `Votes` structure from storage from a given epoch.

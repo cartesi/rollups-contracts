@@ -3,42 +3,42 @@
 
 pragma solidity ^0.8.22;
 
-import {Application} from "src/dapp/Application.sol";
-import {Authority} from "src/consensus/authority/Authority.sol";
+import {IOwnable} from "src/access/IOwnable.sol";
 import {CanonicalMachine} from "src/common/CanonicalMachine.sol";
-import {IApplication} from "src/dapp/IApplication.sol";
-import {IOutputsMerkleRootValidator} from "src/consensus/IOutputsMerkleRootValidator.sol";
+import {DataAvailability} from "src/common/DataAvailability.sol";
 import {OutputValidityProof} from "src/common/OutputValidityProof.sol";
 import {Outputs} from "src/common/Outputs.sol";
+import {IOutputsMerkleRootValidator} from "src/consensus/IOutputsMerkleRootValidator.sol";
+import {Authority} from "src/consensus/authority/Authority.sol";
+import {Application} from "src/dapp/Application.sol";
+import {IApplication} from "src/dapp/IApplication.sol";
 import {SafeERC20Transfer} from "src/delegatecall/SafeERC20Transfer.sol";
-import {IOwnable} from "src/access/IOwnable.sol";
-import {LibAddress} from "src/library/LibAddress.sol";
-import {InputBox} from "src/inputs/InputBox.sol";
 import {IInputBox} from "src/inputs/IInputBox.sol";
-import {DataAvailability} from "src/common/DataAvailability.sol";
+import {InputBox} from "src/inputs/InputBox.sol";
+import {LibAddress} from "src/library/LibAddress.sol";
 
-import {IERC1155} from "@openzeppelin-contracts-5.2.0/token/ERC1155/IERC1155.sol";
-import {
-    IERC20Errors,
-    IERC721Errors,
-    IERC1155Errors
-} from "@openzeppelin-contracts-5.2.0/interfaces/draft-IERC6093.sol";
-import {IERC20} from "@openzeppelin-contracts-5.2.0/token/ERC20/IERC20.sol";
-import {IERC721} from "@openzeppelin-contracts-5.2.0/token/ERC721/IERC721.sol";
 import {Ownable} from "@openzeppelin-contracts-5.2.0/access/Ownable.sol";
+import {
+    IERC1155Errors,
+    IERC20Errors,
+    IERC721Errors
+} from "@openzeppelin-contracts-5.2.0/interfaces/draft-IERC6093.sol";
+import {IERC1155} from "@openzeppelin-contracts-5.2.0/token/ERC1155/IERC1155.sol";
+import {IERC20} from "@openzeppelin-contracts-5.2.0/token/ERC20/IERC20.sol";
 import {SafeERC20} from "@openzeppelin-contracts-5.2.0/token/ERC20/utils/SafeERC20.sol";
+import {IERC721} from "@openzeppelin-contracts-5.2.0/token/ERC721/IERC721.sol";
 
-import {Vm} from "forge-std-1.9.6/src/Vm.sol";
 import {Test} from "forge-std-1.9.6/src/Test.sol";
+import {Vm} from "forge-std-1.9.6/src/Vm.sol";
 
-import {OwnableTest} from "../util/OwnableTest.sol";
-import {EtherReceiver} from "../util/EtherReceiver.sol";
 import {ExternalLibMerkle32} from "../library/LibMerkle32.t.sol";
+import {EtherReceiver} from "../util/EtherReceiver.sol";
 import {LibAddressArray} from "../util/LibAddressArray.sol";
 import {LibEmulator} from "../util/LibEmulator.sol";
+import {OwnableTest} from "../util/OwnableTest.sol";
+import {SimpleBatchERC1155, SimpleSingleERC1155} from "../util/SimpleERC1155.sol";
 import {SimpleERC20} from "../util/SimpleERC20.sol";
 import {SimpleERC721} from "../util/SimpleERC721.sol";
-import {SimpleSingleERC1155, SimpleBatchERC1155} from "../util/SimpleERC1155.sol";
 
 contract ApplicationTest is Test, OwnableTest {
     using LibEmulator for LibEmulator.State;
@@ -143,9 +143,9 @@ contract ApplicationTest is Test, OwnableTest {
         _appContract.migrateToOutputsMerkleRootValidator(newOutputsMerkleRootValidator);
     }
 
-    function testMigrateToOutputsMerkleRootValidator(
-        IOutputsMerkleRootValidator newOutputsMerkleRootValidator
-    ) external {
+    function testMigrateToOutputsMerkleRootValidator(IOutputsMerkleRootValidator newOutputsMerkleRootValidator)
+        external
+    {
         vm.prank(_appOwner);
         vm.expectEmit(false, false, false, true, address(_appContract));
         emit IApplication.OutputsMerkleRootValidatorChanged(newOutputsMerkleRootValidator);
@@ -189,9 +189,8 @@ contract ApplicationTest is Test, OwnableTest {
         OutputValidityProof memory proof = _getProof(name);
 
         bytes memory fakeOutput = _encodeNotice("Goodbye, World!");
-        bytes32 fakeClaim = proof.outputHashesSiblings.merkleRootAfterReplacement(
-            proof.outputIndex, keccak256(fakeOutput)
-        );
+        bytes32 fakeClaim = proof.outputHashesSiblings
+            .merkleRootAfterReplacement(proof.outputIndex, keccak256(fakeOutput));
 
         _expectRevertClaimNotAccepted(fakeClaim);
         _appContract.validateOutput(fakeOutput, proof);
