@@ -4,10 +4,10 @@
 pragma solidity ^0.8.22;
 
 import {Test} from "forge-std-1.9.6/src/Test.sol";
-import {InputBox} from "src/inputs/InputBox.sol";
-import {IInputBox} from "src/inputs/IInputBox.sol";
 import {CanonicalMachine} from "src/common/CanonicalMachine.sol";
 import {Inputs} from "src/common/Inputs.sol";
+import {IInputBox} from "src/inputs/IInputBox.sol";
+import {InputBox} from "src/inputs/InputBox.sol";
 
 import {EvmAdvanceEncoder} from "../util/EvmAdvanceEncoder.sol";
 

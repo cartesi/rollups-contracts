@@ -3,22 +3,25 @@
 
 pragma solidity ^0.8.8;
 
-import {IApplication} from "./IApplication.sol";
-import {IOutputsMerkleRootValidator} from "../consensus/IOutputsMerkleRootValidator.sol";
-import {LibOutputValidityProof} from "../library/LibOutputValidityProof.sol";
+import {IOwnable} from "../access/IOwnable.sol";
 import {OutputValidityProof} from "../common/OutputValidityProof.sol";
 import {Outputs} from "../common/Outputs.sol";
+import {IOutputsMerkleRootValidator} from "../consensus/IOutputsMerkleRootValidator.sol";
 import {LibAddress} from "../library/LibAddress.sol";
-import {IOwnable} from "../access/IOwnable.sol";
+import {LibOutputValidityProof} from "../library/LibOutputValidityProof.sol";
+import {IApplication} from "./IApplication.sol";
 
 import {Ownable} from "@openzeppelin-contracts-5.2.0/access/Ownable.sol";
-import {ERC721Holder} from
-    "@openzeppelin-contracts-5.2.0/token/ERC721/utils/ERC721Holder.sol";
-import {ERC1155Holder} from
-    "@openzeppelin-contracts-5.2.0/token/ERC1155/utils/ERC1155Holder.sol";
+import {
+    ERC1155Holder
+} from "@openzeppelin-contracts-5.2.0/token/ERC1155/utils/ERC1155Holder.sol";
+import {
+    IERC721Receiver
+} from "@openzeppelin-contracts-5.2.0/token/ERC721/IERC721Receiver.sol";
+import {
+    ERC721Holder
+} from "@openzeppelin-contracts-5.2.0/token/ERC721/utils/ERC721Holder.sol";
 import {ReentrancyGuard} from "@openzeppelin-contracts-5.2.0/utils/ReentrancyGuard.sol";
-import {IERC721Receiver} from
-    "@openzeppelin-contracts-5.2.0/token/ERC721/IERC721Receiver.sol";
 import {BitMaps} from "@openzeppelin-contracts-5.2.0/utils/structs/BitMaps.sol";
 
 contract Application is
@@ -113,9 +116,11 @@ contract Application is
     }
 
     /// @inheritdoc IApplication
-    function migrateToOutputsMerkleRootValidator(
-        IOutputsMerkleRootValidator newOutputsMerkleRootValidator
-    ) external override onlyOwner {
+    function migrateToOutputsMerkleRootValidator(IOutputsMerkleRootValidator newOutputsMerkleRootValidator)
+        external
+        override
+        onlyOwner
+    {
         _outputsMerkleRootValidator = newOutputsMerkleRootValidator;
         emit OutputsMerkleRootValidatorChanged(newOutputsMerkleRootValidator);
     }

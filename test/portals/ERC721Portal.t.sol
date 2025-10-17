@@ -6,10 +6,10 @@ pragma solidity ^0.8.22;
 import {ERC721} from "@openzeppelin-contracts-5.2.0/token/ERC721/ERC721.sol";
 import {IERC721} from "@openzeppelin-contracts-5.2.0/token/ERC721/IERC721.sol";
 
+import {InputEncoding} from "src/common/InputEncoding.sol";
+import {IInputBox} from "src/inputs/IInputBox.sol";
 import {ERC721Portal} from "src/portals/ERC721Portal.sol";
 import {IERC721Portal} from "src/portals/IERC721Portal.sol";
-import {IInputBox} from "src/inputs/IInputBox.sol";
-import {InputEncoding} from "src/common/InputEncoding.sol";
 
 import {Test} from "forge-std-1.9.6/src/Test.sol";
 

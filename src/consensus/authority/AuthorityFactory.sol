@@ -5,9 +5,9 @@ pragma solidity ^0.8.8;
 
 import {Create2} from "@openzeppelin-contracts-5.2.0/utils/Create2.sol";
 
-import {IAuthorityFactory} from "./IAuthorityFactory.sol";
 import {Authority} from "./Authority.sol";
 import {IAuthority} from "./IAuthority.sol";
+import {IAuthorityFactory} from "./IAuthorityFactory.sol";
 
 /// @title Authority Factory
 /// @notice Allows anyone to reliably deploy a new `IAuthority` contract.

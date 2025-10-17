@@ -4,12 +4,12 @@
 /// @title Quorum Factory Test
 pragma solidity ^0.8.22;
 
-import {QuorumFactory} from "src/consensus/quorum/QuorumFactory.sol";
-import {IQuorumFactory} from "src/consensus/quorum/IQuorumFactory.sol";
 import {IQuorum} from "src/consensus/quorum/IQuorum.sol";
+import {IQuorumFactory} from "src/consensus/quorum/IQuorumFactory.sol";
+import {QuorumFactory} from "src/consensus/quorum/QuorumFactory.sol";
 
-import {Vm} from "forge-std-1.9.6/src/Vm.sol";
 import {Test} from "forge-std-1.9.6/src/Test.sol";
+import {Vm} from "forge-std-1.9.6/src/Vm.sol";
 
 import {LibAddressArray} from "../../util/LibAddressArray.sol";
 
