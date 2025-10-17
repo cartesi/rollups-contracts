@@ -33,6 +33,7 @@ jobs:
         with:
           setupGitUser: false
           commit: "Version packages"
-          publish: pnpm changeset publish
+          publish: pnpm ci:publish
+          version: pnpm ci:version
         env:
           GITHUB_TOKEN: ${{ secrets.BOT_TOKEN }}

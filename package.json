@@ -4,6 +4,8 @@
     "scripts": {
         "build:contracts": "forge build src",
         "build:devnet": "cannon build --write-deployments deployments --anvil.dump-state state.json",
+        "ci:publish": "changeset publish",
+        "ci:version": "changeset version && node scripts/update-cannonfile-version.mjs",
         "clean": "pnpm clean:forge && pnpm clean:cannon",
         "clean:cannon": "rm -rf deployments state.json",
         "clean:forge": "forge clean",
