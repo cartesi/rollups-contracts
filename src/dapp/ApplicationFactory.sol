@@ -5,10 +5,10 @@ pragma solidity ^0.8.8;
 
 import {Create2} from "@openzeppelin-contracts-5.2.0/utils/Create2.sol";
 
-import {IApplicationFactory} from "./IApplicationFactory.sol";
 import {IOutputsMerkleRootValidator} from "../consensus/IOutputsMerkleRootValidator.sol";
 import {Application} from "./Application.sol";
 import {IApplication} from "./IApplication.sol";
+import {IApplicationFactory} from "./IApplicationFactory.sol";
 
 /// @title Application Factory
 /// @notice Allows anyone to reliably deploy a new `IApplication` contract.
@@ -41,9 +41,9 @@ contract ApplicationFactory is IApplicationFactory {
         bytes calldata dataAvailability,
         bytes32 salt
     ) external override returns (IApplication) {
-        IApplication appContract = new Application{salt: salt}(
-            outputsMerkleRootValidator, appOwner, templateHash, dataAvailability
-        );
+        IApplication appContract = new Application{
+            salt: salt
+        }(outputsMerkleRootValidator, appOwner, templateHash, dataAvailability);
 
         emit ApplicationCreated(
             outputsMerkleRootValidator,

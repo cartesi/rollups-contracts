@@ -1,11 +1,13 @@
 [profile.default]
 libs = ["dependencies"]
-solc_version = "0.8.29"
+solc_version = "0.8.30"
 via_ir = true
 optimizer = true
+evm_version = "prague"
 
 [fmt]
 line_length = 90
+sort_imports = true
 
 [doc]
 out = "forge-docs"

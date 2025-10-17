@@ -6,8 +6,8 @@ pragma solidity ^0.8.26;
 import {ERC165} from "@openzeppelin-contracts-5.2.0/utils/introspection/ERC165.sol";
 import {IERC165} from "@openzeppelin-contracts-5.2.0/utils/introspection/IERC165.sol";
 
-import {IOutputsMerkleRootValidator} from "./IOutputsMerkleRootValidator.sol";
 import {IConsensus} from "./IConsensus.sol";
+import {IOutputsMerkleRootValidator} from "./IOutputsMerkleRootValidator.sol";
 
 /// @notice Abstract implementation of IConsensus
 abstract contract AbstractConsensus is IConsensus, ERC165 {

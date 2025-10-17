@@ -3,8 +3,8 @@
 
 pragma solidity ^0.8.8;
 
-import {IPortal} from "./IPortal.sol";
 import {IInputBox} from "../inputs/IInputBox.sol";
+import {IPortal} from "./IPortal.sol";
 
 /// @title Portal
 /// @notice This contract serves as a base for all the other portals.

@@ -3,10 +3,10 @@
 
 pragma solidity ^0.8.8;
 
+import {InputEncoding} from "../common/InputEncoding.sol";
+import {IInputBox} from "../inputs/IInputBox.sol";
 import {IEtherPortal} from "./IEtherPortal.sol";
 import {Portal} from "./Portal.sol";
-import {IInputBox} from "../inputs/IInputBox.sol";
-import {InputEncoding} from "../common/InputEncoding.sol";
 
 /// @title Ether Portal
 ///

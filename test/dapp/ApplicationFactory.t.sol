@@ -4,10 +4,10 @@
 /// @title Application Factory Test
 pragma solidity ^0.8.22;
 
-import {ApplicationFactory} from "src/dapp/ApplicationFactory.sol";
-import {IApplicationFactory} from "src/dapp/IApplicationFactory.sol";
-import {IApplication} from "src/dapp/IApplication.sol";
 import {IOutputsMerkleRootValidator} from "src/consensus/IOutputsMerkleRootValidator.sol";
+import {ApplicationFactory} from "src/dapp/ApplicationFactory.sol";
+import {IApplication} from "src/dapp/IApplication.sol";
+import {IApplicationFactory} from "src/dapp/IApplicationFactory.sol";
 
 import {Test} from "forge-std-1.9.6/src/Test.sol";
 import {Vm} from "forge-std-1.9.6/src/Vm.sol";
