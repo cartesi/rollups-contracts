@@ -5,6 +5,12 @@
     "@cartesi/rollups": "2.0.1"
   },
   "changesets": [
-    "fresh-brooms-build"
+    "fluffy-ants-dress",
+    "fresh-brooms-build",
+    "gentle-ads-judge",
+    "great-kiwis-make",
+    "honest-keys-fix",
+    "ready-words-return",
+    "sunny-cooks-sip"
   ]
 }

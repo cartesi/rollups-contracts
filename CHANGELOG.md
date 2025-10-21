@@ -1,5 +1,16 @@
 # @cartesi/rollups
 
+## 2.1.0-alpha.1
+
+### Patch Changes
+
+- 1eaf7e1: Bump `@usecannon/cli` from 2.22.0 to 2.25.0
+- 4604760: Use the zero hash as salt for all `CREATE2` deployments
+- fab54a1: Bump foundry from 1.1.0 to 1.4.2
+- b36152b: Bump solc from 0.8.29 to 0.8.30
+- 1eaf7e1: Bump `@changesets/cli` from 2.29.4 to 2.29.7
+- 949e2d1: Bump target EVM version from cancun to prague
+
 ## 2.1.0-alpha.0
 
 ### Minor Changes
