@@ -5,60 +5,60 @@ description = "Cartesi Rollups"
 [deploy.InputBox]
 artifact = "InputBox"
 create2 = true
-salt = "0x0000000000000000000000000000000000000000c2175a09c0ce23025e57d569"
+salt = "<%= zeroHash %>"
 ifExists = "continue"
 
 [deploy.EtherPortal]
 artifact = "EtherPortal"
 args = ["<%= contracts.InputBox.address %>"]
 create2 = true
-salt = "0x0000000000000000000000000000000000000000c16eecddc7bb0700623d021f"
+salt = "<%= zeroHash %>"
 ifExists = "continue"
 
 [deploy.ERC20Portal]
 artifact = "ERC20Portal"
 args = ["<%= contracts.InputBox.address %>"]
 create2 = true
-salt = "0x00000000000000000000000000000000000000000aa0002f20ec570001929585"
+salt = "<%= zeroHash %>"
 ifExists = "continue"
 
 [deploy.ERC721Portal]
 artifact = "ERC721Portal"
 args = ["<%= contracts.InputBox.address %>"]
 create2 = true
-salt = "0x0000000000000000000000000000000000000000d11c8cd912be82036e25e91f"
+salt = "<%= zeroHash %>"
 ifExists = "continue"
 
 [deploy.ERC1155SinglePortal]
 artifact = "ERC1155SinglePortal"
 args = ["<%= contracts.InputBox.address %>"]
 create2 = true
-salt = "0x0000000000000000000000000000000000000000a5a71f025baa24027e55fcb9"
+salt = "<%= zeroHash %>"
 ifExists = "continue"
 
 [deploy.ERC1155BatchPortal]
 artifact = "ERC1155BatchPortal"
 args = ["<%= contracts.InputBox.address %>"]
 create2 = true
-salt = "0x0000000000000000000000000000000000000000ec0f56adf9d34103e58a5f15"
+salt = "<%= zeroHash %>"
 ifExists = "continue"
 
 [deploy.AuthorityFactory]
 artifact = "AuthorityFactory"
 create2 = true
-salt = "0x0000000000000000000000000000000000000000dacfd4ba82e0a901d92dfa57"
+salt = "<%= zeroHash %>"
 ifExists = "continue"
 
 [deploy.QuorumFactory]
 artifact = "QuorumFactory"
 create2 = true
-salt = "0x0000000000000000000000000000000000000000d5556a1a1397890355d302fb"
+salt = "<%= zeroHash %>"
 ifExists = "continue"
 
 [deploy.ApplicationFactory]
 artifact = "ApplicationFactory"
 create2 = true
-salt = "0x0000000000000000000000000000000000000000381c2f62d29c55017736a80e"
+salt = "<%= zeroHash %>"
 ifExists = "continue"
 
 [deploy.SelfHostedApplicationFactory]
@@ -68,11 +68,11 @@ args = [
     "<%= contracts.ApplicationFactory.address %>",
 ]
 create2 = true
-salt = "0x000000000000000000000000000000000000000080a213e9ec68fb034117851c"
+salt = "<%= zeroHash %>"
 ifExists = "continue"
 
 [deploy.SafeERC20Transfer]
 artifact = "SafeERC20Transfer"
 create2 = true
-salt = "0x0000000000000000000000000000000000000000c541f1309937da01e896d02c"
+salt = "<%= zeroHash %>"
 ifExists = "continue"
