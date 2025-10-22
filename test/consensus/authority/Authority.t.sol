@@ -29,7 +29,7 @@ contract AuthorityTest is Test, ERC165Test, OwnableTest {
     }
 
     /// @inheritdoc ERC165Test
-    function _getERC165Contract() internal view override returns (IERC165) {
+    function _getErc165Contract() internal view override returns (IERC165) {
         return _authority;
     }
 

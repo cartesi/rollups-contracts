@@ -10,13 +10,13 @@ import {Test} from "forge-std-1.9.6/src/Test.sol";
 /// @notice Tests contracts that implement ERC-165
 abstract contract ERC165Test is Test {
     /// @notice Get ERC-165 contract to be tested
-    function _getERC165Contract() internal virtual returns (IERC165);
+    function _getErc165Contract() internal virtual returns (IERC165);
 
     /// @notice Get array of IDs of supported interfaces
     function _getSupportedInterfaces() internal virtual returns (bytes4[] memory);
 
     function testSupportsInterface() external {
-        IERC165 erc165 = _getERC165Contract();
+        IERC165 erc165 = _getErc165Contract();
         assertTrue(erc165.supportsInterface(type(IERC165).interfaceId));
         assertFalse(erc165.supportsInterface(0xffffffff));
 
@@ -34,7 +34,7 @@ abstract contract ERC165Test is Test {
             vm.assume(interfaceId != supportedInterfaces[i]);
         }
 
-        IERC165 erc165 = _getERC165Contract();
+        IERC165 erc165 = _getErc165Contract();
         assertFalse(erc165.supportsInterface(interfaceId));
     }
 }

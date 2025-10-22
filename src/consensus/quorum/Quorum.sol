@@ -14,7 +14,7 @@ contract Quorum is IQuorum, AbstractConsensus {
 
     /// @notice The total number of validators.
     /// @notice See the `numOfValidators` function.
-    uint256 private immutable _numOfValidators;
+    uint256 private immutable _NUM_OF_VALIDATORS;
 
     /// @notice Validator IDs indexed by address.
     /// @notice See the `validatorId` function.
@@ -63,7 +63,7 @@ contract Quorum is IQuorum, AbstractConsensus {
                 _validatorById[id] = validator;
             }
         }
-        _numOfValidators = n;
+        _NUM_OF_VALIDATORS = n;
     }
 
     function submitClaim(
@@ -101,14 +101,14 @@ contract Quorum is IQuorum, AbstractConsensus {
             // Register vote (for the specific claim)
             // and accept the claim if a majority has been reached
             votes.inFavorById.set(id);
-            if (++votes.inFavorCount == 1 + _numOfValidators / 2) {
+            if (++votes.inFavorCount == 1 + _NUM_OF_VALIDATORS / 2) {
                 _acceptClaim(appContract, lastProcessedBlockNumber, outputsMerkleRoot);
             }
         }
     }
 
     function numOfValidators() external view override returns (uint256) {
-        return _numOfValidators;
+        return _NUM_OF_VALIDATORS;
     }
 
     function validatorId(address validator) external view override returns (uint256) {

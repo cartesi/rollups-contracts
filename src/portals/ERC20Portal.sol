@@ -34,6 +34,6 @@ contract ERC20Portal is IERC20Portal, Portal {
         bytes memory payload =
             InputEncoding.encodeERC20Deposit(token, msg.sender, value, execLayerData);
 
-        _inputBox.addInput(appContract, payload);
+        _INPUT_BOX.addInput(appContract, payload);
     }
 }
