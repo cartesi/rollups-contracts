@@ -50,7 +50,7 @@ contract ApplicationTest is Test, OwnableTest {
     IERC721 _erc721Token;
     IERC1155 _erc1155SingleToken;
     IERC1155 _erc1155BatchToken;
-    SafeERC20Transfer _safeERC20Transfer;
+    SafeERC20Transfer _safeErc20Transfer;
     IInputBox _inputBox;
 
     LibEmulator.State _emulator;
@@ -65,11 +65,11 @@ contract ApplicationTest is Test, OwnableTest {
     uint256[] _transferAmounts;
     mapping(string => LibEmulator.OutputIndex) _outputIndexByName;
 
-    uint256 constant _epochLength = 1;
-    bytes32 constant _templateHash = keccak256("templateHash");
-    uint256 constant _initialSupply = 1000000000000000000000000000000000000;
-    uint256 constant _tokenId = 88888888;
-    uint256 constant _transferAmount = 42;
+    uint256 constant EPOCH_LENGTH = 1;
+    bytes32 constant TEMPLATE_HASH = keccak256("templateHash");
+    uint256 constant INITIAL_SUPPLY = 1000000000000000000000000000000000000;
+    uint256 constant TOKEN_ID = 88888888;
+    uint256 constant TRANSFER_AMOUNT = 42;
 
     function setUp() public {
         _initVariables();
@@ -94,7 +94,7 @@ contract ApplicationTest is Test, OwnableTest {
         vm.expectRevert(
             abi.encodeWithSelector(Ownable.OwnableInvalidOwner.selector, address(0))
         );
-        new Application(_authority, address(0), _templateHash, new bytes(0));
+        new Application(_authority, address(0), TEMPLATE_HASH, new bytes(0));
     }
 
     function testConstructor(
@@ -228,7 +228,7 @@ contract ApplicationTest is Test, OwnableTest {
 
         assertLt(
             _erc20Token.balanceOf(address(_appContract)),
-            _transferAmount,
+            TRANSFER_AMOUNT,
             "Application contract does not have enough ERC-20 tokens"
         );
 
@@ -237,12 +237,12 @@ contract ApplicationTest is Test, OwnableTest {
                 IERC20Errors.ERC20InsufficientBalance.selector,
                 address(_appContract),
                 _erc20Token.balanceOf(address(_appContract)),
-                _transferAmount
+                TRANSFER_AMOUNT
             )
         );
         _appContract.executeOutput(output, proof);
 
-        _testERC20Success(output, proof);
+        _testErc20Success(output, proof);
     }
 
     function testExecuteERC721TransferVoucher() external {
@@ -250,7 +250,7 @@ contract ApplicationTest is Test, OwnableTest {
         bytes memory output = _getOutput(name);
         OutputValidityProof memory proof = _getProof(name);
 
-        _testERC721Transfer(output, proof);
+        _testErc721Transfer(output, proof);
     }
 
     function testExecuteERC1155SingleTransferVoucher() external {
@@ -258,7 +258,7 @@ contract ApplicationTest is Test, OwnableTest {
         bytes memory output = _getOutput(name);
         OutputValidityProof memory proof = _getProof(name);
 
-        _testERC1155SingleTransfer(output, proof);
+        _testErc1155SingleTransfer(output, proof);
     }
 
     function testExecuteERC1155BatchTransferVoucher() external {
@@ -266,7 +266,7 @@ contract ApplicationTest is Test, OwnableTest {
         bytes memory output = _getOutput(name);
         OutputValidityProof memory proof = _getProof(name);
 
-        _testERC1155BatchTransfer(output, proof);
+        _testErc1155BatchTransfer(output, proof);
     }
 
     function testExecuteEmptyOutput() external {
@@ -301,7 +301,7 @@ contract ApplicationTest is Test, OwnableTest {
         bytes memory output = _getOutput(name);
         OutputValidityProof memory proof = _getProof(name);
 
-        _testERC20Fail(output, proof);
+        _testErc20Fail(output, proof);
     }
 
     function testExecuteERC20TransferDelegateCallVoucherSuccess() external {
@@ -309,7 +309,7 @@ contract ApplicationTest is Test, OwnableTest {
         bytes memory output = _getOutput(name);
         OutputValidityProof memory proof = _getProof(name);
 
-        _testERC20Success(output, proof);
+        _testErc20Success(output, proof);
     }
 
     // ------------------
@@ -324,27 +324,27 @@ contract ApplicationTest is Test, OwnableTest {
         _tokenOwner = addresses[3];
         for (uint256 i; i < 7; ++i) {
             _tokenIds.push(i);
-            _initialSupplies.push(_initialSupply);
+            _initialSupplies.push(INITIAL_SUPPLY);
             _transferAmounts.push(
-                1 + (uint256(keccak256(abi.encode(i))) % _initialSupply)
+                1 + (uint256(keccak256(abi.encode(i))) % INITIAL_SUPPLY)
             );
         }
     }
 
     function _deployContracts() internal {
         _etherReceiver = new EtherReceiver();
-        _erc20Token = new SimpleERC20(_tokenOwner, _initialSupply);
-        _erc721Token = new SimpleERC721(_tokenOwner, _tokenId);
+        _erc20Token = new SimpleERC20(_tokenOwner, INITIAL_SUPPLY);
+        _erc721Token = new SimpleERC721(_tokenOwner, TOKEN_ID);
         _erc1155SingleToken =
-            new SimpleSingleERC1155(_tokenOwner, _tokenId, _initialSupply);
+            new SimpleSingleERC1155(_tokenOwner, TOKEN_ID, INITIAL_SUPPLY);
         _erc1155BatchToken =
             new SimpleBatchERC1155(_tokenOwner, _tokenIds, _initialSupplies);
         _inputBox = new InputBox();
-        _authority = new Authority(_authorityOwner, _epochLength);
+        _authority = new Authority(_authorityOwner, EPOCH_LENGTH);
         _dataAvailability = abi.encodeCall(DataAvailability.InputBox, (_inputBox));
         _appContract =
-            new Application(_authority, _appOwner, _templateHash, _dataAvailability);
-        _safeERC20Transfer = new SafeERC20Transfer();
+            new Application(_authority, _appOwner, TEMPLATE_HASH, _dataAvailability);
+        _safeErc20Transfer = new SafeERC20Transfer();
     }
 
     function _addOutputs() internal {
@@ -353,14 +353,14 @@ contract ApplicationTest is Test, OwnableTest {
         _nameOutput("MyOutput", _addOutput(abi.encodeWithSignature("MyOutput()")));
         _nameOutput(
             "EtherTransferVoucher",
-            _addOutput(_encodeVoucher(_recipient, _transferAmount, abi.encode()))
+            _addOutput(_encodeVoucher(_recipient, TRANSFER_AMOUNT, abi.encode()))
         );
         _nameOutput(
             "EtherMintVoucher",
             _addOutput(
                 _encodeVoucher(
                     address(_etherReceiver),
-                    _transferAmount,
+                    TRANSFER_AMOUNT,
                     abi.encodeCall(EtherReceiver.mint, ())
                 )
             )
@@ -371,7 +371,7 @@ contract ApplicationTest is Test, OwnableTest {
                 _encodeVoucher(
                     address(_erc20Token),
                     0,
-                    abi.encodeCall(IERC20.transfer, (_recipient, _transferAmount))
+                    abi.encodeCall(IERC20.transfer, (_recipient, TRANSFER_AMOUNT))
                 )
             )
         );
@@ -385,7 +385,7 @@ contract ApplicationTest is Test, OwnableTest {
                         "safeTransferFrom(address,address,uint256)",
                         address(_appContract),
                         _recipient,
-                        _tokenId
+                        TOKEN_ID
                     )
                 )
             )
@@ -398,7 +398,7 @@ contract ApplicationTest is Test, OwnableTest {
                     0,
                     abi.encodeCall(
                         IERC1155.safeTransferFrom,
-                        (address(_appContract), _recipient, _tokenId, _transferAmount, "")
+                        (address(_appContract), _recipient, TOKEN_ID, TRANSFER_AMOUNT, "")
                     )
                 )
             )
@@ -426,10 +426,10 @@ contract ApplicationTest is Test, OwnableTest {
             "ERC20DelegateCallVoucher",
             _addOutput(
                 _encodeDelegateCallVoucher(
-                    address(_safeERC20Transfer),
+                    address(_safeErc20Transfer),
                     abi.encodeCall(
                         SafeERC20Transfer.safeTransfer,
-                        (_erc20Token, _recipient, _transferAmount)
+                        (_erc20Token, _recipient, TRANSFER_AMOUNT)
                     )
                 )
             )
@@ -547,17 +547,17 @@ contract ApplicationTest is Test, OwnableTest {
         uint256 numberOfExecutedOutputsBefore = _appContract.getNumberOfExecutedOutputs();
         assertLt(
             address(_appContract).balance,
-            _transferAmount,
+            TRANSFER_AMOUNT,
             "Application contract does not have enough Ether"
         );
         vm.expectRevert(
             abi.encodeWithSelector(
-                IApplication.InsufficientFunds.selector, _transferAmount, 0
+                IApplication.InsufficientFunds.selector, TRANSFER_AMOUNT, 0
             )
         );
         _appContract.executeOutput(output, proof);
         _expectNumberOfExecutedOutputsSame(numberOfExecutedOutputsBefore);
-        vm.deal(address(_appContract), _transferAmount);
+        vm.deal(address(_appContract), TRANSFER_AMOUNT);
 
         uint256 recipientBalance = _recipient.balance;
         uint256 appBalance = address(_appContract).balance;
@@ -568,13 +568,13 @@ contract ApplicationTest is Test, OwnableTest {
 
         assertEq(
             _recipient.balance,
-            recipientBalance + _transferAmount,
+            recipientBalance + TRANSFER_AMOUNT,
             "Recipient should have received the transfer amount"
         );
 
         assertEq(
             address(_appContract).balance,
-            appBalance - _transferAmount,
+            appBalance - TRANSFER_AMOUNT,
             "Application contract should have the transfer amount deducted"
         );
 
@@ -590,7 +590,7 @@ contract ApplicationTest is Test, OwnableTest {
         uint256 numberOfExecutedOutputsBefore = _appContract.getNumberOfExecutedOutputs();
         assertLt(
             address(_appContract).balance,
-            _transferAmount,
+            TRANSFER_AMOUNT,
             "Application contract does not have enough Ether"
         );
 
@@ -598,7 +598,7 @@ contract ApplicationTest is Test, OwnableTest {
         _appContract.executeOutput(output, proof);
 
         _expectNumberOfExecutedOutputsSame(numberOfExecutedOutputsBefore);
-        vm.deal(address(_appContract), _transferAmount);
+        vm.deal(address(_appContract), TRANSFER_AMOUNT);
 
         uint256 recipientBalance = address(_etherReceiver).balance;
         uint256 appBalance = address(_appContract).balance;
@@ -609,19 +609,19 @@ contract ApplicationTest is Test, OwnableTest {
 
         assertEq(
             address(_etherReceiver).balance,
-            recipientBalance + _transferAmount,
+            recipientBalance + TRANSFER_AMOUNT,
             "Recipient should have received the transfer amount"
         );
 
         assertEq(
             address(_appContract).balance,
-            appBalance - _transferAmount,
+            appBalance - TRANSFER_AMOUNT,
             "Application contract should have the transfer amount deducted"
         );
 
         assertEq(
             _etherReceiver.balanceOf(address(_appContract)),
-            balanceOf + _transferAmount,
+            balanceOf + TRANSFER_AMOUNT,
             "Application contract should have the transfer amount minted"
         );
 
@@ -632,12 +632,12 @@ contract ApplicationTest is Test, OwnableTest {
         _appContract.executeOutput(output, proof);
     }
 
-    function _testERC721Transfer(bytes memory output, OutputValidityProof memory proof)
+    function _testErc721Transfer(bytes memory output, OutputValidityProof memory proof)
         internal
     {
         uint256 numberOfExecutedOutputsBefore = _appContract.getNumberOfExecutedOutputs();
         assertEq(
-            _erc721Token.ownerOf(_tokenId),
+            _erc721Token.ownerOf(TOKEN_ID),
             _tokenOwner,
             "The NFT is initially owned by `_tokenOwner`"
         );
@@ -646,20 +646,20 @@ contract ApplicationTest is Test, OwnableTest {
             abi.encodeWithSelector(
                 IERC721Errors.ERC721InsufficientApproval.selector,
                 address(_appContract),
-                _tokenId
+                TOKEN_ID
             )
         );
         _appContract.executeOutput(output, proof);
         _expectNumberOfExecutedOutputsSame(numberOfExecutedOutputsBefore);
 
         vm.prank(_tokenOwner);
-        _erc721Token.safeTransferFrom(_tokenOwner, address(_appContract), _tokenId);
+        _erc721Token.safeTransferFrom(_tokenOwner, address(_appContract), TOKEN_ID);
 
         _expectEmitOutputExecuted(output, proof);
         _appContract.executeOutput(output, proof);
 
         assertEq(
-            _erc721Token.ownerOf(_tokenId),
+            _erc721Token.ownerOf(TOKEN_ID),
             _recipient,
             "The NFT is then transferred to the recipient"
         );
@@ -671,7 +671,7 @@ contract ApplicationTest is Test, OwnableTest {
         _appContract.executeOutput(output, proof);
     }
 
-    function _testERC20Fail(bytes memory output, OutputValidityProof memory proof)
+    function _testErc20Fail(bytes memory output, OutputValidityProof memory proof)
         internal
     {
         uint256 numberOfExecutedOutputsBefore = _appContract.getNumberOfExecutedOutputs();
@@ -679,7 +679,7 @@ contract ApplicationTest is Test, OwnableTest {
 
         assertLt(
             _erc20Token.balanceOf(address(_appContract)),
-            _transferAmount,
+            TRANSFER_AMOUNT,
             "Application contract does not have enough ERC-20 tokens"
         );
 
@@ -688,7 +688,7 @@ contract ApplicationTest is Test, OwnableTest {
                 IERC20Errors.ERC20InsufficientBalance.selector,
                 address(_appContract),
                 _erc20Token.balanceOf(address(_appContract)),
-                _transferAmount
+                TRANSFER_AMOUNT
             )
         );
         _appContract.executeOutput(output, proof);
@@ -698,7 +698,7 @@ contract ApplicationTest is Test, OwnableTest {
 
         vm.mockCall(
             address(_erc20Token),
-            abi.encodeCall(_erc20Token.transfer, (_recipient, _transferAmount)),
+            abi.encodeCall(_erc20Token.transfer, (_recipient, TRANSFER_AMOUNT)),
             abi.encode(false)
         );
         vm.expectRevert(
@@ -711,12 +711,12 @@ contract ApplicationTest is Test, OwnableTest {
         vm.clearMockedCalls();
     }
 
-    function _testERC20Success(bytes memory output, OutputValidityProof memory proof)
+    function _testErc20Success(bytes memory output, OutputValidityProof memory proof)
         internal
     {
         uint256 numberOfExecutedOutputsBefore = _appContract.getNumberOfExecutedOutputs();
         vm.prank(_tokenOwner);
-        _erc20Token.transfer(address(_appContract), _transferAmount);
+        _erc20Token.transfer(address(_appContract), TRANSFER_AMOUNT);
 
         uint256 recipientBalance = _erc20Token.balanceOf(address(_recipient));
         uint256 appBalance = _erc20Token.balanceOf(address(_appContract));
@@ -726,13 +726,13 @@ contract ApplicationTest is Test, OwnableTest {
 
         assertEq(
             _erc20Token.balanceOf(address(_recipient)),
-            recipientBalance + _transferAmount,
+            recipientBalance + TRANSFER_AMOUNT,
             "Recipient should have received the transfer amount"
         );
 
         assertEq(
             _erc20Token.balanceOf(address(_appContract)),
-            appBalance - _transferAmount,
+            appBalance - TRANSFER_AMOUNT,
             "Application contract should have the transfer amount deducted"
         );
 
@@ -743,7 +743,7 @@ contract ApplicationTest is Test, OwnableTest {
         _appContract.executeOutput(output, proof);
     }
 
-    function _testERC1155SingleTransfer(
+    function _testErc1155SingleTransfer(
         bytes memory output,
         OutputValidityProof memory proof
     ) internal {
@@ -753,8 +753,8 @@ contract ApplicationTest is Test, OwnableTest {
                 IERC1155Errors.ERC1155InsufficientBalance.selector,
                 address(_appContract),
                 0,
-                _transferAmount,
-                _tokenId
+                TRANSFER_AMOUNT,
+                TOKEN_ID
             )
         );
         _appContract.executeOutput(output, proof);
@@ -762,24 +762,24 @@ contract ApplicationTest is Test, OwnableTest {
 
         vm.prank(_tokenOwner);
         _erc1155SingleToken.safeTransferFrom(
-            _tokenOwner, address(_appContract), _tokenId, _initialSupply, ""
+            _tokenOwner, address(_appContract), TOKEN_ID, INITIAL_SUPPLY, ""
         );
 
-        uint256 recipientBalance = _erc1155SingleToken.balanceOf(_recipient, _tokenId);
+        uint256 recipientBalance = _erc1155SingleToken.balanceOf(_recipient, TOKEN_ID);
         uint256 appBalance =
-            _erc1155SingleToken.balanceOf(address(_appContract), _tokenId);
+            _erc1155SingleToken.balanceOf(address(_appContract), TOKEN_ID);
 
         _expectEmitOutputExecuted(output, proof);
         _appContract.executeOutput(output, proof);
 
         assertEq(
-            _erc1155SingleToken.balanceOf(address(_appContract), _tokenId),
-            appBalance - _transferAmount,
+            _erc1155SingleToken.balanceOf(address(_appContract), TOKEN_ID),
+            appBalance - TRANSFER_AMOUNT,
             "Application contract should have the transfer amount deducted"
         );
         assertEq(
-            _erc1155SingleToken.balanceOf(_recipient, _tokenId),
-            recipientBalance + _transferAmount,
+            _erc1155SingleToken.balanceOf(_recipient, TOKEN_ID),
+            recipientBalance + TRANSFER_AMOUNT,
             "Recipient should have received the transfer amount"
         );
 
@@ -790,7 +790,7 @@ contract ApplicationTest is Test, OwnableTest {
         _appContract.executeOutput(output, proof);
     }
 
-    function _testERC1155BatchTransfer(
+    function _testErc1155BatchTransfer(
         bytes memory output,
         OutputValidityProof memory proof
     ) internal {

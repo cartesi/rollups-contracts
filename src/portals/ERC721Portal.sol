@@ -32,6 +32,6 @@ contract ERC721Portal is IERC721Portal, Portal {
             token, msg.sender, tokenId, baseLayerData, execLayerData
         );
 
-        _inputBox.addInput(appContract, payload);
+        _INPUT_BOX.addInput(appContract, payload);
     }
 }

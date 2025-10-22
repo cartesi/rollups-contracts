@@ -38,7 +38,7 @@ contract Authority is IAuthority, AbstractConsensus, Ownable {
     ) external override onlyOwner {
         _validateLastProcessedBlockNumber(lastProcessedBlockNumber);
 
-        uint256 epochNumber = lastProcessedBlockNumber / _epochLength;
+        uint256 epochNumber = lastProcessedBlockNumber / _EPOCH_LENGTH;
 
         BitMaps.BitMap storage bitmap = _validatedEpochs[appContract];
 

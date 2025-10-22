@@ -9,7 +9,7 @@ import {IInputBox} from "./IInputBox.sol";
 
 contract InputBox is IInputBox {
     /// @notice Deployment block number
-    uint256 immutable _deploymentBlockNumber = block.number;
+    uint256 immutable _DEPLOYMENT_BLOCK_NUMBER = block.number;
 
     /// @notice Mapping of application contract addresses to arrays of input hashes.
     mapping(address => bytes32[]) private _inputBoxes;
@@ -76,6 +76,6 @@ contract InputBox is IInputBox {
 
     /// @inheritdoc IInputBox
     function getDeploymentBlockNumber() external view override returns (uint256) {
-        return _deploymentBlockNumber;
+        return _DEPLOYMENT_BLOCK_NUMBER;
     }
 }

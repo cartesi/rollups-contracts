@@ -91,7 +91,7 @@ contract QuorumTest is Test, ERC165Test {
     }
 
     /// @inheritdoc ERC165Test
-    function _getERC165Contract() internal view override returns (IERC165) {
+    function _getErc165Contract() internal view override returns (IERC165) {
         return _quorum;
     }
 

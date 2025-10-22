@@ -33,11 +33,11 @@ contract Application is
     using LibOutputValidityProof for OutputValidityProof;
 
     /// @notice Deployment block number
-    uint256 immutable _deploymentBlockNumber = block.number;
+    uint256 immutable _DEPLOYMENT_BLOCK_NUMBER = block.number;
 
     /// @notice The initial machine state hash.
     /// @dev See the `getTemplateHash` function.
-    bytes32 internal immutable _templateHash;
+    bytes32 internal immutable _TEMPLATE_HASH;
 
     /// @notice Keeps track of which outputs have been executed.
     /// @dev See the `wasOutputExecuted` function.
@@ -66,7 +66,7 @@ contract Application is
         bytes32 templateHash,
         bytes memory dataAvailability
     ) Ownable(initialOwner) {
-        _templateHash = templateHash;
+        _TEMPLATE_HASH = templateHash;
         _outputsMerkleRootValidator = outputsMerkleRootValidator;
         _dataAvailability = dataAvailability;
     }
@@ -160,7 +160,7 @@ contract Application is
 
     /// @inheritdoc IApplication
     function getTemplateHash() external view override returns (bytes32) {
-        return _templateHash;
+        return _TEMPLATE_HASH;
     }
 
     /// @inheritdoc IApplication
@@ -180,7 +180,7 @@ contract Application is
 
     /// @inheritdoc IApplication
     function getDeploymentBlockNumber() external view override returns (uint256) {
-        return _deploymentBlockNumber;
+        return _DEPLOYMENT_BLOCK_NUMBER;
     }
 
     /// @inheritdoc IApplication

@@ -35,6 +35,6 @@ contract ERC1155BatchPortal is IERC1155BatchPortal, Portal {
             token, msg.sender, tokenIds, values, baseLayerData, execLayerData
         );
 
-        _inputBox.addInput(appContract, payload);
+        _INPUT_BOX.addInput(appContract, payload);
     }
 }
