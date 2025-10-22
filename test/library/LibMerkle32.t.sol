@@ -7,8 +7,6 @@ import {Test} from "forge-std-1.9.6/src/Test.sol";
 
 import {LibMerkle32} from "src/library/LibMerkle32.sol";
 
-import {console} from "forge-std-1.9.6/src/console.sol";
-
 library ExternalLibMerkle32 {
     using LibMerkle32 for bytes32[];
 

@@ -4,7 +4,6 @@
 pragma solidity ^0.8.22;
 
 import {IOwnable} from "src/access/IOwnable.sol";
-import {CanonicalMachine} from "src/common/CanonicalMachine.sol";
 import {DataAvailability} from "src/common/DataAvailability.sol";
 import {OutputValidityProof} from "src/common/OutputValidityProof.sol";
 import {Outputs} from "src/common/Outputs.sol";
@@ -15,7 +14,6 @@ import {IApplication} from "src/dapp/IApplication.sol";
 import {SafeERC20Transfer} from "src/delegatecall/SafeERC20Transfer.sol";
 import {IInputBox} from "src/inputs/IInputBox.sol";
 import {InputBox} from "src/inputs/InputBox.sol";
-import {LibAddress} from "src/library/LibAddress.sol";
 
 import {Ownable} from "@openzeppelin-contracts-5.2.0/access/Ownable.sol";
 import {

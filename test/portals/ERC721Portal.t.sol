@@ -3,7 +3,6 @@
 
 pragma solidity ^0.8.22;
 
-import {ERC721} from "@openzeppelin-contracts-5.2.0/token/ERC721/ERC721.sol";
 import {IERC721} from "@openzeppelin-contracts-5.2.0/token/ERC721/IERC721.sol";
 
 import {InputEncoding} from "src/common/InputEncoding.sol";
