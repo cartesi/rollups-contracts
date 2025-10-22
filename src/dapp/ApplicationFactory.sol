@@ -41,9 +41,9 @@ contract ApplicationFactory is IApplicationFactory {
         bytes calldata dataAvailability,
         bytes32 salt
     ) external override returns (IApplication) {
-        IApplication appContract = new Application{
-            salt: salt
-        }(outputsMerkleRootValidator, appOwner, templateHash, dataAvailability);
+        IApplication appContract = new Application{salt: salt}(
+            outputsMerkleRootValidator, appOwner, templateHash, dataAvailability
+        );
 
         emit ApplicationCreated(
             outputsMerkleRootValidator,
