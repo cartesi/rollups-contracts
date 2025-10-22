@@ -3,6 +3,8 @@
 
 pragma solidity ^0.8.8;
 
+/// forge-lint: disable-start(mixed-case-function)
+
 /// @title Inputs
 /// @notice Defines the signatures of inputs.
 interface Inputs {
@@ -27,3 +29,5 @@ interface Inputs {
         bytes calldata payload
     ) external;
 }
+
+/// forge-lint: disable-end(mixed-case-function)

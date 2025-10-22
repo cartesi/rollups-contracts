@@ -5,6 +5,8 @@ pragma solidity ^0.8.8;
 
 import {IInputBox} from "../inputs/IInputBox.sol";
 
+/// forge-lint: disable-start(mixed-case-function)
+
 /// @title Data Availability
 /// @notice Defines the signatures of data availability solutions.
 interface DataAvailability {
@@ -26,3 +28,5 @@ interface DataAvailability {
         uint32 namespaceId
     ) external;
 }
+
+/// forge-lint: disable-end(mixed-case-function)
