@@ -3,7 +3,6 @@
 
 pragma solidity ^0.8.22;
 
-import {ERC20} from "@openzeppelin-contracts-5.2.0/token/ERC20/ERC20.sol";
 import {IERC20} from "@openzeppelin-contracts-5.2.0/token/ERC20/IERC20.sol";
 
 import {InputEncoding} from "src/common/InputEncoding.sol";
