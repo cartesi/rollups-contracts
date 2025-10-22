@@ -53,10 +53,12 @@ library LibEmulator {
 
         outputHashes = getOutputHashes(state.outputs);
 
-        return OutputValidityProof(
-            OutputIndex.unwrap(outputIndex),
-            getOutputSiblings(outputHashes, OutputIndex.unwrap(outputIndex))
-        );
+        return OutputValidityProof({
+            outputIndex: OutputIndex.unwrap(outputIndex),
+            outputHashesSiblings: getOutputSiblings(
+                outputHashes, OutputIndex.unwrap(outputIndex)
+            )
+        });
     }
 
     function getOutputsMerkleRoot(State storage state) internal view returns (bytes32) {
