@@ -116,6 +116,7 @@ contract InputBoxTest is Test {
         // number of bytes in input blob excluding input payload
         uint256 extraBytes = blob.length - 32;
         // because it's abi encoded, input payloads are stored as multiples of 32 bytes
+        /// forge-lint: disable-next-line(divide-before-multiply)
         return ((CanonicalMachine.INPUT_MAX_SIZE - extraBytes) / 32) * 32;
     }
 }

@@ -55,8 +55,10 @@ contract LibMerkle32Test is Test {
         assertEq(_minHeight(5), 3);
         // skip...
         for (uint256 i = 3; i < 256; ++i) {
+            /// forge-lint: disable-start(incorrect-shift)
             assertEq(_minHeight(1 << i), i);
             assertEq(_minHeight((1 << i) + 1), i + 1);
+            /// forge-lint: disable-end(incorrect-shift)
         }
         // skip...
         assertEq(_minHeight(type(uint256).max), 256);
@@ -532,6 +534,7 @@ contract LibMerkle32Test is Test {
 
     function _minHeight(uint256 n) internal pure returns (uint256) {
         for (uint256 height; height < 256; ++height) {
+            /// forge-lint: disable-next-line(incorrect-shift)
             if (n <= (1 << height)) {
                 return height;
             }

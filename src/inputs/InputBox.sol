@@ -44,6 +44,7 @@ contract InputBox is IInputBox {
             );
         }
 
+        /// forge-lint: disable-next-line(asm-keccak256)
         bytes32 inputHash = keccak256(input);
 
         inputBox.push(inputHash);
