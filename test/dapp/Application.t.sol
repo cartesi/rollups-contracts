@@ -716,7 +716,8 @@ contract ApplicationTest is Test, OwnableTest {
     {
         uint256 numberOfExecutedOutputsBefore = _appContract.getNumberOfExecutedOutputs();
         vm.prank(_tokenOwner);
-        _erc20Token.transfer(address(_appContract), TRANSFER_AMOUNT);
+        bool success = _erc20Token.transfer(address(_appContract), TRANSFER_AMOUNT);
+        assertTrue(success, "");
 
         uint256 recipientBalance = _erc20Token.balanceOf(address(_recipient));
         uint256 appBalance = _erc20Token.balanceOf(address(_appContract));
