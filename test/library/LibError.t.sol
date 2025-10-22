@@ -24,6 +24,12 @@ contract LibErrorTest is Test {
         _errorRaiser = new ErrorRaiser();
     }
 
+    function testRaiseEmpty() external {
+        bytes memory error;
+        vm.expectRevert(error);
+        _errorRaiser.raise(error);
+    }
+
     function testRaise(bytes calldata error) external {
         vm.expectRevert(error);
         _errorRaiser.raise(error);
