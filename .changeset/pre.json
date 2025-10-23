@@ -5,6 +5,7 @@
     "@cartesi/rollups": "2.0.1"
   },
   "changesets": [
+    "fast-flies-drop",
     "fluffy-ants-dress",
     "fresh-brooms-build",
     "gentle-ads-judge",
