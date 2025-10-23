@@ -1,5 +1,11 @@
 # @cartesi/rollups
 
+## 2.1.0-alpha.2
+
+### Patch Changes
+
+- 85190ad: Bump foundry from 1.4.2 to 1.4.3
+
 ## 2.1.0-alpha.1
 
 ### Patch Changes
