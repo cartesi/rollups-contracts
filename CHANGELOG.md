@@ -1,5 +1,11 @@
 # @cartesi/rollups
 
+## 2.1.0-alpha.3
+
+### Patch Changes
+
+- 363ca77: Use API token when publishing to Soldeer
+
 ## 2.1.0-alpha.2
 
 ### Patch Changes
