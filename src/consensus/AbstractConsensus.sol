@@ -12,7 +12,7 @@ import {IOutputsMerkleRootValidator} from "./IOutputsMerkleRootValidator.sol";
 /// @notice Abstract implementation of IConsensus
 abstract contract AbstractConsensus is IConsensus, ERC165 {
     /// @notice The epoch length
-    uint256 internal immutable _EPOCH_LENGTH;
+    uint256 immutable EPOCH_LENGTH;
 
     /// @notice Indexes accepted claims by application contract address.
     mapping(address => mapping(bytes32 => bool)) private _validOutputsMerkleRoots;
@@ -24,7 +24,7 @@ abstract contract AbstractConsensus is IConsensus, ERC165 {
     /// @dev Reverts if the epoch length is zero.
     constructor(uint256 epochLength) {
         require(epochLength > 0, "epoch length must not be zero");
-        _EPOCH_LENGTH = epochLength;
+        EPOCH_LENGTH = epochLength;
     }
 
     /// @inheritdoc IOutputsMerkleRootValidator
@@ -39,7 +39,7 @@ abstract contract AbstractConsensus is IConsensus, ERC165 {
 
     /// @inheritdoc IConsensus
     function getEpochLength() public view override returns (uint256) {
-        return _EPOCH_LENGTH;
+        return EPOCH_LENGTH;
     }
 
     /// @inheritdoc IConsensus
@@ -66,8 +66,8 @@ abstract contract AbstractConsensus is IConsensus, ERC165 {
         view
     {
         require(
-            lastProcessedBlockNumber % _EPOCH_LENGTH == (_EPOCH_LENGTH - 1),
-            NotEpochFinalBlock(lastProcessedBlockNumber, _EPOCH_LENGTH)
+            lastProcessedBlockNumber % EPOCH_LENGTH == (EPOCH_LENGTH - 1),
+            NotEpochFinalBlock(lastProcessedBlockNumber, EPOCH_LENGTH)
         );
         {
             uint256 upperBound = block.number;

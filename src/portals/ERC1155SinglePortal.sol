@@ -33,6 +33,6 @@ contract ERC1155SinglePortal is IERC1155SinglePortal, Portal {
             token, msg.sender, tokenId, value, baseLayerData, execLayerData
         );
 
-        _INPUT_BOX.addInput(appContract, payload);
+        getInputBox().addInput(appContract, payload);
     }
 }

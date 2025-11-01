@@ -10,15 +10,15 @@ import {IPortal} from "./IPortal.sol";
 /// @notice This contract serves as a base for all the other portals.
 contract Portal is IPortal {
     /// @notice The input box used by the portal.
-    IInputBox internal immutable _INPUT_BOX;
+    IInputBox immutable INPUT_BOX;
 
     /// @notice Constructs the portal.
     /// @param inputBox The input box used by the portal
     constructor(IInputBox inputBox) {
-        _INPUT_BOX = inputBox;
+        INPUT_BOX = inputBox;
     }
 
-    function getInputBox() external view override returns (IInputBox) {
-        return _INPUT_BOX;
+    function getInputBox() public view override returns (IInputBox) {
+        return INPUT_BOX;
     }
 }
