@@ -14,8 +14,8 @@ import {ISelfHostedApplicationFactory} from "./ISelfHostedApplicationFactory.sol
 /// @notice Allows anyone to reliably deploy a new IAuthority contract,
 /// along with an IApplication contract already linked to it.
 contract SelfHostedApplicationFactory is ISelfHostedApplicationFactory {
-    IAuthorityFactory immutable _AUTHORITY_FACTORY;
-    IApplicationFactory immutable _APPLICATION_FACTORY;
+    IAuthorityFactory immutable AUTHORITY_FACTORY;
+    IApplicationFactory immutable APPLICATION_FACTORY;
 
     /// @param authorityFactory The authority factory
     /// @param applicationFactory The application factory
@@ -23,12 +23,12 @@ contract SelfHostedApplicationFactory is ISelfHostedApplicationFactory {
         IAuthorityFactory authorityFactory,
         IApplicationFactory applicationFactory
     ) {
-        _AUTHORITY_FACTORY = authorityFactory;
-        _APPLICATION_FACTORY = applicationFactory;
+        AUTHORITY_FACTORY = authorityFactory;
+        APPLICATION_FACTORY = applicationFactory;
     }
 
     function getAuthorityFactory() external view override returns (IAuthorityFactory) {
-        return _AUTHORITY_FACTORY;
+        return AUTHORITY_FACTORY;
     }
 
     function getApplicationFactory()
@@ -37,7 +37,7 @@ contract SelfHostedApplicationFactory is ISelfHostedApplicationFactory {
         override
         returns (IApplicationFactory)
     {
-        return _APPLICATION_FACTORY;
+        return APPLICATION_FACTORY;
     }
 
     function deployContracts(
@@ -48,9 +48,9 @@ contract SelfHostedApplicationFactory is ISelfHostedApplicationFactory {
         bytes calldata dataAvailability,
         bytes32 salt
     ) external returns (IApplication application, IAuthority authority) {
-        authority = _AUTHORITY_FACTORY.newAuthority(authorityOwner, epochLength, salt);
+        authority = AUTHORITY_FACTORY.newAuthority(authorityOwner, epochLength, salt);
 
-        application = _APPLICATION_FACTORY.newApplication(
+        application = APPLICATION_FACTORY.newApplication(
             authority, appOwner, templateHash, dataAvailability, salt
         );
     }
@@ -63,11 +63,11 @@ contract SelfHostedApplicationFactory is ISelfHostedApplicationFactory {
         bytes calldata dataAvailability,
         bytes32 salt
     ) external view returns (address application, address authority) {
-        authority = _AUTHORITY_FACTORY.calculateAuthorityAddress(
+        authority = AUTHORITY_FACTORY.calculateAuthorityAddress(
                 authorityOwner, epochLength, salt
             );
 
-        application = _APPLICATION_FACTORY.calculateApplicationAddress(
+        application = APPLICATION_FACTORY.calculateApplicationAddress(
             IOutputsMerkleRootValidator(authority),
             appOwner,
             templateHash,

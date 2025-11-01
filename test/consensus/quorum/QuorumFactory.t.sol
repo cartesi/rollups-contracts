@@ -16,7 +16,7 @@ import {LibAddressArray} from "../../util/LibAddressArray.sol";
 contract QuorumFactoryTest is Test {
     using LibAddressArray for Vm;
 
-    uint256 constant _QUORUM_MAX_SIZE = 50;
+    uint256 constant QUORUM_MAX_SIZE = 50;
     QuorumFactory _factory;
 
     function setUp() public {
@@ -24,7 +24,7 @@ contract QuorumFactoryTest is Test {
     }
 
     function testRevertsEpochLengthZero(uint256 seed, bytes32 salt) public {
-        uint256 numOfValidators = bound(seed, 1, _QUORUM_MAX_SIZE);
+        uint256 numOfValidators = bound(seed, 1, QUORUM_MAX_SIZE);
         address[] memory validators = vm.addrs(numOfValidators);
 
         vm.expectRevert("epoch length must not be zero");
@@ -37,7 +37,7 @@ contract QuorumFactoryTest is Test {
     function testNewQuorum(uint256 seed, uint256 epochLength) public {
         vm.assume(epochLength > 0);
 
-        uint256 numOfValidators = bound(seed, 1, _QUORUM_MAX_SIZE);
+        uint256 numOfValidators = bound(seed, 1, QUORUM_MAX_SIZE);
         address[] memory validators = vm.addrs(numOfValidators);
 
         vm.recordLogs();
@@ -52,7 +52,7 @@ contract QuorumFactoryTest is Test {
     {
         vm.assume(epochLength > 0);
 
-        uint256 numOfValidators = bound(seed, 1, _QUORUM_MAX_SIZE);
+        uint256 numOfValidators = bound(seed, 1, QUORUM_MAX_SIZE);
         address[] memory validators = vm.addrs(numOfValidators);
 
         address precalculatedAddress =

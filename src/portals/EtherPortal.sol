@@ -31,6 +31,6 @@ contract EtherPortal is IEtherPortal, Portal {
         bytes memory payload =
             InputEncoding.encodeEtherDeposit(msg.sender, msg.value, execLayerData);
 
-        _INPUT_BOX.addInput(appContract, payload);
+        getInputBox().addInput(appContract, payload);
     }
 }
