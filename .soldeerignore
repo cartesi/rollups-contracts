@@ -4,7 +4,6 @@
 .soldeerignore
 AUTHORS
 CHANGELOG.md
-cannonfile.toml
 package.json
 pnpm-lock.yaml
 test
