@@ -7,7 +7,7 @@
     },
     "scripts": {
         "build:contracts": "forge build src",
-        "build:devnet": "cannon build --write-deployments deployments --anvil.dump-state state.json",
+        "build:devnet": "node scripts/build-devnet.mjs",
         "ci:publish": "changeset publish",
         "ci:version": "changeset version && node scripts/update-cannonfile-version.mjs",
         "clean": "pnpm clean:forge && pnpm clean:cannon",
@@ -15,8 +15,7 @@
         "clean:forge": "forge clean",
         "fmt:check": "forge fmt --check",
         "fmt:write": "forge fmt",
-        "prepack": "pnpm clean && pnpm build:contracts",
-        "start": "cannon build --keep-alive --write-deployments deployments --anvil.port 8545"
+        "prepack": "pnpm clean && pnpm build:contracts"
     },
     "devDependencies": {
         "@changesets/cli": "^2.29.7",
