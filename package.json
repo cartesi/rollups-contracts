@@ -19,7 +19,7 @@
     },
     "devDependencies": {
         "@changesets/cli": "^2.29.7",
-        "@usecannon/cli": "^2.25.0"
+        "@usecannon/cli": "^2.25.1"
     },
     "files": [
         "out"
