@@ -49,16 +49,22 @@ pnpm install
 forge soldeer install
 ```
 
-Having done that, you can run a local devnet with Cannon.
-It will be listening to `127.0.0.1:8545`.
+Having done that, you can build a local devnet with Cannon.
+The following command dumps the Anvil state into a `state.json` file
+and writes the deployment information (which includes addresses and ABIs)
+to the `deployments` directory.
 
 ```sh
-pnpm start
+pnpm build:devnet
 ```
 
-You can interact with the contracts by
-pressing `i` on the terminal running Cannon,
-or by running `cast` commands on another terminal.
+Once built, you can run the local devnet with Anvil.
+
+```sh
+anvil --load-state state.json
+```
+
+You can then interact with the contracts with Cast.
 The following command, for example,
 calls the `getDeploymentBlockNumber` function
 of the `InputBox` contract
