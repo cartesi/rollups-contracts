@@ -1,9 +1,14 @@
 [profile.default]
 libs = ["dependencies"]
+auto_detect_remappings = false
 solc_version = "0.8.30"
 via_ir = true
 optimizer = true
 evm_version = "prague"
+remappings = [
+    "@openzeppelin-contracts-5.2.0/=dependencies/@openzeppelin-contracts-5.2.0/",
+    "forge-std-1.9.6/=dependencies/forge-std-1.9.6/",
+]
 
 [fmt]
 line_length = 90
@@ -16,6 +21,9 @@ out = "forge-docs"
 runs = 32
 depth = 100
 fail_on_revert = true
+
+[soldeer]
+remappings_location = "config"
 
 [dependencies]
 "@openzeppelin-contracts" = "5.2.0"
