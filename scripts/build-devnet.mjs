@@ -9,7 +9,7 @@
 import childProcess from 'node:child_process';
 import http from 'node:http';
 
-console.log("Spawning Anvil...");
+console.log("🚧 Spawning Anvil...");
 
 const anvilChildProcess = childProcess.spawn(
     'anvil',
@@ -17,6 +17,7 @@ const anvilChildProcess = childProcess.spawn(
         '--dump-state',
         'state.json',
         '--preserve-historical-states',
+        '--quiet',
     ],
     {
         stdio: [
@@ -30,7 +31,7 @@ const anvilChildProcess = childProcess.spawn(
 console.log("✅ Anvil spawned!");
 
 function killAnvilChildProcess() {
-    console.log("Killing Anvil...");
+    console.log("🚧 Killing Anvil...");
     anvilChildProcess.kill();
 }
 
@@ -66,11 +67,11 @@ async function waitForAnvil(url = 'http://127.0.0.1:8545', retries = 20, delay =
 
     for (let i = 0; i < retries; i++) {
         try {
-            console.log("Pinging Anvil...");
+            console.log("🚧 Pinging Anvil...");
             await pingAnvil();
             return true;
         } catch {
-            console.log(`Anvil is not listening yet. Waiting ${delay} ms...`)
+            console.log(`🚧 Anvil is not listening yet. Waiting ${delay} ms...`)
             await new Promise(r => setTimeout(r, delay));
         }
     }
@@ -89,28 +90,35 @@ if (!anvilIsListening) {
 
 console.log("✅ Anvil is listening!")
 
-try {
-    const command = "cannon";
-    const args = [
-        "build",
-        "--private-key",
-        "0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80",
-        "--rpc-url",
-        "http://127.0.0.1:8545",
-        "--wipe",
-        "--write-deployments",
-        "deployments",
-    ]
-    childProcess.execSync(
-        ([command, ...args]).join(" "),
-        { stdio: 'inherit' }
-    );
-} catch (err) {
-    console.error('❌ Cannon build failed:', err.message);
-    killAnvilChildProcess();
-    process.exit(1);
+function deployToDevnet(name, cannonfile) {
+    console.log(`🚧 Building Cannon package ${name}...`)
+
+    try {
+        const command = "cannon";
+        const args = [
+            "build",
+            cannonfile,
+            "--private-key",
+            "0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80",
+            "--rpc-url",
+            "http://127.0.0.1:8545",
+            "--wipe",
+            "--write-deployments",
+            "deployments",
+        ]
+        childProcess.execSync(
+            ([command, ...args]).join(" "),
+            { stdio: 'inherit' }
+        );
+    } catch (err) {
+        console.error(`❌ Cannon package ${name} build failed: ${err.message}`);
+        killAnvilChildProcess();
+        process.exit(1);
+    }
+
+    console.log(`✅ Cannon package ${name} built successfully!`);
 }
 
-console.log('✅ Cannon build succeeded!');
+deployToDevnet("cartesi-rollups", "cannonfile.toml");
 
 killAnvilChildProcess();
