@@ -1,5 +1,11 @@
 # @cartesi/rollups
 
+## 2.1.1-alpha.0
+
+### Patch Changes
+
+- 4e448cd: Fix devnet build (preserve historical states)
+
 ## 2.1.0
 
 ### Minor Changes
