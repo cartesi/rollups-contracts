@@ -1,0 +1,8 @@
+{
+  "mode": "pre",
+  "tag": "alpha",
+  "initialVersions": {
+    "@cartesi/rollups": "2.1.0"
+  },
+  "changesets": []
+}
