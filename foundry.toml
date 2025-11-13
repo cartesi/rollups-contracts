@@ -9,6 +9,7 @@ remappings = [
     "@openzeppelin-contracts-5.2.0/=dependencies/@openzeppelin-contracts-5.2.0/",
     "forge-std-1.9.6/=dependencies/forge-std-1.9.6/",
 ]
+fs_permissions = [{ access = "read-write", path = "out/"}]
 
 [fmt]
 line_length = 90
