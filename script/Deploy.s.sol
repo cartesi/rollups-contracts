@@ -3,77 +3,73 @@
 
 pragma solidity ^0.8.8;
 
-import "forge-std-1.9.6/src/Script.sol";
+import {Script} from "forge-std-1.9.6/src/Script.sol";
 
-import "../src/inputs/InputBox.sol";
-import "../src/portals/EtherPortal.sol";
-import "../src/portals/ERC20Portal.sol";
-import "../src/portals/ERC721Portal.sol";
-import "../src/portals/ERC1155SinglePortal.sol";
-import "../src/portals/ERC1155BatchPortal.sol";
-import "../src/consensus/authority/AuthorityFactory.sol";
-import "../src/consensus/quorum/QuorumFactory.sol";
-import "../src/dapp/ApplicationFactory.sol";
-import "../src/dapp/SelfHostedApplicationFactory.sol";
-import "../src/delegatecall/SafeERC20Transfer.sol";
+import {AuthorityFactory} from "src/consensus/authority/AuthorityFactory.sol";
+import {QuorumFactory} from "src/consensus/quorum/QuorumFactory.sol";
+import {ApplicationFactory} from "src/dapp/ApplicationFactory.sol";
+import {SelfHostedApplicationFactory} from "src/dapp/SelfHostedApplicationFactory.sol";
+import {SafeERC20Transfer} from "src/delegatecall/SafeERC20Transfer.sol";
+import {InputBox} from "src/inputs/InputBox.sol";
+import {ERC1155BatchPortal} from "src/portals/ERC1155BatchPortal.sol";
+import {ERC1155SinglePortal} from "src/portals/ERC1155SinglePortal.sol";
+import {ERC20Portal} from "src/portals/ERC20Portal.sol";
+import {ERC721Portal} from "src/portals/ERC721Portal.sol";
+import {EtherPortal} from "src/portals/EtherPortal.sol";
 
-contract Deploy is Script {
+contract DeployScript is Script {
+    /// @notice Deploy the Cartesi Rollups contracts.
+    /// @dev Serializes deployed contract addresses to `deployments.json`.
     function run() external {
         vm.startBroadcast();
-
-        bytes32 zeroSalt = bytes32(0);
-
-        // === InputBox ===
-        IInputBox inputBox = new InputBox{salt: zeroSalt}();
-
-        // === Portals ===
-        IEtherPortal etherPortal = new EtherPortal{salt: zeroSalt}(inputBox);
-        IERC20Portal erc20Portal = new ERC20Portal{salt: zeroSalt}(inputBox);
-        IERC721Portal erc721Portal = new ERC721Portal{salt: zeroSalt}(inputBox);
-        IERC1155SinglePortal erc1155SinglePortal =
-            new ERC1155SinglePortal{salt: zeroSalt}(inputBox);
-        IERC1155BatchPortal erc1155BatchPortal =
-            new ERC1155BatchPortal{salt: zeroSalt}(inputBox);
-
-        // === Factories ===
-        IAuthorityFactory authorityFactory = new AuthorityFactory{salt: zeroSalt}();
-        IQuorumFactory quorumFactory = new QuorumFactory{salt: zeroSalt}();
-        IApplicationFactory applicationFactory = new ApplicationFactory{salt: zeroSalt}();
-        ISelfHostedApplicationFactory selfHostedApplicationFactory =
-            new SelfHostedApplicationFactory{salt: zeroSalt}(
-                authorityFactory,
-                applicationFactory
-            );
-
-        // === Delegatecall ===
-        SafeERC20Transfer safeERC20Transfer = new SafeERC20Transfer{salt: zeroSalt}();
-
+        _deployContracts();
         vm.stopBroadcast();
+        vm.writeJson(_serializeDeployments(), "deployments.json");
+    }
 
-        console2.log("InputBox: %s", address(inputBox));
-        console2.log("EtherPortal: %s", address(etherPortal));
-        console2.log("ERC20Portal: %s", address(erc20Portal));
-        console2.log("ERC721Portal: %s", address(erc721Portal));
-        console2.log("ERC1155SinglePortal: %s", address(erc1155SinglePortal));
-        console2.log("ERC1155BatchPortal: %s", address(erc1155BatchPortal));
-        console2.log("AuthorityFactory: %s", address(authorityFactory));
-        console2.log("QuorumFactory: %s", address(quorumFactory));
-        console2.log("ApplicationFactory: %s", address(applicationFactory));
-        console2.log("SelfHostedApplicationFactory: %s", address(selfHostedApplicationFactory));
-        console2.log("SafeERC20Transfer: %s", address(safeERC20Transfer));
+    /// @notice Deploy contracts deterministically.
+    /// @dev The zero hash is used as salt for all deployments.
+    function _deployContracts() internal {
+        bytes32 salt;
+        InputBox inputBox = new InputBox{salt: salt}();
+        new EtherPortal{salt: salt}(inputBox);
+        new ERC20Portal{salt: salt}(inputBox);
+        new ERC721Portal{salt: salt}(inputBox);
+        new ERC1155SinglePortal{salt: salt}(inputBox);
+        new ERC1155BatchPortal{salt: salt}(inputBox);
+        new SafeERC20Transfer{salt: salt}();
+        ApplicationFactory appFactory = new ApplicationFactory{salt: salt}();
+        AuthorityFactory authorityFactory = new AuthorityFactory{salt: salt}();
+        new QuorumFactory{salt: salt}();
+        new SelfHostedApplicationFactory{salt: salt}(authorityFactory, appFactory);
+    }
 
+    /// @notice Serialize the deployments in a JSON object
+    /// @return The deployments JSON object
+    function _serializeDeployments() internal returns (string memory) {
         string memory json;
-        json = vm.serializeAddress("contracts", "InputBox", address(inputBox));
-        json = vm.serializeAddress("contracts", "EtherPortal", address(etherPortal));
-        json = vm.serializeAddress("contracts", "ERC20Portal", address(erc20Portal));
-        json = vm.serializeAddress("contracts", "ERC721Portal", address(erc721Portal));
-        json = vm.serializeAddress("contracts", "ERC1155SinglePortal", address(erc1155SinglePortal));
-        json = vm.serializeAddress("contracts", "ERC1155BatchPortal", address(erc1155BatchPortal));
-        json = vm.serializeAddress("contracts", "AuthorityFactory", address(authorityFactory));
-        json = vm.serializeAddress("contracts", "QuorumFactory", address(quorumFactory));
-        json = vm.serializeAddress("contracts", "ApplicationFactory", address(applicationFactory));
-        json = vm.serializeAddress("contracts", "SelfHostedApplicationFactory", address(selfHostedApplicationFactory));
-        json = vm.serializeAddress("contracts", "SafeERC20Transfer", address(safeERC20Transfer));
-        vm.writeJson(json, "deployments.json");
+        json = _serializeDeployment("InputBox");
+        json = _serializeDeployment("EtherPortal");
+        json = _serializeDeployment("ERC20Portal");
+        json = _serializeDeployment("ERC721Portal");
+        json = _serializeDeployment("ERC1155SinglePortal");
+        json = _serializeDeployment("ERC1155BatchPortal");
+        json = _serializeDeployment("AuthorityFactory");
+        json = _serializeDeployment("QuorumFactory");
+        json = _serializeDeployment("ApplicationFactory");
+        json = _serializeDeployment("SafeERC20Transfer");
+        json = _serializeDeployment("SelfHostedApplicationFactory");
+        return json;
+    }
+
+    /// @notice Serialize a deployment in the deployments JSON object.
+    /// @param contractName The contract name
+    /// @return The updated deployments JSON object
+    function _serializeDeployment(string memory contractName)
+        internal
+        returns (string memory)
+    {
+        address deployment = vm.getDeployment(contractName);
+        return vm.serializeAddress("deployments", contractName, deployment);
     }
 }

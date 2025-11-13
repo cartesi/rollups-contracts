@@ -49,13 +49,12 @@ pnpm install
 forge soldeer install
 ```
 
-Having done that, you can build a local devnet with Cannon.
-The following command dumps the Anvil state into a `state.json` file
-and writes the deployment information (which includes addresses and ABIs)
-to the `deployments` directory.
+Having done that, you can build a local devnet.
+The following Bash script dumps the Anvil state into a `state.json` file
+and the deployment addresses into a `deployments.json` file.
 
 ```sh
-pnpm build:devnet
+./script/build-devnet.sh
 ```
 
 Once built, you can run the local devnet with Anvil.
@@ -71,7 +70,7 @@ of the `InputBox` contract
 deployed to the local devnet.
 
 ```sh
-cast call $(jq -r .address deployments/InputBox.json) 'getDeploymentBlockNumber()(uint256)'
+cast call $(jq -r .InputBox deployments.json) 'getDeploymentBlockNumber()(uint256)'
 ```
 
 ## Documentation
