@@ -34,10 +34,10 @@ jobs:
           FILEPATH: upload/rollups-contracts-${{ steps.extract_version.outputs.version }}-artifacts.tar.gz
 
       - name: Build devnet
-        run: pnpm build:devnet
+        run: ./script/build-devnet.sh
 
       - name: Compress devnet artifacts
-        run: tar -czf "$FILEPATH" deployments state.json
+        run: tar -czf "$FILEPATH" deployments.json state.json
         env:
           FILEPATH: upload/rollups-contracts-${{ steps.extract_version.outputs.version }}-anvil-${{ steps.setup.outputs.foundry-version }}.tar.gz
 
