@@ -43,7 +43,7 @@ const cannonfileContent = fs.readFileSync(cannonfilePath, 'utf8');
 // Create a Regexp to match the version TOML expression
 const versionRegexp = /^[ \t]*(version|"version"|'version')[ \t]*=.*$/m;
 
-// Check if the Regexp matches any occurence in Cannonfile content
+// Check if the Regexp matches any occurrence in Cannonfile content
 if (cannonfileContent.match(versionRegexp) === null) {
     console.error("Error: No 'version' expression found in cannonfile.toml.");
     process.exit(1);

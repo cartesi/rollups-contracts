@@ -8,7 +8,7 @@ import {IConsensus} from "../IConsensus.sol";
 /// @notice A consensus model controlled by a small, immutable set of `n` validators.
 /// @notice You can know the value of `n` by calling the `numOfValidators` function.
 /// @notice Upon construction, each validator is assigned a unique number between 1 and `n`.
-/// These numbers are used internally instead of addresses for gas optimization reasons.
+/// @notice These numbers are used internally instead of addresses for gas optimization reasons.
 /// @notice You can list the validators in the quorum by calling the `validatorById`
 /// function for each ID from 1 to `n`.
 interface IQuorum is IConsensus {
@@ -18,7 +18,7 @@ interface IQuorum is IConsensus {
     /// @notice Get the ID of a validator.
     /// @param validator The validator address
     /// @dev Validators have IDs greater than zero.
-    /// @dev Non-validators are assigned to ID zero.
+    /// @dev Non-validators are assigned ID zero.
     function validatorId(address validator) external view returns (uint256);
 
     /// @notice Get the address of a validator by its ID.
@@ -30,7 +30,7 @@ interface IQuorum is IConsensus {
     /// @notice Get the number of validators in favor of any claim in a given epoch.
     /// @param appContract The application contract address
     /// @param lastProcessedBlockNumber The number of the last processed block
-    /// @return Number of validators in favor of any claim in the epoch
+    /// @return The number of validators in favor of any claim in the epoch
     function numOfValidatorsInFavorOfAnyClaimInEpoch(
         address appContract,
         uint256 lastProcessedBlockNumber
@@ -40,7 +40,7 @@ interface IQuorum is IConsensus {
     /// @param appContract The application contract address
     /// @param lastProcessedBlockNumber The number of the last processed block
     /// @param id The ID of the validator
-    /// @return Whether validator is in favor of any claim in the epoch
+    /// @return Whether the validator is in favor of any claim in the epoch
     /// @dev Assumes the provided ID is valid.
     function isValidatorInFavorOfAnyClaimInEpoch(
         address appContract,
@@ -52,7 +52,7 @@ interface IQuorum is IConsensus {
     /// @param appContract The application contract address
     /// @param lastProcessedBlockNumber The number of the last processed block
     /// @param outputsMerkleRoot The outputs Merkle root
-    /// @return Number of validators in favor of claim
+    /// @return The number of validators in favor of the claim
     function numOfValidatorsInFavorOf(
         address appContract,
         uint256 lastProcessedBlockNumber,
@@ -64,7 +64,7 @@ interface IQuorum is IConsensus {
     /// @param lastProcessedBlockNumber The number of the last processed block
     /// @param outputsMerkleRoot The outputs Merkle root
     /// @param id The ID of the validator
-    /// @return Whether validator is in favor of claim
+    /// @return Whether the validator is in favor of the claim
     /// @dev Assumes the provided ID is valid.
     function isValidatorInFavorOf(
         address appContract,
