@@ -7,10 +7,10 @@
     },
     "scripts": {
         "build:contracts": "forge build src",
-        "build:devnet": "node scripts/build-devnet.mjs",
-        "build:devnet-no-cannon": "forge script scripts/Deploy.s.sol:Deploy --rpc-url http://127.0.0.1:8545 --broadcast --private-key 0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80",
+        "build:devnet": "node script/build-devnet.mjs",
+        "build:devnet-no-cannon": "forge script script/Deploy.s.sol:Deploy --rpc-url http://127.0.0.1:8545 --broadcast --private-key 0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80",
         "ci:publish": "changeset publish",
-        "ci:version": "changeset version && node scripts/update-cannonfile-version.mjs",
+        "ci:version": "changeset version && node script/update-cannonfile-version.mjs",
         "clean": "pnpm clean:forge && pnpm clean:cannon",
         "clean:cannon": "rm -rf deployments state.json",
         "clean:forge": "forge clean",
