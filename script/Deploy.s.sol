@@ -74,6 +74,6 @@ contract Deploy is Script {
         json = vm.serializeAddress("contracts", "ApplicationFactory", address(applicationFactory));
         json = vm.serializeAddress("contracts", "SelfHostedApplicationFactory", address(selfHostedApplicationFactory));
         json = vm.serializeAddress("contracts", "SafeERC20Transfer", address(safeERC20Transfer));
-        vm.writeJson(json, "out/deployments.json");
+        vm.writeJson(json, "deployments.json");
     }
 }
