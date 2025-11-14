@@ -5,6 +5,7 @@
     "@cartesi/rollups": "2.1.0"
   },
   "changesets": [
+    "fluffy-ducks-joke",
     "long-windows-tease"
   ]
 }

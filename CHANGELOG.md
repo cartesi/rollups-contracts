@@ -1,5 +1,11 @@
 # @cartesi/rollups
 
+## 2.1.1-alpha.1
+
+### Patch Changes
+
+- 70a43e0: Make devnet build not require Cannon or Node.js
+
 ## 2.1.1-alpha.0
 
 ### Patch Changes
