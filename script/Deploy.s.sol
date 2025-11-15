@@ -18,58 +18,52 @@ import {ERC721Portal} from "src/portals/ERC721Portal.sol";
 import {EtherPortal} from "src/portals/EtherPortal.sol";
 
 contract DeployScript is Script {
+    /// @notice Salt used on deterministic deployments.
+    bytes32 constant SALT = bytes32(0);
+
     /// @notice Deploy the Cartesi Rollups contracts.
     /// @dev Serializes deployed contract addresses to `deployments.json`.
     function run() external {
         vm.startBroadcast();
-        _deployContracts();
+        InputBox inputBox = new InputBox{salt: SALT}();
+        EtherPortal etherPortal = new EtherPortal{salt: SALT}(inputBox);
+        ERC20Portal erc20Portal = new ERC20Portal{salt: SALT}(inputBox);
+        ERC721Portal erc721Portal = new ERC721Portal{salt: SALT}(inputBox);
+        ERC1155SinglePortal erc1155SinglePortal =
+            new ERC1155SinglePortal{salt: SALT}(inputBox);
+        ERC1155BatchPortal erc1155BatchPortal =
+            new ERC1155BatchPortal{salt: SALT}(inputBox);
+        SafeERC20Transfer safeErc20Transfer = new SafeERC20Transfer{salt: SALT}();
+        ApplicationFactory appFactory = new ApplicationFactory{salt: SALT}();
+        AuthorityFactory authorityFactory = new AuthorityFactory{salt: SALT}();
+        QuorumFactory quorumFactory = new QuorumFactory{salt: SALT}();
+        SelfHostedApplicationFactory selfHostedAppFactory =
+            new SelfHostedApplicationFactory{salt: SALT}(authorityFactory, appFactory);
         vm.stopBroadcast();
-        vm.writeJson(_serializeDeployments(), "deployments.json");
-    }
 
-    /// @notice Deploy contracts deterministically.
-    /// @dev The zero hash is used as salt for all deployments.
-    function _deployContracts() internal {
-        bytes32 salt;
-        InputBox inputBox = new InputBox{salt: salt}();
-        new EtherPortal{salt: salt}(inputBox);
-        new ERC20Portal{salt: salt}(inputBox);
-        new ERC721Portal{salt: salt}(inputBox);
-        new ERC1155SinglePortal{salt: salt}(inputBox);
-        new ERC1155BatchPortal{salt: salt}(inputBox);
-        new SafeERC20Transfer{salt: salt}();
-        ApplicationFactory appFactory = new ApplicationFactory{salt: salt}();
-        AuthorityFactory authorityFactory = new AuthorityFactory{salt: salt}();
-        new QuorumFactory{salt: salt}();
-        new SelfHostedApplicationFactory{salt: salt}(authorityFactory, appFactory);
-    }
-
-    /// @notice Serialize the deployments in a JSON object
-    /// @return The deployments JSON object
-    function _serializeDeployments() internal returns (string memory) {
         string memory json;
-        json = _serializeDeployment("InputBox");
-        json = _serializeDeployment("EtherPortal");
-        json = _serializeDeployment("ERC20Portal");
-        json = _serializeDeployment("ERC721Portal");
-        json = _serializeDeployment("ERC1155SinglePortal");
-        json = _serializeDeployment("ERC1155BatchPortal");
-        json = _serializeDeployment("AuthorityFactory");
-        json = _serializeDeployment("QuorumFactory");
-        json = _serializeDeployment("ApplicationFactory");
-        json = _serializeDeployment("SafeERC20Transfer");
-        json = _serializeDeployment("SelfHostedApplicationFactory");
-        return json;
+        json = _add("InputBox", address(inputBox));
+        json = _add("EtherPortal", address(etherPortal));
+        json = _add("ERC20Portal", address(erc20Portal));
+        json = _add("ERC721Portal", address(erc721Portal));
+        json = _add("ERC1155SinglePortal", address(erc1155SinglePortal));
+        json = _add("ERC1155BatchPortal", address(erc1155BatchPortal));
+        json = _add("AuthorityFactory", address(authorityFactory));
+        json = _add("QuorumFactory", address(quorumFactory));
+        json = _add("ApplicationFactory", address(appFactory));
+        json = _add("SafeERC20Transfer", address(safeErc20Transfer));
+        json = _add("SelfHostedApplicationFactory", address(selfHostedAppFactory));
+        vm.writeJson(json, "deployments.json");
     }
 
-    /// @notice Serialize a deployment in the deployments JSON object.
+    /// @notice Add a deployment to the deployments JSON object.
     /// @param contractName The contract name
-    /// @return The updated deployments JSON object
-    function _serializeDeployment(string memory contractName)
+    /// @param deployment The deployment address
+    /// @return The deployments JSON object after the addition.
+    function _add(string memory contractName, address deployment)
         internal
         returns (string memory)
     {
-        address deployment = vm.getDeployment(contractName);
         return vm.serializeAddress("deployments", contractName, deployment);
     }
 }
