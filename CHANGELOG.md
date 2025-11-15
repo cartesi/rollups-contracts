@@ -1,5 +1,11 @@
 # @cartesi/rollups
 
+## 2.1.1-alpha.2
+
+### Patch Changes
+
+- dee9d7c: Fix deployment Forge script
+
 ## 2.1.1-alpha.1
 
 ### Patch Changes
