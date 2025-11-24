@@ -80,4 +80,4 @@ run_script() {
     fi
 }
 
-run_script 'script/Deploy.s.sol:DeployScript'
+run_script 'script/Deployment.s.sol:DeploymentScript'

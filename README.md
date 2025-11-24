@@ -51,7 +51,7 @@ forge soldeer install
 
 Having done that, you can build a local devnet.
 The following Bash script dumps the Anvil state into a `state.json` file
-and the deployment addresses into a `deployments.json` file.
+and the deployment addresses into the `deployments/31337` directory.
 
 ```sh
 ./script/build-devnet.sh
@@ -70,7 +70,7 @@ of the `InputBox` contract
 deployed to the local devnet.
 
 ```sh
-cast call $(jq -r .InputBox deployments.json) 'getDeploymentBlockNumber()(uint256)'
+cast call $(jq -r .address deployments/31337/InputBox.json) 'getDeploymentBlockNumber()(uint256)'
 ```
 
 ## Documentation

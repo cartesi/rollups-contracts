@@ -37,7 +37,7 @@ jobs:
         run: ./script/build-devnet.sh
 
       - name: Compress devnet artifacts
-        run: tar -czf "$FILEPATH" deployments.json state.json
+        run: tar -czf "$FILEPATH" deployments/31337 state.json
         env:
           FILEPATH: upload/rollups-contracts-${{ steps.extract_version.outputs.version }}-anvil-${{ steps.setup.outputs.foundry-version }}.tar.gz
 
