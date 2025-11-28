@@ -1,5 +1,16 @@
 # @cartesi/rollups
 
+## 2.1.1-alpha.3
+
+### Patch Changes
+
+- 826473b: Improve deployment Forge script
+
+  - Store deployments in directories indexed by chain
+  - Create abstract deployment script contract for code reuse
+  - Make script idempotent (skips deployment when address has code)
+  - Implement loading deployment functionality (to be used in dave repo)
+
 ## 2.1.1-alpha.2
 
 ### Patch Changes

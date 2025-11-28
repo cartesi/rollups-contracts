@@ -1,5 +1,5 @@
 name = "cartesi-rollups"
-version = "2.1.1-alpha.2"
+version = "2.1.1-alpha.3"
 description = "Cartesi Rollups"
 
 [deploy.InputBox]
