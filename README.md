@@ -73,6 +73,10 @@ deployed to the local devnet.
 cast call $(jq -r .address deployments/31337/InputBox.json) 'getDeploymentBlockNumber()(uint256)'
 ```
 
+## Deployment
+
+If you wish to deploy the contracts to a live network, we may suggest our [deployment guide](./docs/deployment.md).
+
 ## Documentation
 
 A more in-depth documentation on the contracts can be found [here](./docs/contracts.md).
