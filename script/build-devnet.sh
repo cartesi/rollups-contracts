@@ -62,22 +62,9 @@ wait_for_anvil
 rpc_url='http://127.0.0.1:8545'
 private_key='0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80'
 
-run_script() {
-    [[ $# -ge 1 ]] || (>&2 echo "Expected <path> argument." && exit 1)
-    path=$1
-    echo "🚧 Running $path..."
-    if forge script "$path" \
-        --broadcast \
-        --non-interactive \
-        --private-key "$private_key" \
-        --rpc-url "$rpc_url" \
-        --slow
-    then
-        echo "✅ Ran $path successfully!"
-    else
-        >&2 echo "❌ Failed to run $path"
-        exit 1
-    fi
-}
-
-run_script 'script/Deployment.s.sol:DeploymentScript'
+./script/deploy.sh \
+    --broadcast \
+    --non-interactive \
+    --private-key "$private_key" \
+    --rpc-url "$rpc_url" \
+    --slow
