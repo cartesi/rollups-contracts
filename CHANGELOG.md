@@ -1,5 +1,11 @@
 # @cartesi/rollups
 
+## 2.1.1-alpha.4
+
+### Patch Changes
+
+- 05ecd57: Add deployment script and guide
+
 ## 2.1.1-alpha.3
 
 ### Patch Changes
