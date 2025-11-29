@@ -77,6 +77,10 @@ cast call $(jq -r .address deployments/31337/InputBox.json) 'getDeploymentBlockN
 
 A more in-depth documentation on the contracts can be found [here](./docs/contracts.md).
 
+A tutorial on how to deploy core contracts can be found [here](.docs/deploying.md).
+
+A tutorial to interact with the core contracts and deploy applcation specific contracts can be found [here](.docs/interacting.md).
+
 ## Use cases
 
 The Cartesi Rollups Contracts are used by the Cartesi Rollups SDK.
