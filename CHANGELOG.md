@@ -1,5 +1,21 @@
 # @cartesi/rollups
 
+## 2.1.1
+
+### Patch Changes
+
+- dee9d7c: Fix deployment Forge script
+- 70a43e0: Make devnet build not require Cannon or Node.js
+- 826473b: Improve deployment Forge script
+
+  - Store deployments in directories indexed by chain
+  - Create abstract deployment script contract for code reuse
+  - Make script idempotent (skips deployment when address has code)
+  - Implement loading deployment functionality (to be used in dave repo)
+
+- 4e448cd: Fix devnet build (preserve historical states)
+- 05ecd57: Add deployment script and guide
+
 ## 2.1.1-alpha.4
 
 ### Patch Changes
