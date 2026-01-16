@@ -429,11 +429,13 @@ contract QuorumTest is Test, ERC165Test {
         quorum.submitClaim(claim);
     }
 
-    function testMultipleClaimsAcceptedCounter(bytes32[] calldata claims) external {
+    function testMultipleClaimsCounters(bytes32[] calldata claims) external {
         uint256 epochLength = 5;
         uint256 numOfValidators = 3;
 
         IQuorum quorum = _deployQuorum(numOfValidators, epochLength);
+
+        assertEq(quorum.getNumberOfSubmittedClaims(), 0);
 
         Claim memory claim;
         claim.appContract = vm.addr(1);
@@ -441,14 +443,18 @@ contract QuorumTest is Test, ERC165Test {
         uint256 blockNum = epochLength;
         vm.roll(blockNum);
 
+        uint256 totalSubmissions;
+
         for (uint256 i = 0; i < claims.length; ++i) {
             claim.lastProcessedBlockNumber = blockNum - 1;
             claim.outputsMerkleRoot = claims[i];
 
             // submit claim with majority validators
-            for (uint256 id = 1; id <= (numOfValidators / 2 + 1); ++id) {
+            for (uint256 id = 1; id <= numOfValidators / 2 + 1; ++id) {
                 vm.prank(quorum.validatorById(id));
                 quorum.submitClaim(claim);
+                ++totalSubmissions;
+                assertEq(quorum.getNumberOfSubmittedClaims(), totalSubmissions);
             }
 
             assertTrue(quorum.isOutputsMerkleRootValid(claim));
@@ -458,6 +464,66 @@ contract QuorumTest is Test, ERC165Test {
             vm.roll(blockNum);
         }
     }
+
+    function testSubmittedClaimsCounterIgnoresSameValidatorResubmission(
+        uint8 numOfValidators,
+        uint256 epochLength,
+        uint256 epochNumber,
+        uint256 blockNumber,
+        Claim memory claim,
+        uint256 id
+    ) external {
+        numOfValidators = uint8(bound(numOfValidators, 1, type(uint8).max));
+        IQuorum quorum = _deployQuorum(numOfValidators, epochLength);
+        id = bound(id, 1, numOfValidators);
+
+        blockNumber = _boundBlockNumber(blockNumber, epochLength);
+        epochNumber = _boundEpochNumber(epochNumber, blockNumber, epochLength);
+        _boundClaim(claim, epochNumber, epochLength);
+
+        vm.roll(blockNumber);
+
+        assertEq(quorum.getNumberOfSubmittedClaims(), 0);
+
+        vm.startPrank(quorum.validatorById(id));
+
+        // First submission
+        quorum.submitClaim(claim);
+        assertEq(quorum.getNumberOfSubmittedClaims(), 1);
+
+        // Re-submitting the same claim by same validator is silently ignored
+        quorum.submitClaim(claim);
+        assertEq(quorum.getNumberOfSubmittedClaims(), 1);
+
+        vm.stopPrank();
+    }
+
+    function testSubmittedClaimsCounterMaxIsNumOfValidators(
+        uint256 epochLength,
+        uint256 epochNumber,
+        uint256 blockNumber,
+        Claim memory claim
+    ) external {
+        uint256 numOfValidators = 5;
+        IQuorum quorum = _deployQuorum(numOfValidators, epochLength);
+
+        blockNumber = _boundBlockNumber(blockNumber, epochLength);
+        epochNumber = _boundEpochNumber(epochNumber, blockNumber, epochLength);
+        _boundClaim(claim, epochNumber, epochLength);
+
+        vm.roll(blockNumber);
+
+        // Each different validator submitting increments the counter
+        for (uint256 id = 1; id <= numOfValidators; ++id) {
+            vm.prank(quorum.validatorById(id));
+            quorum.submitClaim(claim);
+            assertEq(quorum.getNumberOfSubmittedClaims(), id);
+        }
+
+        // Counter equals number of validators (max per epoch)
+        assertEq(quorum.getNumberOfSubmittedClaims(), numOfValidators);
+    }
+
     // Internal functions
     // ------------------
 

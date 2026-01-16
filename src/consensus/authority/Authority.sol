@@ -46,9 +46,7 @@ contract Authority is IAuthority, AbstractConsensus, Ownable {
             !bitmap.get(epochNumber), NotFirstClaim(appContract, lastProcessedBlockNumber)
         );
 
-        emit ClaimSubmitted(
-            msg.sender, appContract, lastProcessedBlockNumber, outputsMerkleRoot
-        );
+        _submitClaim(msg.sender, appContract, lastProcessedBlockNumber, outputsMerkleRoot);
 
         _acceptClaim(appContract, lastProcessedBlockNumber, outputsMerkleRoot);
 

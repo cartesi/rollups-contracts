@@ -82,4 +82,7 @@ interface IConsensus is IOutputsMerkleRootValidator {
 
     /// @notice Get the number of claims accepted by the consensus.
     function getNumberOfAcceptedClaims() external view returns (uint256);
+
+    /// @notice Get the number of claims submitted to the consensus.
+    function getNumberOfSubmittedClaims() external view returns (uint256);
 }

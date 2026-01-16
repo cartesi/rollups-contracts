@@ -19,6 +19,9 @@ abstract contract AbstractConsensus is IConsensus, ERC165 {
     /// @notice Number of claims accepted by the consensus.
     /// @dev Must be monotonically non-decreasing in time
     uint256 _numOfAcceptedClaims;
+    /// @notice Number of claims submitted to the consensus.
+    /// @dev Must be monotonically non-decreasing in time
+    uint256 _numOfSubmittedClaims;
 
     /// @param epochLength The epoch length
     /// @dev Reverts if the epoch length is zero.
@@ -45,6 +48,11 @@ abstract contract AbstractConsensus is IConsensus, ERC165 {
     /// @inheritdoc IConsensus
     function getNumberOfAcceptedClaims() external view override returns (uint256) {
         return _numOfAcceptedClaims;
+    }
+
+    /// @inheritdoc IConsensus
+    function getNumberOfSubmittedClaims() external view override returns (uint256) {
+        return _numOfSubmittedClaims;
     }
 
     /// @inheritdoc ERC165
@@ -76,6 +84,24 @@ abstract contract AbstractConsensus is IConsensus, ERC165 {
                 NotPastBlock(lastProcessedBlockNumber, upperBound)
             );
         }
+    }
+
+    /// @notice Submit a claim.
+    /// @param submitter The submitter address
+    /// @param appContract The application contract address
+    /// @param lastProcessedBlockNumber The number of the last processed block
+    /// @param outputsMerkleRoot The output Merkle root hash
+    /// @dev Emits a `ClaimSubmitted` event.
+    function _submitClaim(
+        address submitter,
+        address appContract,
+        uint256 lastProcessedBlockNumber,
+        bytes32 outputsMerkleRoot
+    ) internal {
+        emit ClaimSubmitted(
+            submitter, appContract, lastProcessedBlockNumber, outputsMerkleRoot
+        );
+        ++_numOfSubmittedClaims;
     }
 
     /// @notice Accept a claim.

@@ -76,22 +76,21 @@ contract Quorum is IQuorum, AbstractConsensus {
 
         _validateLastProcessedBlockNumber(lastProcessedBlockNumber);
 
-        emit ClaimSubmitted(
-            msg.sender, appContract, lastProcessedBlockNumber, outputsMerkleRoot
-        );
-
         Votes storage votes =
             _getVotes(appContract, lastProcessedBlockNumber, outputsMerkleRoot);
 
         Votes storage allVotes = _getAllVotes(appContract, lastProcessedBlockNumber);
 
-        // Skip storage changes if validator already voted
-        // for the same exact claim before
+        // Skip if validator already voted for the same exact claim before
         if (!votes.inFavorById.get(id)) {
             // Revert if validator has submitted another claim for the same epoch
             require(
                 !allVotes.inFavorById.get(id),
                 NotFirstClaim(appContract, lastProcessedBlockNumber)
+            );
+
+            _submitClaim(
+                msg.sender, appContract, lastProcessedBlockNumber, outputsMerkleRoot
             );
 
             // Register vote (for any claim in the epoch)
