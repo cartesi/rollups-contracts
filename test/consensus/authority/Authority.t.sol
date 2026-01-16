@@ -133,6 +133,7 @@ contract AuthorityTest is Test, ERC165Test, OwnableTest {
             authority.submitClaim(app, blockNum - 1, claims[i]);
 
             assertEq(authority.getNumberOfAcceptedClaims(), i + 1);
+            assertEq(authority.getNumberOfSubmittedClaims(), i + 1);
         }
     }
 
@@ -172,6 +173,7 @@ contract AuthorityTest is Test, ERC165Test, OwnableTest {
         authority.submitClaim(appContract, lastProcessedBlockNumber, claim2);
 
         assertEq(authority.getNumberOfAcceptedClaims(), 1);
+        assertEq(authority.getNumberOfSubmittedClaims(), 1);
     }
 
     function testSubmitClaimNotEpochFinalBlock(
@@ -206,6 +208,7 @@ contract AuthorityTest is Test, ERC165Test, OwnableTest {
         vm.prank(owner);
         authority.submitClaim(appContract, lastProcessedBlockNumber, claim);
         assertEq(authority.getNumberOfAcceptedClaims(), 0);
+        assertEq(authority.getNumberOfSubmittedClaims(), 0);
     }
 
     function testSubmitClaimNotPastBlock(
@@ -236,6 +239,7 @@ contract AuthorityTest is Test, ERC165Test, OwnableTest {
         vm.prank(owner);
         authority.submitClaim(appContract, lastProcessedBlockNumber, claim);
         assertEq(authority.getNumberOfAcceptedClaims(), 0);
+        assertEq(authority.getNumberOfSubmittedClaims(), 0);
     }
 
     function testIsOutputsMerkleRootValid(
