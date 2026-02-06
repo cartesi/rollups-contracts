@@ -1,5 +1,11 @@
 # @cartesi/rollups
 
+## 2.2.0
+
+### Minor Changes
+
+- 54d2d1c: Added `getNumberOfSubmittedClaims` view function to `IConsensus` interface
+
 ## 2.1.1
 
 ### Patch Changes
