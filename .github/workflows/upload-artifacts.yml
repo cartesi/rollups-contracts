@@ -41,7 +41,7 @@ jobs:
         env:
           FILEPATH: upload/rollups-contracts-${{ steps.extract_version.outputs.version }}-anvil-${{ steps.setup.outputs.foundry-version }}.tar.gz
 
-      - name: Upload files to GitHub Releases
-        uses: softprops/action-gh-release@a06a81a03ee405af7f2048a818ed3f03bbf83c7b # v2.5.0
-        with:
-          files: upload/*
+      - name: Upload assets to release on GitHub
+        run: gh release upload "$TAG" upload/* --clobber
+        env:
+          TAG: ${{ github.ref_name }}
