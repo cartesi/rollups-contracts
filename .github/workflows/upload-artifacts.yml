@@ -44,4 +44,5 @@ jobs:
       - name: Upload assets to release on GitHub
         run: gh release upload "$TAG" upload/* --clobber
         env:
+          GH_TOKEN: ${{ github.token }}
           TAG: ${{ github.ref_name }}
