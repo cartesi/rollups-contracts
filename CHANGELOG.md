@@ -1,5 +1,11 @@
 # @cartesi/rollups
 
+## 2.2.1-alpha.1
+
+### Patch Changes
+
+- fe5ceca: Set `GH_TOKEN` env. var when running `gh` on the CI
+
 ## 2.2.1-alpha.0
 
 ### Patch Changes

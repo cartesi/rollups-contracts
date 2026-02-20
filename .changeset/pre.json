@@ -5,6 +5,7 @@
     "@cartesi/rollups": "2.2.0"
   },
   "changesets": [
+    "honest-singers-sing",
     "yummy-dancers-cover"
   ]
 }
