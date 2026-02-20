@@ -4,5 +4,7 @@
   "initialVersions": {
     "@cartesi/rollups": "2.2.0"
   },
-  "changesets": []
+  "changesets": [
+    "yummy-dancers-cover"
+  ]
 }
