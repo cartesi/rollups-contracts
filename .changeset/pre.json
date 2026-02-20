@@ -4,5 +4,14 @@
   "initialVersions": {
     "@cartesi/rollups": "2.0.1"
   },
-  "changesets": []
+  "changesets": [
+    "angry-worms-dig",
+    "beige-snakes-pick",
+    "better-pianos-dress",
+    "common-birds-wear",
+    "green-spiders-unite",
+    "spicy-cars-pull",
+    "weak-clouds-tap",
+    "wet-pandas-love"
+  ]
 }

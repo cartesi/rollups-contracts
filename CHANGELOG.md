@@ -1,5 +1,21 @@
 # @cartesi/rollups
 
+## 3.0.0-alpha.0
+
+### Major Changes
+
+- a4ba7e9: Make `InputBox` require application contract deployment
+- 27e410c: Changed return value of `InputBox.addInput` function from input hash to input Merkle root
+- 4227a06: Removed `Authority` and related contracts
+- 27e410c: Removed `getInputHash` function from `InputBox` (in favor of new `getInputMerkleRoot` function)
+- a93c5d1: Removed non-deterministic deployment functions from factories
+
+### Minor Changes
+
+- 27e410c: Added `getInputMerkleRoot` function to `InputBox` contract
+- 75cf6b8: Added view function for number of executed outputs
+- 4f84597: Increase input size limit from 64 KB to 2 MB
+
 ## 2.0.1
 
 ### Patch Changes
