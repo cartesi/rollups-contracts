@@ -1,5 +1,11 @@
 # @cartesi/rollups
 
+## 2.2.1-alpha.0
+
+### Patch Changes
+
+- a887f66: Use GH CLI to upload assets to GH releases
+
 ## 2.2.0
 
 ### Minor Changes
