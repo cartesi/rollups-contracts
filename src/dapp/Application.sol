@@ -10,6 +10,7 @@ import {WithdrawalConfig} from "../common/WithdrawalConfig.sol";
 import {IOutputsMerkleRootValidator} from "../consensus/IOutputsMerkleRootValidator.sol";
 import {LibAddress} from "../library/LibAddress.sol";
 import {LibOutputValidityProof} from "../library/LibOutputValidityProof.sol";
+import {IWithdrawer} from "../withdrawers/IWithdrawer.sol";
 import {IApplication} from "./IApplication.sol";
 
 import {Ownable} from "@openzeppelin-contracts-5.2.0/access/Ownable.sol";
@@ -40,6 +41,26 @@ contract Application is
     /// @dev See the `getTemplateHash` function.
     bytes32 immutable TEMPLATE_HASH;
 
+    /// @notice The base-2 log of leaves per account.
+    /// @dev See the `getLog2LeavesPerAccount` function.
+    uint8 immutable LOG2_LEAVES_PER_ACCOUNT;
+
+    /// @notice The base-2 log of max. num. of accounts.
+    /// @dev See the `getLog2MaxNumOfAccounts` function.
+    uint8 immutable LOG2_MAX_NUM_OF_ACCOUNTS;
+
+    /// @notice The offset of the accounts drive.
+    /// @dev See the `getAccountsDriveStartIndex` function.
+    uint64 immutable ACCOUNTS_DRIVE_START_INDEX;
+
+    /// @notice The guardian address.
+    /// @dev See the `getGuardian` function.
+    address immutable GUARDIAN;
+
+    /// @notice The withdrawer contract.
+    /// @dev See the `getWithdrawer` function.
+    IWithdrawer immutable WITHDRAWER;
+
     /// @notice Keeps track of which outputs have been executed.
     /// @dev See the `wasOutputExecuted` function.
     BitMaps.BitMap internal _executed;
@@ -66,9 +87,14 @@ contract Application is
         address initialOwner,
         bytes32 templateHash,
         bytes memory dataAvailability,
-        WithdrawalConfig memory
+        WithdrawalConfig memory withdrawawlConfig
     ) Ownable(initialOwner) {
         TEMPLATE_HASH = templateHash;
+        LOG2_LEAVES_PER_ACCOUNT = withdrawawlConfig.log2LeavesPerAccount;
+        LOG2_MAX_NUM_OF_ACCOUNTS = withdrawawlConfig.log2MaxNumOfAccounts;
+        ACCOUNTS_DRIVE_START_INDEX = withdrawawlConfig.accountsDriveStartIndex;
+        GUARDIAN = withdrawawlConfig.guardian;
+        WITHDRAWER = withdrawawlConfig.withdrawer;
         _outputsMerkleRootValidator = outputsMerkleRootValidator;
         _dataAvailability = dataAvailability;
     }
@@ -188,6 +214,26 @@ contract Application is
     /// @inheritdoc IApplication
     function getNumberOfExecutedOutputs() external view override returns (uint256) {
         return _numOfExecutedOutputs;
+    }
+
+    function getLog2LeavesPerAccount() external view override returns (uint8) {
+        return LOG2_LEAVES_PER_ACCOUNT;
+    }
+
+    function getLog2MaxNumOfAccounts() external view override returns (uint8) {
+        return LOG2_MAX_NUM_OF_ACCOUNTS;
+    }
+
+    function getAccountsDriveStartIndex() external view override returns (uint64) {
+        return ACCOUNTS_DRIVE_START_INDEX;
+    }
+
+    function getGuardian() external view override returns (address) {
+        return GUARDIAN;
+    }
+
+    function getWithdrawer() external view override returns (IWithdrawer) {
+        return WITHDRAWER;
     }
 
     /// @inheritdoc Ownable
