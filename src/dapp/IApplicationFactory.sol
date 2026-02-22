@@ -23,6 +23,7 @@ interface IApplicationFactory {
         address appOwner,
         bytes32 templateHash,
         bytes dataAvailability,
+        WithdrawalConfig withdrawalConfig,
         IApplication appContract
     );
 
