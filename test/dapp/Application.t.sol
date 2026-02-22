@@ -7,6 +7,7 @@ import {IOwnable} from "src/access/IOwnable.sol";
 import {DataAvailability} from "src/common/DataAvailability.sol";
 import {OutputValidityProof} from "src/common/OutputValidityProof.sol";
 import {Outputs} from "src/common/Outputs.sol";
+import {WithdrawalConfig} from "src/common/WithdrawalConfig.sol";
 import {IOutputsMerkleRootValidator} from "src/consensus/IOutputsMerkleRootValidator.sol";
 import {Authority} from "src/consensus/authority/Authority.sol";
 import {Application} from "src/dapp/Application.sol";
@@ -91,10 +92,13 @@ contract ApplicationTest is Test, OwnableTest {
     // -----------
 
     function testConstructorRevertsInvalidOwner() external {
+        WithdrawalConfig memory withdrawalConfig;
         vm.expectRevert(
             abi.encodeWithSelector(Ownable.OwnableInvalidOwner.selector, address(0))
         );
-        new Application(_authority, address(0), TEMPLATE_HASH, new bytes(0));
+        new Application(
+            _authority, address(0), TEMPLATE_HASH, new bytes(0), withdrawalConfig
+        );
     }
 
     function testConstructor(
@@ -102,7 +106,8 @@ contract ApplicationTest is Test, OwnableTest {
         IOutputsMerkleRootValidator outputsMerkleRootValidator,
         address owner,
         bytes32 templateHash,
-        bytes calldata dataAvailability
+        bytes calldata dataAvailability,
+        WithdrawalConfig calldata withdrawalConfig
     ) external {
         vm.assume(owner != address(0));
 
@@ -112,7 +117,11 @@ contract ApplicationTest is Test, OwnableTest {
         emit Ownable.OwnershipTransferred(address(0), owner);
 
         IApplication appContract = new Application(
-            outputsMerkleRootValidator, owner, templateHash, dataAvailability
+            outputsMerkleRootValidator,
+            owner,
+            templateHash,
+            dataAvailability,
+            withdrawalConfig
         );
 
         assertEq(
@@ -342,8 +351,10 @@ contract ApplicationTest is Test, OwnableTest {
         _inputBox = new InputBox();
         _authority = new Authority(_authorityOwner, EPOCH_LENGTH);
         _dataAvailability = abi.encodeCall(DataAvailability.InputBox, (_inputBox));
-        _appContract =
-            new Application(_authority, _appOwner, TEMPLATE_HASH, _dataAvailability);
+        WithdrawalConfig memory withdrawalConfig;
+        _appContract = new Application(
+            _authority, _appOwner, TEMPLATE_HASH, _dataAvailability, withdrawalConfig
+        );
         _safeErc20Transfer = new SafeERC20Transfer();
     }
 

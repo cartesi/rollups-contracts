@@ -6,6 +6,7 @@ pragma solidity ^0.8.22;
 
 import {Ownable} from "@openzeppelin-contracts-5.2.0/access/Ownable.sol";
 
+import {WithdrawalConfig} from "src/common/WithdrawalConfig.sol";
 import {AuthorityFactory} from "src/consensus/authority/AuthorityFactory.sol";
 import {IAuthority} from "src/consensus/authority/IAuthority.sol";
 import {IAuthorityFactory} from "src/consensus/authority/IAuthorityFactory.sol";
@@ -41,6 +42,7 @@ contract SelfHostedApplicationFactoryTest is Test {
         address appOwner,
         bytes32 templateHash,
         bytes calldata dataAvailability,
+        WithdrawalConfig calldata withdrawalConfig,
         bytes32 salt
     ) external {
         vm.assume(appOwner != address(0));
@@ -50,7 +52,13 @@ contract SelfHostedApplicationFactoryTest is Test {
             abi.encodeWithSelector(Ownable.OwnableInvalidOwner.selector, address(0))
         );
         factory.deployContracts(
-            address(0), epochLength, appOwner, templateHash, dataAvailability, salt
+            address(0),
+            epochLength,
+            appOwner,
+            templateHash,
+            dataAvailability,
+            withdrawalConfig,
+            salt
         );
     }
 
@@ -59,6 +67,7 @@ contract SelfHostedApplicationFactoryTest is Test {
         address appOwner,
         bytes32 templateHash,
         bytes calldata dataAvailability,
+        WithdrawalConfig calldata withdrawalConfig,
         bytes32 salt
     ) external {
         vm.assume(appOwner != address(0));
@@ -66,7 +75,13 @@ contract SelfHostedApplicationFactoryTest is Test {
 
         vm.expectRevert("epoch length must not be zero");
         factory.deployContracts(
-            authorityOwner, 0, appOwner, templateHash, dataAvailability, salt
+            authorityOwner,
+            0,
+            appOwner,
+            templateHash,
+            dataAvailability,
+            withdrawalConfig,
+            salt
         );
     }
 
@@ -75,6 +90,7 @@ contract SelfHostedApplicationFactoryTest is Test {
         uint256 epochLength,
         bytes32 templateHash,
         bytes calldata dataAvailability,
+        WithdrawalConfig calldata withdrawalConfig,
         bytes32 salt
     ) external {
         vm.assume(authorityOwner != address(0));
@@ -84,7 +100,13 @@ contract SelfHostedApplicationFactoryTest is Test {
             abi.encodeWithSelector(Ownable.OwnableInvalidOwner.selector, address(0))
         );
         factory.deployContracts(
-            authorityOwner, epochLength, address(0), templateHash, dataAvailability, salt
+            authorityOwner,
+            epochLength,
+            address(0),
+            templateHash,
+            dataAvailability,
+            withdrawalConfig,
+            salt
         );
     }
 
@@ -94,6 +116,7 @@ contract SelfHostedApplicationFactoryTest is Test {
         address appOwner,
         bytes32 templateHash,
         bytes calldata dataAvailability,
+        WithdrawalConfig calldata withdrawalConfig,
         bytes32 salt
     ) external {
         vm.assume(appOwner != address(0));
@@ -104,14 +127,26 @@ contract SelfHostedApplicationFactoryTest is Test {
         address authorityAddr;
 
         (appAddr, authorityAddr) = factory.calculateAddresses(
-            authorityOwner, epochLength, appOwner, templateHash, dataAvailability, salt
+            authorityOwner,
+            epochLength,
+            appOwner,
+            templateHash,
+            dataAvailability,
+            withdrawalConfig,
+            salt
         );
 
         IApplication application;
         IAuthority authority;
 
         (application, authority) = factory.deployContracts(
-            authorityOwner, epochLength, appOwner, templateHash, dataAvailability, salt
+            authorityOwner,
+            epochLength,
+            appOwner,
+            templateHash,
+            dataAvailability,
+            withdrawalConfig,
+            salt
         );
 
         assertEq(appAddr, address(application));

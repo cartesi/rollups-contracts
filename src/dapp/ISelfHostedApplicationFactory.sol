@@ -3,6 +3,7 @@
 
 pragma solidity ^0.8.8;
 
+import {WithdrawalConfig} from "../common/WithdrawalConfig.sol";
 import {IAuthority} from "../consensus/authority/IAuthority.sol";
 import {IAuthorityFactory} from "../consensus/authority/IAuthorityFactory.sol";
 import {IApplication} from "./IApplication.sol";
@@ -23,6 +24,8 @@ interface ISelfHostedApplicationFactory {
     /// @param epochLength The epoch length
     /// @param appOwner The initial application owner
     /// @param templateHash The initial machine state hash
+    /// @param dataAvailability The data availability solution
+    /// @param withdrawalConfig The withdrawal configuration
     /// @param salt The salt used to deterministically generate the addresses
     /// @return The application contract
     /// @return The authority contract
@@ -35,6 +38,7 @@ interface ISelfHostedApplicationFactory {
         address appOwner,
         bytes32 templateHash,
         bytes calldata dataAvailability,
+        WithdrawalConfig calldata withdrawalConfig,
         bytes32 salt
     ) external returns (IApplication, IAuthority);
 
@@ -44,6 +48,8 @@ interface ISelfHostedApplicationFactory {
     /// @param epochLength The epoch length
     /// @param appOwner The initial application owner
     /// @param templateHash The initial machine state hash
+    /// @param dataAvailability The data availability solution
+    /// @param withdrawalConfig The withdrawal configuration
     /// @param salt The salt used to deterministically generate the addresses
     /// @return The application address
     /// @return The authority address
@@ -53,6 +59,7 @@ interface ISelfHostedApplicationFactory {
         address appOwner,
         bytes32 templateHash,
         bytes calldata dataAvailability,
+        WithdrawalConfig calldata withdrawalConfig,
         bytes32 salt
     ) external view returns (address, address);
 }

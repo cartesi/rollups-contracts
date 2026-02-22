@@ -5,6 +5,7 @@ pragma solidity ^0.8.8;
 
 import {Create2} from "@openzeppelin-contracts-5.2.0/utils/Create2.sol";
 
+import {WithdrawalConfig} from "../common/WithdrawalConfig.sol";
 import {IOutputsMerkleRootValidator} from "../consensus/IOutputsMerkleRootValidator.sol";
 import {Application} from "./Application.sol";
 import {IApplication} from "./IApplication.sol";
@@ -17,10 +18,15 @@ contract ApplicationFactory is IApplicationFactory {
         IOutputsMerkleRootValidator outputsMerkleRootValidator,
         address appOwner,
         bytes32 templateHash,
-        bytes calldata dataAvailability
+        bytes calldata dataAvailability,
+        WithdrawalConfig calldata withdrawalConfig
     ) external override returns (IApplication) {
         IApplication appContract = new Application(
-            outputsMerkleRootValidator, appOwner, templateHash, dataAvailability
+            outputsMerkleRootValidator,
+            appOwner,
+            templateHash,
+            dataAvailability,
+            withdrawalConfig
         );
 
         emit ApplicationCreated(
@@ -39,10 +45,15 @@ contract ApplicationFactory is IApplicationFactory {
         address appOwner,
         bytes32 templateHash,
         bytes calldata dataAvailability,
+        WithdrawalConfig calldata withdrawalConfig,
         bytes32 salt
     ) external override returns (IApplication) {
         IApplication appContract = new Application{salt: salt}(
-            outputsMerkleRootValidator, appOwner, templateHash, dataAvailability
+            outputsMerkleRootValidator,
+            appOwner,
+            templateHash,
+            dataAvailability,
+            withdrawalConfig
         );
 
         emit ApplicationCreated(
@@ -61,6 +72,7 @@ contract ApplicationFactory is IApplicationFactory {
         address appOwner,
         bytes32 templateHash,
         bytes calldata dataAvailability,
+        WithdrawalConfig calldata withdrawalConfig,
         bytes32 salt
     ) external view override returns (address) {
         return Create2.computeAddress(
@@ -72,7 +84,8 @@ contract ApplicationFactory is IApplicationFactory {
                         outputsMerkleRootValidator,
                         appOwner,
                         templateHash,
-                        dataAvailability
+                        dataAvailability,
+                        withdrawalConfig
                     )
                 )
             )

@@ -6,6 +6,7 @@ pragma solidity ^0.8.8;
 import {IOwnable} from "../access/IOwnable.sol";
 import {OutputValidityProof} from "../common/OutputValidityProof.sol";
 import {Outputs} from "../common/Outputs.sol";
+import {WithdrawalConfig} from "../common/WithdrawalConfig.sol";
 import {IOutputsMerkleRootValidator} from "../consensus/IOutputsMerkleRootValidator.sol";
 import {LibAddress} from "../library/LibAddress.sol";
 import {LibOutputValidityProof} from "../library/LibOutputValidityProof.sol";
@@ -64,7 +65,8 @@ contract Application is
         IOutputsMerkleRootValidator outputsMerkleRootValidator,
         address initialOwner,
         bytes32 templateHash,
-        bytes memory dataAvailability
+        bytes memory dataAvailability,
+        WithdrawalConfig memory
     ) Ownable(initialOwner) {
         TEMPLATE_HASH = templateHash;
         _outputsMerkleRootValidator = outputsMerkleRootValidator;

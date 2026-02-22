@@ -3,6 +3,7 @@
 
 pragma solidity ^0.8.8;
 
+import {WithdrawalConfig} from "../common/WithdrawalConfig.sol";
 import {IOutputsMerkleRootValidator} from "../consensus/IOutputsMerkleRootValidator.sol";
 import {IApplication} from "./IApplication.sol";
 
@@ -14,6 +15,7 @@ interface IApplicationFactory {
     /// @param outputsMerkleRootValidator The initial outputs Merkle root validator contract
     /// @param appOwner The initial application owner
     /// @param templateHash The initial machine state hash
+    /// @param dataAvailability The data availability solution
     /// @param appContract The application contract
     /// @dev MUST be triggered on a successful call to `newApplication`.
     event ApplicationCreated(
@@ -30,6 +32,8 @@ interface IApplicationFactory {
     /// @param outputsMerkleRootValidator The initial outputs Merkle root validator contract
     /// @param appOwner The initial application owner
     /// @param templateHash The initial machine state hash
+    /// @param dataAvailability The data availability solution
+    /// @param withdrawalConfig The withdrawal configuration
     /// @return The application
     /// @dev On success, MUST emit an `ApplicationCreated` event.
     /// @dev Reverts if the application owner address is zero.
@@ -37,13 +41,16 @@ interface IApplicationFactory {
         IOutputsMerkleRootValidator outputsMerkleRootValidator,
         address appOwner,
         bytes32 templateHash,
-        bytes calldata dataAvailability
+        bytes calldata dataAvailability,
+        WithdrawalConfig calldata withdrawalConfig
     ) external returns (IApplication);
 
     /// @notice Deploy a new application deterministically.
     /// @param outputsMerkleRootValidator The initial outputs Merkle root validator contract
     /// @param appOwner The initial application owner
     /// @param templateHash The initial machine state hash
+    /// @param dataAvailability The data availability solution
+    /// @param withdrawalConfig The withdrawal configuration
     /// @param salt The salt used to deterministically generate the application contract address
     /// @return The application
     /// @dev On success, MUST emit an `ApplicationCreated` event.
@@ -53,6 +60,7 @@ interface IApplicationFactory {
         address appOwner,
         bytes32 templateHash,
         bytes calldata dataAvailability,
+        WithdrawalConfig calldata withdrawalConfig,
         bytes32 salt
     ) external returns (IApplication);
 
@@ -60,6 +68,8 @@ interface IApplicationFactory {
     /// @param outputsMerkleRootValidator The initial outputs Merkle root validator contract
     /// @param appOwner The initial application owner
     /// @param templateHash The initial machine state hash
+    /// @param dataAvailability The data availability solution
+    /// @param withdrawalConfig The withdrawal configuration
     /// @param salt The salt used to deterministically generate the application contract address
     /// @return The deterministic application contract address
     /// @dev Beware that only the `newApplication` function with the `salt` parameter
@@ -69,6 +79,7 @@ interface IApplicationFactory {
         address appOwner,
         bytes32 templateHash,
         bytes calldata dataAvailability,
+        WithdrawalConfig calldata withdrawalConfig,
         bytes32 salt
     ) external view returns (address);
 }
