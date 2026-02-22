@@ -34,6 +34,7 @@ contract ApplicationFactory is IApplicationFactory {
             appOwner,
             templateHash,
             dataAvailability,
+            withdrawalConfig,
             appContract
         );
 
@@ -61,6 +62,7 @@ contract ApplicationFactory is IApplicationFactory {
             appOwner,
             templateHash,
             dataAvailability,
+            withdrawalConfig,
             appContract
         );
 
