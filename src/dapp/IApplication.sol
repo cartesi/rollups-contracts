@@ -37,6 +37,9 @@ interface IApplication is IOwnable {
     /// @param output The output
     event OutputExecuted(uint64 outputIndex, bytes output);
 
+    /// @notice MUST trigger when the application is foreclosed.
+    event Foreclosure();
+
     // Errors
 
     /// @notice Could not execute an output, because the application contract doesn't know how to.
@@ -59,6 +62,10 @@ interface IApplication is IOwnable {
     /// @notice Raised when the computed outputs Merkle root is invalid, according to the current outputs Merkle root validator.
     error InvalidOutputsMerkleRoot(bytes32 outputsMerkleRoot);
 
+    /// @notice Raised when a function that can only be called by
+    /// the application guardian is called by some other account.
+    error NotGuardian();
+
     // Permissioned functions
 
     /// @notice Migrate the application to a new outputs Merkle root validator.
@@ -66,6 +73,11 @@ interface IApplication is IOwnable {
     /// @dev Can only be called by the application owner.
     function migrateToOutputsMerkleRootValidator(IOutputsMerkleRootValidator newOutputsMerkleRootValidator)
         external;
+
+    /// @notice Forecloses the application, allowing users to withdraw their funds
+    /// by providing Merkle proofs of their in-app accounts.
+    /// @dev Can only be called by the application guardian.
+    function foreclose() external;
 
     // Permissionless functions
 
@@ -153,4 +165,8 @@ interface IApplication is IOwnable {
     /// @notice Get the withdrawer contract,
     /// which gets delegate-called to withdraw funds from accounts.
     function getWithdrawer() external view returns (IWithdrawer);
+
+    /// @notice Check whether the application has been foreclosed.
+    /// An application that has been foreclosed will remain so.
+    function isForeclosed() external view returns (bool);
 }

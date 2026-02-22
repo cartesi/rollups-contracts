@@ -120,6 +120,7 @@ contract SelfHostedApplicationFactoryTest is Test {
             assertEq(
                 withdrawalConfig.isValid(), true, "Expected withdrawal config to be valid"
             );
+            assertEq(application.isForeclosed(), false, "isForeclosed() != false");
 
             (appAddr, authorityAddr) = factory.calculateAddresses(
                 authorityOwner,
