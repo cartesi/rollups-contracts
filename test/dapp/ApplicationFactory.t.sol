@@ -261,6 +261,7 @@ contract ApplicationFactoryTest is Test {
         assertEq(
             withdrawalConfig.isValid(), true, "Expected withdrawal config to be valid"
         );
+        assertEq(appContract.isForeclosed(), false, "isForeclosed() != false");
     }
 
     function _testNewApplicationFailure(

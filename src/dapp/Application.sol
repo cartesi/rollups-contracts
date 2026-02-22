@@ -75,6 +75,10 @@ contract Application is
     /// @dev See the `getDataAvailability` function.
     bytes internal _dataAvailability;
 
+    /// @notice Whether the application has been foreclosed by the guardian.
+    /// @dev See the `isForeclosed` function.
+    bool internal _isForeclosed;
+
     /// @notice The number of outputs executed by the application.
     /// @dev See the `numberOfOutputsExecuted` function.
     uint256 _numOfExecutedOutputs;
@@ -151,6 +155,11 @@ contract Application is
     {
         _outputsMerkleRootValidator = newOutputsMerkleRootValidator;
         emit OutputsMerkleRootValidatorChanged(newOutputsMerkleRootValidator);
+    }
+
+    function foreclose() external override onlyGuardian {
+        _isForeclosed = true;
+        emit Foreclosure();
     }
 
     /// @inheritdoc IApplication
@@ -231,12 +240,16 @@ contract Application is
         return ACCOUNTS_DRIVE_START_INDEX;
     }
 
-    function getGuardian() external view override returns (address) {
+    function getGuardian() public view override returns (address) {
         return GUARDIAN;
     }
 
     function getWithdrawer() external view override returns (IWithdrawer) {
         return WITHDRAWER;
+    }
+
+    function isForeclosed() external view override returns (bool) {
+        return _isForeclosed;
     }
 
     /// @inheritdoc Ownable
@@ -252,6 +265,11 @@ contract Application is
     /// @inheritdoc Ownable
     function transferOwnership(address newOwner) public override(IOwnable, Ownable) {
         super.transferOwnership(newOwner);
+    }
+
+    modifier onlyGuardian() {
+        _ensureMsgSenderIsGuardian();
+        _;
     }
 
     /// @notice Check if an outputs Merkle root is valid,
@@ -295,5 +313,10 @@ contract Application is
         (destination, payload) = abi.decode(arguments, (address, bytes));
 
         destination.safeDelegateCall(payload);
+    }
+
+    /// @notice Ensures the message sender is the guardian.
+    function _ensureMsgSenderIsGuardian() internal view {
+        require(msg.sender == getGuardian(), NotGuardian());
     }
 }

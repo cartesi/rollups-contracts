@@ -65,6 +65,7 @@ contract ApplicationTest is Test, OwnableTest {
     uint256[] _initialSupplies;
     uint256[] _transferAmounts;
     mapping(string => LibEmulator.OutputIndex) _outputIndexByName;
+    WithdrawalConfig _withdrawalConfig;
 
     uint256 constant EPOCH_LENGTH = 1;
     bytes32 constant TEMPLATE_HASH = keccak256("templateHash");
@@ -114,6 +115,27 @@ contract ApplicationTest is Test, OwnableTest {
             address(_appContract.getOutputsMerkleRootValidator()),
             address(newOutputsMerkleRootValidator)
         );
+    }
+
+    // -----------
+    // foreclosure
+    // -----------
+
+    function testForecloseRevertsNotGuardian(address caller) external {
+        vm.assume(caller != _appContract.getGuardian());
+        assertFalse(_appContract.isForeclosed());
+        vm.expectRevert(IApplication.NotGuardian.selector);
+        vm.prank(caller);
+        _appContract.foreclose();
+    }
+
+    function testForeclose() external {
+        assertFalse(_appContract.isForeclosed());
+        vm.expectEmit(true, true, true, true, address(_appContract));
+        emit IApplication.Foreclosure();
+        vm.prank(_appContract.getGuardian());
+        _appContract.foreclose();
+        assertTrue(_appContract.isForeclosed());
     }
 
     // -----------------
@@ -279,11 +301,12 @@ contract ApplicationTest is Test, OwnableTest {
     // ------------------
 
     function _initVariables() internal {
-        address[] memory addresses = vm.addrs(4);
+        address[] memory addresses = vm.addrs(5);
         _authorityOwner = addresses[0];
         _appOwner = addresses[1];
         _recipient = addresses[2];
         _tokenOwner = addresses[3];
+        _withdrawalConfig.guardian = addresses[4];
         for (uint256 i; i < 7; ++i) {
             _tokenIds.push(i);
             _initialSupplies.push(INITIAL_SUPPLY);
@@ -304,9 +327,8 @@ contract ApplicationTest is Test, OwnableTest {
         _inputBox = new InputBox();
         _authority = new Authority(_authorityOwner, EPOCH_LENGTH);
         _dataAvailability = abi.encodeCall(DataAvailability.InputBox, (_inputBox));
-        WithdrawalConfig memory withdrawalConfig;
         _appContract = new Application(
-            _authority, _appOwner, TEMPLATE_HASH, _dataAvailability, withdrawalConfig
+            _authority, _appOwner, TEMPLATE_HASH, _dataAvailability, _withdrawalConfig
         );
         _safeErc20Transfer = new SafeERC20Transfer();
     }
