@@ -130,6 +130,31 @@ contract ApplicationTest is Test, OwnableTest {
         );
         assertEq(appContract.owner(), owner);
         assertEq(appContract.getTemplateHash(), templateHash);
+        assertEq(
+            appContract.getLog2LeavesPerAccount(),
+            withdrawalConfig.log2LeavesPerAccount,
+            "getLog2LeavesPerAccount() != withdrawalConfig.log2LeavesPerAccount"
+        );
+        assertEq(
+            appContract.getLog2MaxNumOfAccounts(),
+            withdrawalConfig.log2MaxNumOfAccounts,
+            "getLog2MaxNumOfAccounts() != withdrawalConfig.log2MaxNumOfAccounts"
+        );
+        assertEq(
+            appContract.getAccountsDriveStartIndex(),
+            withdrawalConfig.accountsDriveStartIndex,
+            "getAccountsDriveStartIndex() != withdrawalConfig.accountsDriveStartIndex"
+        );
+        assertEq(
+            appContract.getGuardian(),
+            withdrawalConfig.guardian,
+            "getGuardian() != withdrawalConfig.guardian"
+        );
+        assertEq(
+            address(appContract.getWithdrawer()),
+            address(withdrawalConfig.withdrawer),
+            "getWithdrawer() != withdrawalConfig.withdrawer"
+        );
         assertEq(appContract.getDataAvailability(), dataAvailability);
         assertEq(appContract.getDeploymentBlockNumber(), blockNumber);
     }

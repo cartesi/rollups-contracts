@@ -6,6 +6,7 @@ pragma solidity ^0.8.8;
 import {IOwnable} from "../access/IOwnable.sol";
 import {OutputValidityProof} from "../common/OutputValidityProof.sol";
 import {IOutputsMerkleRootValidator} from "../consensus/IOutputsMerkleRootValidator.sol";
+import {IWithdrawer} from "../withdrawers/IWithdrawer.sol";
 
 /// @notice The base layer incarnation of an application running on the execution layer.
 /// @notice The state of the application advances through inputs sent to an `IInputBox` contract.
@@ -123,4 +124,33 @@ interface IApplication is IOwnable {
 
     /// @notice Get number of outputs executed by the application.
     function getNumberOfExecutedOutputs() external view returns (uint256);
+
+    /// @notice Get the log (base 2) of the number of leaves
+    /// in the machine state tree that are reserved for
+    /// each account in the accounts drive.
+    function getLog2LeavesPerAccount() external view returns (uint8);
+
+    /// @notice Get the log (base 2) of the maximum number
+    /// of accounts that can be stored in the accounts drive.
+    /// @notice This is equivalent to the depth of the accounts
+    /// drive tree whose leaves are the account roots.
+    function getLog2MaxNumOfAccounts() external view returns (uint8);
+
+    /// @notice Get the factor that, when multiplied by the
+    /// size of the accounts drive, yields the start memory address
+    /// of the accounts drive.
+    /// @dev If `a = getLog2LeavesPerAccount()`
+    /// `b = getLog2MaxNumOfAccounts()`,
+    /// and `c = getAccountsDriveStartIndex()`,
+    /// then the accounts drive starts at `c*2^{a+b+5}`
+    /// and has size `2^{a+b+5}`.
+    function getAccountsDriveStartIndex() external view returns (uint64);
+
+    /// @notice Get the address of the guardian,
+    /// which has the power to foreclose the application.
+    function getGuardian() external view returns (address);
+
+    /// @notice Get the withdrawer contract,
+    /// which gets delegate-called to withdraw funds from accounts.
+    function getWithdrawer() external view returns (IWithdrawer);
 }
