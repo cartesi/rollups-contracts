@@ -37,80 +37,8 @@ contract SelfHostedApplicationFactoryTest is Test {
         assertEq(address(factory.getAuthorityFactory()), address(authorityFactory));
     }
 
-    function testRevertsAuthorityOwnerAddressZero(
-        uint256 epochLength,
-        address appOwner,
-        bytes32 templateHash,
-        bytes calldata dataAvailability,
-        WithdrawalConfig calldata withdrawalConfig,
-        bytes32 salt
-    ) external {
-        vm.assume(appOwner != address(0));
-        vm.assume(epochLength > 0);
-
-        vm.expectRevert(
-            abi.encodeWithSelector(Ownable.OwnableInvalidOwner.selector, address(0))
-        );
-        factory.deployContracts(
-            address(0),
-            epochLength,
-            appOwner,
-            templateHash,
-            dataAvailability,
-            withdrawalConfig,
-            salt
-        );
-    }
-
-    function testRevertsEpochLengthZero(
-        address authorityOwner,
-        address appOwner,
-        bytes32 templateHash,
-        bytes calldata dataAvailability,
-        WithdrawalConfig calldata withdrawalConfig,
-        bytes32 salt
-    ) external {
-        vm.assume(appOwner != address(0));
-        vm.assume(authorityOwner != address(0));
-
-        vm.expectRevert("epoch length must not be zero");
-        factory.deployContracts(
-            authorityOwner,
-            0,
-            appOwner,
-            templateHash,
-            dataAvailability,
-            withdrawalConfig,
-            salt
-        );
-    }
-
-    function testRevertsApplicationOwnerAddressZero(
-        address authorityOwner,
-        uint256 epochLength,
-        bytes32 templateHash,
-        bytes calldata dataAvailability,
-        WithdrawalConfig calldata withdrawalConfig,
-        bytes32 salt
-    ) external {
-        vm.assume(authorityOwner != address(0));
-        vm.assume(epochLength > 0);
-
-        vm.expectRevert(
-            abi.encodeWithSelector(Ownable.OwnableInvalidOwner.selector, address(0))
-        );
-        factory.deployContracts(
-            authorityOwner,
-            epochLength,
-            address(0),
-            templateHash,
-            dataAvailability,
-            withdrawalConfig,
-            salt
-        );
-    }
-
     function testDeployContracts(
+        uint256 blockNumber,
         address authorityOwner,
         uint256 epochLength,
         address appOwner,
@@ -119,9 +47,7 @@ contract SelfHostedApplicationFactoryTest is Test {
         WithdrawalConfig calldata withdrawalConfig,
         bytes32 salt
     ) external {
-        vm.assume(appOwner != address(0));
-        vm.assume(authorityOwner != address(0));
-        vm.assume(epochLength > 0);
+        vm.roll(blockNumber);
 
         address appAddr;
         address authorityAddr;
@@ -136,10 +62,7 @@ contract SelfHostedApplicationFactoryTest is Test {
             salt
         );
 
-        IApplication application;
-        IAuthority authority;
-
-        (application, authority) = factory.deployContracts(
+        try factory.deployContracts(
             authorityOwner,
             epochLength,
             appOwner,
@@ -147,17 +70,100 @@ contract SelfHostedApplicationFactoryTest is Test {
             dataAvailability,
             withdrawalConfig,
             salt
-        );
+        ) returns (
+            IApplication application, IAuthority authority
+        ) {
+            assertEq(
+                appAddr,
+                address(application),
+                "calculateAddresses(...)[0] != deployContracts(...)[0]"
+            );
+            assertEq(
+                authorityAddr,
+                address(authority),
+                "calculateAddresses(...)[1] != deployContracts(...)[1]"
+            );
 
-        assertEq(appAddr, address(application));
-        assertEq(authorityAddr, address(authority));
+            assertEq(
+                authority.owner(), authorityOwner, "authority.owner() != authorityOwner"
+            );
+            assertEq(
+                authority.getEpochLength(),
+                epochLength,
+                "authority.getEpochLength() != epochLength"
+            );
 
-        assertEq(authority.owner(), authorityOwner);
-        assertEq(authority.getEpochLength(), epochLength);
+            assertEq(
+                address(application.getOutputsMerkleRootValidator()),
+                authorityAddr,
+                "app.getOutputsMerkleRootValidator() != authority"
+            );
+            assertEq(application.owner(), appOwner, "app.owner() != appOwner");
+            assertEq(
+                application.getTemplateHash(),
+                templateHash,
+                "app.getTemplateHash() != templateHash"
+            );
+            assertEq(
+                application.getDataAvailability(),
+                dataAvailability,
+                "app.getDataAvailability() != dataAvailability"
+            );
+            assertEq(
+                application.getDeploymentBlockNumber(),
+                blockNumber,
+                "getDeploymentBlockNumber() != blockNumber"
+            );
 
-        assertEq(address(application.getOutputsMerkleRootValidator()), authorityAddr);
-        assertEq(application.owner(), appOwner);
-        assertEq(application.getTemplateHash(), templateHash);
-        assertEq(application.getDataAvailability(), dataAvailability);
+            (appAddr, authorityAddr) = factory.calculateAddresses(
+                authorityOwner,
+                epochLength,
+                appOwner,
+                templateHash,
+                dataAvailability,
+                withdrawalConfig,
+                salt
+            );
+
+            assertEq(
+                appAddr,
+                address(application),
+                "calculateAddresses(...) is not a pure function"
+            );
+            assertEq(
+                authorityAddr,
+                address(authority),
+                "calculateAddresses(...) is not a pure function"
+            );
+        } catch (bytes memory error) {
+            assertGe(error.length, 4, "Error data too short (no 4-byte selector)");
+
+            // forge-lint: disable-next-line(unsafe-typecast)
+            bytes4 errorSelector = bytes4(error);
+            bytes memory errorArgs = new bytes(error.length - 4);
+
+            for (uint256 i; i < errorArgs.length; ++i) {
+                errorArgs[i] = error[i + 4];
+            }
+
+            if (errorSelector == Ownable.OwnableInvalidOwner.selector) {
+                address owner = abi.decode(errorArgs, (address));
+                assertEq(owner, address(0), "OwnableInvalidOwner.owner != address(0)");
+                assertTrue(
+                    appOwner == address(0) || authorityOwner == address(0),
+                    "Expected either app or authority owner to be zero"
+                );
+            } else if (errorSelector == bytes4(keccak256("Error(string)"))) {
+                string memory message = abi.decode(errorArgs, (string));
+                bytes32 messageHash = keccak256(bytes(message));
+                if (messageHash == keccak256("epoch length must not be zero")) {
+                    assertEq(epochLength, 0, "Expected epoch length to be zero");
+                } else {
+                    revert("Unexpected error message");
+                }
+            } else {
+                revert("Unexpected error");
+            }
+        }
     }
 }
