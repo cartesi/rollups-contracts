@@ -4,6 +4,7 @@
 /// @title Application Factory Test
 pragma solidity ^0.8.22;
 
+import {WithdrawalConfig} from "src/common/WithdrawalConfig.sol";
 import {IOutputsMerkleRootValidator} from "src/consensus/IOutputsMerkleRootValidator.sol";
 import {ApplicationFactory} from "src/dapp/ApplicationFactory.sol";
 import {IApplication} from "src/dapp/IApplication.sol";
@@ -24,14 +25,19 @@ contract ApplicationFactoryTest is Test {
         IOutputsMerkleRootValidator outputsMerkleRootValidator,
         address appOwner,
         bytes32 templateHash,
-        bytes calldata dataAvailability
+        bytes calldata dataAvailability,
+        WithdrawalConfig calldata withdrawalConfig
     ) public {
         vm.assume(appOwner != address(0));
 
         vm.roll(blockNumber);
 
         IApplication appContract = _factory.newApplication(
-            outputsMerkleRootValidator, appOwner, templateHash, dataAvailability
+            outputsMerkleRootValidator,
+            appOwner,
+            templateHash,
+            dataAvailability,
+            withdrawalConfig
         );
 
         assertEq(
@@ -50,6 +56,7 @@ contract ApplicationFactoryTest is Test {
         address appOwner,
         bytes32 templateHash,
         bytes calldata dataAvailability,
+        WithdrawalConfig calldata withdrawalConfig,
         bytes32 salt
     ) public {
         vm.assume(appOwner != address(0));
@@ -57,11 +64,21 @@ contract ApplicationFactoryTest is Test {
         vm.roll(blockNumber);
 
         address precalculatedAddress = _factory.calculateApplicationAddress(
-            outputsMerkleRootValidator, appOwner, templateHash, dataAvailability, salt
+            outputsMerkleRootValidator,
+            appOwner,
+            templateHash,
+            dataAvailability,
+            withdrawalConfig,
+            salt
         );
 
         IApplication appContract = _factory.newApplication(
-            outputsMerkleRootValidator, appOwner, templateHash, dataAvailability, salt
+            outputsMerkleRootValidator,
+            appOwner,
+            templateHash,
+            dataAvailability,
+            withdrawalConfig,
+            salt
         );
 
         // Precalculated address must match actual address
@@ -77,7 +94,12 @@ contract ApplicationFactoryTest is Test {
         assertEq(appContract.getDeploymentBlockNumber(), blockNumber);
 
         precalculatedAddress = _factory.calculateApplicationAddress(
-            outputsMerkleRootValidator, appOwner, templateHash, dataAvailability, salt
+            outputsMerkleRootValidator,
+            appOwner,
+            templateHash,
+            dataAvailability,
+            withdrawalConfig,
+            salt
         );
 
         // Precalculated address must STILL match actual address
@@ -86,7 +108,12 @@ contract ApplicationFactoryTest is Test {
         // Cannot deploy an application with the same salt twice
         vm.expectRevert(bytes(""));
         _factory.newApplication(
-            outputsMerkleRootValidator, appOwner, templateHash, dataAvailability, salt
+            outputsMerkleRootValidator,
+            appOwner,
+            templateHash,
+            dataAvailability,
+            withdrawalConfig,
+            salt
         );
     }
 
@@ -94,14 +121,19 @@ contract ApplicationFactoryTest is Test {
         IOutputsMerkleRootValidator outputsMerkleRootValidator,
         address appOwner,
         bytes32 templateHash,
-        bytes calldata dataAvailability
+        bytes calldata dataAvailability,
+        WithdrawalConfig calldata withdrawalConfig
     ) public {
         vm.assume(appOwner != address(0));
 
         vm.recordLogs();
 
         IApplication appContract = _factory.newApplication(
-            outputsMerkleRootValidator, appOwner, templateHash, dataAvailability
+            outputsMerkleRootValidator,
+            appOwner,
+            templateHash,
+            dataAvailability,
+            withdrawalConfig
         );
 
         _testApplicationCreatedEventAux(
@@ -118,6 +150,7 @@ contract ApplicationFactoryTest is Test {
         address appOwner,
         bytes32 templateHash,
         bytes calldata dataAvailability,
+        WithdrawalConfig calldata withdrawalConfig,
         bytes32 salt
     ) public {
         vm.assume(appOwner != address(0));
@@ -125,7 +158,12 @@ contract ApplicationFactoryTest is Test {
         vm.recordLogs();
 
         IApplication appContract = _factory.newApplication(
-            outputsMerkleRootValidator, appOwner, templateHash, dataAvailability, salt
+            outputsMerkleRootValidator,
+            appOwner,
+            templateHash,
+            dataAvailability,
+            withdrawalConfig,
+            salt
         );
 
         _testApplicationCreatedEventAux(

@@ -3,6 +3,7 @@
 
 pragma solidity ^0.8.8;
 
+import {WithdrawalConfig} from "../common/WithdrawalConfig.sol";
 import {IOutputsMerkleRootValidator} from "../consensus/IOutputsMerkleRootValidator.sol";
 import {IAuthority} from "../consensus/authority/IAuthority.sol";
 import {IAuthorityFactory} from "../consensus/authority/IAuthorityFactory.sol";
@@ -46,12 +47,13 @@ contract SelfHostedApplicationFactory is ISelfHostedApplicationFactory {
         address appOwner,
         bytes32 templateHash,
         bytes calldata dataAvailability,
+        WithdrawalConfig calldata withdrawalConfig,
         bytes32 salt
     ) external returns (IApplication application, IAuthority authority) {
         authority = AUTHORITY_FACTORY.newAuthority(authorityOwner, epochLength, salt);
 
         application = APPLICATION_FACTORY.newApplication(
-            authority, appOwner, templateHash, dataAvailability, salt
+            authority, appOwner, templateHash, dataAvailability, withdrawalConfig, salt
         );
     }
 
@@ -61,6 +63,7 @@ contract SelfHostedApplicationFactory is ISelfHostedApplicationFactory {
         address appOwner,
         bytes32 templateHash,
         bytes calldata dataAvailability,
+        WithdrawalConfig calldata withdrawalConfig,
         bytes32 salt
     ) external view returns (address application, address authority) {
         authority = AUTHORITY_FACTORY.calculateAuthorityAddress(
@@ -72,6 +75,7 @@ contract SelfHostedApplicationFactory is ISelfHostedApplicationFactory {
             appOwner,
             templateHash,
             dataAvailability,
+            withdrawalConfig,
             salt
         );
     }
