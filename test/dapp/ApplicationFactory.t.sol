@@ -141,6 +141,7 @@ contract ApplicationFactoryTest is Test {
             appOwner,
             templateHash,
             dataAvailability,
+            withdrawalConfig,
             appContract
         );
     }
@@ -171,6 +172,7 @@ contract ApplicationFactoryTest is Test {
             appOwner,
             templateHash,
             dataAvailability,
+            withdrawalConfig,
             appContract
         );
     }
@@ -180,6 +182,7 @@ contract ApplicationFactoryTest is Test {
         address appOwner,
         bytes32 templateHash,
         bytes calldata dataAvailability,
+        WithdrawalConfig calldata withdrawalConfig,
         IApplication appContract
     ) internal {
         Vm.Log[] memory entries = vm.getRecordedLogs();
@@ -204,12 +207,16 @@ contract ApplicationFactoryTest is Test {
                     address appOwner_,
                     bytes32 templateHash_,
                     bytes memory dataAvailability_,
+                    WithdrawalConfig memory withdrawalConfig_,
                     IApplication app_
-                ) = abi.decode(entry.data, (address, bytes32, bytes, IApplication));
+                ) = abi.decode(
+                    entry.data, (address, bytes32, bytes, WithdrawalConfig, IApplication)
+                );
 
                 assertEq(appOwner, appOwner_);
                 assertEq(templateHash, templateHash_);
                 assertEq(dataAvailability, dataAvailability_);
+                assertEq(abi.encode(withdrawalConfig), abi.encode(withdrawalConfig_));
                 assertEq(address(appContract), address(app_));
             }
         }
