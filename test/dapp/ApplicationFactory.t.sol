@@ -9,6 +9,7 @@ import {IOutputsMerkleRootValidator} from "src/consensus/IOutputsMerkleRootValid
 import {ApplicationFactory} from "src/dapp/ApplicationFactory.sol";
 import {IApplication} from "src/dapp/IApplication.sol";
 import {IApplicationFactory} from "src/dapp/IApplicationFactory.sol";
+import {LibWithdrawalConfig} from "src/library/LibWithdrawalConfig.sol";
 
 import {Ownable} from "@openzeppelin-contracts-5.2.0/access/Ownable.sol";
 
@@ -16,6 +17,8 @@ import {Test} from "forge-std-1.9.6/src/Test.sol";
 import {Vm} from "forge-std-1.9.6/src/Vm.sol";
 
 contract ApplicationFactoryTest is Test {
+    using LibWithdrawalConfig for WithdrawalConfig;
+
     ApplicationFactory _factory;
 
     function setUp() external {
@@ -56,7 +59,7 @@ contract ApplicationFactoryTest is Test {
                 logs
             );
         } catch (bytes memory error) {
-            _testNewApplicationFailure(appOwner, error);
+            _testNewApplicationFailure(appOwner, withdrawalConfig, error);
             return;
         }
     }
@@ -112,7 +115,7 @@ contract ApplicationFactoryTest is Test {
                 logs
             );
         } catch (bytes memory error) {
-            _testNewApplicationFailure(appOwner, error);
+            _testNewApplicationFailure(appOwner, withdrawalConfig, error);
             return;
         }
 
@@ -153,7 +156,7 @@ contract ApplicationFactoryTest is Test {
         address appOwner,
         bytes32 templateHash,
         bytes calldata dataAvailability,
-        WithdrawalConfig calldata withdrawalConfig,
+        WithdrawalConfig memory withdrawalConfig,
         IApplication appContract,
         uint256 blockNumber,
         Vm.Log[] memory logs
@@ -255,12 +258,16 @@ contract ApplicationFactoryTest is Test {
             blockNumber,
             "getDeploymentBlockNumber() != blockNumber"
         );
+        assertEq(
+            withdrawalConfig.isValid(), true, "Expected withdrawal config to be valid"
+        );
     }
 
-    function _testNewApplicationFailure(address appOwner, bytes memory error)
-        internal
-        pure
-    {
+    function _testNewApplicationFailure(
+        address appOwner,
+        WithdrawalConfig memory withdrawalConfig,
+        bytes memory error
+    ) internal pure {
         assertGe(error.length, 4, "Error data too short (no 4-byte selector)");
 
         // forge-lint: disable-next-line(unsafe-typecast)
@@ -275,6 +282,17 @@ contract ApplicationFactoryTest is Test {
             address owner = abi.decode(errorArgs, (address));
             assertEq(owner, appOwner, "OwnableInvalidOwner.owner != owner");
             assertEq(owner, address(0), "OwnableInvalidOwner.owner != address(0)");
+        } else if (errorSelector == bytes4(keccak256("Error(string)"))) {
+            string memory message = abi.decode(errorArgs, (string));
+            if (keccak256(bytes(message)) == keccak256("Invalid withdrawal config")) {
+                assertEq(
+                    withdrawalConfig.isValid(),
+                    false,
+                    "expected withdrawal config to be invalid"
+                );
+            } else {
+                revert("Unexpected error message");
+            }
         } else {
             revert("Unexpected error");
         }
