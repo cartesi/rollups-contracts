@@ -15,10 +15,13 @@ import {IApplication} from "src/dapp/IApplication.sol";
 import {IApplicationFactory} from "src/dapp/IApplicationFactory.sol";
 import {ISelfHostedApplicationFactory} from "src/dapp/ISelfHostedApplicationFactory.sol";
 import {SelfHostedApplicationFactory} from "src/dapp/SelfHostedApplicationFactory.sol";
+import {LibWithdrawalConfig} from "src/library/LibWithdrawalConfig.sol";
 
 import {Test} from "forge-std-1.9.6/src/Test.sol";
 
 contract SelfHostedApplicationFactoryTest is Test {
+    using LibWithdrawalConfig for WithdrawalConfig;
+
     IAuthorityFactory authorityFactory;
     IApplicationFactory applicationFactory;
     ISelfHostedApplicationFactory factory;
@@ -114,6 +117,9 @@ contract SelfHostedApplicationFactoryTest is Test {
                 blockNumber,
                 "getDeploymentBlockNumber() != blockNumber"
             );
+            assertEq(
+                withdrawalConfig.isValid(), true, "Expected withdrawal config to be valid"
+            );
 
             (appAddr, authorityAddr) = factory.calculateAddresses(
                 authorityOwner,
@@ -158,6 +164,12 @@ contract SelfHostedApplicationFactoryTest is Test {
                 bytes32 messageHash = keccak256(bytes(message));
                 if (messageHash == keccak256("epoch length must not be zero")) {
                     assertEq(epochLength, 0, "Expected epoch length to be zero");
+                } else if (messageHash == keccak256("Invalid withdrawal config")) {
+                    assertEq(
+                        withdrawalConfig.isValid(),
+                        false,
+                        "expected withdrawal config to be invalid"
+                    );
                 } else {
                     revert("Unexpected error message");
                 }

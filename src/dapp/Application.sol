@@ -10,6 +10,7 @@ import {WithdrawalConfig} from "../common/WithdrawalConfig.sol";
 import {IOutputsMerkleRootValidator} from "../consensus/IOutputsMerkleRootValidator.sol";
 import {LibAddress} from "../library/LibAddress.sol";
 import {LibOutputValidityProof} from "../library/LibOutputValidityProof.sol";
+import {LibWithdrawalConfig} from "../library/LibWithdrawalConfig.sol";
 import {IWithdrawer} from "../withdrawers/IWithdrawer.sol";
 import {IApplication} from "./IApplication.sol";
 
@@ -33,6 +34,7 @@ contract Application is
     using BitMaps for BitMaps.BitMap;
     using LibAddress for address;
     using LibOutputValidityProof for OutputValidityProof;
+    using LibWithdrawalConfig for WithdrawalConfig;
 
     /// @notice Deployment block number
     uint256 immutable DEPLOYMENT_BLOCK_NUMBER = block.number;
@@ -89,6 +91,7 @@ contract Application is
         bytes memory dataAvailability,
         WithdrawalConfig memory withdrawawlConfig
     ) Ownable(initialOwner) {
+        require(withdrawawlConfig.isValid(), "Invalid withdrawal config");
         TEMPLATE_HASH = templateHash;
         LOG2_LEAVES_PER_ACCOUNT = withdrawawlConfig.log2LeavesPerAccount;
         LOG2_MAX_NUM_OF_ACCOUNTS = withdrawawlConfig.log2MaxNumOfAccounts;
