@@ -7,6 +7,7 @@ import {IOwnable} from "../access/IOwnable.sol";
 import {OutputValidityProof} from "../common/OutputValidityProof.sol";
 import {IOutputsMerkleRootValidator} from "../consensus/IOutputsMerkleRootValidator.sol";
 import {IWithdrawer} from "../withdrawers/IWithdrawer.sol";
+import {IApplicationForeclosure} from "./IApplicationForeclosure.sol";
 
 /// @notice The base layer incarnation of an application running on the execution layer.
 /// @notice The state of the application advances through inputs sent to an `IInputBox` contract.
@@ -25,7 +26,7 @@ import {IWithdrawer} from "../withdrawers/IWithdrawer.sol";
 /// - multiple signers (multi-sig)
 /// - DAO (decentralized autonomous organization)
 /// - self-owned application (off-chain governance logic)
-interface IApplication is IOwnable {
+interface IApplication is IOwnable, IApplicationForeclosure {
     // Events
 
     /// @notice MUST trigger when a new outputs Merkle root validator is chosen.
@@ -36,9 +37,6 @@ interface IApplication is IOwnable {
     /// @param outputIndex The index of the output
     /// @param output The output
     event OutputExecuted(uint64 outputIndex, bytes output);
-
-    /// @notice MUST trigger when the application is foreclosed.
-    event Foreclosure();
 
     // Errors
 
@@ -62,10 +60,6 @@ interface IApplication is IOwnable {
     /// @notice Raised when the computed outputs Merkle root is invalid, according to the current outputs Merkle root validator.
     error InvalidOutputsMerkleRoot(bytes32 outputsMerkleRoot);
 
-    /// @notice Raised when a function that can only be called by
-    /// the application guardian is called by some other account.
-    error NotGuardian();
-
     // Permissioned functions
 
     /// @notice Migrate the application to a new outputs Merkle root validator.
@@ -73,11 +67,6 @@ interface IApplication is IOwnable {
     /// @dev Can only be called by the application owner.
     function migrateToOutputsMerkleRootValidator(IOutputsMerkleRootValidator newOutputsMerkleRootValidator)
         external;
-
-    /// @notice Forecloses the application, allowing users to withdraw their funds
-    /// by providing Merkle proofs of their in-app accounts.
-    /// @dev Can only be called by the application guardian.
-    function foreclose() external;
 
     // Permissionless functions
 
@@ -158,15 +147,7 @@ interface IApplication is IOwnable {
     /// and has size `2^{a+b+5}`.
     function getAccountsDriveStartIndex() external view returns (uint64);
 
-    /// @notice Get the address of the guardian,
-    /// which has the power to foreclose the application.
-    function getGuardian() external view returns (address);
-
     /// @notice Get the withdrawer contract,
     /// which gets delegate-called to withdraw funds from accounts.
     function getWithdrawer() external view returns (IWithdrawer);
-
-    /// @notice Check whether the application has been foreclosed.
-    /// An application that has been foreclosed will remain so.
-    function isForeclosed() external view returns (bool);
 }
