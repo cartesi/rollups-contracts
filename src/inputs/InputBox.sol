@@ -5,9 +5,10 @@ pragma solidity ^0.8.18;
 
 import {CanonicalMachine} from "../common/CanonicalMachine.sol";
 import {Inputs} from "../common/Inputs.sol";
+import {ApplicationChecker} from "../dapp/ApplicationChecker.sol";
 import {IInputBox} from "./IInputBox.sol";
 
-contract InputBox is IInputBox {
+contract InputBox is IInputBox, ApplicationChecker {
     /// @notice Deployment block number
     uint256 immutable DEPLOYMENT_BLOCK_NUMBER = block.number;
 
@@ -18,6 +19,7 @@ contract InputBox is IInputBox {
     function addInput(address appContract, bytes calldata payload)
         external
         override
+        notForeclosed(appContract)
         returns (bytes32)
     {
         bytes32[] storage inputBox = _inputBoxes[appContract];
