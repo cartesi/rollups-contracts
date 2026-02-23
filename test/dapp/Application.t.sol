@@ -12,6 +12,7 @@ import {IOutputsMerkleRootValidator} from "src/consensus/IOutputsMerkleRootValid
 import {Authority} from "src/consensus/authority/Authority.sol";
 import {Application} from "src/dapp/Application.sol";
 import {IApplication} from "src/dapp/IApplication.sol";
+import {IApplicationForeclosure} from "src/dapp/IApplicationForeclosure.sol";
 import {SafeERC20Transfer} from "src/delegatecall/SafeERC20Transfer.sol";
 import {IInputBox} from "src/inputs/IInputBox.sol";
 import {InputBox} from "src/inputs/InputBox.sol";
@@ -124,7 +125,7 @@ contract ApplicationTest is Test, OwnableTest {
     function testForecloseRevertsNotGuardian(address caller) external {
         vm.assume(caller != _appContract.getGuardian());
         assertFalse(_appContract.isForeclosed());
-        vm.expectRevert(IApplication.NotGuardian.selector);
+        vm.expectRevert(IApplicationForeclosure.NotGuardian.selector);
         vm.prank(caller);
         _appContract.foreclose();
     }
@@ -132,7 +133,7 @@ contract ApplicationTest is Test, OwnableTest {
     function testForeclose() external {
         assertFalse(_appContract.isForeclosed());
         vm.expectEmit(true, true, true, true, address(_appContract));
-        emit IApplication.Foreclosure();
+        emit IApplicationForeclosure.Foreclosure();
         vm.prank(_appContract.getGuardian());
         _appContract.foreclose();
         assertTrue(_appContract.isForeclosed());
