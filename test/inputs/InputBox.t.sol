@@ -7,21 +7,17 @@ import {Test} from "forge-std-1.9.6/src/Test.sol";
 
 import {CanonicalMachine} from "src/common/CanonicalMachine.sol";
 import {Inputs} from "src/common/Inputs.sol";
-import {IApplicationChecker} from "src/dapp/IApplicationChecker.sol";
-import {IApplicationForeclosure} from "src/dapp/IApplicationForeclosure.sol";
 import {IInputBox} from "src/inputs/IInputBox.sol";
 import {InputBox} from "src/inputs/InputBox.sol";
 
+import {ApplicationCheckerTestUtils} from "../util/ApplicationCheckerTestUtils.sol";
 import {EvmAdvanceEncoder} from "../util/EvmAdvanceEncoder.sol";
-import {SimpleApplicationForeclosure} from "../util/SimpleApplicationForeclosure.sol";
 
-contract InputBoxTest is Test {
+contract InputBoxTest is Test, ApplicationCheckerTestUtils {
     InputBox _inputBox;
-    SimpleApplicationForeclosure _forecloser;
 
     function setUp() external {
         _inputBox = new InputBox();
-        _forecloser = new SimpleApplicationForeclosure(vm.addr(1));
     }
 
     function testDeploymentBlockNumber(uint256 blockNumber) external {
@@ -34,48 +30,54 @@ contract InputBoxTest is Test {
         assertEq(_inputBox.getNumberOfInputs(appContract), 0);
     }
 
-    function testAddInputToZeroAddress(bytes calldata payload) external {
-        vm.expectRevert(_encodeApplicationNotDeployed(address(0)));
-        _inputBox.addInput(address(0), payload);
+    function testAddInputRevertsZeroAddress(bytes calldata payload) external {
+        address appContract = address(0);
+        vm.expectRevert(_encodeApplicationNotDeployed(appContract));
+        _inputBox.addInput(appContract, payload);
     }
 
-    function testAddInputToEoa(uint256 pkSeed, bytes calldata payload) external {
-        address eoa = vm.addr(boundPrivateKey(pkSeed));
-        assertEq(eoa.code.length, 0, "EOA code length");
-        vm.expectRevert(_encodeApplicationNotDeployed(eoa));
-        _inputBox.addInput(eoa, payload);
+    function testAddInputRevertsApplicationNotDeployed(bytes calldata payload) external {
+        address appContract = _randomAccountWithNoCode();
+        vm.expectRevert(_encodeApplicationNotDeployed(appContract));
+        _inputBox.addInput(appContract, payload);
     }
 
-    function testAddInputToReverter(bytes calldata error, bytes calldata payload)
-        external
-    {
-        address addr = vm.addr(2);
-        vm.mockCallRevert(
-            addr, abi.encodeCall(IApplicationForeclosure.isForeclosed, ()), error
-        );
-        vm.expectRevert(_encodeApplicationReverted(addr, error));
-        _inputBox.addInput(addr, payload);
+    function testAddInputRevertsApplicationReverted(
+        bytes calldata error,
+        bytes calldata payload
+    ) external {
+        address appContract = _newAppMockReverts(error);
+        vm.expectRevert(_encodeApplicationReverted(appContract, error));
+        _inputBox.addInput(appContract, payload);
     }
 
-    function testAddInputToIllReturner(bytes calldata data, bytes calldata payload)
+    function testAddInputRevertsIllSize(bytes calldata data, bytes calldata payload)
         external
     {
         vm.assume(data.length != 32);
-        address addr = vm.addr(2);
-        vm.mockCall(addr, abi.encodeCall(IApplicationForeclosure.isForeclosed, ()), data);
-        vm.expectRevert(_encodeIllformedApplicationReturnData(addr, data));
-        _inputBox.addInput(addr, payload);
+        address appContract = _newAppMockReturns(data);
+        vm.expectRevert(_encodeIllformedApplicationReturnData(appContract, data));
+        _inputBox.addInput(appContract, payload);
+    }
+
+    function testAddInputRevertsIllForm(uint256 returnValue, bytes calldata payload)
+        external
+    {
+        vm.assume(returnValue > 1);
+        bytes memory data = abi.encode(returnValue);
+        address appContract = _newAppMockReturns(data);
+        vm.expectRevert(_encodeIllformedApplicationReturnData(appContract, data));
+        _inputBox.addInput(appContract, payload);
     }
 
     function testAddInputForeclosedApp(bytes calldata payload) external {
-        vm.prank(_forecloser.getGuardian());
-        _forecloser.foreclose();
-        vm.expectRevert(_encodeApplicationForeclosed(address(_forecloser)));
-        _inputBox.addInput(address(_forecloser), payload);
+        address appContract = _newForeclosedAppMock();
+        vm.expectRevert(_encodeApplicationForeclosed(appContract));
+        _inputBox.addInput(appContract, payload);
     }
 
     function testAddLargeInput() external {
-        address appContract = address(_forecloser);
+        address appContract = _newActiveAppMock();
         uint256 max = _getMaxInputPayloadLength();
 
         _inputBox.addInput(appContract, new bytes(max));
@@ -96,7 +98,7 @@ contract InputBoxTest is Test {
     }
 
     function testAddInput(uint64 chainId, bytes[] calldata payloads) external {
-        address appContract = address(_forecloser);
+        address appContract = _newActiveAppMock();
 
         vm.chainId(chainId); // foundry limits chain id to be less than 2^64 - 1
 
@@ -164,44 +166,5 @@ contract InputBoxTest is Test {
         // because it's abi encoded, input payloads are stored as multiples of 32 bytes
         /// forge-lint: disable-next-line(divide-before-multiply)
         return ((CanonicalMachine.INPUT_MAX_SIZE - extraBytes) / 32) * 32;
-    }
-
-    function _encodeApplicationNotDeployed(address appContract)
-        internal
-        pure
-        returns (bytes memory)
-    {
-        return abi.encodeWithSelector(
-            IApplicationChecker.ApplicationNotDeployed.selector, appContract
-        );
-    }
-
-    function _encodeApplicationReverted(address appContract, bytes memory error)
-        internal
-        pure
-        returns (bytes memory)
-    {
-        return abi.encodeWithSelector(
-            IApplicationChecker.ApplicationReverted.selector, appContract, error
-        );
-    }
-
-    function _encodeIllformedApplicationReturnData(
-        address appContract,
-        bytes memory data
-    ) internal pure returns (bytes memory) {
-        return abi.encodeWithSelector(
-            IApplicationChecker.IllformedApplicationReturnData.selector, appContract, data
-        );
-    }
-
-    function _encodeApplicationForeclosed(address appContract)
-        internal
-        pure
-        returns (bytes memory)
-    {
-        return abi.encodeWithSelector(
-            IApplicationChecker.ApplicationForeclosed.selector, appContract
-        );
     }
 }
