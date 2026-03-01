@@ -7,6 +7,7 @@ optimizer = true
 evm_version = "prague"
 remappings = [
     "@openzeppelin-contracts-5.2.0/=dependencies/@openzeppelin-contracts-5.2.0/",
+    "cartesi-machine-solidity-step-0.13.0/=dependencies/cartesi-machine-solidity-step-0.13.0/",
     "forge-std-1.9.6/=dependencies/forge-std-1.9.6/",
 ]
 fs_permissions = [{ access = "read-write", path = "deployments" }]
@@ -29,5 +30,6 @@ remappings_location = "config"
 [dependencies]
 "@openzeppelin-contracts" = "5.2.0"
 forge-std = "1.9.6"
+cartesi-machine-solidity-step = { version = "0.13.0", git = "https://github.com/cartesi/machine-solidity-step.git", tag = "v0.13.0" }
 
 # See more config options https://book.getfoundry.sh/reference/config/
