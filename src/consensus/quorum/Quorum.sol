@@ -50,19 +50,23 @@ contract Quorum is IQuorum, AbstractConsensus {
     /// @param validators The array of validator addresses
     /// @param epochLength The epoch length
     /// @dev Duplicates in the `validators` array are ignored.
+    /// @dev Zero addresses in the `validators` array are prohibited.
     /// @dev Reverts if the epoch length is zero.
+    /// @dev Reverts if the quorum would contain zero validators.
     constructor(address[] memory validators, uint256 epochLength)
         AbstractConsensus(epochLength)
     {
         uint256 n;
         for (uint256 i; i < validators.length; ++i) {
             address validator = validators[i];
+            require(validator != address(0), "Quorum can't contain address(0)");
             if (_validatorId[validator] == 0) {
                 uint256 id = ++n;
                 _validatorId[validator] = id;
                 _validatorById[id] = validator;
             }
         }
+        require(n >= 1, "Quorum can't be empty");
         NUM_OF_VALIDATORS = n;
     }
 

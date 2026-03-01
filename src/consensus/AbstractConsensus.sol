@@ -6,11 +6,12 @@ pragma solidity ^0.8.26;
 import {ERC165} from "@openzeppelin-contracts-5.2.0/utils/introspection/ERC165.sol";
 import {IERC165} from "@openzeppelin-contracts-5.2.0/utils/introspection/IERC165.sol";
 
+import {ApplicationChecker} from "../dapp/ApplicationChecker.sol";
 import {IConsensus} from "./IConsensus.sol";
 import {IOutputsMerkleRootValidator} from "./IOutputsMerkleRootValidator.sol";
 
 /// @notice Abstract implementation of IConsensus
-abstract contract AbstractConsensus is IConsensus, ERC165 {
+abstract contract AbstractConsensus is IConsensus, ERC165, ApplicationChecker {
     /// @notice The epoch length
     uint256 immutable EPOCH_LENGTH;
 
@@ -91,13 +92,14 @@ abstract contract AbstractConsensus is IConsensus, ERC165 {
     /// @param appContract The application contract address
     /// @param lastProcessedBlockNumber The number of the last processed block
     /// @param outputsMerkleRoot The output Merkle root hash
+    /// @dev Checks whether the app is foreclosed.
     /// @dev Emits a `ClaimSubmitted` event.
     function _submitClaim(
         address submitter,
         address appContract,
         uint256 lastProcessedBlockNumber,
         bytes32 outputsMerkleRoot
-    ) internal {
+    ) internal notForeclosed(appContract) {
         emit ClaimSubmitted(
             submitter, appContract, lastProcessedBlockNumber, outputsMerkleRoot
         );
@@ -108,13 +110,14 @@ abstract contract AbstractConsensus is IConsensus, ERC165 {
     /// @param appContract The application contract address
     /// @param lastProcessedBlockNumber The number of the last processed block
     /// @param outputsMerkleRoot The output Merkle root hash
+    /// @dev Checks whether the app is foreclosed.
     /// @dev Marks the outputsMerkleRoot as valid.
     /// @dev Emits a `ClaimAccepted` event.
     function _acceptClaim(
         address appContract,
         uint256 lastProcessedBlockNumber,
         bytes32 outputsMerkleRoot
-    ) internal {
+    ) internal notForeclosed(appContract) {
         _validOutputsMerkleRoots[appContract][outputsMerkleRoot] = true;
         emit ClaimAccepted(appContract, lastProcessedBlockNumber, outputsMerkleRoot);
         ++_numOfAcceptedClaims;
