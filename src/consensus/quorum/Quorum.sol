@@ -43,7 +43,7 @@ contract Quorum is IQuorum, AbstractConsensus {
     mapping(address => mapping(uint256 => Votes)) private _allVotes;
 
     /// @notice Votes indexed by application contract address,
-    /// last processed block number and outputs Merkle root.
+    /// last processed block number and machine Merkle root.
     /// @dev See the `numOfValidatorsInFavorOf` and `isValidatorInFavorOf` functions.
     mapping(address => mapping(uint256 => mapping(bytes32 => Votes))) private _votes;
 
@@ -73,15 +73,18 @@ contract Quorum is IQuorum, AbstractConsensus {
     function submitClaim(
         address appContract,
         uint256 lastProcessedBlockNumber,
-        bytes32 outputsMerkleRoot
+        bytes32 outputsMerkleRoot,
+        bytes32[] calldata proof
     ) external override {
         uint256 id = _validatorId[msg.sender];
         require(id > 0, "Quorum: caller is not validator");
 
         _validateLastProcessedBlockNumber(lastProcessedBlockNumber);
 
+        bytes32 machineMerkleRoot = _computeMachineMerkleRoot(outputsMerkleRoot, proof);
+
         Votes storage votes =
-            _getVotes(appContract, lastProcessedBlockNumber, outputsMerkleRoot);
+            _getVotes(appContract, lastProcessedBlockNumber, machineMerkleRoot);
 
         Votes storage allVotes = _getAllVotes(appContract, lastProcessedBlockNumber);
 
@@ -94,7 +97,11 @@ contract Quorum is IQuorum, AbstractConsensus {
             );
 
             _submitClaim(
-                msg.sender, appContract, lastProcessedBlockNumber, outputsMerkleRoot
+                msg.sender,
+                appContract,
+                lastProcessedBlockNumber,
+                outputsMerkleRoot,
+                machineMerkleRoot
             );
 
             // Register vote (for any claim in the epoch)
@@ -105,7 +112,12 @@ contract Quorum is IQuorum, AbstractConsensus {
             // and accept the claim if a majority has been reached
             votes.inFavorById.set(id);
             if (++votes.inFavorCount == 1 + NUM_OF_VALIDATORS / 2) {
-                _acceptClaim(appContract, lastProcessedBlockNumber, outputsMerkleRoot);
+                _acceptClaim(
+                    appContract,
+                    lastProcessedBlockNumber,
+                    outputsMerkleRoot,
+                    machineMerkleRoot
+                );
             }
         }
     }
@@ -140,19 +152,19 @@ contract Quorum is IQuorum, AbstractConsensus {
     function numOfValidatorsInFavorOf(
         address appContract,
         uint256 lastProcessedBlockNumber,
-        bytes32 outputsMerkleRoot
+        bytes32 machineMerkleRoot
     ) external view override returns (uint256) {
-        return _getVotes(appContract, lastProcessedBlockNumber, outputsMerkleRoot)
+        return _getVotes(appContract, lastProcessedBlockNumber, machineMerkleRoot)
         .inFavorCount;
     }
 
     function isValidatorInFavorOf(
         address appContract,
         uint256 lastProcessedBlockNumber,
-        bytes32 outputsMerkleRoot,
+        bytes32 machineMerkleRoot,
         uint256 id
     ) external view override returns (bool) {
-        return _getVotes(appContract, lastProcessedBlockNumber, outputsMerkleRoot)
+        return _getVotes(appContract, lastProcessedBlockNumber, machineMerkleRoot)
             .inFavorById.get(id);
     }
 
@@ -171,14 +183,14 @@ contract Quorum is IQuorum, AbstractConsensus {
     /// @notice Get a `Votes` structure from storage from a given claim.
     /// @param appContract The application contract address
     /// @param lastProcessedBlockNumber The number of the last processed block
-    /// @param outputsMerkleRoot The outputs Merkle root
+    /// @param machineMerkleRoot The machine Merkle root
     /// @return The `Votes` structure related to a given claim
     function _getVotes(
         address appContract,
         uint256 lastProcessedBlockNumber,
-        bytes32 outputsMerkleRoot
+        bytes32 machineMerkleRoot
     ) internal view returns (Votes storage) {
-        return _votes[appContract][lastProcessedBlockNumber][outputsMerkleRoot];
+        return _votes[appContract][lastProcessedBlockNumber][machineMerkleRoot];
     }
 
     /// @inheritdoc AbstractConsensus

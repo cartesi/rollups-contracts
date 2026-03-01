@@ -34,7 +34,8 @@ contract Authority is IAuthority, AbstractConsensus, Ownable {
     function submitClaim(
         address appContract,
         uint256 lastProcessedBlockNumber,
-        bytes32 outputsMerkleRoot
+        bytes32 outputsMerkleRoot,
+        bytes32[] calldata proof
     ) external override onlyOwner {
         _validateLastProcessedBlockNumber(lastProcessedBlockNumber);
 
@@ -46,9 +47,19 @@ contract Authority is IAuthority, AbstractConsensus, Ownable {
             !bitmap.get(epochNumber), NotFirstClaim(appContract, lastProcessedBlockNumber)
         );
 
-        _submitClaim(msg.sender, appContract, lastProcessedBlockNumber, outputsMerkleRoot);
+        bytes32 machineMerkleRoot = _computeMachineMerkleRoot(outputsMerkleRoot, proof);
 
-        _acceptClaim(appContract, lastProcessedBlockNumber, outputsMerkleRoot);
+        _submitClaim(
+            msg.sender,
+            appContract,
+            lastProcessedBlockNumber,
+            outputsMerkleRoot,
+            machineMerkleRoot
+        );
+
+        _acceptClaim(
+            appContract, lastProcessedBlockNumber, outputsMerkleRoot, machineMerkleRoot
+        );
 
         bitmap.set(epochNumber);
     }

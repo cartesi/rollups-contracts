@@ -12,9 +12,9 @@ import {Claim} from "../../util/Claim.sol";
 import {ConsensusTestUtils} from "../../util/ConsensusTestUtils.sol";
 import {ERC165Test} from "../../util/ERC165Test.sol";
 import {LibAddressArray} from "../../util/LibAddressArray.sol";
+import {LibClaim} from "../../util/LibClaim.sol";
 import {LibConsensus} from "../../util/LibConsensus.sol";
 import {LibMath} from "../../util/LibMath.sol";
-import {LibQuorum} from "../../util/LibQuorum.sol";
 import {LibTopic} from "../../util/LibTopic.sol";
 import {LibUint256Array} from "../../util/LibUint256Array.sol";
 
@@ -27,9 +27,9 @@ contract QuorumFactoryTest is Test, ERC165Test, ConsensusTestUtils {
     using LibUint256Array for uint256[];
     using LibUint256Array for Vm;
     using LibConsensus for IQuorum;
-    using LibQuorum for IQuorum;
     using LibTopic for address;
     using LibMath for uint256;
+    using LibClaim for Claim;
 
     IQuorumFactory _factory;
     bytes4[] _supportedInterfaces;
@@ -114,6 +114,8 @@ contract QuorumFactoryTest is Test, ERC165Test, ConsensusTestUtils {
         claim.lastProcessedBlockNumber = _randomFutureEpochFinalBlockNumber(epochLength);
         vm.roll(_randomUintGt(claim.lastProcessedBlockNumber));
 
+        claim.proof = _randomLeafProof();
+
         vm.expectRevert("Quorum: caller is not validator");
         vm.prank(vm.randomAddressNotIn(validators)); // non-validator address
         quorum.submitClaim(claim);
@@ -133,6 +135,8 @@ contract QuorumFactoryTest is Test, ERC165Test, ConsensusTestUtils {
         claim.lastProcessedBlockNumber = lastProcessedBlockNumber;
         vm.roll(_randomUintGt(lastProcessedBlockNumber));
 
+        claim.proof = _randomLeafProof();
+
         vm.expectRevert(_encodeNotEpochFinalBlock(lastProcessedBlockNumber, epochLength));
         vm.prank(vm.randomAddressIn(validators));
         quorum.submitClaim(claim);
@@ -149,6 +153,8 @@ contract QuorumFactoryTest is Test, ERC165Test, ConsensusTestUtils {
 
         // Adjust the lastProcessedBlockNumber but do not roll past it.
         claim.lastProcessedBlockNumber = _randomFutureEpochFinalBlockNumber(epochLength);
+
+        claim.proof = _randomLeafProof();
 
         vm.expectRevert(_encodeNotPastBlock(claim.lastProcessedBlockNumber));
         vm.prank(vm.randomAddressIn(validators));
@@ -168,6 +174,8 @@ contract QuorumFactoryTest is Test, ERC165Test, ConsensusTestUtils {
         claim.lastProcessedBlockNumber = _randomFutureEpochFinalBlockNumber(epochLength);
         vm.roll(_randomUintGt(claim.lastProcessedBlockNumber));
 
+        claim.proof = _randomLeafProof();
+
         vm.expectRevert(_encodeApplicationNotDeployed(claim.appContract));
         vm.prank(vm.randomAddressIn(validators));
         quorum.submitClaim(claim);
@@ -186,6 +194,8 @@ contract QuorumFactoryTest is Test, ERC165Test, ConsensusTestUtils {
 
         claim.lastProcessedBlockNumber = _randomFutureEpochFinalBlockNumber(epochLength);
         vm.roll(_randomUintGt(claim.lastProcessedBlockNumber));
+
+        claim.proof = _randomLeafProof();
 
         vm.expectRevert(_encodeApplicationReverted(claim.appContract, error));
         vm.prank(vm.randomAddressIn(validators));
@@ -207,6 +217,8 @@ contract QuorumFactoryTest is Test, ERC165Test, ConsensusTestUtils {
 
         claim.lastProcessedBlockNumber = _randomFutureEpochFinalBlockNumber(epochLength);
         vm.roll(_randomUintGt(claim.lastProcessedBlockNumber));
+
+        claim.proof = _randomLeafProof();
 
         vm.expectRevert(_encodeIllformedApplicationReturnData(claim.appContract, data));
         vm.prank(vm.randomAddressIn(validators));
@@ -230,6 +242,8 @@ contract QuorumFactoryTest is Test, ERC165Test, ConsensusTestUtils {
         claim.lastProcessedBlockNumber = _randomFutureEpochFinalBlockNumber(epochLength);
         vm.roll(_randomUintGt(claim.lastProcessedBlockNumber));
 
+        claim.proof = _randomLeafProof();
+
         vm.expectRevert(_encodeIllformedApplicationReturnData(claim.appContract, data));
         vm.prank(vm.randomAddressIn(validators));
         quorum.submitClaim(claim);
@@ -248,7 +262,28 @@ contract QuorumFactoryTest is Test, ERC165Test, ConsensusTestUtils {
         claim.lastProcessedBlockNumber = _randomFutureEpochFinalBlockNumber(epochLength);
         vm.roll(_randomUintGt(claim.lastProcessedBlockNumber));
 
+        claim.proof = _randomLeafProof();
+
         vm.expectRevert(_encodeApplicationForeclosed(claim.appContract));
+        vm.prank(vm.randomAddressIn(validators));
+        quorum.submitClaim(claim);
+    }
+
+    function testSubmitClaimRevertInvalidOutputsMerkleRootProofSize(
+        address[] memory validators,
+        uint256 epochLength,
+        Claim memory claim
+    ) external {
+        IQuorum quorum = _newQuorum(validators, epochLength);
+
+        claim.appContract = _newActiveAppMock();
+
+        claim.lastProcessedBlockNumber = _randomFutureEpochFinalBlockNumber(epochLength);
+        vm.roll(_randomUintGt(claim.lastProcessedBlockNumber));
+
+        claim.proof = _randomProof(_randomInvalidLeafProofSize());
+
+        vm.expectRevert(_encodeInvalidOutputsMerkleRootProofSize(claim.proof.length));
         vm.prank(vm.randomAddressIn(validators));
         quorum.submitClaim(claim);
     }
@@ -264,6 +299,17 @@ contract QuorumFactoryTest is Test, ERC165Test, ConsensusTestUtils {
 
         uint256 lastProcessedBlockNumber = _randomFutureEpochFinalBlockNumber(epochLength);
         vm.roll(_randomUintGt(lastProcessedBlockNumber));
+
+        bytes32[] memory winningProof = _randomLeafProof();
+
+        Claim memory winningClaim = Claim({
+            appContract: appContract,
+            lastProcessedBlockNumber: lastProcessedBlockNumber,
+            outputsMerkleRoot: winningOutputsMerkleRoot,
+            proof: winningProof
+        });
+
+        bytes32 winningMachineMerkleRoot = winningClaim.computeMachineMerkleRoot();
 
         // Divide validators into three categories:
         // - winners: they form a majority and vote on the same claim
@@ -315,7 +361,7 @@ contract QuorumFactoryTest is Test, ERC165Test, ConsensusTestUtils {
 
         assertEq(
             quorum.numOfValidatorsInFavorOf(
-                appContract, lastProcessedBlockNumber, winningOutputsMerkleRoot
+                appContract, lastProcessedBlockNumber, winningMachineMerkleRoot
             ),
             0,
             "Expected no validator to be in favor of the winning claim in epoch"
@@ -323,7 +369,7 @@ contract QuorumFactoryTest is Test, ERC165Test, ConsensusTestUtils {
 
         assertEq(
             quorum.numOfValidatorsInFavorOf(
-                appContract, lastProcessedBlockNumber, bytes32(vm.randomUint())
+                appContract, lastProcessedBlockNumber, _randomBytes32()
             ),
             0,
             "Expected no validator to be in favor of any random claim in epoch"
@@ -345,7 +391,7 @@ contract QuorumFactoryTest is Test, ERC165Test, ConsensusTestUtils {
 
             assertFalse(
                 quorum.isValidatorInFavorOf(
-                    appContract, lastProcessedBlockNumber, bytes32(vm.randomUint()), id
+                    appContract, lastProcessedBlockNumber, _randomBytes32(), id
                 ),
                 "Expected validator to not be in favor of any random claim in epoch"
             );
@@ -354,13 +400,15 @@ contract QuorumFactoryTest is Test, ERC165Test, ConsensusTestUtils {
                 continue; // skip voting
             }
 
-            bytes32 outputsMerkleRoot;
+            Claim memory claim;
+            bytes32 machineMerkleRoot;
 
             if (winnerIds.contains(id)) {
-                outputsMerkleRoot = winningOutputsMerkleRoot;
+                (claim, machineMerkleRoot) = (winningClaim, winningMachineMerkleRoot);
                 ++numOfWinningVotes;
             } else if (loserIds.contains(id)) {
-                outputsMerkleRoot = _randomBytes32DifferentFrom(winningOutputsMerkleRoot);
+                (claim, machineMerkleRoot) =
+                    _randomClaimDifferentFrom(winningClaim, winningMachineMerkleRoot);
                 ++numOfLosingVotes;
             } else {
                 revert("unexpected validator category");
@@ -368,7 +416,7 @@ contract QuorumFactoryTest is Test, ERC165Test, ConsensusTestUtils {
 
             assertFalse(
                 quorum.isValidatorInFavorOf(
-                    appContract, lastProcessedBlockNumber, outputsMerkleRoot, id
+                    appContract, lastProcessedBlockNumber, machineMerkleRoot, id
                 ),
                 "Expected validator to not be in favor of claim"
             );
@@ -382,7 +430,7 @@ contract QuorumFactoryTest is Test, ERC165Test, ConsensusTestUtils {
                 );
 
             uint256 numOfValidatorsInFavorOfClaimBefore = quorum.numOfValidatorsInFavorOf(
-                appContract, lastProcessedBlockNumber, outputsMerkleRoot
+                appContract, lastProcessedBlockNumber, machineMerkleRoot
             );
 
             address validator = quorum.validatorById(id);
@@ -391,7 +439,7 @@ contract QuorumFactoryTest is Test, ERC165Test, ConsensusTestUtils {
             vm.recordLogs();
 
             vm.prank(validator);
-            quorum.submitClaim(appContract, lastProcessedBlockNumber, outputsMerkleRoot);
+            quorum.submitClaim(claim);
 
             Vm.Log[] memory logs = vm.getRecordedLogs();
 
@@ -404,19 +452,21 @@ contract QuorumFactoryTest is Test, ERC165Test, ConsensusTestUtils {
                     assertGe(log.topics.length, 1, "unexpected annonymous event");
                     bytes32 topic0 = log.topics[0];
                     if (topic0 == IConsensus.ClaimSubmitted.selector) {
-                        (uint256 arg0, bytes32 arg1) =
-                            abi.decode(log.data, (uint256, bytes32));
+                        (uint256 arg0, bytes32 arg1, bytes32 arg2) =
+                            abi.decode(log.data, (uint256, bytes32, bytes32));
                         assertEq(log.topics[1], validator.asTopic());
                         assertEq(log.topics[2], appContract.asTopic());
                         assertEq(arg0, lastProcessedBlockNumber);
-                        assertEq(arg1, outputsMerkleRoot);
+                        assertEq(arg1, claim.outputsMerkleRoot);
+                        assertEq(arg2, machineMerkleRoot);
                         ++numOfClaimSubmittedEvents;
                     } else if (topic0 == IConsensus.ClaimAccepted.selector) {
-                        (uint256 arg0, bytes32 arg1) =
-                            abi.decode(log.data, (uint256, bytes32));
+                        (uint256 arg0, bytes32 arg1, bytes32 arg2) =
+                            abi.decode(log.data, (uint256, bytes32, bytes32));
                         assertEq(log.topics[1], appContract.asTopic());
                         assertEq(arg0, lastProcessedBlockNumber);
-                        assertEq(arg1, outputsMerkleRoot);
+                        assertEq(arg1, claim.outputsMerkleRoot);
+                        assertEq(arg2, machineMerkleRoot);
                         ++numOfClaimAcceptedEvents;
                     } else {
                         revert("unexpected event selector");
@@ -436,7 +486,7 @@ contract QuorumFactoryTest is Test, ERC165Test, ConsensusTestUtils {
             }
 
             assertEq(
-                quorum.isOutputsMerkleRootValid(appContract, winningOutputsMerkleRoot),
+                quorum.isOutputsMerkleRootValid(winningClaim),
                 numOfWinningVotes >= majority,
                 "Once a claim is accepted, the outputs Merkle root is valid"
             );
@@ -470,7 +520,7 @@ contract QuorumFactoryTest is Test, ERC165Test, ConsensusTestUtils {
 
             assertEq(
                 quorum.numOfValidatorsInFavorOf(
-                    appContract, lastProcessedBlockNumber, outputsMerkleRoot
+                    appContract, lastProcessedBlockNumber, machineMerkleRoot
                 ),
                 numOfValidatorsInFavorOfClaimBefore + 1,
                 "Number of validators in favor of claim should be incremented"
@@ -478,7 +528,7 @@ contract QuorumFactoryTest is Test, ERC165Test, ConsensusTestUtils {
 
             assertTrue(
                 quorum.isValidatorInFavorOf(
-                    appContract, lastProcessedBlockNumber, outputsMerkleRoot, id
+                    appContract, lastProcessedBlockNumber, machineMerkleRoot, id
                 ),
                 "Expected validator to be in favor of claim"
             );
@@ -486,7 +536,7 @@ contract QuorumFactoryTest is Test, ERC165Test, ConsensusTestUtils {
             vm.recordLogs();
 
             vm.prank(validator);
-            quorum.submitClaim(appContract, lastProcessedBlockNumber, outputsMerkleRoot);
+            quorum.submitClaim(claim);
 
             assertEq(
                 vm.getRecordedLogs().length,
@@ -495,7 +545,7 @@ contract QuorumFactoryTest is Test, ERC165Test, ConsensusTestUtils {
             );
 
             assertEq(
-                quorum.isOutputsMerkleRootValid(appContract, winningOutputsMerkleRoot),
+                quorum.isOutputsMerkleRootValid(winningClaim),
                 numOfWinningVotes >= majority,
                 "Once a claim is accepted, the outputs Merkle root is valid"
             );
@@ -517,7 +567,7 @@ contract QuorumFactoryTest is Test, ERC165Test, ConsensusTestUtils {
 
             assertEq(
                 quorum.numOfValidatorsInFavorOf(
-                    appContract, lastProcessedBlockNumber, outputsMerkleRoot
+                    appContract, lastProcessedBlockNumber, machineMerkleRoot
                 ),
                 numOfValidatorsInFavorOfClaimBefore + 1,
                 "Number of validators in favor of claim should be incremented"
@@ -525,18 +575,17 @@ contract QuorumFactoryTest is Test, ERC165Test, ConsensusTestUtils {
 
             assertTrue(
                 quorum.isValidatorInFavorOf(
-                    appContract, lastProcessedBlockNumber, outputsMerkleRoot, id
+                    appContract, lastProcessedBlockNumber, machineMerkleRoot, id
                 ),
                 "Expected validator to be in favor of claim"
             );
 
+            (Claim memory otherClaim,) =
+                _randomClaimDifferentFrom(claim, machineMerkleRoot);
+
             vm.expectRevert(_encodeNotFirstClaim(appContract, lastProcessedBlockNumber));
             vm.prank(validator);
-            quorum.submitClaim(
-                appContract,
-                lastProcessedBlockNumber,
-                _randomBytes32DifferentFrom(outputsMerkleRoot)
-            );
+            quorum.submitClaim(otherClaim);
         }
 
         assertEq(numOfWinningVotes, numOfWinners, "# winning votes == # winner voters");
@@ -545,7 +594,7 @@ contract QuorumFactoryTest is Test, ERC165Test, ConsensusTestUtils {
         assertTrue(wasClaimAccepted, "unexpected ClaimAccepted event");
 
         assertTrue(
-            quorum.isOutputsMerkleRootValid(appContract, winningOutputsMerkleRoot),
+            quorum.isOutputsMerkleRootValid(winningClaim),
             "The outputs Merkle root should be valid"
         );
 
@@ -559,6 +608,22 @@ contract QuorumFactoryTest is Test, ERC165Test, ConsensusTestUtils {
             quorum.getNumberOfAcceptedClaims(),
             1,
             "Expected only 1 claim to be accepted (the winning claim)"
+        );
+
+        assertEq(
+            quorum.numOfValidatorsInFavorOfAnyClaimInEpoch(
+                appContract, lastProcessedBlockNumber
+            ),
+            numOfWinningVotes + numOfLosingVotes,
+            "numOfValidatorsInFavorOfAnyClaimInEpoch(...) == # winning votes + # losing votes"
+        );
+
+        assertEq(
+            quorum.numOfValidatorsInFavorOf(
+                appContract, lastProcessedBlockNumber, winningMachineMerkleRoot
+            ),
+            numOfWinningVotes,
+            "numOfValidatorsInFavorOf(winningClaim...) = # winning votes"
         );
     }
 
@@ -648,7 +713,7 @@ contract QuorumFactoryTest is Test, ERC165Test, ConsensusTestUtils {
 
         // We check that initially all outputs Merkle roots are invalid.
         assertFalse(
-            quorum.isOutputsMerkleRootValid(vm.randomAddress(), bytes32(vm.randomUint())),
+            quorum.isOutputsMerkleRootValid(vm.randomAddress(), _randomBytes32()),
             "initially, isOutputsMerkleRootValid(...) == false"
         );
 
@@ -662,7 +727,7 @@ contract QuorumFactoryTest is Test, ERC165Test, ConsensusTestUtils {
         );
         assertEq(
             quorum.numOfValidatorsInFavorOf(
-                vm.randomAddress(), vm.randomUint(), bytes32(vm.randomUint())
+                vm.randomAddress(), vm.randomUint(), _randomBytes32()
             ),
             0,
             "initially, numOfValidatorsInFavorOfAnyClaimInEpoch(...) == 0"
@@ -675,10 +740,7 @@ contract QuorumFactoryTest is Test, ERC165Test, ConsensusTestUtils {
         );
         assertFalse(
             quorum.isValidatorInFavorOf(
-                vm.randomAddress(),
-                vm.randomUint(),
-                bytes32(vm.randomUint()),
-                vm.randomUint()
+                vm.randomAddress(), vm.randomUint(), _randomBytes32(), vm.randomUint()
             ),
             "initially, isValidatorInFavorOf(...) == false"
         );
@@ -742,7 +804,7 @@ contract QuorumFactoryTest is Test, ERC165Test, ConsensusTestUtils {
             vm.assumeNoRevert();
             return _factory.newQuorum(validators, epochLength);
         } else {
-            bytes32 salt = bytes32(vm.randomUint());
+            bytes32 salt = _randomBytes32();
             vm.assumeNoRevert();
             return _factory.newQuorum(validators, epochLength, salt);
         }
