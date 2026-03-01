@@ -28,23 +28,27 @@ interface IConsensus is IOutputsMerkleRootValidator, IApplicationChecker {
     /// @param appContract The application contract address
     /// @param lastProcessedBlockNumber The number of the last processed block
     /// @param outputsMerkleRoot The outputs Merkle root
+    /// @param machineStateRoot The machine state root
     event ClaimSubmitted(
         address indexed submitter,
         address indexed appContract,
         uint256 lastProcessedBlockNumber,
-        bytes32 outputsMerkleRoot
+        bytes32 outputsMerkleRoot,
+        bytes32 machineStateRoot
     );
 
     /// @notice MUST trigger when a claim is accepted.
     /// @param appContract The application contract address
     /// @param lastProcessedBlockNumber The number of the last processed block
     /// @param outputsMerkleRoot The outputs Merkle root
+    /// @param machineStateRoot The machine state root
     /// @dev For each application and lastProcessedBlockNumber,
     /// there can be at most one accepted claim.
     event ClaimAccepted(
         address indexed appContract,
         uint256 lastProcessedBlockNumber,
-        bytes32 outputsMerkleRoot
+        bytes32 outputsMerkleRoot,
+        bytes32 machineStateRoot
     );
 
     /// @notice The claim contains the number of a block that is not
@@ -64,16 +68,25 @@ interface IConsensus is IOutputsMerkleRootValidator, IApplicationChecker {
     /// @param lastProcessedBlockNumber The number of the last processed block
     error NotFirstClaim(address appContract, uint256 lastProcessedBlockNumber);
 
+    /// @notice Supplied output tree proof size is incorrect
+    /// @param suppliedProofSize Supplied proof size
+    /// @param expectedProofSize Expected proof size
+    error InvalidOutputsMerkleRootProofSize(
+        uint256 suppliedProofSize, uint256 expectedProofSize
+    );
+
     /// @notice Submit a claim to the consensus.
     /// @param appContract The application contract address
     /// @param lastProcessedBlockNumber The number of the last processed block
     /// @param outputsMerkleRoot The outputs Merkle root
+    /// @param proof The bottom-up Merkle proof of the outputs Merkle root at the start of the machine TX buffer
     /// @dev MUST fire a `ClaimSubmitted` event.
     /// @dev MAY fire a `ClaimAccepted` event, if the acceptance criteria is met.
     function submitClaim(
         address appContract,
         uint256 lastProcessedBlockNumber,
-        bytes32 outputsMerkleRoot
+        bytes32 outputsMerkleRoot,
+        bytes32[] calldata proof
     ) external;
 
     /// @notice Get the epoch length, in number of base layer blocks.
