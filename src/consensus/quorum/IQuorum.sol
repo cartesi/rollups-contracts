@@ -5,7 +5,7 @@ pragma solidity ^0.8.8;
 
 import {IConsensus} from "../IConsensus.sol";
 
-/// @notice A consensus model controlled by a small, immutable set of `n` validators.
+/// @notice A consensus model controlled by a small, immutable set of `n` (>= 1) validators.
 /// @notice You can know the value of `n` by calling the `numOfValidators` function.
 /// @notice Upon construction, each validator is assigned a unique number between 1 and `n`.
 /// These numbers are used internally instead of addresses for gas optimization reasons.
@@ -13,17 +13,19 @@ import {IConsensus} from "../IConsensus.sol";
 /// function for each ID from 1 to `n`.
 interface IQuorum is IConsensus {
     /// @notice Get the number of validators.
+    /// @dev The number of validators is greater than or equal to 1.
     function numOfValidators() external view returns (uint256);
 
     /// @notice Get the ID of a validator.
     /// @param validator The validator address
-    /// @dev Validators have IDs greater than zero.
+    /// @dev Validators are assigned IDs between 1 and `N`, the total number of validators.
     /// @dev Non-validators are assigned to ID zero.
     function validatorId(address validator) external view returns (uint256);
 
     /// @notice Get the address of a validator by its ID.
     /// @param id The validator ID
     /// @dev Validator IDs range from 1 to `N`, the total number of validators.
+    /// @dev Valid IDs do not map to address zero.
     /// @dev Invalid IDs map to address zero.
     function validatorById(uint256 id) external view returns (address);
 
