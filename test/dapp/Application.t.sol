@@ -3,7 +3,6 @@
 
 pragma solidity ^0.8.22;
 
-import {IOwnable} from "src/access/IOwnable.sol";
 import {DataAvailability} from "src/common/DataAvailability.sol";
 import {OutputValidityProof} from "src/common/OutputValidityProof.sol";
 import {Outputs} from "src/common/Outputs.sol";
@@ -17,7 +16,6 @@ import {SafeERC20Transfer} from "src/delegatecall/SafeERC20Transfer.sol";
 import {IInputBox} from "src/inputs/IInputBox.sol";
 import {InputBox} from "src/inputs/InputBox.sol";
 
-import {Ownable} from "@openzeppelin-contracts-5.2.0/access/Ownable.sol";
 import {
     IERC1155Errors,
     IERC20Errors,
@@ -83,8 +81,20 @@ contract ApplicationTest is Test, OwnableTest, AddressGenerator {
     // ownable test
     // ------------
 
-    function _getOwnableContract() internal view override returns (IOwnable) {
-        return _appContract;
+    function testRenounceOwnership(uint256) external {
+        _testRenounceOwnership(_appContract);
+    }
+
+    function testUnauthorizedAccount(uint256) external {
+        _testUnauthorizedAccount(_appContract);
+    }
+
+    function testInvalidOwner(uint256) external {
+        _testInvalidOwner(_appContract);
+    }
+
+    function testTransferOwnership(uint256) external {
+        _testTransferOwnership(_appContract);
     }
 
     // ---------------------------------------
@@ -97,9 +107,7 @@ contract ApplicationTest is Test, OwnableTest, AddressGenerator {
     ) external {
         vm.assume(caller != _appOwner);
         vm.startPrank(caller);
-        vm.expectRevert(
-            abi.encodeWithSelector(Ownable.OwnableUnauthorizedAccount.selector, caller)
-        );
+        vm.expectRevert(_encodeOwnableUnauthorizedAccount(caller));
         _appContract.migrateToOutputsMerkleRootValidator(newOutputsMerkleRootValidator);
     }
 
