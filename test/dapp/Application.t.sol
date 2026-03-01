@@ -30,6 +30,7 @@ import {Test} from "forge-std-1.9.6/src/Test.sol";
 
 import {ExternalLibMerkle32} from "../library/LibMerkle32.t.sol";
 import {AddressGenerator} from "../util/AddressGenerator.sol";
+import {ConsensusTestUtils} from "../util/ConsensusTestUtils.sol";
 import {EtherReceiver} from "../util/EtherReceiver.sol";
 import {LibEmulator} from "../util/LibEmulator.sol";
 import {OwnableTest} from "../util/OwnableTest.sol";
@@ -37,7 +38,7 @@ import {SimpleBatchERC1155, SimpleSingleERC1155} from "../util/SimpleERC1155.sol
 import {SimpleERC20} from "../util/SimpleERC20.sol";
 import {SimpleERC721} from "../util/SimpleERC721.sol";
 
-contract ApplicationTest is Test, OwnableTest, AddressGenerator {
+contract ApplicationTest is Test, OwnableTest, AddressGenerator, ConsensusTestUtils {
     using LibEmulator for LibEmulator.State;
     using ExternalLibMerkle32 for bytes32[];
 
@@ -474,7 +475,9 @@ contract ApplicationTest is Test, OwnableTest, AddressGenerator {
     function _submitClaim() internal {
         bytes32 outputsMerkleRoot = _emulator.getOutputsMerkleRoot();
         vm.prank(_authorityOwner);
-        _authority.submitClaim(address(_appContract), 0, outputsMerkleRoot);
+        _authority.submitClaim(
+            address(_appContract), 0, outputsMerkleRoot, _randomLeafProof()
+        );
     }
 
     function _expectEmitOutputExecuted(

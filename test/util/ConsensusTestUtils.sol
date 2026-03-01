@@ -3,11 +3,17 @@
 
 pragma solidity ^0.8.22;
 
+import {Memory} from "cartesi-machine-solidity-step-0.13.0/src/Memory.sol";
+
 import {IConsensus} from "src/consensus/IConsensus.sol";
 
 import {ApplicationCheckerTestUtils} from "./ApplicationCheckerTestUtils.sol";
+import {Claim} from "./Claim.sol";
+import {LibClaim} from "./LibClaim.sol";
 
 contract ConsensusTestUtils is ApplicationCheckerTestUtils {
+    using LibClaim for Claim;
+
     function _encodeNotPastBlock(uint256 lastProcessedBlockNumber)
         internal
         view
@@ -36,6 +42,18 @@ contract ConsensusTestUtils is ApplicationCheckerTestUtils {
     ) internal pure returns (bytes memory) {
         return abi.encodeWithSelector(
             IConsensus.NotEpochFinalBlock.selector, lastProcessedBlockNumber, epochLength
+        );
+    }
+
+    function _encodeInvalidOutputsMerkleRootProofSize(uint256 proofSize)
+        internal
+        pure
+        returns (bytes memory)
+    {
+        return abi.encodeWithSelector(
+            IConsensus.InvalidOutputsMerkleRootProofSize.selector,
+            proofSize,
+            Memory.LOG2_MAX_SIZE
         );
     }
 
@@ -79,13 +97,41 @@ contract ConsensusTestUtils is ApplicationCheckerTestUtils {
         return blockNumber;
     }
 
-    function _randomBytes32DifferentFrom(bytes32 value)
+    function _randomBytes32() internal returns (bytes32) {
+        return bytes32(vm.randomUint());
+    }
+
+    function _randomProof(uint256 length) internal returns (bytes32[] memory proof) {
+        proof = new bytes32[](length);
+        for (uint256 i; i < proof.length; ++i) {
+            proof[i] = _randomBytes32();
+        }
+    }
+
+    function _randomLeafProof() internal returns (bytes32[] memory proof) {
+        return _randomProof(Memory.LOG2_MAX_SIZE);
+    }
+
+    function _randomClaimDifferentFrom(Claim memory claim, bytes32 machineMerkleRoot)
         internal
-        returns (bytes32 otherValue)
+        returns (Claim memory otherClaim, bytes32 otherMachineMerkleRoot)
     {
+        otherClaim.appContract = claim.appContract;
+        otherClaim.lastProcessedBlockNumber = claim.lastProcessedBlockNumber;
         while (true) {
-            otherValue = bytes32(vm.randomUint());
-            if (otherValue != value) {
+            otherClaim.outputsMerkleRoot = _randomBytes32();
+            otherClaim.proof = _randomProof(claim.proof.length);
+            otherMachineMerkleRoot = otherClaim.computeMachineMerkleRoot();
+            if (machineMerkleRoot != otherMachineMerkleRoot) {
+                break;
+            }
+        }
+    }
+
+    function _randomInvalidLeafProofSize() internal returns (uint256 proofSize) {
+        while (true) {
+            proofSize = vm.randomUint(0, 2 * Memory.LOG2_MAX_SIZE + 1);
+            if (proofSize != Memory.LOG2_MAX_SIZE) {
                 break;
             }
         }

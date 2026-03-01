@@ -10,7 +10,10 @@ import {Claim} from "./Claim.sol";
 library LibConsensus {
     function submitClaim(IConsensus consensus, Claim memory claim) internal {
         consensus.submitClaim(
-            claim.appContract, claim.lastProcessedBlockNumber, claim.outputsMerkleRoot
+            claim.appContract,
+            claim.lastProcessedBlockNumber,
+            claim.outputsMerkleRoot,
+            claim.proof
         );
     }
 

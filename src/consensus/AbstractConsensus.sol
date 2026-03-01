@@ -6,12 +6,20 @@ pragma solidity ^0.8.26;
 import {ERC165} from "@openzeppelin-contracts-5.2.0/utils/introspection/ERC165.sol";
 import {IERC165} from "@openzeppelin-contracts-5.2.0/utils/introspection/IERC165.sol";
 
+import {
+    EmulatorConstants
+} from "cartesi-machine-solidity-step-0.13.0/src/EmulatorConstants.sol";
+import {Memory} from "cartesi-machine-solidity-step-0.13.0/src/Memory.sol";
+
 import {ApplicationChecker} from "../dapp/ApplicationChecker.sol";
+import {LibMerkle32} from "../library/LibMerkle32.sol";
 import {IConsensus} from "./IConsensus.sol";
 import {IOutputsMerkleRootValidator} from "./IOutputsMerkleRootValidator.sol";
 
 /// @notice Abstract implementation of IConsensus
 abstract contract AbstractConsensus is IConsensus, ERC165, ApplicationChecker {
+    using LibMerkle32 for bytes32[];
+
     /// @notice The epoch length
     uint256 immutable EPOCH_LENGTH;
 
@@ -91,17 +99,24 @@ abstract contract AbstractConsensus is IConsensus, ERC165, ApplicationChecker {
     /// @param submitter The submitter address
     /// @param appContract The application contract address
     /// @param lastProcessedBlockNumber The number of the last processed block
-    /// @param outputsMerkleRoot The output Merkle root hash
+    /// @param outputsMerkleRoot The output Merkle root
+    /// @param machineMerkleRoot The machine Merkle root
+    /// @dev Assumes outputs Merkle root is proven to be at the start of the machine TX buffer.
     /// @dev Checks whether the app is foreclosed.
     /// @dev Emits a `ClaimSubmitted` event.
     function _submitClaim(
         address submitter,
         address appContract,
         uint256 lastProcessedBlockNumber,
-        bytes32 outputsMerkleRoot
+        bytes32 outputsMerkleRoot,
+        bytes32 machineMerkleRoot
     ) internal notForeclosed(appContract) {
         emit ClaimSubmitted(
-            submitter, appContract, lastProcessedBlockNumber, outputsMerkleRoot
+            submitter,
+            appContract,
+            lastProcessedBlockNumber,
+            outputsMerkleRoot,
+            machineMerkleRoot
         );
         ++_numOfSubmittedClaims;
     }
@@ -109,17 +124,52 @@ abstract contract AbstractConsensus is IConsensus, ERC165, ApplicationChecker {
     /// @notice Accept a claim.
     /// @param appContract The application contract address
     /// @param lastProcessedBlockNumber The number of the last processed block
-    /// @param outputsMerkleRoot The output Merkle root hash
+    /// @param outputsMerkleRoot The output Merkle root
+    /// @param machineMerkleRoot The machine Merkle root
+    /// @dev Assumes outputs Merkle root is proven to be at the start of the machine TX buffer.
     /// @dev Checks whether the app is foreclosed.
     /// @dev Marks the outputsMerkleRoot as valid.
     /// @dev Emits a `ClaimAccepted` event.
     function _acceptClaim(
         address appContract,
         uint256 lastProcessedBlockNumber,
-        bytes32 outputsMerkleRoot
+        bytes32 outputsMerkleRoot,
+        bytes32 machineMerkleRoot
     ) internal notForeclosed(appContract) {
         _validOutputsMerkleRoots[appContract][outputsMerkleRoot] = true;
-        emit ClaimAccepted(appContract, lastProcessedBlockNumber, outputsMerkleRoot);
+        emit ClaimAccepted(
+            appContract, lastProcessedBlockNumber, outputsMerkleRoot, machineMerkleRoot
+        );
         ++_numOfAcceptedClaims;
+    }
+
+    /// @notice Compute the machine Merkle root given an outputs Merkle root and a proof.
+    /// @param outputsMerkleRoot The outputs Merkle root
+    /// @param proof The bottom-up Merkle proof of the outputs Merkle root at the start of the machine TX buffer
+    /// @return machineMerkleRoot The machine Merkle root
+    function _computeMachineMerkleRoot(
+        bytes32 outputsMerkleRoot,
+        bytes32[] calldata proof
+    ) internal pure returns (bytes32 machineMerkleRoot) {
+        _checkProofSize(proof.length, Memory.LOG2_MAX_SIZE);
+        machineMerkleRoot = proof.merkleRootAfterReplacement(
+            EmulatorConstants.PMA_CMIO_TX_BUFFER_START
+                >> EmulatorConstants.TREE_LOG2_WORD_SIZE,
+            keccak256(abi.encode(outputsMerkleRoot))
+        );
+    }
+
+    /// @notice Check the size of a supplied proof against the expected proof size.
+    /// @param suppliedProofSize Supplied proof size
+    /// @param expectedProofSize Expected proof size
+    /// @dev Raises an `InvalidOutputsMerkleRootProofSize` error if sizes differ.
+    function _checkProofSize(uint256 suppliedProofSize, uint256 expectedProofSize)
+        internal
+        pure
+    {
+        require(
+            suppliedProofSize == expectedProofSize,
+            InvalidOutputsMerkleRootProofSize(suppliedProofSize, expectedProofSize)
+        );
     }
 }

@@ -53,25 +53,25 @@ interface IQuorum is IConsensus {
     /// @notice Get the number of validators in favor of a claim.
     /// @param appContract The application contract address
     /// @param lastProcessedBlockNumber The number of the last processed block
-    /// @param outputsMerkleRoot The outputs Merkle root
+    /// @param machineMerkleRoot The machine Merkle root
     /// @return Number of validators in favor of claim
     function numOfValidatorsInFavorOf(
         address appContract,
         uint256 lastProcessedBlockNumber,
-        bytes32 outputsMerkleRoot
+        bytes32 machineMerkleRoot
     ) external view returns (uint256);
 
     /// @notice Check whether a validator is in favor of a claim.
     /// @param appContract The application contract address
     /// @param lastProcessedBlockNumber The number of the last processed block
-    /// @param outputsMerkleRoot The outputs Merkle root
+    /// @param machineMerkleRoot The machine Merkle root
     /// @param id The ID of the validator
     /// @return Whether validator is in favor of claim
     /// @dev Assumes the provided ID is valid.
     function isValidatorInFavorOf(
         address appContract,
         uint256 lastProcessedBlockNumber,
-        bytes32 outputsMerkleRoot,
+        bytes32 machineMerkleRoot,
         uint256 id
     ) external view returns (bool);
 }
