@@ -87,4 +87,60 @@ contract LibUint256ArrayTest is Test {
         }
         assertFalse(LibUint256Array.contains(array, notElem));
     }
+
+    function testContainsBefore(uint256[] memory array) external {
+        for (uint256 i; i < array.length; ++i) {
+            uint256 elem = array[i];
+            uint256 j = vm.randomUint(i + 1, array.length);
+            assertTrue(
+                LibUint256Array.containsBefore(array, elem, j),
+                "element in array should be contained before an index greater its own"
+            );
+        }
+        {
+            uint256 notElem;
+            uint256 i = vm.randomUint(0, array.length);
+            while (true) {
+                bool isElem = false;
+                notElem = vm.randomUint();
+                for (uint256 j; j < i; ++j) {
+                    if (notElem == array[j]) {
+                        isElem = true;
+                        break;
+                    }
+                }
+                if (!isElem) {
+                    break;
+                }
+            }
+            assertFalse(
+                LibUint256Array.containsBefore(array, notElem, i),
+                "element not in subarray should not be contained before any of its indices"
+            );
+        }
+    }
+
+    function testRandomUniqueUint256Array(uint8 n) external {
+        uint256[] memory array = vm.randomUniqueUint256Array(n);
+        assertEq(array.length, n);
+        for (uint256 i; i < array.length; ++i) {
+            uint256 elem = array[i];
+            uint256 count = ++_histogram[elem];
+            assertEq(count, 1, "array element not unique");
+        }
+    }
+
+    function testAddAndSub(uint8 n) external {
+        uint256[] memory a = new uint256[](n);
+        uint256[] memory b = new uint256[](n);
+        uint256[] memory c = new uint256[](n);
+        for (uint256 i; i < a.length; ++i) {
+            c[i] = vm.randomUint();
+            a[i] = vm.randomUint(0, c[i]);
+            b[i] = c[i] - a[i];
+        }
+        assertEq(LibUint256Array.add(a, b), c);
+        assertEq(LibUint256Array.sub(c, b), a);
+        assertEq(LibUint256Array.sub(c, a), b);
+    }
 }

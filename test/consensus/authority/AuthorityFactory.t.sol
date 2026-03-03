@@ -16,6 +16,7 @@ import {IAuthorityFactory} from "src/consensus/authority/IAuthorityFactory.sol";
 import {Claim} from "../../util/Claim.sol";
 import {ConsensusTestUtils} from "../../util/ConsensusTestUtils.sol";
 import {ERC165Test} from "../../util/ERC165Test.sol";
+import {LibBytes} from "../../util/LibBytes.sol";
 import {LibClaim} from "../../util/LibClaim.sol";
 import {LibConsensus} from "../../util/LibConsensus.sol";
 import {LibTopic} from "../../util/LibTopic.sol";
@@ -25,6 +26,7 @@ contract AuthorityFactoryTest is Test, ERC165Test, OwnableTest, ConsensusTestUti
     using LibConsensus for IAuthority;
     using LibTopic for address;
     using LibClaim for Claim;
+    using LibBytes for bytes;
 
     AuthorityFactory _factory;
     bytes4[] _supportedInterfaces;
@@ -254,11 +256,10 @@ contract AuthorityFactoryTest is Test, ERC165Test, OwnableTest, ConsensusTestUti
     function testSubmitClaimRevertApplicationReturnIllFormedReturnData(
         address authorityOwner,
         uint256 epochLength,
-        Claim memory claim,
-        uint256 returnValue
+        Claim memory claim
     ) external {
         // We make isForeclosed() return an invalid boolean (neither 0 or 1)
-        vm.assume(returnValue > 1);
+        uint256 returnValue = vm.randomUint(2, type(uint256).max);
 
         IAuthority authority = _newAuthority(authorityOwner, epochLength);
 
@@ -477,16 +478,7 @@ contract AuthorityFactoryTest is Test, ERC165Test, OwnableTest, ConsensusTestUti
         uint256 epochLength,
         bytes memory error
     ) internal pure {
-        assertGe(error.length, 4, "Error data too short (no 4-byte selector)");
-
-        // forge-lint: disable-next-line(unsafe-typecast)
-        bytes4 errorSelector = bytes4(error);
-        bytes memory errorArgs = new bytes(error.length - 4);
-
-        for (uint256 i; i < errorArgs.length; ++i) {
-            errorArgs[i] = error[i + 4];
-        }
-
+        (bytes4 errorSelector, bytes memory errorArgs) = error.consumeBytes4();
         if (errorSelector == Ownable.OwnableInvalidOwner.selector) {
             address owner = abi.decode(errorArgs, (address));
             assertEq(owner, authorityOwner, "OwnableInvalidOwner.owner != owner");

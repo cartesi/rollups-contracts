@@ -19,8 +19,11 @@ import {LibWithdrawalConfig} from "src/library/LibWithdrawalConfig.sol";
 
 import {Test} from "forge-std-1.9.6/src/Test.sol";
 
+import {LibBytes} from "../util/LibBytes.sol";
+
 contract SelfHostedApplicationFactoryTest is Test {
     using LibWithdrawalConfig for WithdrawalConfig;
+    using LibBytes for bytes;
 
     IAuthorityFactory authorityFactory;
     IApplicationFactory applicationFactory;
@@ -143,16 +146,7 @@ contract SelfHostedApplicationFactoryTest is Test {
                 "calculateAddresses(...) is not a pure function"
             );
         } catch (bytes memory error) {
-            assertGe(error.length, 4, "Error data too short (no 4-byte selector)");
-
-            // forge-lint: disable-next-line(unsafe-typecast)
-            bytes4 errorSelector = bytes4(error);
-            bytes memory errorArgs = new bytes(error.length - 4);
-
-            for (uint256 i; i < errorArgs.length; ++i) {
-                errorArgs[i] = error[i + 4];
-            }
-
+            (bytes4 errorSelector, bytes memory errorArgs) = error.consumeBytes4();
             if (errorSelector == Ownable.OwnableInvalidOwner.selector) {
                 address owner = abi.decode(errorArgs, (address));
                 assertEq(owner, address(0), "OwnableInvalidOwner.owner != address(0)");
