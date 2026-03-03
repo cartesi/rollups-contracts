@@ -19,6 +19,23 @@ library LibUint256Array {
         }
     }
 
+    function randomUniqueUint256Array(Vm vm, uint256 n)
+        internal
+        returns (uint256[] memory array)
+    {
+        array = new uint256[](n);
+        for (uint256 i; i < array.length; ++i) {
+            uint256 elem;
+            while (true) {
+                elem = vm.randomUint();
+                if (!containsBefore(array, elem, i)) {
+                    break;
+                }
+            }
+            array[i] = elem;
+        }
+    }
+
     function sequence(uint256 start, uint256 n)
         internal
         pure
@@ -48,11 +65,44 @@ library LibUint256Array {
     }
 
     function contains(uint256[] memory array, uint256 elem) internal pure returns (bool) {
-        for (uint256 i; i < array.length; ++i) {
+        return containsBefore(array, elem, array.length);
+    }
+
+    function containsBefore(uint256[] memory array, uint256 elem, uint256 n)
+        internal
+        pure
+        returns (bool)
+    {
+        require(n <= array.length, "cannot check past array length");
+        for (uint256 i; i < n; ++i) {
             if (array[i] == elem) {
                 return true;
             }
         }
         return false;
+    }
+
+    function sub(uint256[] memory a, uint256[] memory b)
+        internal
+        pure
+        returns (uint256[] memory c)
+    {
+        require(a.length == b.length, "vector subtraction terms have inequal lengths");
+        c = new uint256[](a.length);
+        for (uint256 i; i < a.length; ++i) {
+            c[i] = a[i] - b[i];
+        }
+    }
+
+    function add(uint256[] memory a, uint256[] memory b)
+        internal
+        pure
+        returns (uint256[] memory c)
+    {
+        require(a.length == b.length, "vector addition terms have inequal lengths");
+        c = new uint256[](a.length);
+        for (uint256 i; i < a.length; ++i) {
+            c[i] = a[i] + b[i];
+        }
     }
 }

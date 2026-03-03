@@ -34,4 +34,15 @@ library LibAddressArray {
         }
         return false;
     }
+
+    function repeat(address addr, uint256 n)
+        internal
+        pure
+        returns (address[] memory array)
+    {
+        array = new address[](n);
+        for (uint256 i; i < array.length; ++i) {
+            array[i] = addr;
+        }
+    }
 }

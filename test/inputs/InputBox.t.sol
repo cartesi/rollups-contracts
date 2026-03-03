@@ -4,16 +4,16 @@
 pragma solidity ^0.8.22;
 
 import {Test} from "forge-std-1.9.6/src/Test.sol";
+import {Vm} from "forge-std-1.9.6/src/Vm.sol";
 
 import {CanonicalMachine} from "src/common/CanonicalMachine.sol";
 import {Inputs} from "src/common/Inputs.sol";
 import {IInputBox} from "src/inputs/IInputBox.sol";
 import {InputBox} from "src/inputs/InputBox.sol";
 
-import {ApplicationCheckerTestUtils} from "../util/ApplicationCheckerTestUtils.sol";
-import {EvmAdvanceEncoder} from "../util/EvmAdvanceEncoder.sol";
+import {InputBoxTestUtils} from "../util/InputBoxTestUtils.sol";
 
-contract InputBoxTest is Test, ApplicationCheckerTestUtils {
+contract InputBoxTest is Test, InputBoxTestUtils {
     InputBox _inputBox;
 
     function setUp() external {
@@ -60,10 +60,8 @@ contract InputBoxTest is Test, ApplicationCheckerTestUtils {
         _inputBox.addInput(appContract, payload);
     }
 
-    function testAddInputRevertsIllForm(uint256 returnValue, bytes calldata payload)
-        external
-    {
-        vm.assume(returnValue > 1);
+    function testAddInputRevertsIllForm(bytes calldata payload) external {
+        uint256 returnValue = vm.randomUint(2, type(uint256).max);
         bytes memory data = abi.encode(returnValue);
         address appContract = _newAppMockReturns(data);
         vm.expectRevert(_encodeIllformedApplicationReturnData(appContract, data));
@@ -78,93 +76,68 @@ contract InputBoxTest is Test, ApplicationCheckerTestUtils {
 
     function testAddLargeInput() external {
         address appContract = _newActiveAppMock();
-        uint256 max = _getMaxInputPayloadLength();
 
-        _inputBox.addInput(appContract, new bytes(max));
+        bytes memory inputWithEmptyPayload = abi.encodeCall(
+            Inputs.EvmAdvance,
+            (
+                block.chainid,
+                appContract,
+                address(this),
+                vm.getBlockNumber(),
+                vm.getBlockTimestamp(),
+                block.prevrandao,
+                0,
+                new bytes(0)
+            )
+        );
 
-        bytes memory largePayload = new bytes(max + 1);
-        bytes memory largeInput =
-            EvmAdvanceEncoder.encode(1, appContract, address(this), 1, largePayload);
-        uint256 largeLength = largeInput.length;
+        uint256 maxPayloadLength =
+            (CanonicalMachine.INPUT_MAX_SIZE - inputWithEmptyPayload.length)
+                & ~uint256(0x1f);
+
+        _inputBox.addInput(appContract, new bytes(maxPayloadLength));
+
         vm.expectRevert(
             abi.encodeWithSelector(
                 IInputBox.InputTooLarge.selector,
                 appContract,
-                largeLength,
+                inputWithEmptyPayload.length + maxPayloadLength + 32,
                 CanonicalMachine.INPUT_MAX_SIZE
             )
         );
-        _inputBox.addInput(appContract, largePayload);
+        _inputBox.addInput(appContract, new bytes(maxPayloadLength + 1));
     }
 
-    function testAddInput(uint64 chainId, bytes[] calldata payloads) external {
-        address appContract = _newActiveAppMock();
-
-        vm.chainId(chainId); // foundry limits chain id to be less than 2^64 - 1
-
-        uint256 numPayloads = payloads.length;
-        bytes32[] memory returnedValues = new bytes32[](numPayloads);
-        uint256 year2022 = 1641070800; // Unix Timestamp for 2022
-
-        // assume #bytes for each payload is within bounds
-        for (uint256 i; i < numPayloads; ++i) {
-            vm.assume(payloads[i].length <= _getMaxInputPayloadLength());
+    function testAddInputs(bytes[] calldata payloads) external {
+        vm.chainId(vm.randomUint(64));
+        for (uint256 i; i < payloads.length; ++i) {
+            vm.roll(vm.randomUint(vm.getBlockNumber(), type(uint256).max));
+            vm.warp(vm.randomUint(vm.getBlockTimestamp(), type(uint256).max));
+            vm.prevrandao(vm.randomUint());
+            address appContract = _newActiveAppMock();
+            address sender = vm.randomAddress();
+            uint256 index = _inputBox.getNumberOfInputs(appContract);
+            bytes calldata payload = payloads[i];
+            vm.recordLogs();
+            vm.prank(sender);
+            bytes32 inputHash = _inputBox.addInput(appContract, payload);
+            Vm.Log[] memory logs = vm.getRecordedLogs();
+            uint256 numOfInputAdded;
+            for (uint256 j; j < logs.length; ++j) {
+                Vm.Log memory log = logs[j];
+                if (log.emitter == address(_inputBox)) {
+                    (bytes memory decodedInput, bytes memory decodedPayload) =
+                        _decodeInputAdded(log, appContract, sender, index);
+                    assertEq(decodedPayload, payload);
+                    assertEq(keccak256(decodedInput), inputHash);
+                    ++numOfInputAdded;
+                } else {
+                    revert("unexpected log emitter");
+                }
+            }
+            assertEq(numOfInputAdded, 1);
+            assertEq(_inputBox.getInputHash(appContract, index), inputHash);
+            assertEq(_inputBox.getNumberOfInputs(appContract), index + 1);
         }
-
-        // adding inputs
-        for (uint256 i; i < numPayloads; ++i) {
-            // test for different block number and timestamp
-            vm.roll(i);
-            vm.warp(i + year2022);
-            vm.prevrandao(bytes32(_prevrandao(i)));
-
-            vm.expectEmit(true, true, false, true, address(_inputBox));
-            bytes memory input = EvmAdvanceEncoder.encode(
-                chainId, appContract, address(this), i, payloads[i]
-            );
-            emit IInputBox.InputAdded(appContract, i, input);
-
-            returnedValues[i] = _inputBox.addInput(appContract, payloads[i]);
-
-            assertEq(i + 1, _inputBox.getNumberOfInputs(appContract));
-        }
-
-        // testing added inputs
-        for (uint256 i; i < numPayloads; ++i) {
-            bytes32 inputHash = keccak256(
-                abi.encodeCall(
-                    Inputs.EvmAdvance,
-                    (
-                        chainId,
-                        appContract,
-                        address(this),
-                        i, // block.number
-                        i + year2022, // block.timestamp
-                        _prevrandao(i), // block.prevrandao
-                        i, // inputBox.length
-                        payloads[i]
-                    )
-                )
-            );
-            // test if input hash is the same as in InputBox
-            assertEq(inputHash, _inputBox.getInputHash(appContract, i));
-            // test if input hash is the same as returned from calling addInput() function
-            assertEq(inputHash, returnedValues[i]);
-        }
-    }
-
-    function _prevrandao(uint256 blockNumber) internal pure returns (uint256) {
-        return uint256(keccak256(abi.encode("prevrandao", blockNumber)));
-    }
-
-    function _getMaxInputPayloadLength() internal pure returns (uint256) {
-        bytes memory blob = abi.encodeCall(
-            Inputs.EvmAdvance, (0, address(0), address(0), 0, 0, 0, 0, new bytes(32))
-        );
-        // number of bytes in input blob excluding input payload
-        uint256 extraBytes = blob.length - 32;
-        // because it's abi encoded, input payloads are stored as multiples of 32 bytes
-        /// forge-lint: disable-next-line(divide-before-multiply)
-        return ((CanonicalMachine.INPUT_MAX_SIZE - extraBytes) / 32) * 32;
     }
 }

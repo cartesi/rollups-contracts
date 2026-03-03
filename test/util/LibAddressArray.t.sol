@@ -19,6 +19,7 @@ library ExternalLibAddressArray {
 
 contract LibAddressArrayTest is Test {
     using LibAddressArray for address[];
+    using LibAddressArray for address;
     using LibAddressArray for Vm;
 
     function testRandomAddressIn(address[] memory array) external {
@@ -100,5 +101,13 @@ contract LibAddressArrayTest is Test {
         ba[1] = a;
         assertTrue(ba.contains(a));
         assertTrue(ba.contains(b));
+    }
+
+    function testRepeat(address addr, uint8 n) external pure {
+        address[] memory array = addr.repeat(n);
+        assertEq(array.length, n);
+        for (uint256 i; i < array.length; ++i) {
+            assertEq(array[i], addr);
+        }
     }
 }
