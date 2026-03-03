@@ -4,169 +4,302 @@
 pragma solidity ^0.8.22;
 
 import {IERC1155} from "@openzeppelin-contracts-5.2.0/token/ERC1155/IERC1155.sol";
+import {
+    IERC1155Receiver
+} from "@openzeppelin-contracts-5.2.0/token/ERC1155/IERC1155Receiver.sol";
 
-import {InputEncoding} from "src/common/InputEncoding.sol";
+import {Test} from "forge-std-1.9.6/src/Test.sol";
+import {Vm} from "forge-std-1.9.6/src/Vm.sol";
+
 import {IInputBox} from "src/inputs/IInputBox.sol";
+import {InputBox} from "src/inputs/InputBox.sol";
 import {ERC1155BatchPortal} from "src/portals/ERC1155BatchPortal.sol";
 import {IERC1155BatchPortal} from "src/portals/IERC1155BatchPortal.sol";
 
-import {Test} from "forge-std-1.9.6/src/Test.sol";
-
+import {InputBoxTestUtils} from "../util/InputBoxTestUtils.sol";
+import {LibAddressArray} from "../util/LibAddressArray.sol";
+import {LibBytes} from "../util/LibBytes.sol";
+import {LibTopic} from "../util/LibTopic.sol";
+import {LibUint256Array} from "../util/LibUint256Array.sol";
 import {SimpleBatchERC1155} from "../util/SimpleERC1155.sol";
 
-contract ERC1155BatchPortalTest is Test {
-    address _alice;
-    address _appContract;
-    IERC1155 _token;
+contract ERC1155BatchPortalTest is Test, InputBoxTestUtils {
+    using LibUint256Array for uint256[];
+    using LibAddressArray for address;
+    using LibUint256Array for Vm;
+    using LibTopic for address;
+    using LibBytes for bytes;
+
     IInputBox _inputBox;
     IERC1155BatchPortal _portal;
 
     function setUp() public {
-        _alice = vm.addr(1);
-        _appContract = vm.addr(2);
-        _token = IERC1155(vm.addr(3));
-        _inputBox = IInputBox(vm.addr(4));
+        _inputBox = new InputBox();
         _portal = new ERC1155BatchPortal(_inputBox);
     }
 
-    function testDeposit(
-        uint256[] calldata tokenIds,
+    function testGetInputBox() public view {
+        assertEq(address(_portal.getInputBox()), address(_inputBox));
+    }
+
+    function testDepositRevertApplicationNotDeployed(
         uint256[] calldata values,
         bytes calldata baseLayerData,
         bytes calldata execLayerData
-    ) public {
-        bytes memory safeBatchTransferFrom =
-            _encodeSafeBatchTransferFrom(tokenIds, values, baseLayerData);
+    ) external {
+        address sender = _randomAccountWithNoCode();
+        address appContract = _randomAccountWithNoCode();
 
-        vm.mockCall(address(_token), safeBatchTransferFrom, abi.encode());
-        vm.expectCall(address(_token), safeBatchTransferFrom, 1);
+        (IERC1155 token, uint256[] memory tokenIds) = _randomSetup(sender, values);
 
-        bytes memory payload =
-            encodePayload(tokenIds, values, baseLayerData, execLayerData);
-
-        bytes memory addInput = _encodeAddInput(payload);
-
-        vm.mockCall(address(_inputBox), addInput, abi.encode(bytes32(0)));
-        vm.expectCall(address(_inputBox), addInput, 1);
-
-        vm.prank(_alice);
+        vm.prank(sender);
+        vm.expectRevert(_encodeApplicationNotDeployed(appContract));
         _portal.depositBatchERC1155Token(
-            _token, _appContract, tokenIds, values, baseLayerData, execLayerData
+            token, appContract, tokenIds, values, baseLayerData, execLayerData
         );
     }
 
-    function testTokenReverts(
-        uint256[] calldata tokenIds,
+    function testDepositRevertApplicationReverted(
         uint256[] calldata values,
         bytes calldata baseLayerData,
         bytes calldata execLayerData,
-        bytes memory errorData
-    ) public {
-        bytes memory safeBatchTransferFrom =
-            _encodeSafeBatchTransferFrom(tokenIds, values, baseLayerData);
+        bytes calldata error
+    ) external {
+        address sender = _randomAccountWithNoCode();
+        address appContract = _newAppMockReverts(error);
 
-        vm.mockCall(address(_token), safeBatchTransferFrom, abi.encode());
-        vm.mockCallRevert(address(_token), safeBatchTransferFrom, errorData);
+        (IERC1155 token, uint256[] memory tokenIds) = _randomSetup(sender, values);
 
-        bytes memory payload =
-            encodePayload(tokenIds, values, baseLayerData, execLayerData);
+        _mockOnErc1155BatchReceived(appContract, sender, tokenIds, values, baseLayerData);
 
-        bytes memory addInput = _encodeAddInput(payload);
-
-        vm.mockCall(address(_inputBox), addInput, abi.encode(bytes32(0)));
-
-        vm.expectRevert(errorData);
-
-        vm.prank(_alice);
+        vm.prank(sender);
+        vm.expectRevert(_encodeApplicationReverted(appContract, error));
         _portal.depositBatchERC1155Token(
-            _token, _appContract, tokenIds, values, baseLayerData, execLayerData
+            token, appContract, tokenIds, values, baseLayerData, execLayerData
         );
     }
 
-    function testSimpleBatchERC1155(
-        uint256[] calldata supplies,
+    function testDepositRevertIllformedApplicationReturnDataSize(
+        uint256[] calldata values,
         bytes calldata baseLayerData,
-        bytes calldata execLayerData
-    ) public {
-        // construct arrays of tokenIds and values
-        uint256 numOfTokenIds = supplies.length;
-        vm.assume(numOfTokenIds > 1);
-        uint256[] memory tokenIds = new uint256[](numOfTokenIds);
-        uint256[] memory values = new uint256[](numOfTokenIds);
-        for (uint256 i; i < numOfTokenIds; ++i) {
-            tokenIds[i] = i;
-            values[i] = bound(i, 0, supplies[i]);
-        }
+        bytes calldata execLayerData,
+        bytes calldata returnData
+    ) external {
+        vm.assume(returnData.length != 32);
 
-        _token = new SimpleBatchERC1155(_alice, tokenIds, supplies);
+        address sender = _randomAccountWithNoCode();
+        address appContract = _newAppMockReturns(returnData);
 
-        vm.startPrank(_alice);
+        (IERC1155 token, uint256[] memory tokenIds) = _randomSetup(sender, values);
 
-        // Allow the portal to withdraw tokens from Alice
-        _token.setApprovalForAll(address(_portal), true);
+        _mockOnErc1155BatchReceived(appContract, sender, tokenIds, values, baseLayerData);
 
-        bytes memory payload =
-            this.encodePayload(tokenIds, values, baseLayerData, execLayerData);
-
-        bytes memory addInput = _encodeAddInput(payload);
-
-        vm.mockCall(address(_inputBox), addInput, abi.encode(bytes32(0)));
-
-        // balances before
-        for (uint256 i; i < numOfTokenIds; ++i) {
-            uint256 tokenId = tokenIds[i];
-            uint256 supply = supplies[i];
-            assertEq(_token.balanceOf(_alice, tokenId), supply);
-            assertEq(_token.balanceOf(_appContract, tokenId), 0);
-            assertEq(_token.balanceOf(address(_portal), tokenId), 0);
-        }
-
-        vm.expectCall(address(_inputBox), addInput, 1);
-
-        vm.expectEmit(true, true, true, true, address(_token));
-        emit IERC1155.TransferBatch(
-            address(_portal), _alice, _appContract, tokenIds, values
-        );
-
+        vm.prank(sender);
+        vm.expectRevert(_encodeIllformedApplicationReturnData(appContract, returnData));
         _portal.depositBatchERC1155Token(
-            _token, _appContract, tokenIds, values, baseLayerData, execLayerData
+            token, appContract, tokenIds, values, baseLayerData, execLayerData
         );
-        vm.stopPrank();
-
-        // balances after
-        for (uint256 i; i < numOfTokenIds; ++i) {
-            uint256 tokenId = tokenIds[i];
-            uint256 value = values[i];
-            uint256 supply = supplies[i];
-            assertEq(_token.balanceOf(_alice, tokenId), supply - value);
-            assertEq(_token.balanceOf(_appContract, tokenId), value);
-            assertEq(_token.balanceOf(address(_portal), tokenId), 0);
-        }
     }
 
-    function encodePayload(
-        uint256[] calldata tokenIds,
+    function testDepositRevertIllformedApplicationReturnDataInvalidBool(
         uint256[] calldata values,
         bytes calldata baseLayerData,
         bytes calldata execLayerData
-    ) public view returns (bytes memory) {
-        return InputEncoding.encodeBatchERC1155Deposit(
-            _token, _alice, tokenIds, values, baseLayerData, execLayerData
+    ) external {
+        uint256 returnValue = vm.randomUint(2, type(uint256).max);
+        bytes memory returnData = abi.encode(returnValue);
+
+        address sender = _randomAccountWithNoCode();
+        address appContract = _newAppMockReturns(returnData);
+
+        (IERC1155 token, uint256[] memory tokenIds) = _randomSetup(sender, values);
+
+        _mockOnErc1155BatchReceived(appContract, sender, tokenIds, values, baseLayerData);
+
+        vm.prank(sender);
+        vm.expectRevert(_encodeIllformedApplicationReturnData(appContract, returnData));
+        _portal.depositBatchERC1155Token(
+            token, appContract, tokenIds, values, baseLayerData, execLayerData
         );
     }
 
-    function _encodeAddInput(bytes memory payload) internal view returns (bytes memory) {
-        return abi.encodeCall(IInputBox.addInput, (_appContract, payload));
-    }
-
-    function _encodeSafeBatchTransferFrom(
-        uint256[] calldata tokenIds,
+    function testDepositRevertApplicationForeclosed(
         uint256[] calldata values,
-        bytes calldata baseLayerData
-    ) internal view returns (bytes memory) {
-        return abi.encodeCall(
-            IERC1155.safeBatchTransferFrom,
-            (_alice, _appContract, tokenIds, values, baseLayerData)
+        bytes calldata baseLayerData,
+        bytes calldata execLayerData
+    ) external {
+        address sender = _randomAccountWithNoCode();
+        address appContract = _newForeclosedAppMock();
+
+        (IERC1155 token, uint256[] memory tokenIds) = _randomSetup(sender, values);
+
+        _mockOnErc1155BatchReceived(appContract, sender, tokenIds, values, baseLayerData);
+
+        vm.prank(sender);
+        vm.expectRevert(_encodeApplicationForeclosed(appContract));
+        _portal.depositBatchERC1155Token(
+            token, appContract, tokenIds, values, baseLayerData, execLayerData
         );
+    }
+
+    function testDeposit(
+        uint256[] calldata values,
+        bytes calldata baseLayerData,
+        bytes calldata execLayerData,
+        bytes[] calldata payloads
+    ) external {
+        address sender = _randomAccountWithNoCode();
+        address appContract = _newActiveAppMock();
+
+        (IERC1155 token, uint256[] memory tokenIds) = _randomSetup(sender, values);
+
+        _mockOnErc1155BatchReceived(appContract, sender, tokenIds, values, baseLayerData);
+
+        _addInputs(_inputBox, appContract, payloads);
+
+        uint256[] memory senderBalances =
+            token.balanceOfBatch(sender.repeat(tokenIds.length), tokenIds);
+        uint256[] memory appContractBalances =
+            token.balanceOfBatch(appContract.repeat(tokenIds.length), tokenIds);
+
+        uint256 numOfInputs = _inputBox.getNumberOfInputs(appContract);
+
+        vm.recordLogs();
+
+        vm.prank(sender);
+        _portal.depositBatchERC1155Token(
+            token, appContract, tokenIds, values, baseLayerData, execLayerData
+        );
+
+        Vm.Log[] memory logs = vm.getRecordedLogs();
+        bytes memory input;
+        bytes memory payload;
+        uint256 numOfInputAdded;
+        uint256 numOfTransferSingle;
+        uint256 numOfTransferBatch;
+
+        for (uint256 i; i < logs.length; ++i) {
+            Vm.Log memory log = logs[i];
+            if (log.emitter == address(_inputBox)) {
+                (input, payload) =
+                    _decodeInputAdded(log, appContract, address(_portal), numOfInputs);
+                ++numOfInputAdded;
+            } else if (log.emitter == address(token)) {
+                bytes32 topic0 = log.topics[0];
+                if (topic0 == IERC1155.TransferSingle.selector) {
+                    (uint256 arg1, uint256 arg2) =
+                        abi.decode(log.data, (uint256, uint256));
+                    assertEq(log.topics[1], address(_portal).asTopic());
+                    assertEq(log.topics[2], sender.asTopic());
+                    assertEq(log.topics[3], appContract.asTopic());
+                    assertEq(tokenIds.length, 1);
+                    assertEq(arg1, tokenIds[0]);
+                    assertEq(values.length, 1);
+                    assertEq(arg2, values[0]);
+                    ++numOfTransferSingle;
+                } else if (topic0 == IERC1155.TransferBatch.selector) {
+                    (uint256[] memory arg1, uint256[] memory arg2) =
+                        abi.decode(log.data, (uint256[], uint256[]));
+                    assertEq(log.topics[1], address(_portal).asTopic());
+                    assertEq(log.topics[2], sender.asTopic());
+                    assertEq(log.topics[3], appContract.asTopic());
+                    assertEq(arg1, tokenIds);
+                    assertEq(arg2, values);
+                    ++numOfTransferBatch;
+                } else {
+                    revert("unexpected token contract topic #0");
+                }
+            } else {
+                revert("unexpected log emitter");
+            }
+        }
+
+        assertEq(numOfInputAdded, 1);
+
+        if (tokenIds.length == 1) {
+            assertEq(numOfTransferSingle, 1);
+            assertEq(numOfTransferBatch, 0);
+        } else {
+            assertEq(numOfTransferSingle, 0);
+            assertEq(numOfTransferBatch, 1);
+        }
+
+        assertEq(
+            token.balanceOfBatch(sender.repeat(tokenIds.length), tokenIds),
+            senderBalances.sub(values)
+        );
+        assertEq(
+            token.balanceOfBatch(appContract.repeat(tokenIds.length), tokenIds),
+            appContractBalances.add(values)
+        );
+
+        assertEq(_inputBox.getNumberOfInputs(appContract), numOfInputs + 1);
+        assertEq(keccak256(input), _inputBox.getInputHash(appContract, numOfInputs));
+
+        bytes memory buffer = payload;
+        address tokenArg;
+        address senderArg;
+        uint256[] memory tokenIdsArg;
+        uint256[] memory valuesArg;
+        bytes memory baseLayerDataArg;
+        bytes memory execLayerDataArg;
+
+        (tokenArg, buffer) = buffer.consumeAddress();
+        (senderArg, buffer) = buffer.consumeAddress();
+        (tokenIdsArg, valuesArg, baseLayerDataArg, execLayerDataArg) =
+            abi.decode(buffer, (uint256[], uint256[], bytes, bytes));
+
+        assertEq(tokenArg, address(token));
+        assertEq(senderArg, sender);
+        assertEq(tokenIdsArg, tokenIds);
+        assertEq(valuesArg, values);
+        assertEq(baseLayerDataArg, baseLayerData);
+        assertEq(execLayerDataArg, execLayerData);
+    }
+
+    function _randomSetup(address sender, uint256[] calldata values)
+        internal
+        returns (IERC1155 token, uint256[] memory tokenIds)
+    {
+        // Generate an array of unique uint256 values with the same size as `values`.
+        tokenIds = vm.randomUniqueUint256Array(values.length);
+
+        // Deploy the ERC-1155 token contract with the sender's tokens pre-minted
+        token = new SimpleBatchERC1155(sender, tokenIds, values);
+
+        // Mine a random number of blocks
+        vm.roll(vm.randomUint(vm.getBlockNumber(), type(uint256).max));
+
+        // Make the sender give approval to the portal
+        vm.prank(sender);
+        token.setApprovalForAll(address(_portal), true);
+    }
+
+    function _mockOnErc1155BatchReceived(
+        address appContract,
+        address sender,
+        uint256[] memory tokenIds,
+        uint256[] memory values,
+        bytes memory baseLayerData
+    ) internal {
+        if (tokenIds.length == 1) {
+            vm.mockCall(
+                appContract,
+                abi.encodeCall(
+                    IERC1155Receiver.onERC1155Received,
+                    (address(_portal), sender, tokenIds[0], values[0], baseLayerData)
+                ),
+                abi.encode(IERC1155Receiver.onERC1155Received.selector)
+            );
+        } else {
+            vm.mockCall(
+                appContract,
+                abi.encodeCall(
+                    IERC1155Receiver.onERC1155BatchReceived,
+                    (address(_portal), sender, tokenIds, values, baseLayerData)
+                ),
+                abi.encode(IERC1155Receiver.onERC1155BatchReceived.selector)
+            );
+        }
     }
 }

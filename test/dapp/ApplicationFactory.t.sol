@@ -16,8 +16,11 @@ import {Ownable} from "@openzeppelin-contracts-5.2.0/access/Ownable.sol";
 import {Test} from "forge-std-1.9.6/src/Test.sol";
 import {Vm} from "forge-std-1.9.6/src/Vm.sol";
 
+import {LibBytes} from "../util/LibBytes.sol";
+
 contract ApplicationFactoryTest is Test {
     using LibWithdrawalConfig for WithdrawalConfig;
+    using LibBytes for bytes;
 
     ApplicationFactory _factory;
 
@@ -269,16 +272,7 @@ contract ApplicationFactoryTest is Test {
         WithdrawalConfig memory withdrawalConfig,
         bytes memory error
     ) internal pure {
-        assertGe(error.length, 4, "Error data too short (no 4-byte selector)");
-
-        // forge-lint: disable-next-line(unsafe-typecast)
-        bytes4 errorSelector = bytes4(error);
-        bytes memory errorArgs = new bytes(error.length - 4);
-
-        for (uint256 i; i < errorArgs.length; ++i) {
-            errorArgs[i] = error[i + 4];
-        }
-
+        (bytes4 errorSelector, bytes memory errorArgs) = error.consumeBytes4();
         if (errorSelector == Ownable.OwnableInvalidOwner.selector) {
             address owner = abi.decode(errorArgs, (address));
             assertEq(owner, appOwner, "OwnableInvalidOwner.owner != owner");

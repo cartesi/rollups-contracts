@@ -5,138 +5,208 @@ pragma solidity ^0.8.22;
 
 import {IERC20} from "@openzeppelin-contracts-5.2.0/token/ERC20/IERC20.sol";
 
-import {InputEncoding} from "src/common/InputEncoding.sol";
+import {Test} from "forge-std-1.9.6/src/Test.sol";
+import {Vm} from "forge-std-1.9.6/src/Vm.sol";
+
 import {IInputBox} from "src/inputs/IInputBox.sol";
+import {InputBox} from "src/inputs/InputBox.sol";
 import {ERC20Portal} from "src/portals/ERC20Portal.sol";
 import {IERC20Portal} from "src/portals/IERC20Portal.sol";
 
-import {Test} from "forge-std-1.9.6/src/Test.sol";
-
+import {InputBoxTestUtils} from "../util/InputBoxTestUtils.sol";
+import {LibBytes} from "../util/LibBytes.sol";
+import {LibTopic} from "../util/LibTopic.sol";
 import {SimpleERC20} from "../util/SimpleERC20.sol";
 
-contract ERC20PortalTest is Test {
-    address _alice;
-    address _appContract;
+contract ERC20PortalTest is Test, InputBoxTestUtils {
+    using LibTopic for address;
+    using LibBytes for bytes;
+
     IInputBox _inputBox;
-    IERC20 _token;
     IERC20Portal _portal;
+    IERC20 _token;
+
+    address immutable TOKEN_OWNER = vm.addr(1);
+    uint256 immutable TOTAL_SUPPLY = type(uint256).max;
 
     function setUp() public {
-        _alice = vm.addr(1);
-        _appContract = vm.addr(2);
-        _inputBox = IInputBox(vm.addr(3));
-        _token = IERC20(vm.addr(4));
+        _inputBox = new InputBox();
         _portal = new ERC20Portal(_inputBox);
+        _token = new SimpleERC20(TOKEN_OWNER, TOTAL_SUPPLY);
     }
 
     function testGetInputBox() public view {
         assertEq(address(_portal.getInputBox()), address(_inputBox));
     }
 
-    function testTokenReturnsTrue(uint256 value, bytes calldata data) public {
-        bytes memory transferFrom = _encodeTransferFrom(value);
+    function testDepositRevertApplicationNotDeployed(
+        uint256 value,
+        bytes calldata execLayerData
+    ) external {
+        address sender = _randomAccountWithNoCode();
+        address appContract = _randomAccountWithNoCode();
 
-        vm.mockCall(address(_token), transferFrom, abi.encode(true));
+        _randomSetup(sender, appContract, value);
 
-        bytes memory payload = _encodePayload(_token, value, data);
-
-        bytes memory addInput = _encodeAddInput(payload);
-
-        vm.mockCall(address(_inputBox), addInput, abi.encode(bytes32(0)));
-
-        vm.expectCall(address(_token), transferFrom, 1);
-
-        vm.expectCall(address(_inputBox), addInput, 1);
-
-        vm.prank(_alice);
-        _portal.depositERC20Tokens(_token, _appContract, value, data);
+        vm.prank(sender);
+        vm.expectRevert(_encodeApplicationNotDeployed(appContract));
+        _portal.depositERC20Tokens(_token, appContract, value, execLayerData);
     }
 
-    function testTokenReturnsFalse(uint256 value, bytes calldata data) public {
-        bytes memory transferFrom = _encodeTransferFrom(value);
+    function testDepositRevertApplicationReverted(
+        uint256 value,
+        bytes calldata execLayerData,
+        bytes calldata error
+    ) external {
+        address sender = _randomAccountWithNoCode();
+        address appContract = _newAppMockReverts(error);
 
-        vm.mockCall(address(_token), transferFrom, abi.encode(false));
+        _randomSetup(sender, appContract, value);
 
-        bytes memory payload = _encodePayload(_token, value, data);
-
-        bytes memory addInput = _encodeAddInput(payload);
-
-        vm.mockCall(address(_inputBox), addInput, abi.encode(bytes32(0)));
-
-        vm.expectRevert(IERC20Portal.ERC20TransferFailed.selector);
-
-        vm.prank(_alice);
-        _portal.depositERC20Tokens(_token, _appContract, value, data);
+        vm.prank(sender);
+        vm.expectRevert(_encodeApplicationReverted(appContract, error));
+        _portal.depositERC20Tokens(_token, appContract, value, execLayerData);
     }
 
-    function testTokenReverts(uint256 value, bytes calldata data, bytes memory errorData)
-        public
-    {
-        bytes memory transferFrom = _encodeTransferFrom(value);
+    function testDepositRevertIllformedApplicationReturnDataSize(
+        uint256 value,
+        bytes calldata execLayerData,
+        bytes calldata returnData
+    ) external {
+        vm.assume(returnData.length != 32);
 
-        vm.mockCallRevert(address(_token), transferFrom, errorData);
+        address sender = _randomAccountWithNoCode();
+        address appContract = _newAppMockReturns(returnData);
 
-        bytes memory payload = _encodePayload(_token, value, data);
+        _randomSetup(sender, appContract, value);
 
-        bytes memory addInput = _encodeAddInput(payload);
-
-        vm.mockCall(address(_inputBox), addInput, abi.encode(bytes32(0)));
-
-        vm.expectRevert(errorData);
-
-        vm.prank(_alice);
-        _portal.depositERC20Tokens(_token, _appContract, value, data);
+        vm.prank(sender);
+        vm.expectRevert(_encodeIllformedApplicationReturnData(appContract, returnData));
+        _portal.depositERC20Tokens(_token, appContract, value, execLayerData);
     }
 
-    function testSimpleERC20(uint256 supply, uint256 value, bytes calldata data) public {
-        value = bound(value, 0, supply);
+    function testDepositRevertIllformedApplicationReturnDataInvalidBool(
+        uint256 value,
+        bytes calldata execLayerData
+    ) external {
+        uint256 returnValue = vm.randomUint(2, type(uint256).max);
+        bytes memory returnData = abi.encode(returnValue);
 
-        SimpleERC20 token = new SimpleERC20(_alice, supply);
+        address sender = _randomAccountWithNoCode();
+        address appContract = _newAppMockReturns(returnData);
 
-        bytes memory payload = _encodePayload(token, value, data);
+        _randomSetup(sender, appContract, value);
 
-        bytes memory addInput = _encodeAddInput(payload);
+        vm.prank(sender);
+        vm.expectRevert(_encodeIllformedApplicationReturnData(appContract, returnData));
+        _portal.depositERC20Tokens(_token, appContract, value, execLayerData);
+    }
 
-        vm.startPrank(_alice);
+    function testDepositRevertApplicationForeclosed(
+        uint256 value,
+        bytes calldata execLayerData
+    ) external {
+        address sender = _randomAccountWithNoCode();
+        address appContract = _newForeclosedAppMock();
 
-        token.approve(address(_portal), value);
+        _randomSetup(sender, appContract, value);
 
-        vm.mockCall(address(_inputBox), addInput, abi.encode(bytes32(0)));
+        vm.prank(sender);
+        vm.expectRevert(_encodeApplicationForeclosed(appContract));
+        _portal.depositERC20Tokens(_token, appContract, value, execLayerData);
+    }
 
-        // balances before
-        assertEq(token.balanceOf(_alice), supply);
-        assertEq(token.balanceOf(_appContract), 0);
-        assertEq(token.balanceOf(address(_portal)), 0);
+    function testDeposit(
+        uint256 value,
+        bytes calldata execLayerData,
+        bytes[] calldata payloads
+    ) external {
+        address sender = _randomAccountWithNoCode();
+        address appContract = _newActiveAppMock();
 
-        vm.expectCall(address(_inputBox), addInput, 1);
+        _randomSetup(sender, appContract, value);
+        _addInputs(_inputBox, appContract, payloads);
 
-        vm.expectEmit(true, true, false, true, address(token));
-        emit IERC20.Transfer(_alice, _appContract, value);
+        uint256 senderBalance = _token.balanceOf(sender);
+        uint256 appContractBalance = _token.balanceOf(appContract);
 
-        // deposit tokens
-        _portal.depositERC20Tokens(token, _appContract, value, data);
+        uint256 numOfInputs = _inputBox.getNumberOfInputs(appContract);
 
+        vm.recordLogs();
+
+        vm.prank(sender);
+        _portal.depositERC20Tokens(_token, appContract, value, execLayerData);
+
+        Vm.Log[] memory logs = vm.getRecordedLogs();
+        bytes memory input;
+        bytes memory payload;
+        uint256 numOfInputAdded;
+        uint256 numOfTransfer;
+
+        for (uint256 i; i < logs.length; ++i) {
+            Vm.Log memory log = logs[i];
+            if (log.emitter == address(_inputBox)) {
+                (input, payload) =
+                    _decodeInputAdded(log, appContract, address(_portal), numOfInputs);
+                ++numOfInputAdded;
+            } else if (log.emitter == address(_token)) {
+                bytes32 topic0 = log.topics[0];
+                if (topic0 == IERC20.Transfer.selector) {
+                    uint256 arg1 = abi.decode(log.data, (uint256));
+                    assertEq(log.topics[1], sender.asTopic());
+                    assertEq(log.topics[2], appContract.asTopic());
+                    assertEq(arg1, value);
+                    ++numOfTransfer;
+                } else {
+                    revert("unexpected token contract topic #0");
+                }
+            } else {
+                revert("unexpected log emitter");
+            }
+        }
+
+        assertEq(numOfInputAdded, 1);
+        assertEq(numOfTransfer, 1);
+
+        assertEq(_token.balanceOf(sender), senderBalance - value);
+        assertEq(_token.balanceOf(appContract), appContractBalance + value);
+
+        assertEq(_inputBox.getNumberOfInputs(appContract), numOfInputs + 1);
+        assertEq(keccak256(input), _inputBox.getInputHash(appContract, numOfInputs));
+
+        bytes memory buffer = payload;
+        address tokenArg;
+        address senderArg;
+        uint256 valueArg;
+        bytes memory execLayerDataArg;
+
+        (tokenArg, buffer) = buffer.consumeAddress();
+        (senderArg, buffer) = buffer.consumeAddress();
+        (valueArg, execLayerDataArg) = buffer.consumeUint256();
+
+        assertEq(tokenArg, address(_token));
+        assertEq(senderArg, sender);
+        assertEq(valueArg, value);
+        assertEq(execLayerDataArg, execLayerData);
+    }
+
+    function _randomSetup(address sender, address appContract, uint256 value) internal {
+        // Mine a random number of blocks
+        vm.roll(vm.randomUint(vm.getBlockNumber(), type(uint256).max));
+
+        // Transfer a random amount of tokens to each participant
+        vm.startPrank(TOKEN_OWNER);
+        assertTrue(_token.transfer(sender, _randomAmountGe(value)));
+        assertTrue(_token.transfer(address(_portal), _randomAmountGe(0)));
+        assertTrue(_token.transfer(appContract, _randomAmountGe(0)));
         vm.stopPrank();
 
-        // balances after
-        assertEq(token.balanceOf(_alice), supply - value);
-        assertEq(token.balanceOf(_appContract), value);
-        assertEq(token.balanceOf(address(_portal)), 0);
+        // Make the sender give enough allowance to the portal
+        vm.prank(sender);
+        _token.approve(address(_portal), vm.randomUint(value, type(uint256).max));
     }
 
-    function _encodePayload(IERC20 token, uint256 value, bytes calldata data)
-        internal
-        view
-        returns (bytes memory)
-    {
-        return InputEncoding.encodeERC20Deposit(token, _alice, value, data);
-    }
-
-    function _encodeTransferFrom(uint256 value) internal view returns (bytes memory) {
-        return abi.encodeCall(IERC20.transferFrom, (_alice, _appContract, value));
-    }
-
-    function _encodeAddInput(bytes memory payload) internal view returns (bytes memory) {
-        return abi.encodeCall(IInputBox.addInput, (_appContract, payload));
+    function _randomAmountGe(uint256 min) internal returns (uint256) {
+        return vm.randomUint(min, _token.balanceOf(TOKEN_OWNER));
     }
 }

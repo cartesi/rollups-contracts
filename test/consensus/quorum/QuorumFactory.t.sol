@@ -12,6 +12,7 @@ import {Claim} from "../../util/Claim.sol";
 import {ConsensusTestUtils} from "../../util/ConsensusTestUtils.sol";
 import {ERC165Test} from "../../util/ERC165Test.sol";
 import {LibAddressArray} from "../../util/LibAddressArray.sol";
+import {LibBytes} from "../../util/LibBytes.sol";
 import {LibClaim} from "../../util/LibClaim.sol";
 import {LibConsensus} from "../../util/LibConsensus.sol";
 import {LibMath} from "../../util/LibMath.sol";
@@ -29,6 +30,7 @@ contract QuorumFactoryTest is Test, ERC165Test, ConsensusTestUtils {
     using LibConsensus for IQuorum;
     using LibTopic for address;
     using LibMath for uint256;
+    using LibBytes for bytes;
     using LibClaim for Claim;
 
     IQuorumFactory _factory;
@@ -228,11 +230,10 @@ contract QuorumFactoryTest is Test, ERC165Test, ConsensusTestUtils {
     function testSubmitClaimRevertApplicationReturnIllFormedReturnData(
         address[] memory validators,
         uint256 epochLength,
-        Claim memory claim,
-        uint256 returnValue
+        Claim memory claim
     ) external {
         // We make isForeclosed() return an invalid boolean (neither 0 or 1)
-        vm.assume(returnValue > 1);
+        uint256 returnValue = vm.randomUint(2, type(uint256).max);
 
         IQuorum quorum = _newQuorum(validators, epochLength);
 
@@ -766,16 +767,7 @@ contract QuorumFactoryTest is Test, ERC165Test, ConsensusTestUtils {
         uint256 epochLength,
         bytes memory error
     ) internal pure {
-        assertGe(error.length, 4, "Error data too short (no 4-byte selector)");
-
-        // forge-lint: disable-next-line(unsafe-typecast)
-        bytes4 errorSelector = bytes4(error);
-        bytes memory errorArgs = new bytes(error.length - 4);
-
-        for (uint256 i; i < errorArgs.length; ++i) {
-            errorArgs[i] = error[i + 4];
-        }
-
+        (bytes4 errorSelector, bytes memory errorArgs) = error.consumeBytes4();
         if (errorSelector == bytes4(keccak256("Error(string)"))) {
             string memory message = abi.decode(errorArgs, (string));
             bytes32 messageHash = keccak256(bytes(message));
