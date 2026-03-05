@@ -105,4 +105,37 @@ library LibUint256Array {
             c[i] = a[i] + b[i];
         }
     }
+
+    function max(uint256[] memory array)
+        external
+        pure
+        returns (bool isEmpty, uint256 maxElem)
+    {
+        (isEmpty, maxElem) = maxBefore(array, array.length);
+    }
+
+    error InvalidSubArrayLength(uint256 subArrayLength, uint256 arrayLength);
+
+    function maxBefore(uint256[] memory array, uint256 subArrayLength)
+        public
+        pure
+        returns (bool isEmpty, uint256 maxElem)
+    {
+        if (subArrayLength == 0) {
+            isEmpty = true;
+            maxElem = 0;
+        } else {
+            require(
+                subArrayLength <= array.length,
+                InvalidSubArrayLength(subArrayLength, array.length)
+            );
+            isEmpty = false;
+            maxElem = array[0];
+            for (uint256 i = 1; i < subArrayLength; ++i) {
+                if (array[i] > maxElem) {
+                    maxElem = array[i];
+                }
+            }
+        }
+    }
 }

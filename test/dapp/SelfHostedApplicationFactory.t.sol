@@ -145,6 +145,19 @@ contract SelfHostedApplicationFactoryTest is Test {
                 address(authority),
                 "calculateAddresses(...) is not a pure function"
             );
+        } catch Error(string memory message) {
+            bytes32 messageHash = keccak256(bytes(message));
+            if (messageHash == keccak256("epoch length must not be zero")) {
+                assertEq(epochLength, 0, "Expected epoch length to be zero");
+            } else if (messageHash == keccak256("Invalid withdrawal config")) {
+                assertEq(
+                    withdrawalConfig.isValid(),
+                    false,
+                    "expected withdrawal config to be invalid"
+                );
+            } else {
+                revert("Unexpected error message");
+            }
         } catch (bytes memory error) {
             (bytes4 errorSelector, bytes memory errorArgs) = error.consumeBytes4();
             if (errorSelector == Ownable.OwnableInvalidOwner.selector) {
@@ -154,20 +167,6 @@ contract SelfHostedApplicationFactoryTest is Test {
                     appOwner == address(0) || authorityOwner == address(0),
                     "Expected either app or authority owner to be zero"
                 );
-            } else if (errorSelector == bytes4(keccak256("Error(string)"))) {
-                string memory message = abi.decode(errorArgs, (string));
-                bytes32 messageHash = keccak256(bytes(message));
-                if (messageHash == keccak256("epoch length must not be zero")) {
-                    assertEq(epochLength, 0, "Expected epoch length to be zero");
-                } else if (messageHash == keccak256("Invalid withdrawal config")) {
-                    assertEq(
-                        withdrawalConfig.isValid(),
-                        false,
-                        "expected withdrawal config to be invalid"
-                    );
-                } else {
-                    revert("Unexpected error message");
-                }
             } else {
                 revert("Unexpected error");
             }

@@ -25,12 +25,22 @@ abstract contract AbstractConsensus is IConsensus, ERC165, ApplicationChecker {
 
     /// @notice Indexes accepted claims by application contract address.
     mapping(address => mapping(bytes32 => bool)) private _validOutputsMerkleRoots;
+
+    /// @notice Indexes number of the first unprocessed block
+    /// by application contract address.
+    mapping(address => uint256) private _firstUnprocessedBlockNumbers;
+
+    /// @notice Indexes machine merkle root of the most recently accepted claim
+    /// by application contract address.
+    mapping(address => bytes32) private _lastFinalizedMachineMerkleRoots;
+
     /// @notice Number of claims accepted by the consensus.
     /// @dev Must be monotonically non-decreasing in time
-    uint256 _numOfAcceptedClaims;
+    uint256 private _numOfAcceptedClaims;
+
     /// @notice Number of claims submitted to the consensus.
     /// @dev Must be monotonically non-decreasing in time
-    uint256 _numOfSubmittedClaims;
+    uint256 private _numOfSubmittedClaims;
 
     /// @param epochLength The epoch length
     /// @dev Reverts if the epoch length is zero.
@@ -47,6 +57,15 @@ abstract contract AbstractConsensus is IConsensus, ERC165, ApplicationChecker {
         returns (bool)
     {
         return _validOutputsMerkleRoots[appContract][outputsMerkleRoot];
+    }
+
+    function getLastFinalizedMachineMerkleRoot(address appContract)
+        public
+        view
+        override
+        returns (bytes32)
+    {
+        return _lastFinalizedMachineMerkleRoots[appContract];
     }
 
     /// @inheritdoc IConsensus
@@ -137,6 +156,10 @@ abstract contract AbstractConsensus is IConsensus, ERC165, ApplicationChecker {
         bytes32 machineMerkleRoot
     ) internal notForeclosed(appContract) {
         _validOutputsMerkleRoots[appContract][outputsMerkleRoot] = true;
+        if (lastProcessedBlockNumber >= _firstUnprocessedBlockNumbers[appContract]) {
+            _lastFinalizedMachineMerkleRoots[appContract] = machineMerkleRoot;
+            _firstUnprocessedBlockNumbers[appContract] = lastProcessedBlockNumber + 1;
+        }
         emit ClaimAccepted(
             appContract, lastProcessedBlockNumber, outputsMerkleRoot, machineMerkleRoot
         );
