@@ -16,4 +16,14 @@ interface IOutputsMerkleRootValidator is IERC165 {
         external
         view
         returns (bool);
+
+    /// @notice Get the last finalized machine Merkle root.
+    /// @param appContract The application contract address
+    /// @dev Returns zero if no machine merkle root has been finalized yet
+    /// for that particular application. This should not be a problem given
+    /// that the pre-image Keccak-256 hash of zero is unknown.
+    function getLastFinalizedMachineMerkleRoot(address appContract)
+        external
+        view
+        returns (bytes32);
 }

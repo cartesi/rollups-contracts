@@ -20,9 +20,11 @@ import {LibBytes} from "../../util/LibBytes.sol";
 import {LibClaim} from "../../util/LibClaim.sol";
 import {LibConsensus} from "../../util/LibConsensus.sol";
 import {LibTopic} from "../../util/LibTopic.sol";
+import {LibUint256Array} from "../../util/LibUint256Array.sol";
 import {OwnableTest} from "../../util/OwnableTest.sol";
 
 contract AuthorityFactoryTest is Test, ERC165Test, OwnableTest, ConsensusTestUtils {
+    using LibUint256Array for uint256[];
     using LibConsensus for IAuthority;
     using LibTopic for address;
     using LibClaim for Claim;
@@ -52,8 +54,11 @@ contract AuthorityFactoryTest is Test, ERC165Test, OwnableTest, ConsensusTestUti
             _testNewAuthoritySuccess(
                 authorityOwner, epochLength, interfaceId, authority, logs
             );
+        } catch Error(string memory message) {
+            _testNewAuthorityFailure(epochLength, message);
+            return;
         } catch (bytes memory error) {
-            _testNewAuthorityFailure(authorityOwner, epochLength, error);
+            _testNewAuthorityFailure(authorityOwner, error);
             return;
         }
     }
@@ -83,8 +88,11 @@ contract AuthorityFactoryTest is Test, ERC165Test, OwnableTest, ConsensusTestUti
             _testNewAuthoritySuccess(
                 authorityOwner, epochLength, interfaceId, authority, logs
             );
+        } catch Error(string memory message) {
+            _testNewAuthorityFailure(epochLength, message);
+            return;
         } catch (bytes memory error) {
-            _testNewAuthorityFailure(authorityOwner, epochLength, error);
+            _testNewAuthorityFailure(authorityOwner, error);
             return;
         }
 
@@ -137,7 +145,7 @@ contract AuthorityFactoryTest is Test, ERC165Test, OwnableTest, ConsensusTestUti
 
         claim.appContract = _newActiveAppMock();
 
-        claim.lastProcessedBlockNumber = _randomFutureEpochFinalBlockNumber(epochLength);
+        claim.lastProcessedBlockNumber = _randomEpochFinalBlockNumber(epochLength);
         vm.roll(_randomUintGt(claim.lastProcessedBlockNumber));
 
         claim.proof = _randomLeafProof();
@@ -180,7 +188,7 @@ contract AuthorityFactoryTest is Test, ERC165Test, OwnableTest, ConsensusTestUti
         claim.appContract = _newActiveAppMock();
 
         // Adjust the lastProcessedBlockNumber but do not roll past it.
-        claim.lastProcessedBlockNumber = _randomFutureEpochFinalBlockNumber(epochLength);
+        claim.lastProcessedBlockNumber = _randomEpochFinalBlockNumber(epochLength);
 
         claim.proof = _randomLeafProof();
 
@@ -199,7 +207,7 @@ contract AuthorityFactoryTest is Test, ERC165Test, OwnableTest, ConsensusTestUti
         // We use a random account with no code as app contract
         claim.appContract = _randomAccountWithNoCode();
 
-        claim.lastProcessedBlockNumber = _randomFutureEpochFinalBlockNumber(epochLength);
+        claim.lastProcessedBlockNumber = _randomEpochFinalBlockNumber(epochLength);
         vm.roll(_randomUintGt(claim.lastProcessedBlockNumber));
 
         claim.proof = _randomLeafProof();
@@ -220,7 +228,7 @@ contract AuthorityFactoryTest is Test, ERC165Test, OwnableTest, ConsensusTestUti
         // We make isForeclosed() revert with an error
         claim.appContract = _newAppMockReverts(error);
 
-        claim.lastProcessedBlockNumber = _randomFutureEpochFinalBlockNumber(epochLength);
+        claim.lastProcessedBlockNumber = _randomEpochFinalBlockNumber(epochLength);
         vm.roll(_randomUintGt(claim.lastProcessedBlockNumber));
 
         claim.proof = _randomLeafProof();
@@ -243,7 +251,7 @@ contract AuthorityFactoryTest is Test, ERC165Test, OwnableTest, ConsensusTestUti
 
         claim.appContract = _newAppMockReturns(data);
 
-        claim.lastProcessedBlockNumber = _randomFutureEpochFinalBlockNumber(epochLength);
+        claim.lastProcessedBlockNumber = _randomEpochFinalBlockNumber(epochLength);
         vm.roll(_randomUintGt(claim.lastProcessedBlockNumber));
 
         claim.proof = _randomLeafProof();
@@ -266,7 +274,7 @@ contract AuthorityFactoryTest is Test, ERC165Test, OwnableTest, ConsensusTestUti
         bytes memory data = abi.encode(returnValue);
         claim.appContract = _newAppMockReturns(data);
 
-        claim.lastProcessedBlockNumber = _randomFutureEpochFinalBlockNumber(epochLength);
+        claim.lastProcessedBlockNumber = _randomEpochFinalBlockNumber(epochLength);
         vm.roll(_randomUintGt(claim.lastProcessedBlockNumber));
 
         claim.proof = _randomLeafProof();
@@ -286,7 +294,7 @@ contract AuthorityFactoryTest is Test, ERC165Test, OwnableTest, ConsensusTestUti
         // We make isForeclosed() return true
         claim.appContract = _newForeclosedAppMock();
 
-        claim.lastProcessedBlockNumber = _randomFutureEpochFinalBlockNumber(epochLength);
+        claim.lastProcessedBlockNumber = _randomEpochFinalBlockNumber(epochLength);
         vm.roll(_randomUintGt(claim.lastProcessedBlockNumber));
 
         claim.proof = _randomLeafProof();
@@ -305,7 +313,7 @@ contract AuthorityFactoryTest is Test, ERC165Test, OwnableTest, ConsensusTestUti
 
         claim.appContract = _newActiveAppMock();
 
-        claim.lastProcessedBlockNumber = _randomFutureEpochFinalBlockNumber(epochLength);
+        claim.lastProcessedBlockNumber = _randomEpochFinalBlockNumber(epochLength);
         vm.roll(_randomUintGt(claim.lastProcessedBlockNumber));
 
         claim.proof = _randomProof(_randomInvalidLeafProofSize());
@@ -324,85 +332,126 @@ contract AuthorityFactoryTest is Test, ERC165Test, OwnableTest, ConsensusTestUti
 
         claim.appContract = _newActiveAppMock();
 
-        claim.lastProcessedBlockNumber = _randomFutureEpochFinalBlockNumber(epochLength);
-        vm.roll(_randomUintGt(claim.lastProcessedBlockNumber));
+        uint256[] memory blockNumbers = _randomEpochFinalBlockNumbers(epochLength);
 
-        claim.proof = _randomLeafProof();
-
-        bytes32 machineMerkleRoot = claim.computeMachineMerkleRoot();
-
-        uint256 totalNumOfSubmittedClaimsBefore = authority.getNumberOfSubmittedClaims();
-        uint256 totalNumOfAcceptedClaimsBefore = authority.getNumberOfAcceptedClaims();
-
-        vm.recordLogs();
-
-        vm.prank(authorityOwner);
-        authority.submitClaim(claim);
-
-        Vm.Log[] memory logs = vm.getRecordedLogs();
-
-        uint256 numOfClaimSubmittedEvents;
-        uint256 numOfClaimAcceptedEvents;
-
-        for (uint256 j; j < logs.length; ++j) {
-            Vm.Log memory log = logs[j];
-            if (log.emitter == address(authority)) {
-                assertGe(log.topics.length, 1, "unexpected annonymous event");
-                bytes32 topic0 = log.topics[0];
-                if (topic0 == IConsensus.ClaimSubmitted.selector) {
-                    (uint256 arg0, bytes32 arg1, bytes32 arg2) =
-                        abi.decode(log.data, (uint256, bytes32, bytes32));
-                    assertEq(log.topics[1], authorityOwner.asTopic());
-                    assertEq(log.topics[2], claim.appContract.asTopic());
-                    assertEq(arg0, claim.lastProcessedBlockNumber);
-                    assertEq(arg1, claim.outputsMerkleRoot);
-                    assertEq(arg2, machineMerkleRoot);
-                    ++numOfClaimSubmittedEvents;
-                } else if (topic0 == IConsensus.ClaimAccepted.selector) {
-                    (uint256 arg0, bytes32 arg1, bytes32 arg2) =
-                        abi.decode(log.data, (uint256, bytes32, bytes32));
-                    assertEq(log.topics[1], claim.appContract.asTopic());
-                    assertEq(arg0, claim.lastProcessedBlockNumber);
-                    assertEq(arg1, claim.outputsMerkleRoot);
-                    assertEq(arg2, machineMerkleRoot);
-                    ++numOfClaimAcceptedEvents;
-                } else {
-                    revert("unexpected event selector");
-                }
-            } else {
-                revert("unexpected log emitter");
-            }
+        {
+            (bool isEmpty, uint256 max) = blockNumbers.max();
+            assertFalse(isEmpty, "unexpected empty array of epoch final block numbers");
+            vm.roll(_randomUintGt(max));
         }
 
-        assertEq(numOfClaimSubmittedEvents, 1, "expected 1 ClaimSubmitted event");
-        assertEq(numOfClaimAcceptedEvents, 1, "expected 1 ClaimAccepted event");
+        bytes32 lastFinalizedMachineMerkleRoot;
 
-        assertTrue(
-            authority.isOutputsMerkleRootValid(
-                claim.appContract, claim.outputsMerkleRoot
-            ),
-            "Once a claim is accepted, the outputs Merkle root is valid"
-        );
+        for (uint256 claimIndex; claimIndex < blockNumbers.length; ++claimIndex) {
+            claim.lastProcessedBlockNumber = blockNumbers[claimIndex];
+            claim.outputsMerkleRoot = _randomBytes32();
+            claim.proof = _randomLeafProof();
 
-        assertEq(
-            authority.getNumberOfSubmittedClaims(),
-            totalNumOfSubmittedClaimsBefore + numOfClaimSubmittedEvents,
-            "Total number of submitted claims should be increased by number of events"
-        );
+            bytes32 machineMerkleRoot = claim.computeMachineMerkleRoot();
 
-        assertEq(
-            authority.getNumberOfAcceptedClaims(),
-            totalNumOfAcceptedClaimsBefore + numOfClaimAcceptedEvents,
-            "Total number of accepted claims should be increased by number of events"
-        );
+            uint256 totalNumOfSubmittedClaims = authority.getNumberOfSubmittedClaims();
+            uint256 totalNumOfAcceptedClaims = authority.getNumberOfAcceptedClaims();
 
-        (Claim memory otherClaim,) = _randomClaimDifferentFrom(claim, machineMerkleRoot);
+            vm.recordLogs();
 
-        vm.expectRevert(
-            _encodeNotFirstClaim(claim.appContract, claim.lastProcessedBlockNumber)
-        );
-        vm.prank(authorityOwner);
-        authority.submitClaim(otherClaim);
+            vm.prank(authority.owner());
+            try authority.submitClaim(
+                claim.appContract,
+                claim.lastProcessedBlockNumber,
+                claim.outputsMerkleRoot,
+                claim.proof
+            ) {}
+            catch (bytes memory error) {
+                (bytes4 errorSelector, bytes memory errorArgs) = error.consumeBytes4();
+                if (errorSelector == IConsensus.NotFirstClaim.selector) {
+                    (address arg1, uint256 arg2) =
+                        abi.decode(errorArgs, (address, uint256));
+                    assertEq(arg1, claim.appContract);
+                    assertEq(arg2, claim.lastProcessedBlockNumber);
+                    assertTrue(blockNumbers.containsBefore(arg2, claimIndex));
+                } else {
+                    revert("Unexpected error");
+                }
+
+                // Proceed to the next claim.
+                continue;
+            }
+
+            {
+                Vm.Log[] memory logs = vm.getRecordedLogs();
+
+                uint256 numOfClaimSubmittedEvents;
+                uint256 numOfClaimAcceptedEvents;
+
+                for (uint256 i; i < logs.length; ++i) {
+                    Vm.Log memory log = logs[i];
+                    if (log.emitter == address(authority)) {
+                        assertGe(log.topics.length, 1, "unexpected annonymous event");
+                        bytes32 topic0 = log.topics[0];
+                        if (topic0 == IConsensus.ClaimSubmitted.selector) {
+                            (uint256 arg0, bytes32 arg1, bytes32 arg2) =
+                                abi.decode(log.data, (uint256, bytes32, bytes32));
+                            assertEq(log.topics[1], authority.owner().asTopic());
+                            assertEq(log.topics[2], claim.appContract.asTopic());
+                            assertEq(arg0, claim.lastProcessedBlockNumber);
+                            assertEq(arg1, claim.outputsMerkleRoot);
+                            assertEq(arg2, machineMerkleRoot);
+                            ++numOfClaimSubmittedEvents;
+                        } else if (topic0 == IConsensus.ClaimAccepted.selector) {
+                            (uint256 arg0, bytes32 arg1, bytes32 arg2) =
+                                abi.decode(log.data, (uint256, bytes32, bytes32));
+                            assertEq(log.topics[1], claim.appContract.asTopic());
+                            assertEq(arg0, claim.lastProcessedBlockNumber);
+                            assertEq(arg1, claim.outputsMerkleRoot);
+                            assertEq(arg2, machineMerkleRoot);
+                            ++numOfClaimAcceptedEvents;
+                        } else {
+                            revert("unexpected event selector");
+                        }
+                    } else {
+                        revert("unexpected log emitter");
+                    }
+                }
+
+                assertEq(numOfClaimSubmittedEvents, 1, "expected 1 ClaimSubmitted event");
+                assertEq(numOfClaimAcceptedEvents, 1, "expected 1 ClaimAccepted event");
+            }
+
+            assertEq(
+                authority.getNumberOfSubmittedClaims(),
+                totalNumOfSubmittedClaims + 1,
+                "Total number of submitted claims should be increased by number of events"
+            );
+
+            assertEq(
+                authority.getNumberOfAcceptedClaims(),
+                totalNumOfAcceptedClaims + 1,
+                "Total number of accepted claims should be increased by number of events"
+            );
+
+            {
+                (bool isEmpty, uint256 max) = blockNumbers.maxBefore(claimIndex);
+
+                // If the claim was successful submitted, then its last processed
+                // block number cannot be equal to any past successful claim.
+                if (isEmpty || claim.lastProcessedBlockNumber > max) {
+                    lastFinalizedMachineMerkleRoot = machineMerkleRoot;
+                }
+            }
+
+            assertTrue(
+                authority.isOutputsMerkleRootValid(
+                    claim.appContract, claim.outputsMerkleRoot
+                ),
+                "Once a claim is accepted, the outputs Merkle root is valid"
+            );
+
+            assertEq(
+                authority.getLastFinalizedMachineMerkleRoot(claim.appContract),
+                lastFinalizedMachineMerkleRoot,
+                "Check last finalized machine Merkle root"
+            );
+        }
     }
 
     function _testNewAuthoritySuccess(
@@ -457,6 +506,13 @@ contract AuthorityFactoryTest is Test, ERC165Test, OwnableTest, ConsensusTestUti
             "initially, isOutputsMerkleRootValid(...) == false"
         );
 
+        // We check that initially no machine Merkle root has been finalized.
+        assertEq(
+            authority.getLastFinalizedMachineMerkleRoot(vm.randomAddress()),
+            bytes32(0),
+            "initially, getLastFinalizedMachineMerkleRoot(...) == bytes32(0)"
+        );
+
         // Also, initially, no `ClaimSubmitted` or `ClaimAccepted` were emitted.
         assertEq(
             authority.getNumberOfSubmittedClaims(),
@@ -473,23 +529,27 @@ contract AuthorityFactoryTest is Test, ERC165Test, OwnableTest, ConsensusTestUti
         _testSupportsInterface(authority, interfaceId);
     }
 
-    function _testNewAuthorityFailure(
-        address authorityOwner,
-        uint256 epochLength,
-        bytes memory error
-    ) internal pure {
+    function _testNewAuthorityFailure(uint256 epochLength, string memory message)
+        internal
+        pure
+    {
+        bytes32 messageHash = keccak256(bytes(message));
+        if (messageHash == keccak256("epoch length must not be zero")) {
+            assertEq(epochLength, 0, "expected epoch length to be zero");
+        } else {
+            revert("Unexpected error message");
+        }
+    }
+
+    function _testNewAuthorityFailure(address authorityOwner, bytes memory error)
+        internal
+        pure
+    {
         (bytes4 errorSelector, bytes memory errorArgs) = error.consumeBytes4();
         if (errorSelector == Ownable.OwnableInvalidOwner.selector) {
             address owner = abi.decode(errorArgs, (address));
             assertEq(owner, authorityOwner, "OwnableInvalidOwner.owner != owner");
             assertEq(owner, address(0), "OwnableInvalidOwner.owner != address(0)");
-        } else if (errorSelector == bytes4(keccak256("Error(string)"))) {
-            string memory message = abi.decode(errorArgs, (string));
-            if (keccak256(bytes(message)) == keccak256("epoch length must not be zero")) {
-                assertEq(epochLength, 0, "expected epoch length to be zero");
-            } else {
-                revert("Unexpected error message");
-            }
         } else {
             revert("Unexpected error");
         }

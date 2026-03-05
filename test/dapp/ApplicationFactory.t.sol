@@ -61,8 +61,11 @@ contract ApplicationFactoryTest is Test {
                 blockNumber,
                 logs
             );
+        } catch Error(string memory message) {
+            _testNewApplicationFailure(withdrawalConfig, message);
+            return;
         } catch (bytes memory error) {
-            _testNewApplicationFailure(appOwner, withdrawalConfig, error);
+            _testNewApplicationFailure(appOwner, error);
             return;
         }
     }
@@ -117,8 +120,11 @@ contract ApplicationFactoryTest is Test {
                 blockNumber,
                 logs
             );
+        } catch Error(string memory message) {
+            _testNewApplicationFailure(withdrawalConfig, message);
+            return;
         } catch (bytes memory error) {
-            _testNewApplicationFailure(appOwner, withdrawalConfig, error);
+            _testNewApplicationFailure(appOwner, error);
             return;
         }
 
@@ -268,26 +274,30 @@ contract ApplicationFactoryTest is Test {
     }
 
     function _testNewApplicationFailure(
-        address appOwner,
         WithdrawalConfig memory withdrawalConfig,
-        bytes memory error
+        string memory message
     ) internal pure {
+        bytes32 messageHash = keccak256(bytes(message));
+        if (messageHash == keccak256("Invalid withdrawal config")) {
+            assertEq(
+                withdrawalConfig.isValid(),
+                false,
+                "expected withdrawal config to be invalid"
+            );
+        } else {
+            revert("Unexpected error message");
+        }
+    }
+
+    function _testNewApplicationFailure(address appOwner, bytes memory error)
+        internal
+        pure
+    {
         (bytes4 errorSelector, bytes memory errorArgs) = error.consumeBytes4();
         if (errorSelector == Ownable.OwnableInvalidOwner.selector) {
             address owner = abi.decode(errorArgs, (address));
             assertEq(owner, appOwner, "OwnableInvalidOwner.owner != owner");
             assertEq(owner, address(0), "OwnableInvalidOwner.owner != address(0)");
-        } else if (errorSelector == bytes4(keccak256("Error(string)"))) {
-            string memory message = abi.decode(errorArgs, (string));
-            if (keccak256(bytes(message)) == keccak256("Invalid withdrawal config")) {
-                assertEq(
-                    withdrawalConfig.isValid(),
-                    false,
-                    "expected withdrawal config to be invalid"
-                );
-            } else {
-                revert("Unexpected error message");
-            }
         } else {
             revert("Unexpected error");
         }
