@@ -57,24 +57,56 @@ contract ConsensusTestUtils is ApplicationCheckerTestUtils {
         );
     }
 
-    function _maxEpochIndex(uint256 epochLength) internal pure returns (uint256) {
-        return (type(uint256).max - (epochLength - 1)) / epochLength;
-    }
-
-    function _minFutureEpochIndex(uint256 epochLength) internal view returns (uint256) {
-        return (vm.getBlockNumber() + 1) / epochLength;
-    }
-
-    function _randomFutureEpochIndex(uint256 epochLength) internal returns (uint256) {
-        return
-            vm.randomUint(_minFutureEpochIndex(epochLength), _maxEpochIndex(epochLength));
-    }
-
-    function _randomFutureEpochFinalBlockNumber(uint256 epochLength)
+    function _epochIndexOfLastBlock(uint256 epochLength)
         internal
-        returns (uint256)
+        pure
+        returns (uint256 epochIndex)
     {
-        return _randomFutureEpochIndex(epochLength) * epochLength + (epochLength - 1);
+        return type(uint256).max / epochLength;
+    }
+
+    function _currentEpochIndex(uint256 epochLength)
+        internal
+        view
+        returns (uint256 epochIndex)
+    {
+        return vm.getBlockNumber() / epochLength;
+    }
+
+    function _randomEpochIndex(uint256 epochLength)
+        internal
+        returns (uint256 epochIndex)
+    {
+        uint256 currentEpochIndex = _currentEpochIndex(epochLength);
+        uint256 epochIndexOfLastBlock = _epochIndexOfLastBlock(epochLength);
+        vm.assume(epochIndexOfLastBlock >= 1);
+        uint256 maxEpochIndex = epochIndexOfLastBlock - 1;
+        vm.assume(currentEpochIndex <= maxEpochIndex);
+        return vm.randomUint(currentEpochIndex, maxEpochIndex);
+    }
+
+    function _randomEpochFinalBlockNumber(uint256 epochLength)
+        internal
+        returns (uint256 epochFinalBlock)
+    {
+        return _randomEpochIndex(epochLength) * epochLength + (epochLength - 1);
+    }
+
+    function _randomEpochFinalBlockNumbers(uint256 epochLength, uint256 n)
+        internal
+        returns (uint256[] memory epochFinalBlocks)
+    {
+        epochFinalBlocks = new uint256[](n);
+        for (uint256 i; i < epochFinalBlocks.length; ++i) {
+            epochFinalBlocks[i] = _randomEpochFinalBlockNumber(epochLength);
+        }
+    }
+
+    function _randomEpochFinalBlockNumbers(uint256 epochLength)
+        internal
+        returns (uint256[] memory epochFinalBlocks)
+    {
+        return _randomEpochFinalBlockNumbers(epochLength, vm.randomUint(1, 3));
     }
 
     function _randomUintGt(uint256 n) internal returns (uint256) {
