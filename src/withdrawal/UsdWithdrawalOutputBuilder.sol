@@ -1,0 +1,60 @@
+// (c) Cartesi and individual authors (see AUTHORS)
+// SPDX-License-Identifier: Apache-2.0 (see LICENSE)
+
+pragma solidity ^0.8.8;
+
+import {IERC20} from "@openzeppelin-contracts-5.2.0/token/ERC20/IERC20.sol";
+
+import {Outputs} from "../common/Outputs.sol";
+import {ISafeERC20Transfer} from "../delegatecall/ISafeERC20Transfer.sol";
+import {IWithdrawalOutputBuilder} from "./IWithdrawalOutputBuilder.sol";
+
+contract UsdWithdrawalOutputBuilder is IWithdrawalOutputBuilder {
+    ISafeERC20Transfer immutable SAFE_ERC20_TRANSFER;
+    IERC20 immutable USD;
+
+    constructor(ISafeERC20Transfer safeTransfer, IERC20 usd) {
+        SAFE_ERC20_TRANSFER = safeTransfer;
+        USD = usd;
+    }
+
+    function buildWithdrawalOutput(bytes calldata account)
+        external
+        view
+        override
+        returns (bytes memory output)
+    {
+        (address user, uint256 balance) = _decodeAccount(account);
+        address destination = address(SAFE_ERC20_TRANSFER);
+        bytes memory payload = _encodeSafeTransferPayload(user, balance);
+        return _encodeDelegateCallVoucher(destination, payload);
+    }
+
+    function _decodeAccount(bytes calldata account)
+        internal
+        pure
+        returns (address user, uint256 balance)
+    {
+        require(account.length >= 28, "Account is too short");
+        user = address(uint160(bytes20(account[8:28])));
+        for (uint256 i; i < 8; ++i) {
+            balance |= (uint256(uint8(account[i])) << (8 * i));
+        }
+    }
+
+    function _encodeSafeTransferPayload(address user, uint256 value)
+        internal
+        view
+        returns (bytes memory payload)
+    {
+        return abi.encodeCall(ISafeERC20Transfer.safeTransfer, (USD, user, value));
+    }
+
+    function _encodeDelegateCallVoucher(address destination, bytes memory payload)
+        internal
+        pure
+        returns (bytes memory output)
+    {
+        return abi.encodeCall(Outputs.DelegateCallVoucher, (destination, payload));
+    }
+}
