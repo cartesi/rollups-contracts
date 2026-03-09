@@ -169,7 +169,7 @@ contract ApplicationFactoryTest is Test {
         IApplication appContract,
         uint256 blockNumber,
         Vm.Log[] memory logs
-    ) internal view {
+    ) internal {
         uint256 numOfApplicationsCreated;
 
         for (uint256 i; i < logs.length; ++i) {
@@ -272,7 +272,15 @@ contract ApplicationFactoryTest is Test {
             0,
             "getNumberOfExecutedOutputs() != 0"
         );
+        assertFalse(
+            appContract.wasOutputExecuted(vm.randomUint()),
+            "initially, wasOutputExecuted(...) = false"
+        );
         assertEq(appContract.getNumberOfWithdrawals(), 0, "getNumberOfWithdrawals() != 0");
+        assertFalse(
+            appContract.wereAccountFundsWithdrawn(vm.randomUint()),
+            "initially, wereAccountFundsWithdrawn(...) = false"
+        );
         assertEq(
             withdrawalConfig.isValid(), true, "Expected withdrawal config to be valid"
         );
