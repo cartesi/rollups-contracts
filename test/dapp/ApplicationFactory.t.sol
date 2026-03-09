@@ -253,9 +253,9 @@ contract ApplicationFactoryTest is Test {
             "getAccountsDriveStartIndex() != withdrawalConfig.accountsDriveStartIndex"
         );
         assertEq(
-            address(appContract.getWithdrawer()),
-            address(withdrawalConfig.withdrawer),
-            "getWithdrawer() != withdrawalConfig.withdrawer"
+            address(appContract.getWithdrawalOutputBuilder()),
+            address(withdrawalConfig.withdrawalOutputBuilder),
+            "getWithdrawalOutputBuilder() != withdrawalConfig.withdrawalOutputBuilder"
         );
         assertEq(
             appContract.getDataAvailability(),
