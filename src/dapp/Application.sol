@@ -11,7 +11,7 @@ import {IOutputsMerkleRootValidator} from "../consensus/IOutputsMerkleRootValida
 import {LibAddress} from "../library/LibAddress.sol";
 import {LibOutputValidityProof} from "../library/LibOutputValidityProof.sol";
 import {LibWithdrawalConfig} from "../library/LibWithdrawalConfig.sol";
-import {IWithdrawer} from "../withdrawers/IWithdrawer.sol";
+import {IWithdrawalOutputBuilder} from "../withdrawal/IWithdrawalOutputBuilder.sol";
 import {IApplication} from "./IApplication.sol";
 
 import {Ownable} from "@openzeppelin-contracts-5.2.0/access/Ownable.sol";
@@ -59,9 +59,9 @@ contract Application is
     /// @dev See the `getAccountsDriveStartIndex` function.
     uint64 immutable ACCOUNTS_DRIVE_START_INDEX;
 
-    /// @notice The withdrawer contract.
-    /// @dev See the `getWithdrawer` function.
-    IWithdrawer immutable WITHDRAWER;
+    /// @notice The withdrawal output builder contract.
+    /// @dev See the `getWithdrawalOutputBuilder` function.
+    IWithdrawalOutputBuilder immutable WITHDRAWAL_OUTPUT_BUILDER;
 
     /// @notice Keeps track of which outputs have been executed.
     /// @dev See the `wasOutputExecuted` function.
@@ -87,21 +87,23 @@ contract Application is
     /// @param outputsMerkleRootValidator The initial outputs Merkle root validator contract
     /// @param initialOwner The initial application owner
     /// @param templateHash The initial machine state hash
+    /// @param dataAvailability The data availability solution
+    /// @param withdrawalConfig The withdrawal configuration
     /// @dev Reverts if the initial application owner address is zero.
     constructor(
         IOutputsMerkleRootValidator outputsMerkleRootValidator,
         address initialOwner,
         bytes32 templateHash,
         bytes memory dataAvailability,
-        WithdrawalConfig memory withdrawawlConfig
+        WithdrawalConfig memory withdrawalConfig
     ) Ownable(initialOwner) {
-        require(withdrawawlConfig.isValid(), "Invalid withdrawal config");
+        require(withdrawalConfig.isValid(), "Invalid withdrawal config");
         TEMPLATE_HASH = templateHash;
-        GUARDIAN = withdrawawlConfig.guardian;
-        LOG2_LEAVES_PER_ACCOUNT = withdrawawlConfig.log2LeavesPerAccount;
-        LOG2_MAX_NUM_OF_ACCOUNTS = withdrawawlConfig.log2MaxNumOfAccounts;
-        ACCOUNTS_DRIVE_START_INDEX = withdrawawlConfig.accountsDriveStartIndex;
-        WITHDRAWER = withdrawawlConfig.withdrawer;
+        GUARDIAN = withdrawalConfig.guardian;
+        LOG2_LEAVES_PER_ACCOUNT = withdrawalConfig.log2LeavesPerAccount;
+        LOG2_MAX_NUM_OF_ACCOUNTS = withdrawalConfig.log2MaxNumOfAccounts;
+        ACCOUNTS_DRIVE_START_INDEX = withdrawalConfig.accountsDriveStartIndex;
+        WITHDRAWAL_OUTPUT_BUILDER = withdrawalConfig.withdrawalOutputBuilder;
         _outputsMerkleRootValidator = outputsMerkleRootValidator;
         _dataAvailability = dataAvailability;
     }
@@ -244,8 +246,13 @@ contract Application is
         return GUARDIAN;
     }
 
-    function getWithdrawer() external view override returns (IWithdrawer) {
-        return WITHDRAWER;
+    function getWithdrawalOutputBuilder()
+        external
+        view
+        override
+        returns (IWithdrawalOutputBuilder)
+    {
+        return WITHDRAWAL_OUTPUT_BUILDER;
     }
 
     function isForeclosed() external view override returns (bool) {
