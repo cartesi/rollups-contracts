@@ -15,7 +15,6 @@ import {LibAddressArray} from "../../util/LibAddressArray.sol";
 import {LibBytes} from "../../util/LibBytes.sol";
 import {LibClaim} from "../../util/LibClaim.sol";
 import {LibConsensus} from "../../util/LibConsensus.sol";
-import {LibMath} from "../../util/LibMath.sol";
 import {LibTopic} from "../../util/LibTopic.sol";
 import {LibUint256Array} from "../../util/LibUint256Array.sol";
 
@@ -29,7 +28,6 @@ contract QuorumFactoryTest is Test, ERC165Test, ConsensusTestUtils {
     using LibUint256Array for Vm;
     using LibConsensus for IQuorum;
     using LibTopic for address;
-    using LibMath for uint256;
     using LibBytes for bytes;
     using LibClaim for Claim;
 

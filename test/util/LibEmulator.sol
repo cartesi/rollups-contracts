@@ -7,17 +7,21 @@ import {SafeCast} from "@openzeppelin-contracts-5.2.0/utils/math/SafeCast.sol";
 
 import {CanonicalMachine} from "src/common/CanonicalMachine.sol";
 import {OutputValidityProof} from "src/common/OutputValidityProof.sol";
-import {LibMerkle32} from "src/library/LibMerkle32.sol";
+import {LibKeccak256} from "src/library/LibKeccak256.sol";
+
+import {LibBinaryMerkleTreeHelper} from "./LibBinaryMerkleTreeHelper.sol";
 
 library LibEmulator {
     using SafeCast for uint256;
-    using LibMerkle32 for bytes32[];
+    using LibBinaryMerkleTreeHelper for bytes32[];
 
     struct State {
         bytes[] outputs;
     }
 
     type OutputIndex is uint64;
+
+    bytes32 constant NO_OUTPUT_SENTINEL_VALUE = bytes32(0);
 
     // -------------
     // state changes
@@ -78,7 +82,11 @@ library LibEmulator {
         pure
         returns (bytes32)
     {
-        return outputHashes.merkleRoot(CanonicalMachine.LOG2_MAX_OUTPUTS);
+        return outputHashes.merkleRootFromNodes(
+            NO_OUTPUT_SENTINEL_VALUE,
+            CanonicalMachine.LOG2_MAX_OUTPUTS,
+            LibKeccak256.hashPair
+        );
     }
 
     function getOutputSiblings(bytes32[] memory outputHashes, uint64 outputIndex)
@@ -86,7 +94,12 @@ library LibEmulator {
         pure
         returns (bytes32[] memory)
     {
-        return outputHashes.siblings(outputIndex, CanonicalMachine.LOG2_MAX_OUTPUTS);
+        return outputHashes.siblings(
+            NO_OUTPUT_SENTINEL_VALUE,
+            outputIndex,
+            CanonicalMachine.LOG2_MAX_OUTPUTS,
+            LibKeccak256.hashPair
+        );
     }
 
     // ---------------

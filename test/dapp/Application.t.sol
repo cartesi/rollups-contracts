@@ -28,7 +28,7 @@ import {IERC721} from "@openzeppelin-contracts-5.2.0/token/ERC721/IERC721.sol";
 
 import {Test} from "forge-std-1.9.6/src/Test.sol";
 
-import {ExternalLibMerkle32} from "../library/LibMerkle32.t.sol";
+import {ExternalLibBinaryMerkleTree} from "../library/LibBinaryMerkleTree.t.sol";
 import {AddressGenerator} from "../util/AddressGenerator.sol";
 import {ConsensusTestUtils} from "../util/ConsensusTestUtils.sol";
 import {EtherReceiver} from "../util/EtherReceiver.sol";
@@ -40,7 +40,7 @@ import {SimpleERC721} from "../util/SimpleERC721.sol";
 
 contract ApplicationTest is Test, OwnableTest, AddressGenerator, ConsensusTestUtils {
     using LibEmulator for LibEmulator.State;
-    using ExternalLibMerkle32 for bytes32[];
+    using ExternalLibBinaryMerkleTree for bytes32[];
 
     IApplication _appContract;
     EtherReceiver _etherReceiver;

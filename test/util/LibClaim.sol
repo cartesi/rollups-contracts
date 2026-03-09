@@ -7,12 +7,13 @@ import {
     EmulatorConstants
 } from "cartesi-machine-solidity-step-0.13.0/src/EmulatorConstants.sol";
 
-import {LibMerkle32} from "src/library/LibMerkle32.sol";
+import {LibBinaryMerkleTree} from "src/library/LibBinaryMerkleTree.sol";
+import {LibKeccak256} from "src/library/LibKeccak256.sol";
 
 import {Claim} from "./Claim.sol";
 
 library LibClaim {
-    using LibMerkle32 for bytes32[];
+    using LibBinaryMerkleTree for bytes32[];
 
     function computeMachineMerkleRoot(Claim calldata claim)
         external
@@ -23,7 +24,8 @@ library LibClaim {
             .merkleRootAfterReplacement(
                 EmulatorConstants.PMA_CMIO_TX_BUFFER_START
                     >> EmulatorConstants.TREE_LOG2_WORD_SIZE,
-                keccak256(abi.encode(claim.outputsMerkleRoot))
+                keccak256(abi.encode(claim.outputsMerkleRoot)),
+                LibKeccak256.hashPair
             );
     }
 }

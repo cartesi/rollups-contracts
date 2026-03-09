@@ -12,13 +12,14 @@ import {
 import {Memory} from "cartesi-machine-solidity-step-0.13.0/src/Memory.sol";
 
 import {ApplicationChecker} from "../dapp/ApplicationChecker.sol";
-import {LibMerkle32} from "../library/LibMerkle32.sol";
+import {LibBinaryMerkleTree} from "../library/LibBinaryMerkleTree.sol";
+import {LibKeccak256} from "../library/LibKeccak256.sol";
 import {IConsensus} from "./IConsensus.sol";
 import {IOutputsMerkleRootValidator} from "./IOutputsMerkleRootValidator.sol";
 
 /// @notice Abstract implementation of IConsensus
 abstract contract AbstractConsensus is IConsensus, ERC165, ApplicationChecker {
-    using LibMerkle32 for bytes32[];
+    using LibBinaryMerkleTree for bytes32[];
 
     /// @notice The epoch length
     uint256 immutable EPOCH_LENGTH;
@@ -178,7 +179,8 @@ abstract contract AbstractConsensus is IConsensus, ERC165, ApplicationChecker {
         machineMerkleRoot = proof.merkleRootAfterReplacement(
             EmulatorConstants.PMA_CMIO_TX_BUFFER_START
                 >> EmulatorConstants.TREE_LOG2_WORD_SIZE,
-            keccak256(abi.encode(outputsMerkleRoot))
+            keccak256(abi.encode(outputsMerkleRoot)),
+            LibKeccak256.hashPair
         );
     }
 
