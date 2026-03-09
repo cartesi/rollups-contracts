@@ -43,6 +43,10 @@ contract Application is
     /// @dev See the `getTemplateHash` function.
     bytes32 immutable TEMPLATE_HASH;
 
+    /// @notice The guardian address.
+    /// @dev See the `getGuardian` function.
+    address immutable GUARDIAN;
+
     /// @notice The base-2 log of leaves per account.
     /// @dev See the `getLog2LeavesPerAccount` function.
     uint8 immutable LOG2_LEAVES_PER_ACCOUNT;
@@ -54,10 +58,6 @@ contract Application is
     /// @notice The offset of the accounts drive.
     /// @dev See the `getAccountsDriveStartIndex` function.
     uint64 immutable ACCOUNTS_DRIVE_START_INDEX;
-
-    /// @notice The guardian address.
-    /// @dev See the `getGuardian` function.
-    address immutable GUARDIAN;
 
     /// @notice The withdrawer contract.
     /// @dev See the `getWithdrawer` function.
@@ -97,10 +97,10 @@ contract Application is
     ) Ownable(initialOwner) {
         require(withdrawawlConfig.isValid(), "Invalid withdrawal config");
         TEMPLATE_HASH = templateHash;
+        GUARDIAN = withdrawawlConfig.guardian;
         LOG2_LEAVES_PER_ACCOUNT = withdrawawlConfig.log2LeavesPerAccount;
         LOG2_MAX_NUM_OF_ACCOUNTS = withdrawawlConfig.log2MaxNumOfAccounts;
         ACCOUNTS_DRIVE_START_INDEX = withdrawawlConfig.accountsDriveStartIndex;
-        GUARDIAN = withdrawawlConfig.guardian;
         WITHDRAWER = withdrawawlConfig.withdrawer;
         _outputsMerkleRootValidator = outputsMerkleRootValidator;
         _dataAvailability = dataAvailability;
