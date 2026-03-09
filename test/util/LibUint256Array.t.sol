@@ -6,8 +6,9 @@ pragma solidity ^0.8.22;
 import {Test} from "forge-std-1.9.6/src/Test.sol";
 import {Vm} from "forge-std-1.9.6/src/Vm.sol";
 
+import {LibMath} from "src/library/LibMath.sol";
+
 import {LibBytes} from "./LibBytes.sol";
-import {LibMath} from "./LibMath.sol";
 import {LibUint256Array} from "./LibUint256Array.sol";
 
 contract LibUint256ArrayTest is Test {
