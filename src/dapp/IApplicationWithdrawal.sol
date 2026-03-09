@@ -16,6 +16,10 @@ interface IApplicationWithdrawal {
 
     // View Functions
 
+    /// @notice Get the number of withdrawals.
+    /// Useful for fast-syncing `Withdrawal` events.
+    function getNumberOfWithdrawals() external view returns (uint256);
+
     /// @notice Get the log (base 2) of the number of leaves
     /// in the machine state tree that are reserved for
     /// each account in the accounts drive.
