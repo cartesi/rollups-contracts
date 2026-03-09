@@ -233,6 +233,11 @@ contract ApplicationFactoryTest is Test {
             "getTemplateHash() != templateHash"
         );
         assertEq(
+            appContract.getGuardian(),
+            withdrawalConfig.guardian,
+            "getGuardian() != withdrawalConfig.guardian"
+        );
+        assertEq(
             appContract.getLog2LeavesPerAccount(),
             withdrawalConfig.log2LeavesPerAccount,
             "getLog2LeavesPerAccount() != withdrawalConfig.log2LeavesPerAccount"
@@ -246,11 +251,6 @@ contract ApplicationFactoryTest is Test {
             appContract.getAccountsDriveStartIndex(),
             withdrawalConfig.accountsDriveStartIndex,
             "getAccountsDriveStartIndex() != withdrawalConfig.accountsDriveStartIndex"
-        );
-        assertEq(
-            appContract.getGuardian(),
-            withdrawalConfig.guardian,
-            "getGuardian() != withdrawalConfig.guardian"
         );
         assertEq(
             address(appContract.getWithdrawer()),
