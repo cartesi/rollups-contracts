@@ -80,8 +80,12 @@ contract Application is
     bool internal _isForeclosed;
 
     /// @notice The number of outputs executed by the application.
-    /// @dev See the `numberOfOutputsExecuted` function.
+    /// @dev See the `getNumberOfExecutedOutputs` function.
     uint256 _numOfExecutedOutputs;
+
+    /// @notice The number of withdrawals from the application.
+    /// @dev See the `getNumberOfWithdrawals` function.
+    uint256 _numOfWithdrawals;
 
     /// @notice Creates an `Application` contract.
     /// @param outputsMerkleRootValidator The initial outputs Merkle root validator contract
@@ -228,6 +232,10 @@ contract Application is
     /// @inheritdoc IApplication
     function getNumberOfExecutedOutputs() external view override returns (uint256) {
         return _numOfExecutedOutputs;
+    }
+
+    function getNumberOfWithdrawals() external view override returns (uint256) {
+        return _numOfWithdrawals;
     }
 
     function getLog2LeavesPerAccount() external view override returns (uint8) {
