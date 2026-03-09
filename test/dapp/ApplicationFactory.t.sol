@@ -268,6 +268,12 @@ contract ApplicationFactoryTest is Test {
             "getDeploymentBlockNumber() != blockNumber"
         );
         assertEq(
+            appContract.getNumberOfExecutedOutputs(),
+            0,
+            "getNumberOfExecutedOutputs() != 0"
+        );
+        assertEq(appContract.getNumberOfWithdrawals(), 0, "getNumberOfWithdrawals() != 0");
+        assertEq(
             withdrawalConfig.isValid(), true, "Expected withdrawal config to be valid"
         );
         assertEq(appContract.isForeclosed(), false, "isForeclosed() != false");
