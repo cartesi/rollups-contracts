@@ -55,14 +55,6 @@ library ExternalLibBinaryMerkleTree {
         );
     }
 
-    function parentLevel(bytes32[] memory nodes, bytes32 defaultNode)
-        external
-        pure
-        returns (bytes32[] memory)
-    {
-        return LibBinaryMerkleTreeHelper.parentLevel(nodes, defaultNode, nodeFromChildren);
-    }
-
     function toLeaves(bytes[] memory dataBlocks)
         external
         pure
@@ -112,14 +104,12 @@ contract LibBinaryMerkleTreeTest is Test {
 
     function testMerkleRootAfterReplacement(
         bytes32[] memory nodes,
-        uint256 height,
-        uint256 nodeIndex,
         bytes32 defaultNode,
         bytes32 newNode
-    ) external pure {
-        // Bound height and nodeIndex parameters according to the number of nodes
-        height = _boundHeight(height, nodes.length);
-        nodeIndex = _boundBits(nodeIndex, height);
+    ) external {
+        // Sample height and nodeIndex according to the number of nodes
+        uint256 height = vm.randomUint(LibMath.ceilLog2(nodes.length), 256);
+        uint256 nodeIndex = vm.randomUint(height);
 
         // Get node at given index or use default node if beyond array bounds
         bytes32 node = (nodeIndex < nodes.length) ? nodes[nodeIndex] : defaultNode;
@@ -368,63 +358,6 @@ contract LibBinaryMerkleTreeTest is Test {
         // Then, we call the merkleRoot function and expect an error.
         vm.expectRevert(LibBinaryMerkleTree.DriveSmallerThanData.selector);
         data.merkleRoot(log2DriveSize, log2DataBlockSize);
-    }
-
-    // ------------------
-    // internal functions
-    // ------------------
-
-    /// @notice Compute a Merkle tree leaf from a data block.
-    /// @param data The data
-    /// @param dataBlockIndex The data block index
-    /// @param dataBlockSize The data block size
-    function _leafFromDataBlock(
-        bytes memory data,
-        uint256 dataBlockIndex,
-        uint256 dataBlockSize
-    ) internal pure returns (bytes32 leaf) {
-        return data.leafFromDataAt(dataBlockIndex, dataBlockSize);
-    }
-
-    /// @notice Compute a Merkle tree node from its children.
-    /// @param left The left child
-    /// @param right The right child
-    /// @return node The node with the provided left and right children
-    function _nodeFromChildren(bytes32 left, bytes32 right)
-        internal
-        pure
-        returns (bytes32 node)
-    {
-        return ExternalLibBinaryMerkleTree.nodeFromChildren(left, right);
-    }
-
-    /// @notice Bounds a value between `y` (inclusive) and 256 (inclusive),
-    /// where `y` is the smallest unsigned integer such that `n <= 2^y`.
-    /// @param height The random seed
-    /// @param n The value `n` in the expression
-    /// @return newHeight A value `y` such that `n <= 2^y`
-    function _boundHeight(uint256 height, uint256 n)
-        internal
-        pure
-        returns (uint256 newHeight)
-    {
-        return bound(height, LibMath.ceilLog2(n), 256);
-    }
-
-    /// @notice Bounds a value between `0` (inclusive) and `2^{nbits}` (exclusive).
-    /// @param x The random seed
-    /// @param nbits The number of non-zero least-significant bits
-    /// @return newValue A value between 0 and `2^{nbits}`
-    function _boundBits(uint256 x, uint256 nbits)
-        internal
-        pure
-        returns (uint256 newValue)
-    {
-        if (nbits < 256) {
-            return x >> (256 - nbits);
-        } else {
-            return x;
-        }
     }
 }
 
