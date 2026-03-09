@@ -20,6 +20,10 @@ interface IApplicationWithdrawal {
     /// Useful for fast-syncing `Withdrawal` events.
     function getNumberOfWithdrawals() external view returns (uint256);
 
+    /// @notice Check whether an account had its funds withdrawn.
+    /// @param accountIndex The index of the account in the accounts drive.
+    function wereAccountFundsWithdrawn(uint256 accountIndex) external view returns (bool);
+
     /// @notice Get the log (base 2) of the number of leaves
     /// in the machine state tree that are reserved for
     /// each account in the accounts drive.

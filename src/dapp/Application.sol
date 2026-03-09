@@ -67,6 +67,10 @@ contract Application is
     /// @dev See the `wasOutputExecuted` function.
     BitMaps.BitMap internal _executed;
 
+    /// @notice Keeps track of which accounts have been withdrawn.
+    /// @dev See the `wereAccountFundsWithdrawn` function.
+    BitMaps.BitMap internal _withdrawn;
+
     /// @notice The current outputs Merkle root validator contract.
     /// @dev See the `getOutputsMerkleRootValidator` and `migrateToOutputsMerkleRootValidator` functions.
     IOutputsMerkleRootValidator internal _outputsMerkleRootValidator;
@@ -176,6 +180,14 @@ contract Application is
         returns (bool)
     {
         return _executed.get(outputIndex);
+    }
+
+    function wereAccountFundsWithdrawn(uint256 accountIndex)
+        external
+        view
+        returns (bool)
+    {
+        return _withdrawn.get(accountIndex);
     }
 
     /// @inheritdoc IApplication
