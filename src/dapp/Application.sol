@@ -4,10 +4,12 @@
 pragma solidity ^0.8.8;
 
 import {IOwnable} from "../access/IOwnable.sol";
+import {AccountValidityProof} from "../common/AccountValidityProof.sol";
 import {OutputValidityProof} from "../common/OutputValidityProof.sol";
 import {Outputs} from "../common/Outputs.sol";
 import {WithdrawalConfig} from "../common/WithdrawalConfig.sol";
 import {IOutputsMerkleRootValidator} from "../consensus/IOutputsMerkleRootValidator.sol";
+import {LibAccountValidityProof} from "../library/LibAccountValidityProof.sol";
 import {LibAddress} from "../library/LibAddress.sol";
 import {LibOutputValidityProof} from "../library/LibOutputValidityProof.sol";
 import {LibWithdrawalConfig} from "../library/LibWithdrawalConfig.sol";
@@ -32,6 +34,7 @@ contract Application is
     ReentrancyGuard
 {
     using BitMaps for BitMaps.BitMap;
+    using LibAccountValidityProof for AccountValidityProof;
     using LibAddress for address;
     using LibOutputValidityProof for OutputValidityProof;
     using LibWithdrawalConfig for WithdrawalConfig;
@@ -216,6 +219,29 @@ contract Application is
         }
     }
 
+    function validateAccountMerkleRoot(
+        bytes32 accountMerkleRoot,
+        AccountValidityProof calldata proof
+    ) external view override {
+        if (!proof.isSiblingsArrayLengthValid(getLog2MaxNumOfAccounts())) {
+            revert InvalidAccountRootSiblingsArrayLength();
+        }
+
+        if (!proof.isAccountIndexValid(getLog2MaxNumOfAccounts())) {
+            revert InvalidAccountIndex();
+        }
+
+        bytes32 machineMerkleRoot = proof.computeMachineMerkleRoot(
+            accountMerkleRoot, getLog2MaxNumOfAccounts(), getAccountsDriveStartIndex()
+        );
+
+        bytes32 lastFinalizedMachineMerkleRoot = _getLastFinalizedMachineMerkleRoot();
+
+        if (machineMerkleRoot != lastFinalizedMachineMerkleRoot) {
+            revert InvalidMachineMerkleRoot(machineMerkleRoot);
+        }
+    }
+
     /// @inheritdoc IApplication
     function getTemplateHash() external view override returns (bytes32) {
         return TEMPLATE_HASH;
@@ -250,15 +276,15 @@ contract Application is
         return _numOfWithdrawals;
     }
 
-    function getLog2LeavesPerAccount() external view override returns (uint8) {
+    function getLog2LeavesPerAccount() public view override returns (uint8) {
         return LOG2_LEAVES_PER_ACCOUNT;
     }
 
-    function getLog2MaxNumOfAccounts() external view override returns (uint8) {
+    function getLog2MaxNumOfAccounts() public view override returns (uint8) {
         return LOG2_MAX_NUM_OF_ACCOUNTS;
     }
 
-    function getAccountsDriveStartIndex() external view override returns (uint64) {
+    function getAccountsDriveStartIndex() public view override returns (uint64) {
         return ACCOUNTS_DRIVE_START_INDEX;
     }
 
@@ -310,6 +336,18 @@ contract Application is
         return _outputsMerkleRootValidator.isOutputsMerkleRootValid(
             address(this), outputsMerkleRoot
         );
+    }
+
+    /// @notice Get the last finalized machine Merkle root,
+    /// according to the current outputs Merkle root validator.
+    /// @return lastFinalizedMachineMerkleRoot The last finalized machine Merkle root
+    function _getLastFinalizedMachineMerkleRoot()
+        internal
+        view
+        returns (bytes32 lastFinalizedMachineMerkleRoot)
+    {
+        return
+            _outputsMerkleRootValidator.getLastFinalizedMachineMerkleRoot(address(this));
     }
 
     /// @notice Executes a voucher
