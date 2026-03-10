@@ -5,12 +5,15 @@ pragma solidity ^0.8.8;
 
 import {IOwnable} from "../access/IOwnable.sol";
 import {AccountValidityProof} from "../common/AccountValidityProof.sol";
+import {CanonicalMachine} from "../common/CanonicalMachine.sol";
 import {OutputValidityProof} from "../common/OutputValidityProof.sol";
 import {Outputs} from "../common/Outputs.sol";
 import {WithdrawalConfig} from "../common/WithdrawalConfig.sol";
 import {IOutputsMerkleRootValidator} from "../consensus/IOutputsMerkleRootValidator.sol";
 import {LibAccountValidityProof} from "../library/LibAccountValidityProof.sol";
 import {LibAddress} from "../library/LibAddress.sol";
+import {LibBinaryMerkleTree} from "../library/LibBinaryMerkleTree.sol";
+import {LibKeccak256} from "../library/LibKeccak256.sol";
 import {LibOutputValidityProof} from "../library/LibOutputValidityProof.sol";
 import {LibWithdrawalConfig} from "../library/LibWithdrawalConfig.sol";
 import {IWithdrawalOutputBuilder} from "../withdrawal/IWithdrawalOutputBuilder.sol";
@@ -36,6 +39,7 @@ contract Application is
     using BitMaps for BitMaps.BitMap;
     using LibAccountValidityProof for AccountValidityProof;
     using LibAddress for address;
+    using LibBinaryMerkleTree for bytes;
     using LibOutputValidityProof for OutputValidityProof;
     using LibWithdrawalConfig for WithdrawalConfig;
 
@@ -219,10 +223,25 @@ contract Application is
         }
     }
 
+    function validateAccount(bytes calldata account, AccountValidityProof calldata proof)
+        external
+        view
+        override
+    {
+        bytes32 accountMerkleRoot = account.merkleRoot(
+            CanonicalMachine.LOG2_DATA_BLOCK_SIZE + getLog2LeavesPerAccount(),
+            CanonicalMachine.LOG2_DATA_BLOCK_SIZE,
+            LibKeccak256.hashBlock,
+            LibKeccak256.hashPair
+        );
+
+        validateAccountMerkleRoot(accountMerkleRoot, proof);
+    }
+
     function validateAccountMerkleRoot(
         bytes32 accountMerkleRoot,
         AccountValidityProof calldata proof
-    ) external view override {
+    ) public view override {
         if (!proof.isSiblingsArrayLengthValid(getLog2MaxNumOfAccounts())) {
             revert InvalidAccountRootSiblingsArrayLength();
         }
