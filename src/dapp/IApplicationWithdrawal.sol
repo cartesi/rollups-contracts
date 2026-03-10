@@ -4,9 +4,10 @@
 pragma solidity ^0.8.8;
 
 import {AccountValidityProof} from "../common/AccountValidityProof.sol";
+import {BinaryMerkleTreeErrors} from "../common/BinaryMerkleTreeErrors.sol";
 import {IWithdrawalOutputBuilder} from "../withdrawal/IWithdrawalOutputBuilder.sol";
 
-interface IApplicationWithdrawal {
+interface IApplicationWithdrawal is BinaryMerkleTreeErrors {
     // Events
 
     /// @notice MUST trigger when the funds of an account are withdrawn.
@@ -66,6 +67,17 @@ interface IApplicationWithdrawal {
     /// @notice Get the withdrawal output builder, which gets static-called
     /// whenever the funds of an account are to be withdrawn.
     function getWithdrawalOutputBuilder() external view returns (IWithdrawalOutputBuilder);
+
+    /// @notice Validate the existence of an account at a given index
+    /// on the accounts drive given a Merkle proof of the account root,
+    /// according to the last finalized machine Merkle root reported by
+    /// the application outputs Merkle root validator.
+    /// @param account The account
+    /// @param proof The proof used to validate the account
+    /// @dev May raise any of the errors raised by `validateAccountMerkleRoot`.
+    function validateAccount(bytes calldata account, AccountValidityProof calldata proof)
+        external
+        view;
 
     /// @notice Validate the existence of an account at a given index
     /// on the accounts drive given a Merkle proof of the account root,
