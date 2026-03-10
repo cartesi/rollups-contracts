@@ -3,6 +3,7 @@
 
 pragma solidity ^0.8.8;
 
+import {AccountValidityProof} from "../common/AccountValidityProof.sol";
 import {IWithdrawalOutputBuilder} from "../withdrawal/IWithdrawalOutputBuilder.sol";
 
 interface IApplicationWithdrawal {
@@ -13,6 +14,23 @@ interface IApplicationWithdrawal {
     /// @param account The account as encoded in the accounts drive
     /// @param account The withdrawal output
     event Withdrawal(uint64 accountIndex, bytes account, bytes output);
+
+    // Errors
+
+    /// @notice Raised when the account root siblings array has an invalid length.
+    /// @dev The array length should be log2 of the machine memory size -
+    /// log2 of the data block size - log2 of the maximum number of accounts.
+    /// See the `CanonicalMachine` library for machine constants
+    /// and the `getLog2MaxNumOfAccounts` function for accounts drive parameters.
+    error InvalidAccountRootSiblingsArrayLength();
+
+    /// @notice Raised when the account index is outside the accounts drive boundaries.
+    /// See the `getLog2MaxNumOfAccounts` for accounts drive parameters.
+    error InvalidAccountIndex();
+
+    /// @notice Raised when the computed machine Merkle root differs
+    /// from the one provided by the current outputs Merkle root validator.
+    error InvalidMachineMerkleRoot(bytes32 machineMerkleRoot);
 
     // View Functions
 
@@ -48,4 +66,17 @@ interface IApplicationWithdrawal {
     /// @notice Get the withdrawal output builder, which gets static-called
     /// whenever the funds of an account are to be withdrawn.
     function getWithdrawalOutputBuilder() external view returns (IWithdrawalOutputBuilder);
+
+    /// @notice Validate the existence of an account at a given index
+    /// on the accounts drive given a Merkle proof of the account root,
+    /// according to the last finalized machine Merkle root reported by
+    /// the application outputs Merkle root validator.
+    /// @param accountMerkleRoot The account Merkle root
+    /// @param proof The proof used to validate the account
+    /// @dev May raise `InvalidAccountRootSiblingsArrayLength`,
+    /// `InvalidAccountIndex`, or `InvalidMachineMerkleRoot`.
+    function validateAccountMerkleRoot(
+        bytes32 accountMerkleRoot,
+        AccountValidityProof calldata proof
+    ) external view;
 }
