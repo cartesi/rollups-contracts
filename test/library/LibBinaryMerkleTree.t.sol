@@ -5,6 +5,8 @@ pragma solidity ^0.8.22;
 
 import {Test} from "forge-std-1.9.6/src/Test.sol";
 
+import {BinaryMerkleTreeErrors} from "src/common/BinaryMerkleTreeErrors.sol";
+import {CanonicalMachine} from "src/common/CanonicalMachine.sol";
 import {LibBinaryMerkleTree} from "src/library/LibBinaryMerkleTree.sol";
 import {LibKeccak256} from "src/library/LibKeccak256.sol";
 import {LibMath} from "src/library/LibMath.sol";
@@ -157,7 +159,7 @@ contract LibBinaryMerkleTreeTest is Test {
 
         // Finally, provide the invalid node index to the
         // merkleRootAfterReplacement function and expect an error.
-        vm.expectRevert(LibBinaryMerkleTree.InvalidNodeIndex.selector);
+        vm.expectRevert(_encodeInvalidNodeIndex(nodeIndex, height));
         siblings.merkleRootAfterReplacement(nodeIndex, node);
     }
 
@@ -174,7 +176,7 @@ contract LibBinaryMerkleTreeTest is Test {
 
         // Second, we bound the log2 drive size to between the minimum amount
         // calculated in the previous step and the maximum allowed.
-        uint256 maxLog2DriveSize = LibBinaryMerkleTree.LOG2_MAX_DRIVE_SIZE;
+        uint256 maxLog2DriveSize = CanonicalMachine.LOG2_MEMORY_SIZE;
         log2DriveSize = bound(log2DriveSize, minLog2DriveSize, maxLog2DriveSize);
 
         // Third, we bound the log2 data block size between 0 and
@@ -295,11 +297,11 @@ contract LibBinaryMerkleTreeTest is Test {
         uint256 log2DataBlockSize
     ) external {
         // First, we bound the log2 drive size to beyond the maximum.
-        uint256 maxLog2DriveSize = LibBinaryMerkleTree.LOG2_MAX_DRIVE_SIZE;
+        uint256 maxLog2DriveSize = CanonicalMachine.LOG2_MEMORY_SIZE;
         log2DriveSize = bound(log2DriveSize, maxLog2DriveSize + 1, type(uint256).max);
 
         // Then, we call the merkleRoot function and expect an error.
-        vm.expectRevert(LibBinaryMerkleTree.DriveTooLarge.selector);
+        vm.expectRevert(_encodeDriveTooLarge(log2DriveSize));
         data.merkleRoot(log2DriveSize, log2DataBlockSize);
     }
 
@@ -313,7 +315,7 @@ contract LibBinaryMerkleTreeTest is Test {
 
         // Second, we bound the log2 drive size to between the minimum amount
         // calculated in the previous step and the maximum allowed.
-        uint256 maxLog2DriveSize = LibBinaryMerkleTree.LOG2_MAX_DRIVE_SIZE;
+        uint256 maxLog2DriveSize = CanonicalMachine.LOG2_MEMORY_SIZE;
         log2DriveSize = bound(log2DriveSize, minLog2DriveSize, maxLog2DriveSize);
 
         // Third, we bound the log2 data block size beyond the maximum allowed.
@@ -322,7 +324,7 @@ contract LibBinaryMerkleTreeTest is Test {
             bound(log2DataBlockSize, maxLog2DataBlockSize + 1, type(uint256).max);
 
         // Then, we call the merkleRoot function and expect an error.
-        vm.expectRevert(LibBinaryMerkleTree.DataBlockTooLarge.selector);
+        vm.expectRevert(_encodeDataBlockTooLarge(log2DataBlockSize));
         data.merkleRoot(log2DriveSize, log2DataBlockSize);
     }
 
@@ -356,8 +358,52 @@ contract LibBinaryMerkleTreeTest is Test {
         log2DataBlockSize = bound(log2DataBlockSize, 0, maxLog2DataBlockSize);
 
         // Then, we call the merkleRoot function and expect an error.
-        vm.expectRevert(LibBinaryMerkleTree.DriveSmallerThanData.selector);
+        vm.expectRevert(_encodeDriveSmallerThanData(1 << log2DriveSize, data.length));
         data.merkleRoot(log2DriveSize, log2DataBlockSize);
+    }
+
+    function _encodeInvalidNodeIndex(uint256 nodeIndex, uint256 height)
+        internal
+        pure
+        returns (bytes memory)
+    {
+        return abi.encodeWithSelector(
+            BinaryMerkleTreeErrors.InvalidNodeIndex.selector, nodeIndex, height
+        );
+    }
+
+    function _encodeDriveTooLarge(uint256 log2DriveSize)
+        internal
+        pure
+        returns (bytes memory)
+    {
+        return abi.encodeWithSelector(
+            BinaryMerkleTreeErrors.DriveTooLarge.selector,
+            log2DriveSize,
+            CanonicalMachine.LOG2_MEMORY_SIZE
+        );
+    }
+
+    function _encodeDataBlockTooLarge(uint256 log2DataBlockSize)
+        internal
+        pure
+        returns (bytes memory)
+    {
+        return abi.encodeWithSelector(
+            BinaryMerkleTreeErrors.DataBlockTooLarge.selector,
+            log2DataBlockSize,
+            LibBinaryMerkleTree.LOG2_MAX_DATA_BLOCK_SIZE
+        );
+    }
+
+    function _encodeDriveSmallerThanData(uint256 driveSize, uint256 dataSize)
+        internal
+        pure
+        returns (bytes memory)
+    {
+        return abi.encodeWithSelector(
+            BinaryMerkleTreeErrors.DriveSmallerThanData.selector, driveSize, dataSize
+        );
     }
 }
 
