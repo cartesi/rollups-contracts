@@ -18,6 +18,10 @@ interface IApplicationWithdrawal is BinaryMerkleTreeErrors {
 
     // Errors
 
+    /// @notice Raised when the application has not yet been foreclosed
+    /// and therefore withdrawals cannot yet be performed.
+    error NotForeclosed();
+
     /// @notice Raised when the account root siblings array has an invalid length.
     /// @dev The array length should be log2 of the machine memory size -
     /// log2 of the data block size - log2 of the maximum number of accounts.
@@ -31,7 +35,26 @@ interface IApplicationWithdrawal is BinaryMerkleTreeErrors {
 
     /// @notice Raised when the computed machine Merkle root differs
     /// from the one provided by the current outputs Merkle root validator.
+    /// @param machineMerkleRoot The computed machine Merkle root
     error InvalidMachineMerkleRoot(bytes32 machineMerkleRoot);
+
+    /// @notice Raised when trying to withdraw funds of an account
+    /// whose funds have already been withdrawn.
+    /// @param accountIndex The account index
+    error AccountFundsAlreadyWithdrawn(uint64 accountIndex);
+
+    // Write functions
+
+    /// @notice Withdraw the funds of an account from the foreclosed application.
+    /// First, the account is validated against the last finalized machine Merkle root.
+    /// Then, a withdrawal output is built from the account, and executed.
+    /// @param account The account
+    /// @param proof The proof used to validate the account
+    /// @dev May raise `NotForeclosed`, `AccountFundsAlreadyWithdrawn`,
+    /// as well as any of the errors raised by `validateAccount`.
+    /// On success, marks the account funds as withdrawn, and emits a `Withdrawal` event.
+    function withdraw(bytes calldata account, AccountValidityProof calldata proof)
+        external;
 
     // View Functions
 
