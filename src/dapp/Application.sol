@@ -13,6 +13,7 @@ import {IOutputsMerkleRootValidator} from "../consensus/IOutputsMerkleRootValida
 import {LibAccountValidityProof} from "../library/LibAccountValidityProof.sol";
 import {LibAddress} from "../library/LibAddress.sol";
 import {LibBinaryMerkleTree} from "../library/LibBinaryMerkleTree.sol";
+import {LibBytes} from "../library/LibBytes.sol";
 import {LibKeccak256} from "../library/LibKeccak256.sol";
 import {LibOutputValidityProof} from "../library/LibOutputValidityProof.sol";
 import {LibWithdrawalConfig} from "../library/LibWithdrawalConfig.sol";
@@ -40,6 +41,7 @@ contract Application is
     using LibAccountValidityProof for AccountValidityProof;
     using LibAddress for address;
     using LibBinaryMerkleTree for bytes;
+    using LibBytes for bytes;
     using LibOutputValidityProof for OutputValidityProof;
     using LibWithdrawalConfig for WithdrawalConfig;
 
@@ -138,30 +140,40 @@ contract Application is
 
         uint64 outputIndex = proof.outputIndex;
 
-        if (output.length < 4) {
-            revert OutputNotExecutable(output);
+        if (_executed.get(outputIndex)) {
+            revert OutputNotReexecutable(output);
         }
 
-        bytes4 selector = bytes4(output[:4]);
-        bytes calldata arguments = output[4:];
-
-        if (selector == Outputs.Voucher.selector) {
-            if (_executed.get(outputIndex)) {
-                revert OutputNotReexecutable(output);
-            }
-            _executeVoucher(arguments);
-        } else if (selector == Outputs.DelegateCallVoucher.selector) {
-            if (_executed.get(outputIndex)) {
-                revert OutputNotReexecutable(output);
-            }
-            _executeDelegateCallVoucher(arguments);
-        } else {
-            revert OutputNotExecutable(output);
-        }
+        _executeOutput(output);
 
         _executed.set(outputIndex);
+
         ++_numOfExecutedOutputs;
         emit OutputExecuted(outputIndex, output);
+    }
+
+    function withdraw(bytes calldata account, AccountValidityProof calldata proof)
+        external
+        override
+        nonReentrant
+        onlyForeclosed
+    {
+        validateAccount(account, proof);
+
+        bytes memory output = _buildWithdrawalOutput(account);
+
+        uint64 accountIndex = proof.accountIndex;
+
+        if (_withdrawn.get(accountIndex)) {
+            revert AccountFundsAlreadyWithdrawn(accountIndex);
+        }
+
+        _executeOutput(output);
+
+        _withdrawn.set(accountIndex);
+
+        ++_numOfWithdrawals;
+        emit Withdrawal(accountIndex, account, output);
     }
 
     /// @inheritdoc IApplication
@@ -224,7 +236,7 @@ contract Application is
     }
 
     function validateAccount(bytes calldata account, AccountValidityProof calldata proof)
-        external
+        public
         view
         override
     {
@@ -268,7 +280,7 @@ contract Application is
 
     /// @inheritdoc IApplication
     function getOutputsMerkleRootValidator()
-        external
+        public
         view
         override
         returns (IOutputsMerkleRootValidator)
@@ -312,7 +324,7 @@ contract Application is
     }
 
     function getWithdrawalOutputBuilder()
-        external
+        public
         view
         override
         returns (IWithdrawalOutputBuilder)
@@ -320,7 +332,7 @@ contract Application is
         return WITHDRAWAL_OUTPUT_BUILDER;
     }
 
-    function isForeclosed() external view override returns (bool) {
+    function isForeclosed() public view override returns (bool) {
         return _isForeclosed;
     }
 
@@ -344,6 +356,11 @@ contract Application is
         _;
     }
 
+    modifier onlyForeclosed() {
+        _ensureAppIsForeclosed();
+        _;
+    }
+
     /// @notice Check if an outputs Merkle root is valid,
     /// according to the current outputs Merkle root validator.
     /// @param outputsMerkleRoot The output Merkle root
@@ -352,9 +369,8 @@ contract Application is
         view
         returns (bool)
     {
-        return _outputsMerkleRootValidator.isOutputsMerkleRootValid(
-            address(this), outputsMerkleRoot
-        );
+        return getOutputsMerkleRootValidator()
+            .isOutputsMerkleRootValid(address(this), outputsMerkleRoot);
     }
 
     /// @notice Get the last finalized machine Merkle root,
@@ -365,13 +381,45 @@ contract Application is
         view
         returns (bytes32 lastFinalizedMachineMerkleRoot)
     {
-        return
-            _outputsMerkleRootValidator.getLastFinalizedMachineMerkleRoot(address(this));
+        return getOutputsMerkleRootValidator()
+            .getLastFinalizedMachineMerkleRoot(address(this));
+    }
+
+    /// @notice Build a withdrawal output from an account,
+    /// using the withdrawal output builder contract.
+    /// @param account The account
+    /// @return output The withdrawal output
+    function _buildWithdrawalOutput(bytes calldata account)
+        internal
+        view
+        returns (bytes memory output)
+    {
+        return getWithdrawalOutputBuilder().buildWithdrawalOutput(account);
+    }
+
+    /// @notice Executes an output
+    /// @param output The output
+    function _executeOutput(bytes memory output) internal {
+        bool isOutputExecutable;
+        bytes4 selector;
+        bytes memory arguments;
+
+        (isOutputExecutable, selector, arguments) = output.consumeBytes4();
+
+        require(isOutputExecutable, OutputNotExecutable(output));
+
+        if (selector == Outputs.Voucher.selector) {
+            _executeVoucher(arguments);
+        } else if (selector == Outputs.DelegateCallVoucher.selector) {
+            _executeDelegateCallVoucher(arguments);
+        } else {
+            revert OutputNotExecutable(output);
+        }
     }
 
     /// @notice Executes a voucher
     /// @param arguments ABI-encoded arguments
-    function _executeVoucher(bytes calldata arguments) internal {
+    function _executeVoucher(bytes memory arguments) internal {
         address destination;
         uint256 value;
         bytes memory payload;
@@ -390,7 +438,7 @@ contract Application is
 
     /// @notice Executes a delegatecall voucher
     /// @param arguments ABI-encoded arguments
-    function _executeDelegateCallVoucher(bytes calldata arguments) internal {
+    function _executeDelegateCallVoucher(bytes memory arguments) internal {
         address destination;
         bytes memory payload;
 
@@ -402,5 +450,10 @@ contract Application is
     /// @notice Ensures the message sender is the guardian.
     function _ensureMsgSenderIsGuardian() internal view {
         require(msg.sender == getGuardian(), NotGuardian());
+    }
+
+    /// @notice Ensures the application is foreclosed.
+    function _ensureAppIsForeclosed() internal view {
+        require(isForeclosed(), NotForeclosed());
     }
 }
