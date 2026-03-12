@@ -9,9 +9,11 @@ import {Outputs} from "src/common/Outputs.sol";
 import {WithdrawalConfig} from "src/common/WithdrawalConfig.sol";
 import {IOutputsMerkleRootValidator} from "src/consensus/IOutputsMerkleRootValidator.sol";
 import {Authority} from "src/consensus/authority/Authority.sol";
+import {IAuthority} from "src/consensus/authority/IAuthority.sol";
 import {Application} from "src/dapp/Application.sol";
 import {IApplication} from "src/dapp/IApplication.sol";
 import {IApplicationForeclosure} from "src/dapp/IApplicationForeclosure.sol";
+import {ISafeERC20Transfer} from "src/delegatecall/ISafeERC20Transfer.sol";
 import {SafeERC20Transfer} from "src/delegatecall/SafeERC20Transfer.sol";
 import {IInputBox} from "src/inputs/IInputBox.sol";
 import {InputBox} from "src/inputs/InputBox.sol";
@@ -31,7 +33,7 @@ import {Test} from "forge-std-1.9.6/src/Test.sol";
 import {ExternalLibBinaryMerkleTree} from "../library/LibBinaryMerkleTree.t.sol";
 import {AddressGenerator} from "../util/AddressGenerator.sol";
 import {ConsensusTestUtils} from "../util/ConsensusTestUtils.sol";
-import {EtherReceiver} from "../util/EtherReceiver.sol";
+import {EtherReceiver, IEtherReceiver} from "../util/EtherReceiver.sol";
 import {LibEmulator} from "../util/LibEmulator.sol";
 import {OwnableTest} from "../util/OwnableTest.sol";
 import {SimpleBatchERC1155, SimpleSingleERC1155} from "../util/SimpleERC1155.sol";
@@ -43,13 +45,13 @@ contract ApplicationTest is Test, OwnableTest, AddressGenerator, ConsensusTestUt
     using ExternalLibBinaryMerkleTree for bytes32[];
 
     IApplication _appContract;
-    EtherReceiver _etherReceiver;
-    Authority _authority;
+    IEtherReceiver _etherReceiver;
+    IAuthority _authority;
     IERC20 _erc20Token;
     IERC721 _erc721Token;
     IERC1155 _erc1155SingleToken;
     IERC1155 _erc1155BatchToken;
-    SafeERC20Transfer _safeErc20Transfer;
+    ISafeERC20Transfer _safeErc20Transfer;
     IInputBox _inputBox;
 
     LibEmulator.State _emulator;
@@ -139,11 +141,15 @@ contract ApplicationTest is Test, OwnableTest, AddressGenerator, ConsensusTestUt
 
     function testForeclose() external {
         assertFalse(_appContract.isForeclosed());
-        vm.expectEmit(true, true, true, true, address(_appContract));
-        emit IApplicationForeclosure.Foreclosure();
-        vm.prank(_appContract.getGuardian());
-        _appContract.foreclose();
-        assertTrue(_appContract.isForeclosed());
+
+        // check the idempotence of the `foreclose()` function.
+        for (uint256 i; i < 3; ++i) {
+            vm.expectEmit(true, true, true, true, address(_appContract));
+            emit IApplicationForeclosure.Foreclosure();
+            vm.prank(_appContract.getGuardian());
+            _appContract.foreclose();
+            assertTrue(_appContract.isForeclosed());
+        }
     }
 
     // -----------------
