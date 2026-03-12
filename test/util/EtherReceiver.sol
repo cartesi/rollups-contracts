@@ -3,10 +3,15 @@
 
 pragma solidity ^0.8.22;
 
-contract EtherReceiver {
+interface IEtherReceiver {
+    function balanceOf(address who) external view returns (uint256);
+    function mint() external payable;
+}
+
+contract EtherReceiver is IEtherReceiver {
     mapping(address => uint256) public balanceOf;
 
-    function mint() external payable {
+    function mint() external payable override {
         balanceOf[msg.sender] += msg.value;
     }
 }
