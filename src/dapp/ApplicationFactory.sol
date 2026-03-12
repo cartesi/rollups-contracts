@@ -20,8 +20,8 @@ contract ApplicationFactory is IApplicationFactory {
         bytes32 templateHash,
         bytes calldata dataAvailability,
         WithdrawalConfig calldata withdrawalConfig
-    ) external override returns (IApplication) {
-        IApplication appContract = new Application(
+    ) external override returns (IApplication appContract) {
+        appContract = new Application(
             outputsMerkleRootValidator,
             appOwner,
             templateHash,
@@ -37,8 +37,6 @@ contract ApplicationFactory is IApplicationFactory {
             withdrawalConfig,
             appContract
         );
-
-        return appContract;
     }
 
     function newApplication(
@@ -48,8 +46,8 @@ contract ApplicationFactory is IApplicationFactory {
         bytes calldata dataAvailability,
         WithdrawalConfig calldata withdrawalConfig,
         bytes32 salt
-    ) external override returns (IApplication) {
-        IApplication appContract = new Application{salt: salt}(
+    ) external override returns (IApplication appContract) {
+        appContract = new Application{salt: salt}(
             outputsMerkleRootValidator,
             appOwner,
             templateHash,
@@ -65,8 +63,6 @@ contract ApplicationFactory is IApplicationFactory {
             withdrawalConfig,
             appContract
         );
-
-        return appContract;
     }
 
     function calculateApplicationAddress(

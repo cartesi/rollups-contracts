@@ -28,8 +28,11 @@ contract LibWithdrawalConfigTest is WithdrawalConfigTestUtils {
 
     /// @notice This test ensures that `isValid` returns false
     /// for some withdrawal configurations.
-    function testIsValidFalse(WithdrawalConfig memory withdrawalConfig) external view {
-        _makeWithdrawalConfigInvalidInPlace(withdrawalConfig);
+    function testIsValidFalse(WithdrawalConfig memory withdrawalConfig, uint256 seed)
+        external
+        pure
+    {
+        _makeWithdrawalConfigInvalidInPlace(withdrawalConfig, seed);
         assertFalse(LibWithdrawalConfig.isValid(withdrawalConfig));
     }
 }

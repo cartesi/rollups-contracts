@@ -58,18 +58,22 @@ contract ApplicationCheckerTestUtils is Test {
         return account;
     }
 
-    function _newAppMockReturns(bytes memory data) internal returns (address) {
-        address appContract = _randomAccountWithNoCode();
+    function _newAppMockReturns(bytes memory data)
+        internal
+        returns (address appContract)
+    {
+        appContract = _randomAccountWithNoCode();
         vm.mockCall(appContract, _encodeIsForeclosed(), data);
         assertGt(appContract.code.length, 0);
-        return appContract;
     }
 
-    function _newAppMockReverts(bytes memory error) internal returns (address) {
-        address appContract = _randomAccountWithNoCode();
+    function _newAppMockReverts(bytes memory error)
+        internal
+        returns (address appContract)
+    {
+        appContract = _randomAccountWithNoCode();
         vm.mockCallRevert(appContract, _encodeIsForeclosed(), error);
         assertGt(appContract.code.length, 0);
-        return appContract;
     }
 
     function _newForeclosedAppMock() internal returns (address) {
