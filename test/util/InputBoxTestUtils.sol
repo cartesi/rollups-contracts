@@ -31,23 +31,32 @@ contract InputBoxTestUtils is ApplicationCheckerTestUtils {
         address appContract,
         address sender,
         uint256 index
-    ) internal view returns (bytes memory) {
+    ) internal view returns (bytes memory payloadArg) {
         (bytes4 inputSelector, bytes memory inputArgs) = input.consumeBytes4();
         assertEq(inputSelector, Inputs.EvmAdvance.selector);
 
+        uint256 chainIdArg;
+        address appContractArg;
+        address msgSenderArg;
+        uint256 blockNumberArg;
+        uint256 blockTimestampArg;
+        uint256 prevRandaoArg;
+        uint256 indexArg;
+
         (
-            uint256 chainIdArg,
-            address appContractArg,
-            address msgSenderArg,
-            uint256 blockNumberArg,
-            uint256 blockTimestampArg,
-            uint256 prevRandaoArg,
-            uint256 indexArg,
-            bytes memory payloadArg
-        ) = abi.decode(
-            inputArgs,
-            (uint256, address, address, uint256, uint256, uint256, uint256, bytes)
-        );
+            chainIdArg,
+            appContractArg,
+            msgSenderArg,
+            blockNumberArg,
+            blockTimestampArg,
+            prevRandaoArg,
+            indexArg,
+            payloadArg
+        ) =
+            abi.decode(
+                inputArgs,
+                (uint256, address, address, uint256, uint256, uint256, uint256, bytes)
+            );
 
         assertEq(chainIdArg, block.chainid);
         assertEq(appContractArg, appContract);
@@ -56,8 +65,6 @@ contract InputBoxTestUtils is ApplicationCheckerTestUtils {
         assertEq(blockTimestampArg, vm.getBlockTimestamp());
         assertEq(prevRandaoArg, block.prevrandao);
         assertEq(indexArg, index);
-
-        return payloadArg;
     }
 
     function _decodeInputAdded(

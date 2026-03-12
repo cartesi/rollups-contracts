@@ -15,11 +15,11 @@ library LibMath {
 
     /// @notice Count leading zeros.
     /// @param x The number you want the clz of
+    /// @return n The number of leading zeros in x
     /// @dev This a binary search implementation.
-    function clz(uint256 x) internal pure returns (uint256) {
+    function clz(uint256 x) internal pure returns (uint256 n) {
         if (x == 0) return 256;
 
-        uint256 n = 0;
         if (x & 0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF00000000000000000000000000000000 == 0) {
             n = n + 128;
             x = x << 128;
@@ -51,8 +51,6 @@ library LibMath {
         if (x & 0x8000000000000000000000000000000000000000000000000000000000000000 == 0) {
             n = n + 1;
         }
-
-        return n;
     }
 
     /// @notice The smallest y for which x <= 2^y.

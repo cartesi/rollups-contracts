@@ -211,8 +211,12 @@ contract LibBinaryMerkleTreeTest is Test {
 
         // First, we need to make sure that the data spans at least one full block.
         // Otherwise, we won't be able to replace a full block from it.
+        // We quit the test early but do not discard it so that we can at least
+        // cover the empty byte array.
         uint256 numOfFullDataBlocks = data.length >> log2DataBlockSize;
-        vm.assume(numOfFullDataBlocks > 0);
+        if (numOfFullDataBlocks == 0) {
+            return;
+        }
 
         // Then we compute the floor log2 number of full data blocks.
         // This will help us bound the log2 number of leaves and log2 replacement size.

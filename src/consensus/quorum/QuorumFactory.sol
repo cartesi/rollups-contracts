@@ -15,25 +15,21 @@ contract QuorumFactory is IQuorumFactory {
     function newQuorum(address[] calldata validators, uint256 epochLength)
         external
         override
-        returns (IQuorum)
+        returns (IQuorum quorum)
     {
-        IQuorum quorum = new Quorum(validators, epochLength);
+        quorum = new Quorum(validators, epochLength);
 
         emit QuorumCreated(quorum);
-
-        return quorum;
     }
 
     function newQuorum(address[] calldata validators, uint256 epochLength, bytes32 salt)
         external
         override
-        returns (IQuorum)
+        returns (IQuorum quorum)
     {
-        IQuorum quorum = new Quorum{salt: salt}(validators, epochLength);
+        quorum = new Quorum{salt: salt}(validators, epochLength);
 
         emit QuorumCreated(quorum);
-
-        return quorum;
     }
 
     function calculateQuorumAddress(

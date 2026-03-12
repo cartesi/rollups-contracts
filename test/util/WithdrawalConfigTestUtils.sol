@@ -45,11 +45,11 @@ abstract contract WithdrawalConfigTestUtils is Test {
         // forge-lint: disable-end(incorrect-shift)
     }
 
-    function _makeWithdrawalConfigInvalidInPlace(WithdrawalConfig memory withdrawalConfig)
-        internal
-        view
-    {
-        if (vm.randomBool()) {
+    function _makeWithdrawalConfigInvalidInPlace(
+        WithdrawalConfig memory withdrawalConfig,
+        uint256 seed
+    ) internal pure {
+        if (seed % 2 == 0) {
             if (
                 withdrawalConfig.log2MaxNumOfAccounts
                     <= CanonicalMachine.LOG2_MEMORY_SIZE

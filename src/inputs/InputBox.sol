@@ -20,7 +20,7 @@ contract InputBox is IInputBox, ApplicationChecker {
         external
         override
         notForeclosed(appContract)
-        returns (bytes32)
+        returns (bytes32 inputHash)
     {
         bytes32[] storage inputBox = _inputBoxes[appContract];
 
@@ -47,13 +47,11 @@ contract InputBox is IInputBox, ApplicationChecker {
         }
 
         /// forge-lint: disable-next-line(asm-keccak256)
-        bytes32 inputHash = keccak256(input);
+        inputHash = keccak256(input);
 
         inputBox.push(inputHash);
 
         emit InputAdded(appContract, index, input);
-
-        return inputHash;
     }
 
     /// @inheritdoc IInputBox

@@ -26,16 +26,6 @@ contract ConsensusTestUtils is ApplicationCheckerTestUtils {
         );
     }
 
-    function _encodeNotFirstClaim(address appContract, uint256 lastProcessedBlockNumber)
-        internal
-        pure
-        returns (bytes memory)
-    {
-        return abi.encodeWithSelector(
-            IConsensus.NotFirstClaim.selector, appContract, lastProcessedBlockNumber
-        );
-    }
-
     function _encodeNotEpochFinalBlock(
         uint256 lastProcessedBlockNumber,
         uint256 epochLength
@@ -160,12 +150,11 @@ contract ConsensusTestUtils is ApplicationCheckerTestUtils {
         }
     }
 
-    function _randomInvalidLeafProofSize() internal returns (uint256 proofSize) {
-        while (true) {
-            proofSize = vm.randomUint(0, 2 * Memory.LOG2_MAX_SIZE + 1);
-            if (proofSize != Memory.LOG2_MAX_SIZE) {
-                break;
-            }
+    function _randomInvalidLeafProofSize() internal returns (uint256) {
+        if (vm.randomUint() % 2 == 0) {
+            return vm.randomUint(0, Memory.LOG2_MAX_SIZE - 1);
+        } else {
+            return vm.randomUint(Memory.LOG2_MAX_SIZE + 1, 2 * Memory.LOG2_MAX_SIZE);
         }
     }
 }

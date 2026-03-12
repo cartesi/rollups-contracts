@@ -114,34 +114,59 @@ contract AuthorityFactoryTest is Test, ERC165Test, OwnableTest, ConsensusTestUti
         }
     }
 
-    function testRenounceOwnership(address authorityOwner, uint256 epochLength) external {
-        IAuthority authority = _newAuthority(authorityOwner, epochLength);
+    function testRenounceOwnership(
+        address authorityOwner,
+        uint256 epochLength,
+        bool nonDeterministicDeployment
+    ) external {
+        IAuthority authority = _newAuthority(
+            authorityOwner, epochLength, nonDeterministicDeployment
+        );
         _testRenounceOwnership(authority);
     }
 
-    function testUnauthorizedAccount(address authorityOwner, uint256 epochLength)
-        external
-    {
-        IAuthority authority = _newAuthority(authorityOwner, epochLength);
+    function testUnauthorizedAccount(
+        address authorityOwner,
+        uint256 epochLength,
+        bool nonDeterministicDeployment
+    ) external {
+        IAuthority authority = _newAuthority(
+            authorityOwner, epochLength, nonDeterministicDeployment
+        );
         _testUnauthorizedAccount(authority);
     }
 
-    function testInvalidOwner(address authorityOwner, uint256 epochLength) external {
-        IAuthority authority = _newAuthority(authorityOwner, epochLength);
+    function testInvalidOwner(
+        address authorityOwner,
+        uint256 epochLength,
+        bool nonDeterministicDeployment
+    ) external {
+        IAuthority authority = _newAuthority(
+            authorityOwner, epochLength, nonDeterministicDeployment
+        );
         _testInvalidOwner(authority);
     }
 
-    function testTransferOwnership(address authorityOwner, uint256 epochLength) external {
-        IAuthority authority = _newAuthority(authorityOwner, epochLength);
+    function testTransferOwnership(
+        address authorityOwner,
+        uint256 epochLength,
+        bool nonDeterministicDeployment
+    ) external {
+        IAuthority authority = _newAuthority(
+            authorityOwner, epochLength, nonDeterministicDeployment
+        );
         _testTransferOwnership(authority);
     }
 
     function testSubmitClaimRevertsOwnableUnauthorizedAccount(
         address authorityOwner,
         uint256 epochLength,
+        bool nonDeterministicDeployment,
         Claim memory claim
     ) external {
-        IAuthority authority = _newAuthority(authorityOwner, epochLength);
+        IAuthority authority = _newAuthority(
+            authorityOwner, epochLength, nonDeterministicDeployment
+        );
 
         claim.appContract = _newActiveAppMock();
 
@@ -160,11 +185,13 @@ contract AuthorityFactoryTest is Test, ERC165Test, OwnableTest, ConsensusTestUti
     function testSubmitClaimRevertsNotEpochFinalBlock(
         address authorityOwner,
         uint256 epochLength,
+        bool nonDeterministicDeployment,
         Claim memory claim
     ) external {
         uint256 lastProcessedBlockNumber = _randomNonEpochFinalBlock(epochLength);
 
-        IAuthority authority = _newAuthority(authorityOwner, epochLength);
+        IAuthority authority =
+            _newAuthority(authorityOwner, epochLength, nonDeterministicDeployment);
 
         claim.appContract = _newActiveAppMock();
 
@@ -181,9 +208,12 @@ contract AuthorityFactoryTest is Test, ERC165Test, OwnableTest, ConsensusTestUti
     function testSubmitClaimRevertNotPastBlock(
         address authorityOwner,
         uint256 epochLength,
+        bool nonDeterministicDeployment,
         Claim memory claim
     ) external {
-        IAuthority authority = _newAuthority(authorityOwner, epochLength);
+        IAuthority authority = _newAuthority(
+            authorityOwner, epochLength, nonDeterministicDeployment
+        );
 
         claim.appContract = _newActiveAppMock();
 
@@ -200,9 +230,12 @@ contract AuthorityFactoryTest is Test, ERC165Test, OwnableTest, ConsensusTestUti
     function testSubmitClaimRevertApplicationNotDeployed(
         address authorityOwner,
         uint256 epochLength,
+        bool nonDeterministicDeployment,
         Claim memory claim
     ) external {
-        IAuthority authority = _newAuthority(authorityOwner, epochLength);
+        IAuthority authority = _newAuthority(
+            authorityOwner, epochLength, nonDeterministicDeployment
+        );
 
         // We use a random account with no code as app contract
         claim.appContract = _randomAccountWithNoCode();
@@ -220,10 +253,13 @@ contract AuthorityFactoryTest is Test, ERC165Test, OwnableTest, ConsensusTestUti
     function testSubmitClaimRevertApplicationReverted(
         address authorityOwner,
         uint256 epochLength,
+        bool nonDeterministicDeployment,
         Claim memory claim,
         bytes memory error
     ) external {
-        IAuthority authority = _newAuthority(authorityOwner, epochLength);
+        IAuthority authority = _newAuthority(
+            authorityOwner, epochLength, nonDeterministicDeployment
+        );
 
         // We make isForeclosed() revert with an error
         claim.appContract = _newAppMockReverts(error);
@@ -241,13 +277,15 @@ contract AuthorityFactoryTest is Test, ERC165Test, OwnableTest, ConsensusTestUti
     function testSubmitClaimRevertApplicationReturnIllSizedReturnData(
         address authorityOwner,
         uint256 epochLength,
+        bool nonDeterministicDeployment,
         Claim memory claim,
         bytes memory data
     ) external {
         // We make isForeclosed() return ill-sized data
         vm.assume(data.length != 32);
 
-        IAuthority authority = _newAuthority(authorityOwner, epochLength);
+        IAuthority authority =
+            _newAuthority(authorityOwner, epochLength, nonDeterministicDeployment);
 
         claim.appContract = _newAppMockReturns(data);
 
@@ -264,12 +302,14 @@ contract AuthorityFactoryTest is Test, ERC165Test, OwnableTest, ConsensusTestUti
     function testSubmitClaimRevertApplicationReturnIllFormedReturnData(
         address authorityOwner,
         uint256 epochLength,
+        bool nonDeterministicDeployment,
         Claim memory claim
     ) external {
         // We make isForeclosed() return an invalid boolean (neither 0 or 1)
         uint256 returnValue = vm.randomUint(2, type(uint256).max);
 
-        IAuthority authority = _newAuthority(authorityOwner, epochLength);
+        IAuthority authority =
+            _newAuthority(authorityOwner, epochLength, nonDeterministicDeployment);
 
         bytes memory data = abi.encode(returnValue);
         claim.appContract = _newAppMockReturns(data);
@@ -287,9 +327,12 @@ contract AuthorityFactoryTest is Test, ERC165Test, OwnableTest, ConsensusTestUti
     function testSubmitClaimRevertApplicationForeclosed(
         address authorityOwner,
         uint256 epochLength,
+        bool nonDeterministicDeployment,
         Claim memory claim
     ) external {
-        IAuthority authority = _newAuthority(authorityOwner, epochLength);
+        IAuthority authority = _newAuthority(
+            authorityOwner, epochLength, nonDeterministicDeployment
+        );
 
         // We make isForeclosed() return true
         claim.appContract = _newForeclosedAppMock();
@@ -307,9 +350,12 @@ contract AuthorityFactoryTest is Test, ERC165Test, OwnableTest, ConsensusTestUti
     function testSubmitClaimRevertInvalidOutputsMerkleRootProofSize(
         address authorityOwner,
         uint256 epochLength,
+        bool nonDeterministicDeployment,
         Claim memory claim
     ) external {
-        IAuthority authority = _newAuthority(authorityOwner, epochLength);
+        IAuthority authority = _newAuthority(
+            authorityOwner, epochLength, nonDeterministicDeployment
+        );
 
         claim.appContract = _newActiveAppMock();
 
@@ -326,9 +372,12 @@ contract AuthorityFactoryTest is Test, ERC165Test, OwnableTest, ConsensusTestUti
     function testSubmitClaim(
         address authorityOwner,
         uint256 epochLength,
+        bool nonDeterministicDeployment,
         Claim memory claim
     ) external {
-        IAuthority authority = _newAuthority(authorityOwner, epochLength);
+        IAuthority authority = _newAuthority(
+            authorityOwner, epochLength, nonDeterministicDeployment
+        );
 
         claim.appContract = _newActiveAppMock();
 
@@ -555,11 +604,12 @@ contract AuthorityFactoryTest is Test, ERC165Test, OwnableTest, ConsensusTestUti
         }
     }
 
-    function _newAuthority(address authorityOwner, uint256 epochLength)
-        internal
-        returns (IAuthority)
-    {
-        if (vm.randomBool()) {
+    function _newAuthority(
+        address authorityOwner,
+        uint256 epochLength,
+        bool nonDeterministicDeployment
+    ) internal returns (IAuthority) {
+        if (nonDeterministicDeployment) {
             vm.assumeNoRevert();
             return _factory.newAuthority(authorityOwner, epochLength);
         } else {
