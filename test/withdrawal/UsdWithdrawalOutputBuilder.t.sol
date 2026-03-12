@@ -55,8 +55,8 @@ contract UsdWithdrawalOutputBuilderTest is Test {
         assertEq(value, balance);
     }
 
-    function testBuildWithdrawalOutputReverts(bytes calldata account) external {
-        vm.assume(account.length < 28);
+    function testBuildWithdrawalOutputReverts(uint256) external {
+        bytes memory account = vm.randomBytes(vm.randomUint(0, 27));
         vm.expectRevert("Account is too short");
         _withdrawalOutputBuilder.buildWithdrawalOutput(account);
     }
