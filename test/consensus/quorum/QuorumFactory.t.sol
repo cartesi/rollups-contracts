@@ -109,9 +109,10 @@ contract QuorumFactoryTest is Test, ERC165Test, ConsensusTestUtils {
     function testSubmitClaimRevertsCallerIsNotValidator(
         address[] memory validators,
         uint256 epochLength,
+        bool nonDeterministicDeployment,
         Claim memory claim
     ) external {
-        IQuorum quorum = _newQuorum(validators, epochLength);
+        IQuorum quorum = _newQuorum(validators, epochLength, nonDeterministicDeployment);
 
         claim.appContract = _newActiveAppMock();
 
@@ -128,11 +129,12 @@ contract QuorumFactoryTest is Test, ERC165Test, ConsensusTestUtils {
     function testSubmitClaimRevertsNotEpochFinalBlock(
         address[] memory validators,
         uint256 epochLength,
+        bool nonDeterministicDeployment,
         Claim memory claim
     ) external {
         uint256 lastProcessedBlockNumber = _randomNonEpochFinalBlock(epochLength);
 
-        IQuorum quorum = _newQuorum(validators, epochLength);
+        IQuorum quorum = _newQuorum(validators, epochLength, nonDeterministicDeployment);
 
         claim.appContract = _newActiveAppMock();
 
@@ -149,9 +151,10 @@ contract QuorumFactoryTest is Test, ERC165Test, ConsensusTestUtils {
     function testSubmitClaimRevertNotPastBlock(
         address[] memory validators,
         uint256 epochLength,
+        bool nonDeterministicDeployment,
         Claim memory claim
     ) external {
-        IQuorum quorum = _newQuorum(validators, epochLength);
+        IQuorum quorum = _newQuorum(validators, epochLength, nonDeterministicDeployment);
 
         claim.appContract = _newActiveAppMock();
 
@@ -168,9 +171,10 @@ contract QuorumFactoryTest is Test, ERC165Test, ConsensusTestUtils {
     function testSubmitClaimRevertApplicationNotDeployed(
         address[] memory validators,
         uint256 epochLength,
+        bool nonDeterministicDeployment,
         Claim memory claim
     ) external {
-        IQuorum quorum = _newQuorum(validators, epochLength);
+        IQuorum quorum = _newQuorum(validators, epochLength, nonDeterministicDeployment);
 
         // We use a random account with no code as app contract
         claim.appContract = _randomAccountWithNoCode();
@@ -188,10 +192,11 @@ contract QuorumFactoryTest is Test, ERC165Test, ConsensusTestUtils {
     function testSubmitClaimRevertApplicationReverted(
         address[] memory validators,
         uint256 epochLength,
+        bool nonDeterministicDeployment,
         Claim memory claim,
         bytes memory error
     ) external {
-        IQuorum quorum = _newQuorum(validators, epochLength);
+        IQuorum quorum = _newQuorum(validators, epochLength, nonDeterministicDeployment);
 
         // We make isForeclosed() revert with an error
         claim.appContract = _newAppMockReverts(error);
@@ -209,13 +214,14 @@ contract QuorumFactoryTest is Test, ERC165Test, ConsensusTestUtils {
     function testSubmitClaimRevertApplicationReturnIllSizedReturnData(
         address[] memory validators,
         uint256 epochLength,
+        bool nonDeterministicDeployment,
         Claim memory claim,
         bytes memory data
     ) external {
         // We make isForeclosed() return ill-sized data
         vm.assume(data.length != 32);
 
-        IQuorum quorum = _newQuorum(validators, epochLength);
+        IQuorum quorum = _newQuorum(validators, epochLength, nonDeterministicDeployment);
 
         claim.appContract = _newAppMockReturns(data);
 
@@ -232,12 +238,13 @@ contract QuorumFactoryTest is Test, ERC165Test, ConsensusTestUtils {
     function testSubmitClaimRevertApplicationReturnIllFormedReturnData(
         address[] memory validators,
         uint256 epochLength,
+        bool nonDeterministicDeployment,
         Claim memory claim
     ) external {
         // We make isForeclosed() return an invalid boolean (neither 0 or 1)
         uint256 returnValue = vm.randomUint(2, type(uint256).max);
 
-        IQuorum quorum = _newQuorum(validators, epochLength);
+        IQuorum quorum = _newQuorum(validators, epochLength, nonDeterministicDeployment);
 
         bytes memory data = abi.encode(returnValue);
         claim.appContract = _newAppMockReturns(data);
@@ -255,9 +262,10 @@ contract QuorumFactoryTest is Test, ERC165Test, ConsensusTestUtils {
     function testSubmitClaimRevertApplicationForeclosed(
         address[] memory validators,
         uint256 epochLength,
+        bool nonDeterministicDeployment,
         Claim memory claim
     ) external {
-        IQuorum quorum = _newQuorum(validators, epochLength);
+        IQuorum quorum = _newQuorum(validators, epochLength, nonDeterministicDeployment);
 
         // We make isForeclosed() return true
         claim.appContract = _newForeclosedAppMock();
@@ -275,9 +283,10 @@ contract QuorumFactoryTest is Test, ERC165Test, ConsensusTestUtils {
     function testSubmitClaimRevertInvalidOutputsMerkleRootProofSize(
         address[] memory validators,
         uint256 epochLength,
+        bool nonDeterministicDeployment,
         Claim memory claim
     ) external {
-        IQuorum quorum = _newQuorum(validators, epochLength);
+        IQuorum quorum = _newQuorum(validators, epochLength, nonDeterministicDeployment);
 
         claim.appContract = _newActiveAppMock();
 
@@ -291,8 +300,12 @@ contract QuorumFactoryTest is Test, ERC165Test, ConsensusTestUtils {
         quorum.submitClaim(claim);
     }
 
-    function testSubmitClaim(address[] memory validators, uint256 epochLength) external {
-        IQuorum quorum = _newQuorum(validators, epochLength);
+    function testSubmitClaim(
+        address[] memory validators,
+        uint256 epochLength,
+        bool nonDeterministicDeployment
+    ) external {
+        IQuorum quorum = _newQuorum(validators, epochLength, nonDeterministicDeployment);
 
         address appContract = _newActiveAppMock();
 
@@ -875,11 +888,12 @@ contract QuorumFactoryTest is Test, ERC165Test, ConsensusTestUtils {
         }
     }
 
-    function _newQuorum(address[] memory validators, uint256 epochLength)
-        internal
-        returns (IQuorum)
-    {
-        if (vm.randomBool()) {
+    function _newQuorum(
+        address[] memory validators,
+        uint256 epochLength,
+        bool nonDeterministicDeployment
+    ) internal returns (IQuorum) {
+        if (nonDeterministicDeployment) {
             vm.assumeNoRevert();
             return _factory.newQuorum(validators, epochLength);
         } else {

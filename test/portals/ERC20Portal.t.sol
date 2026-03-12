@@ -116,6 +116,47 @@ contract ERC20PortalTest is Test, InputBoxTestUtils {
         _portal.depositERC20Tokens(_token, appContract, value, execLayerData);
     }
 
+    function testDepositRevertERC20TokenReverts(
+        uint256 value,
+        bytes calldata execLayerData,
+        bytes calldata errorData
+    ) external {
+        address sender = _randomAccountWithNoCode();
+        address appContract = _newActiveAppMock();
+
+        _randomSetup(sender, appContract, value);
+
+        vm.mockCallRevert(
+            address(_token),
+            abi.encodeCall(IERC20.transferFrom, (sender, appContract, value)),
+            errorData
+        );
+
+        vm.prank(sender);
+        vm.expectRevert(errorData);
+        _portal.depositERC20Tokens(_token, appContract, value, execLayerData);
+    }
+
+    function testDepositRevertERC20TokenReturnsFalse(
+        uint256 value,
+        bytes calldata execLayerData
+    ) external {
+        address sender = _randomAccountWithNoCode();
+        address appContract = _newActiveAppMock();
+
+        _randomSetup(sender, appContract, value);
+
+        vm.mockCall(
+            address(_token),
+            abi.encodeCall(IERC20.transferFrom, (sender, appContract, value)),
+            abi.encode(false)
+        );
+
+        vm.prank(sender);
+        vm.expectRevert(IERC20Portal.ERC20TransferFailed.selector);
+        _portal.depositERC20Tokens(_token, appContract, value, execLayerData);
+    }
+
     function testDeposit(
         uint256 value,
         bytes calldata execLayerData,

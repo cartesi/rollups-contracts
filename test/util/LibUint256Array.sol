@@ -123,13 +123,11 @@ library LibUint256Array {
     {
         if (subArrayLength == 0) {
             isEmpty = true;
-            maxElem = 0;
         } else {
             require(
                 subArrayLength <= array.length,
                 InvalidSubArrayLength(subArrayLength, array.length)
             );
-            isEmpty = false;
             maxElem = array[0];
             for (uint256 i = 1; i < subArrayLength; ++i) {
                 if (array[i] > maxElem) {

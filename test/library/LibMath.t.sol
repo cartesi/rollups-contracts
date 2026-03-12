@@ -11,22 +11,20 @@ import {LibMath} from "src/library/LibMath.sol";
 
 /// @title Alternative naive, gas-inefficient implementation of LibMath
 library LibNaiveMath {
-    function ctz(uint256 x) internal pure returns (uint256) {
-        uint256 n = 256;
+    function ctz(uint256 x) internal pure returns (uint256 n) {
+        n = 256;
         while (x != 0) {
             --n;
             x <<= 1;
         }
-        return n;
     }
 
-    function clz(uint256 x) internal pure returns (uint256) {
-        uint256 n = 256;
+    function clz(uint256 x) internal pure returns (uint256 n) {
+        n = 256;
         while (x != 0) {
             --n;
             x >>= 1;
         }
-        return n;
     }
 
     function ceilLog2(uint256 x) internal pure returns (uint256) {
@@ -38,14 +36,12 @@ library LibNaiveMath {
         return 256;
     }
 
-    function floorLog2(uint256 x) internal pure returns (uint256) {
-        require(x > 0, "floorLog2(0) is undefined");
+    function floorLog2(uint256 x) internal pure returns (uint256 ret) {
         for (uint256 i; i < 256; ++i) {
             if ((x >> i) == 1) {
-                return i;
+                ret = i;
             }
         }
-        revert("unexpected code path reached");
     }
 }
 

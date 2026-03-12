@@ -39,7 +39,7 @@ library LibBinaryMerkleTreeHelper {
     /// @param nodeIndex The index of the node
     /// @param height The height of the Merkle tree
     /// @param nodeFromChildren The function that computes nodes from their children
-    /// @return The siblings of the node in bottom-up order
+    /// @return sibs The siblings of the node in bottom-up order
     /// @dev Raises an `InvalidNodeIndex` error if the provided index is out of bounds.
     /// @dev Raises an `InvalidHeight` error if more than `2^height` nodes are provided.
     function siblings(
@@ -48,8 +48,8 @@ library LibBinaryMerkleTreeHelper {
         uint256 nodeIndex,
         uint256 height,
         function(bytes32, bytes32) pure returns (bytes32) nodeFromChildren
-    ) internal pure returns (bytes32[] memory) {
-        bytes32[] memory sibs = new bytes32[](height);
+    ) internal pure returns (bytes32[] memory sibs) {
+        sibs = new bytes32[](height);
         for (uint256 i; i < height; ++i) {
             sibs[i] = nodes.at(nodeIndex ^ 1, defaultNode);
             nodes = nodes.parentLevel(defaultNode, nodeFromChildren);
@@ -58,7 +58,6 @@ library LibBinaryMerkleTreeHelper {
         }
         require(nodeIndex == 0, InvalidNodeIndex());
         require(nodes.length <= 1, InvalidHeight());
-        return sibs;
     }
 
     /// @notice Compute the parent level of an array of nodes.

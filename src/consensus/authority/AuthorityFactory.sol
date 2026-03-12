@@ -15,25 +15,21 @@ contract AuthorityFactory is IAuthorityFactory {
     function newAuthority(address authorityOwner, uint256 epochLength)
         external
         override
-        returns (IAuthority)
+        returns (IAuthority authority)
     {
-        IAuthority authority = new Authority(authorityOwner, epochLength);
+        authority = new Authority(authorityOwner, epochLength);
 
         emit AuthorityCreated(authority);
-
-        return authority;
     }
 
     function newAuthority(address authorityOwner, uint256 epochLength, bytes32 salt)
         external
         override
-        returns (IAuthority)
+        returns (IAuthority authority)
     {
-        IAuthority authority = new Authority{salt: salt}(authorityOwner, epochLength);
+        authority = new Authority{salt: salt}(authorityOwner, epochLength);
 
         emit AuthorityCreated(authority);
-
-        return authority;
     }
 
     function calculateAuthorityAddress(

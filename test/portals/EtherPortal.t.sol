@@ -106,6 +106,23 @@ contract EtherPortalTest is Test, InputBoxTestUtils {
         _portal.depositEther{value: value}(appContract, execLayerData);
     }
 
+    function testDepositRevertCallReverts(
+        uint256 value,
+        bytes calldata execLayerData,
+        bytes calldata errorData
+    ) external {
+        address sender = _randomAccountWithNoCode();
+        address appContract = _newActiveAppMock();
+
+        _randomSetup(sender, appContract, value);
+
+        vm.mockCallRevert(appContract, value, new bytes(0), errorData);
+
+        vm.prank(sender);
+        vm.expectRevert(IEtherPortal.EtherTransferFailed.selector);
+        _portal.depositEther{value: value}(appContract, execLayerData);
+    }
+
     function testDeposit(
         uint256 value,
         bytes calldata execLayerData,

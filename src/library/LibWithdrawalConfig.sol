@@ -31,10 +31,6 @@ library LibWithdrawalConfig {
         uint256 memorySize = 1 << CanonicalMachine.LOG2_MEMORY_SIZE;
 
         // Check if the accounts drive would end past the machine memory boundaries.
-        if (accountsDriveEnd > memorySize) {
-            return false;
-        }
-
-        return true;
+        return (accountsDriveEnd <= memorySize);
     }
 }
