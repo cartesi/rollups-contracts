@@ -3,8 +3,7 @@
 
 pragma solidity ^0.8.22;
 
-import {Memory} from "cartesi-machine-solidity-step-0.13.0/src/Memory.sol";
-
+import {CanonicalMachine} from "src/common/CanonicalMachine.sol";
 import {IConsensus} from "src/consensus/IConsensus.sol";
 
 import {ApplicationCheckerTestUtils} from "./ApplicationCheckerTestUtils.sol";
@@ -43,7 +42,7 @@ contract ConsensusTestUtils is ApplicationCheckerTestUtils {
         return abi.encodeWithSelector(
             IConsensus.InvalidOutputsMerkleRootProofSize.selector,
             proofSize,
-            Memory.LOG2_MAX_SIZE
+            CanonicalMachine.MEMORY_TREE_HEIGHT
         );
     }
 
@@ -131,7 +130,7 @@ contract ConsensusTestUtils is ApplicationCheckerTestUtils {
     }
 
     function _randomLeafProof() internal returns (bytes32[] memory proof) {
-        return _randomProof(Memory.LOG2_MAX_SIZE);
+        return _randomProof(CanonicalMachine.MEMORY_TREE_HEIGHT);
     }
 
     function _randomClaimDifferentFrom(Claim memory claim, bytes32 machineMerkleRoot)
@@ -152,9 +151,12 @@ contract ConsensusTestUtils is ApplicationCheckerTestUtils {
 
     function _randomInvalidLeafProofSize() internal returns (uint256) {
         if (vm.randomUint() % 2 == 0) {
-            return vm.randomUint(0, Memory.LOG2_MAX_SIZE - 1);
+            return vm.randomUint(0, CanonicalMachine.MEMORY_TREE_HEIGHT - 1);
         } else {
-            return vm.randomUint(Memory.LOG2_MAX_SIZE + 1, 2 * Memory.LOG2_MAX_SIZE);
+            return vm.randomUint(
+                CanonicalMachine.MEMORY_TREE_HEIGHT + 1,
+                2 * CanonicalMachine.MEMORY_TREE_HEIGHT
+            );
         }
     }
 }

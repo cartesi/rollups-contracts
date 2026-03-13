@@ -6,11 +6,7 @@ pragma solidity ^0.8.26;
 import {ERC165} from "@openzeppelin-contracts-5.2.0/utils/introspection/ERC165.sol";
 import {IERC165} from "@openzeppelin-contracts-5.2.0/utils/introspection/IERC165.sol";
 
-import {
-    EmulatorConstants
-} from "cartesi-machine-solidity-step-0.13.0/src/EmulatorConstants.sol";
-import {Memory} from "cartesi-machine-solidity-step-0.13.0/src/Memory.sol";
-
+import {CanonicalMachine} from "../common/CanonicalMachine.sol";
 import {ApplicationChecker} from "../dapp/ApplicationChecker.sol";
 import {LibBinaryMerkleTree} from "../library/LibBinaryMerkleTree.sol";
 import {LibKeccak256} from "../library/LibKeccak256.sol";
@@ -175,10 +171,9 @@ abstract contract AbstractConsensus is IConsensus, ERC165, ApplicationChecker {
         bytes32 outputsMerkleRoot,
         bytes32[] calldata proof
     ) internal pure returns (bytes32 machineMerkleRoot) {
-        _checkProofSize(proof.length, Memory.LOG2_MAX_SIZE);
+        _checkProofSize(proof.length, CanonicalMachine.MEMORY_TREE_HEIGHT);
         machineMerkleRoot = proof.merkleRootAfterReplacement(
-            EmulatorConstants.PMA_CMIO_TX_BUFFER_START
-                >> EmulatorConstants.TREE_LOG2_WORD_SIZE,
+            CanonicalMachine.TX_BUFFER_START >> CanonicalMachine.LOG2_DATA_BLOCK_SIZE,
             keccak256(abi.encode(outputsMerkleRoot)),
             LibKeccak256.hashPair
         );
