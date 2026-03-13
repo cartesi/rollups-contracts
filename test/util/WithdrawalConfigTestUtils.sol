@@ -17,7 +17,7 @@ abstract contract WithdrawalConfigTestUtils is Test {
             bound(
                 withdrawalConfig.log2LeavesPerAccount,
                 0,
-                CanonicalMachine.LOG2_MEMORY_SIZE - CanonicalMachine.LOG2_DATA_BLOCK_SIZE
+                CanonicalMachine.MEMORY_TREE_HEIGHT
             )
         );
 
@@ -25,7 +25,7 @@ abstract contract WithdrawalConfigTestUtils is Test {
             bound(
                 withdrawalConfig.log2MaxNumOfAccounts,
                 0,
-                CanonicalMachine.LOG2_MEMORY_SIZE - CanonicalMachine.LOG2_DATA_BLOCK_SIZE
+                CanonicalMachine.MEMORY_TREE_HEIGHT
                     - withdrawalConfig.log2LeavesPerAccount
             )
         );
@@ -52,14 +52,12 @@ abstract contract WithdrawalConfigTestUtils is Test {
         if (seed % 2 == 0) {
             if (
                 withdrawalConfig.log2MaxNumOfAccounts
-                    <= CanonicalMachine.LOG2_MEMORY_SIZE
-                        - CanonicalMachine.LOG2_DATA_BLOCK_SIZE
+                    <= CanonicalMachine.MEMORY_TREE_HEIGHT
             ) {
                 withdrawalConfig.log2LeavesPerAccount = uint8(
                     bound(
                         withdrawalConfig.log2LeavesPerAccount,
-                        CanonicalMachine.LOG2_MEMORY_SIZE
-                            - CanonicalMachine.LOG2_DATA_BLOCK_SIZE
+                        CanonicalMachine.MEMORY_TREE_HEIGHT
                             - withdrawalConfig.log2MaxNumOfAccounts + 1,
                         type(uint8).max
                     )
