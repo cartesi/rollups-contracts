@@ -34,7 +34,6 @@ abstract contract WithdrawalConfigTestUtils is Test {
             + withdrawalConfig.log2LeavesPerAccount
             + withdrawalConfig.log2MaxNumOfAccounts;
 
-        // forge-lint: disable-start(incorrect-shift)
         withdrawalConfig.accountsDriveStartIndex = uint64(
             bound(
                 withdrawalConfig.accountsDriveStartIndex,
@@ -42,7 +41,6 @@ abstract contract WithdrawalConfigTestUtils is Test {
                 (1 << (CanonicalMachine.LOG2_MEMORY_SIZE - log2AccountsDriveSize)) - 1
             )
         );
-        // forge-lint: disable-end(incorrect-shift)
     }
 
     function _makeWithdrawalConfigInvalidInPlace(
@@ -68,7 +66,6 @@ abstract contract WithdrawalConfigTestUtils is Test {
                 + uint256(withdrawalConfig.log2LeavesPerAccount)
                 + uint256(withdrawalConfig.log2MaxNumOfAccounts);
 
-            // forge-lint: disable-start(incorrect-shift)
             if (log2AccountsDriveSize <= CanonicalMachine.LOG2_MEMORY_SIZE) {
                 withdrawalConfig.accountsDriveStartIndex = uint64(
                     bound(
@@ -78,7 +75,6 @@ abstract contract WithdrawalConfigTestUtils is Test {
                     )
                 );
             }
-            // forge-lint: disable-end(incorrect-shift)
         }
     }
 }
