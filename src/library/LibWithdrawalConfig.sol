@@ -27,7 +27,6 @@ library LibWithdrawalConfig {
             return false;
         }
 
-        // forge-lint: disable-next-line(incorrect-shift)
         uint256 memorySize = 1 << CanonicalMachine.LOG2_MEMORY_SIZE;
 
         // Check if the accounts drive would end past the machine memory boundaries.
