@@ -7,8 +7,6 @@ import {Test} from "forge-std-1.9.6/src/Test.sol";
 
 import {LibMath} from "src/library/LibMath.sol";
 
-/// forge-lint: disable-start(incorrect-shift)
-
 /// @title Alternative naive, gas-inefficient implementation of LibMath
 library LibNaiveMath {
     function ctz(uint256 x) internal pure returns (uint256 n) {
@@ -190,5 +188,3 @@ contract LibMathTest is Test {
         assertEq(max, LibMath.max(y, x));
     }
 }
-
-/// forge-lint: disable-end(incorrect-shift)

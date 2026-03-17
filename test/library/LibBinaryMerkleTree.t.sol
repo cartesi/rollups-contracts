@@ -13,8 +13,6 @@ import {LibMath} from "src/library/LibMath.sol";
 
 import {LibBinaryMerkleTreeHelper} from "../util/LibBinaryMerkleTreeHelper.sol";
 
-/// forge-lint: disable-start(incorrect-shift)
-
 library ExternalLibBinaryMerkleTree {
     function merkleRootAfterReplacement(
         bytes32[] calldata sibs,
@@ -410,5 +408,3 @@ contract LibBinaryMerkleTreeTest is Test {
         );
     }
 }
-
-/// forge-lint: disable-end(incorrect-shift)

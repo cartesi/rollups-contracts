@@ -7,8 +7,6 @@ import {BinaryMerkleTreeErrors} from "../common/BinaryMerkleTreeErrors.sol";
 import {CanonicalMachine} from "../common/CanonicalMachine.sol";
 import {LibMath} from "./LibMath.sol";
 
-/// forge-lint: disable-start(incorrect-shift)
-
 library LibBinaryMerkleTree {
     using LibMath for uint256;
 
@@ -157,5 +155,3 @@ library LibBinaryMerkleTree {
         return stack[0];
     }
 }
-
-/// forge-lint: disable-end(incorrect-shift)
