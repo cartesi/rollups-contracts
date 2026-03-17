@@ -254,7 +254,7 @@ contract Application is
         bytes32 accountMerkleRoot,
         AccountValidityProof calldata proof
     ) public view override {
-        if (!proof.isSiblingsArrayLengthValid(getLog2MaxNumOfAccounts())) {
+        if (!proof.isSiblingsArrayLengthValid(getLog2LeavesPerAccount())) {
             revert InvalidAccountRootSiblingsArrayLength();
         }
 
