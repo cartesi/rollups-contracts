@@ -48,28 +48,26 @@ if (!fs.existsSync(cannonfilePath)) {
 // Read cannonfile.toml
 const cannonfileContent = fs.readFileSync(cannonfilePath, 'utf8');
 
-// Create a Regexp to match the version TOML expression
-const versionRegexp = /^[ \t]*(version|"version"|'version')[ \t]*=.*$/m;
+// Create a RegExp to match the version TOML key/value pair
+const versionTomlKvPairRegExp = /^\s*(?:version|"version"|'version')\s*=.*$/m;
 
-// Check if the Regexp matches any occurence in Cannonfile content
-if (cannonfileContent.match(versionRegexp) === null) {
-    console.error("Error: No 'version' expression found in cannonfile.toml.");
+// Check if the RegExp matches any occurrence in Cannonfile content
+if (cannonfileContent.match(versionTomlKvPairRegExp) === null) {
+    console.error("Error: No 'version' key/value pair in cannonfile.toml.");
     process.exit(1);
 }
 
-// Build version replacement string
-const versionReplacement = `version = "${nodeJsPackageVersion}"`;
+// Build the version key/value pair
+const versionTomlKvPair = `version = "${nodeJsPackageVersion}"`;
 
-// Replace version expression in Cannonfile content
-const newCannonfileContent = cannonfileContent.replace(versionRegexp, versionReplacement);
+// Replace version key/value pair in Cannonfile content
+const newCannonfileContent = cannonfileContent
+    .replace(versionTomlKvPairRegExp, versionTomlKvPair);
 
-// Exit successfully if Cannonfile is already in-sync
+// Skip updating Cannonfile if already in-sync
 if (cannonfileContent == newCannonfileContent) {
-    console.log("Cannonfile is already in-sync with the Node.js package.")
-    process.exit(0);
+    console.log("Cannonfile version is already in-sync.");
+} else {
+    fs.writeFileSync(cannonfilePath, newCannonfileContent, 'utf8');
+    console.log(`Updated Cannonfile version to ${nodeJsPackageVersion}`);
 }
-
-// Update cannonfile.toml with new content
-fs.writeFileSync(cannonfilePath, newCannonfileContent, 'utf8');
-
-console.log(`Updated Cannonfile version to ${nodeJsPackageVersion}`);
