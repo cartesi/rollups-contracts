@@ -26,8 +26,16 @@ const nodeJsPackage = JSON.parse(fs.readFileSync(packageJsonPath, 'utf8'));
 
 // Extract version from Node.js package
 const nodeJsPackageVersion = nodeJsPackage.version;
-if (!nodeJsPackageVersion) {
-    console.error("Error: No 'version' field found in package.json.");
+
+// Check whether the package version is defined
+if (typeof nodeJsPackageVersion === 'undefined') {
+    console.error("Error: The package version is undefined");
+    process.exit(1);
+}
+
+// Check whether the package version is a string
+if (typeof nodeJsPackageVersion !== 'string') {
+    console.error("Error: The package version is not a string.");
     process.exit(1);
 }
 
