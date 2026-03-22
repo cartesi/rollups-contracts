@@ -17,11 +17,17 @@ import {LibClaim} from "../../util/LibClaim.sol";
 import {LibConsensus} from "../../util/LibConsensus.sol";
 import {LibTopic} from "../../util/LibTopic.sol";
 import {LibUint256Array} from "../../util/LibUint256Array.sol";
+import {VersionGetterTestUtils} from "../../util/VersionGetterTestUtils.sol";
 
 import {Test} from "forge-std-1.9.6/src/Test.sol";
 import {Vm} from "forge-std-1.9.6/src/Vm.sol";
 
-contract QuorumFactoryTest is Test, ERC165Test, ConsensusTestUtils {
+contract QuorumFactoryTest is
+    Test,
+    ERC165Test,
+    ConsensusTestUtils,
+    VersionGetterTestUtils
+{
     using LibAddressArray for address[];
     using LibAddressArray for Vm;
     using LibUint256Array for uint256[];
@@ -39,6 +45,10 @@ contract QuorumFactoryTest is Test, ERC165Test, ConsensusTestUtils {
         _supportedInterfaces.push(type(IConsensus).interfaceId);
         _supportedInterfaces.push(type(IQuorum).interfaceId);
         _registerSupportedInterfaces(_supportedInterfaces);
+    }
+
+    function testVersion() external view {
+        _testVersion(_factory);
     }
 
     function testNewQuorum(
@@ -753,6 +763,8 @@ contract QuorumFactoryTest is Test, ERC165Test, ConsensusTestUtils {
         }
 
         assertEq(numOfQuorumCreated, 1, "number of QuorumCreated events");
+
+        _testVersion(quorum);
 
         uint256 numOfValidators = quorum.numOfValidators();
         assertGt(numOfValidators, 0, "numOfValidators() > 0");

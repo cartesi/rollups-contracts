@@ -20,27 +20,33 @@ import {LibWithdrawalConfig} from "src/library/LibWithdrawalConfig.sol";
 import {Test} from "forge-std-1.9.6/src/Test.sol";
 
 import {LibBytes} from "../util/LibBytes.sol";
+import {VersionGetterTestUtils} from "../util/VersionGetterTestUtils.sol";
 
-contract SelfHostedApplicationFactoryTest is Test {
+contract SelfHostedApplicationFactoryTest is Test, VersionGetterTestUtils {
     using LibWithdrawalConfig for WithdrawalConfig;
     using LibBytes for bytes;
 
-    IAuthorityFactory authorityFactory;
-    IApplicationFactory applicationFactory;
-    ISelfHostedApplicationFactory factory;
+    IAuthorityFactory _authorityFactory;
+    IApplicationFactory _applicationFactory;
+    ISelfHostedApplicationFactory _factory;
 
     function setUp() external {
-        authorityFactory = new AuthorityFactory();
-        applicationFactory = new ApplicationFactory();
-        factory = new SelfHostedApplicationFactory(authorityFactory, applicationFactory);
+        _authorityFactory = new AuthorityFactory();
+        _applicationFactory = new ApplicationFactory();
+        _factory =
+            new SelfHostedApplicationFactory(_authorityFactory, _applicationFactory);
+    }
+
+    function testVersion() external view {
+        _testVersion(_factory);
     }
 
     function testGetApplicationContract() external view {
-        assertEq(address(factory.getApplicationFactory()), address(applicationFactory));
+        assertEq(address(_factory.getApplicationFactory()), address(_applicationFactory));
     }
 
     function testGetAuthorityFactory() external view {
-        assertEq(address(factory.getAuthorityFactory()), address(authorityFactory));
+        assertEq(address(_factory.getAuthorityFactory()), address(_authorityFactory));
     }
 
     function testDeployContracts(
@@ -58,7 +64,7 @@ contract SelfHostedApplicationFactoryTest is Test {
         address appAddr;
         address authorityAddr;
 
-        (appAddr, authorityAddr) = factory.calculateAddresses(
+        (appAddr, authorityAddr) = _factory.calculateAddresses(
             authorityOwner,
             epochLength,
             appOwner,
@@ -68,7 +74,7 @@ contract SelfHostedApplicationFactoryTest is Test {
             salt
         );
 
-        try factory.deployContracts(
+        try _factory.deployContracts(
             authorityOwner,
             epochLength,
             appOwner,
@@ -79,6 +85,9 @@ contract SelfHostedApplicationFactoryTest is Test {
         ) returns (
             IApplication application, IAuthority authority
         ) {
+            _testVersion(application);
+            _testVersion(authority);
+
             assertEq(
                 appAddr,
                 address(application),
@@ -125,7 +134,7 @@ contract SelfHostedApplicationFactoryTest is Test {
             );
             assertEq(application.isForeclosed(), false, "isForeclosed() != false");
 
-            (appAddr, authorityAddr) = factory.calculateAddresses(
+            (appAddr, authorityAddr) = _factory.calculateAddresses(
                 authorityOwner,
                 epochLength,
                 appOwner,

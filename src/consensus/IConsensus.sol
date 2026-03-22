@@ -3,6 +3,7 @@
 
 pragma solidity ^0.8.8;
 
+import {IVersionGetter} from "../common/IVersionGetter.sol";
 import {IApplicationChecker} from "../dapp/IApplicationChecker.sol";
 import {IOutputsMerkleRootValidator} from "./IOutputsMerkleRootValidator.sol";
 
@@ -22,7 +23,7 @@ import {IOutputsMerkleRootValidator} from "./IOutputsMerkleRootValidator.sol";
 /// - submitted by the majority of a quorum or;
 /// - submitted and not proven wrong after some period of time or;
 /// - submitted and proven correct through an on-chain tournament.
-interface IConsensus is IOutputsMerkleRootValidator, IApplicationChecker {
+interface IConsensus is IOutputsMerkleRootValidator, IApplicationChecker, IVersionGetter {
     /// @notice MUST trigger when a claim is submitted.
     /// @param submitter The submitter address
     /// @param appContract The application contract address

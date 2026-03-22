@@ -22,8 +22,15 @@ import {LibConsensus} from "../../util/LibConsensus.sol";
 import {LibTopic} from "../../util/LibTopic.sol";
 import {LibUint256Array} from "../../util/LibUint256Array.sol";
 import {OwnableTest} from "../../util/OwnableTest.sol";
+import {VersionGetterTestUtils} from "../../util/VersionGetterTestUtils.sol";
 
-contract AuthorityFactoryTest is Test, ERC165Test, OwnableTest, ConsensusTestUtils {
+contract AuthorityFactoryTest is
+    Test,
+    ERC165Test,
+    OwnableTest,
+    ConsensusTestUtils,
+    VersionGetterTestUtils
+{
     using LibUint256Array for uint256[];
     using LibConsensus for IAuthority;
     using LibTopic for address;
@@ -38,6 +45,10 @@ contract AuthorityFactoryTest is Test, ERC165Test, OwnableTest, ConsensusTestUti
         _supportedInterfaces.push(type(IConsensus).interfaceId);
         _supportedInterfaces.push(type(IAuthority).interfaceId);
         _registerSupportedInterfaces(_supportedInterfaces);
+    }
+
+    function testVersion() external view {
+        _testVersion(_factory);
     }
 
     function testNewAuthority(
@@ -540,6 +551,8 @@ contract AuthorityFactoryTest is Test, ERC165Test, OwnableTest, ConsensusTestUti
 
         assertEq(numOfAuthorityCreated, 1, "number of AuthorityCreated events");
         assertEq(numOfOwnershipTransferred, 1, "number of OwnershipTransferred events");
+
+        _testVersion(authority);
 
         assertEq(authority.owner(), authorityOwner, "owner() == authorityOwner");
         assertNotEq(authorityOwner, address(0), "owner() != address(0)");

@@ -3,6 +3,7 @@
 
 pragma solidity ^0.8.8;
 
+import {IVersionGetter} from "../common/IVersionGetter.sol";
 import {IApplicationChecker} from "../dapp/IApplicationChecker.sol";
 
 /// @notice Provides data availability of inputs for applications.
@@ -10,7 +11,7 @@ import {IApplicationChecker} from "../dapp/IApplicationChecker.sol";
 /// @notice Off-chain, inputs can be retrieved via events.
 /// @notice On-chain, only the input hashes are stored.
 /// @notice See `LibInput` for more details on how such hashes are computed.
-interface IInputBox is IApplicationChecker {
+interface IInputBox is IVersionGetter, IApplicationChecker {
     /// @notice MUST trigger when an input is added.
     /// @param appContract The application contract address
     /// @param index The input index
