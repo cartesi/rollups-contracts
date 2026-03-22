@@ -6,11 +6,12 @@ pragma solidity ^0.8.8;
 import {IERC20} from "@openzeppelin-contracts-5.2.0/token/ERC20/IERC20.sol";
 
 import {Outputs} from "../common/Outputs.sol";
+import {RollupsContract} from "../common/RollupsContract.sol";
 import {ISafeERC20Transfer} from "../delegatecall/ISafeERC20Transfer.sol";
 import {LibUsdAccount} from "../library/LibUsdAccount.sol";
 import {IUsdWithdrawalOutputBuilder} from "./IUsdWithdrawalOutputBuilder.sol";
 
-contract UsdWithdrawalOutputBuilder is IUsdWithdrawalOutputBuilder {
+contract UsdWithdrawalOutputBuilder is IUsdWithdrawalOutputBuilder, RollupsContract {
     ISafeERC20Transfer immutable SAFE_ERC20_TRANSFER;
     IERC20 immutable USD;
 

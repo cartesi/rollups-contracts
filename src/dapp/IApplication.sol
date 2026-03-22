@@ -4,6 +4,7 @@
 pragma solidity ^0.8.8;
 
 import {IOwnable} from "../access/IOwnable.sol";
+import {IVersionGetter} from "../common/IVersionGetter.sol";
 import {OutputValidityProof} from "../common/OutputValidityProof.sol";
 import {IOutputsMerkleRootValidator} from "../consensus/IOutputsMerkleRootValidator.sol";
 import {IApplicationForeclosure} from "./IApplicationForeclosure.sol";
@@ -26,7 +27,12 @@ import {IApplicationWithdrawal} from "./IApplicationWithdrawal.sol";
 /// - multiple signers (multi-sig)
 /// - DAO (decentralized autonomous organization)
 /// - self-owned application (off-chain governance logic)
-interface IApplication is IOwnable, IApplicationForeclosure, IApplicationWithdrawal {
+interface IApplication is
+    IOwnable,
+    IApplicationForeclosure,
+    IApplicationWithdrawal,
+    IVersionGetter
+{
     // Events
 
     /// @notice MUST trigger when a new outputs Merkle root validator is chosen.

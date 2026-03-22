@@ -3,6 +3,7 @@
 
 pragma solidity ^0.8.8;
 
+import {RollupsContract} from "../common/RollupsContract.sol";
 import {WithdrawalConfig} from "../common/WithdrawalConfig.sol";
 import {IOutputsMerkleRootValidator} from "../consensus/IOutputsMerkleRootValidator.sol";
 import {IAuthority} from "../consensus/authority/IAuthority.sol";
@@ -14,7 +15,7 @@ import {ISelfHostedApplicationFactory} from "./ISelfHostedApplicationFactory.sol
 /// @title Self-hosted Application Factory
 /// @notice Allows anyone to reliably deploy a new IAuthority contract,
 /// along with an IApplication contract already linked to it.
-contract SelfHostedApplicationFactory is ISelfHostedApplicationFactory {
+contract SelfHostedApplicationFactory is ISelfHostedApplicationFactory, RollupsContract {
     IAuthorityFactory immutable AUTHORITY_FACTORY;
     IApplicationFactory immutable APPLICATION_FACTORY;
 
