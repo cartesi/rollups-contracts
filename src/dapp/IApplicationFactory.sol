@@ -3,12 +3,13 @@
 
 pragma solidity ^0.8.8;
 
+import {IVersionGetter} from "../common/IVersionGetter.sol";
 import {WithdrawalConfig} from "../common/WithdrawalConfig.sol";
 import {IOutputsMerkleRootValidator} from "../consensus/IOutputsMerkleRootValidator.sol";
 import {IApplication} from "./IApplication.sol";
 
 /// @title Application Factory interface
-interface IApplicationFactory {
+interface IApplicationFactory is IVersionGetter {
     // Events
 
     /// @notice A new application was deployed.

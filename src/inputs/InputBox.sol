@@ -5,10 +5,11 @@ pragma solidity ^0.8.18;
 
 import {CanonicalMachine} from "../common/CanonicalMachine.sol";
 import {Inputs} from "../common/Inputs.sol";
+import {RollupsContract} from "../common/RollupsContract.sol";
 import {ApplicationChecker} from "../dapp/ApplicationChecker.sol";
 import {IInputBox} from "./IInputBox.sol";
 
-contract InputBox is IInputBox, ApplicationChecker {
+contract InputBox is IInputBox, RollupsContract, ApplicationChecker {
     /// @notice Deployment block number
     uint256 immutable DEPLOYMENT_BLOCK_NUMBER = block.number;
 

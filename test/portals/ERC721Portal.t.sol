@@ -20,8 +20,9 @@ import {InputBoxTestUtils} from "../util/InputBoxTestUtils.sol";
 import {LibBytes} from "../util/LibBytes.sol";
 import {LibTopic} from "../util/LibTopic.sol";
 import {SimpleERC721} from "../util/SimpleERC721.sol";
+import {VersionGetterTestUtils} from "../util/VersionGetterTestUtils.sol";
 
-contract ERC721PortalTest is Test, InputBoxTestUtils {
+contract ERC721PortalTest is Test, InputBoxTestUtils, VersionGetterTestUtils {
     using LibTopic for address;
     using LibBytes for bytes;
 
@@ -31,6 +32,10 @@ contract ERC721PortalTest is Test, InputBoxTestUtils {
     function setUp() public {
         _inputBox = new InputBox();
         _portal = new ERC721Portal(_inputBox);
+    }
+
+    function testVersion() external view {
+        _testVersion(_portal);
     }
 
     function testGetInputBox() public view {

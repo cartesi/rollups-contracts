@@ -17,8 +17,9 @@ import {InputBoxTestUtils} from "../util/InputBoxTestUtils.sol";
 import {LibBytes} from "../util/LibBytes.sol";
 import {LibTopic} from "../util/LibTopic.sol";
 import {SimpleERC20} from "../util/SimpleERC20.sol";
+import {VersionGetterTestUtils} from "../util/VersionGetterTestUtils.sol";
 
-contract ERC20PortalTest is Test, InputBoxTestUtils {
+contract ERC20PortalTest is Test, InputBoxTestUtils, VersionGetterTestUtils {
     using LibTopic for address;
     using LibBytes for bytes;
 
@@ -33,6 +34,10 @@ contract ERC20PortalTest is Test, InputBoxTestUtils {
         _inputBox = new InputBox();
         _portal = new ERC20Portal(_inputBox);
         _token = new SimpleERC20(TOKEN_OWNER, TOTAL_SUPPLY);
+    }
+
+    function testVersion() external view {
+        _testVersion(_portal);
     }
 
     function testGetInputBox() public view {

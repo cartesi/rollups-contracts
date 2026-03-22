@@ -3,10 +3,11 @@
 
 pragma solidity ^0.8.8;
 
+import {IVersionGetter} from "../common/IVersionGetter.sol";
 import {IInputBox} from "../inputs/IInputBox.sol";
 
 /// @title Portal interface
-interface IPortal {
+interface IPortal is IVersionGetter {
     // Permissionless functions
 
     /// @notice Get the input box used by this portal.
