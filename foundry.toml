@@ -10,7 +10,10 @@ remappings = [
     "cartesi-machine-solidity-step-0.13.0/=dependencies/cartesi-machine-solidity-step-0.13.0/",
     "forge-std-1.9.6/=dependencies/forge-std-1.9.6/",
 ]
-fs_permissions = [{ access = "read-write", path = "deployments" }]
+fs_permissions = [
+    { access = "read-write", path = "deployments" },
+    { access = "read", path = "package.json" },
+]
 
 [fmt]
 line_length = 90

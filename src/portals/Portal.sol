@@ -3,12 +3,13 @@
 
 pragma solidity ^0.8.8;
 
+import {RollupsContract} from "../common/RollupsContract.sol";
 import {IInputBox} from "../inputs/IInputBox.sol";
 import {IPortal} from "./IPortal.sol";
 
 /// @title Portal
 /// @notice This contract serves as a base for all the other portals.
-contract Portal is IPortal {
+contract Portal is IPortal, RollupsContract {
     /// @notice The input box used by the portal.
     IInputBox immutable INPUT_BOX;
 

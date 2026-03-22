@@ -17,8 +17,9 @@ import {UsdWithdrawalOutputBuilder} from "src/withdrawal/UsdWithdrawalOutputBuil
 
 import {LibBytes} from "../util/LibBytes.sol";
 import {SimpleERC20} from "../util/SimpleERC20.sol";
+import {VersionGetterTestUtils} from "../util/VersionGetterTestUtils.sol";
 
-contract UsdWithdrawalOutputBuilderTest is Test {
+contract UsdWithdrawalOutputBuilderTest is Test, VersionGetterTestUtils {
     using LibBytes for bytes;
 
     IERC20 _usd;
@@ -37,6 +38,10 @@ contract UsdWithdrawalOutputBuilderTest is Test {
 
     function testToken() external view {
         assertEq(address(_usdWithdrawalOutputBuilder.token()), address(_usd));
+    }
+
+    function testVersion() external view {
+        _testVersion(_usdWithdrawalOutputBuilder);
     }
 
     function testBuildWithdrawalOutput(

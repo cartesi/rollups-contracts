@@ -22,8 +22,9 @@ import {LibBytes} from "../util/LibBytes.sol";
 import {LibTopic} from "../util/LibTopic.sol";
 import {LibUint256Array} from "../util/LibUint256Array.sol";
 import {SimpleBatchERC1155} from "../util/SimpleERC1155.sol";
+import {VersionGetterTestUtils} from "../util/VersionGetterTestUtils.sol";
 
-contract ERC1155BatchPortalTest is Test, InputBoxTestUtils {
+contract ERC1155BatchPortalTest is Test, InputBoxTestUtils, VersionGetterTestUtils {
     using LibUint256Array for uint256[];
     using LibAddressArray for address;
     using LibUint256Array for Vm;
@@ -36,6 +37,10 @@ contract ERC1155BatchPortalTest is Test, InputBoxTestUtils {
     function setUp() public {
         _inputBox = new InputBox();
         _portal = new ERC1155BatchPortal(_inputBox);
+    }
+
+    function testVersion() external view {
+        _testVersion(_portal);
     }
 
     function testGetInputBox() public view {
