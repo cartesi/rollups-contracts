@@ -74,7 +74,7 @@ if (nodeJsPackageVersion !== reassambledVersion) {
 const contractContent = fs.readFileSync(contractFilePath, 'utf8');
 
 // Create a RegExp to match the major version assignment statement
-const majorAssignmentStatementRegExp = /^\s*major\s*=.*$/m;
+const majorAssignmentStatementRegExp = /^(?<lhs>\s*major)\s*=.*$/m;
 
 // Check if the RegExp matches any occurence in contract content
 if (contractContent.match(majorAssignmentStatementRegExp) == null) {
@@ -83,10 +83,10 @@ if (contractContent.match(majorAssignmentStatementRegExp) == null) {
 }
 
 // Build the major version assignment statement
-const majorAssignmentStatement = `        major = ${major};`;
+const majorAssignmentStatement = `$<lhs> = ${major};`;
 
 // Create a RegExp to match the minor version assignment statement
-const minorAssignmentStatementRegExp = /^\s*minor\s*=.*$/m;
+const minorAssignmentStatementRegExp = /^(?<lhs>\s*minor)\s*=.*$/m;
 
 // Check if the RegExp matches any occurence in contract content
 if (contractContent.match(minorAssignmentStatementRegExp) == null) {
@@ -95,10 +95,10 @@ if (contractContent.match(minorAssignmentStatementRegExp) == null) {
 }
 
 // Build the minor version assignment statement
-const minorAssignmentStatement = `        minor = ${minor};`;
+const minorAssignmentStatement = `$<lhs> = ${minor};`;
 
 // Create a RegExp to match the patch version assignment statement
-const patchAssignmentStatementRegExp = /^\s*patch\s*=.*$/m;
+const patchAssignmentStatementRegExp = /^(?<lhs>\s*patch)\s*=.*$/m;
 
 // Check if the RegExp matches any occurence in contract content
 if (contractContent.match(patchAssignmentStatementRegExp) == null) {
@@ -107,10 +107,10 @@ if (contractContent.match(patchAssignmentStatementRegExp) == null) {
 }
 
 // Build the patch version assignment statement
-const patchAssignmentStatement = `        patch = ${patch};`;
+const patchAssignmentStatement = `$<lhs> = ${patch};`;
 
 // Create a RegExp to match the pre-release version assignment statement
-const preReleaseAssignmentStatementRegExp = /^\s*preRelease\s*=.*$/m;
+const preReleaseAssignmentStatementRegExp = /^(?<lhs>\s*preRelease)\s*=.*$/m;
 
 // Check if the RegExp matches any occurence in contract content
 if (contractContent.match(preReleaseAssignmentStatementRegExp) == null) {
@@ -119,10 +119,10 @@ if (contractContent.match(preReleaseAssignmentStatementRegExp) == null) {
 }
 
 // Build the pre-release version assignment statement
-const preReleaseAssignmentStatement = `        preRelease = "${preRelease ?? ""}";`;
+const preReleaseAssignmentStatement = `$<lhs> = "${preRelease ?? ""}";`;
 
 // Create a RegExp to match the build metadata assignment statement
-const buildMetadataAssignmentStatementRegExp = /^\s*buildMetadata\s*=.*$/m;
+const buildMetadataAssignmentStatementRegExp = /^(?<lhs>\s*buildMetadata)\s*=.*$/m;
 
 // Check if the RegExp matches any occurence in contract content
 if (contractContent.match(buildMetadataAssignmentStatementRegExp) == null) {
@@ -131,7 +131,7 @@ if (contractContent.match(buildMetadataAssignmentStatementRegExp) == null) {
 }
 
 // Build the build metadata assignment statement
-const buildMetadataAssignmentStatement = `        buildMetadata = "${buildMetadata ?? ""}";`;
+const buildMetadataAssignmentStatement = `$<lhs> = "${buildMetadata ?? ""}";`;
 
 // Replace version assignment statements in contract content
 const newContractContent = contractContent
@@ -151,7 +151,7 @@ if (!fs.existsSync(cannonfilePath)) {
 const cannonfileContent = fs.readFileSync(cannonfilePath, 'utf8');
 
 // Create a RegExp to match the version TOML key/value pair
-const versionTomlKvPairRegExp = /^\s*(?:version|"version"|'version')\s*=.*$/m;
+const versionTomlKvPairRegExp = /^(?<lhs>\s*(?:version|"version"|'version'))\s*=.*$/m;
 
 // Check if the RegExp matches any occurence in Cannonfile content
 if (cannonfileContent.match(versionTomlKvPairRegExp) === null) {
@@ -160,7 +160,7 @@ if (cannonfileContent.match(versionTomlKvPairRegExp) === null) {
 }
 
 // Build the version key/value pair
-const versionTomlKvPair = `version = "${nodeJsPackageVersion}"`;
+const versionTomlKvPair = `$<lhs> = "${nodeJsPackageVersion}"`;
 
 // Replace version key/value pair in Cannonfile content
 const newCannonfileContent = cannonfileContent
