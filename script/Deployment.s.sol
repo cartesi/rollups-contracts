@@ -10,6 +10,9 @@ import {QuorumFactory} from "src/consensus/quorum/QuorumFactory.sol";
 import {ApplicationFactory} from "src/dapp/ApplicationFactory.sol";
 import {SelfHostedApplicationFactory} from "src/dapp/SelfHostedApplicationFactory.sol";
 import {SafeERC20Transfer} from "src/delegatecall/SafeERC20Transfer.sol";
+import {TestFungibleToken} from "src/devnet/TestFungibleToken.sol";
+import {TestMultiToken} from "src/devnet/TestMultiToken.sol";
+import {TestNonFungibleToken} from "src/devnet/TestNonFungibleToken.sol";
 import {InputBox} from "src/inputs/InputBox.sol";
 import {ERC1155BatchPortal} from "src/portals/ERC1155BatchPortal.sol";
 import {ERC1155SinglePortal} from "src/portals/ERC1155SinglePortal.sol";
@@ -18,6 +21,10 @@ import {ERC721Portal} from "src/portals/ERC721Portal.sol";
 import {EtherPortal} from "src/portals/EtherPortal.sol";
 
 contract DeploymentScript is BaseDeploymentScript {
+    // Chain IDs
+    // See <https://chainlist.org>
+    uint64 constant ANVIL_CHAIN_ID = 31337;
+
     function run() external {
         vmSafe.startBroadcast();
 
@@ -54,6 +61,21 @@ contract DeploymentScript is BaseDeploymentScript {
             type(SafeERC20Transfer).name,
             _create2(type(SafeERC20Transfer).creationCode, abi.encode())
         );
+
+        if (block.chainid == ANVIL_CHAIN_ID) {
+            _storeDeployment(
+                type(TestFungibleToken).name,
+                _create2(type(TestFungibleToken).creationCode, abi.encode())
+            );
+            _storeDeployment(
+                type(TestNonFungibleToken).name,
+                _create2(type(TestNonFungibleToken).creationCode, abi.encode())
+            );
+            _storeDeployment(
+                type(TestMultiToken).name,
+                _create2(type(TestMultiToken).creationCode, abi.encode())
+            );
+        }
 
         address appFactory = _storeDeployment(
             type(ApplicationFactory).name,
