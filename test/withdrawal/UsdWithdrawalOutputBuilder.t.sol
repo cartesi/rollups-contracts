@@ -10,7 +10,9 @@ import {IERC20} from "@openzeppelin-contracts-5.2.0/token/ERC20/IERC20.sol";
 import {Outputs} from "src/common/Outputs.sol";
 import {ISafeERC20Transfer} from "src/delegatecall/ISafeERC20Transfer.sol";
 import {SafeERC20Transfer} from "src/delegatecall/SafeERC20Transfer.sol";
-import {IWithdrawalOutputBuilder} from "src/withdrawal/IWithdrawalOutputBuilder.sol";
+import {
+    IUsdWithdrawalOutputBuilder
+} from "src/withdrawal/IUsdWithdrawalOutputBuilder.sol";
 import {UsdWithdrawalOutputBuilder} from "src/withdrawal/UsdWithdrawalOutputBuilder.sol";
 
 import {LibBytes} from "../util/LibBytes.sol";
@@ -21,7 +23,7 @@ contract UsdWithdrawalOutputBuilderTest is Test {
 
     IERC20 _usd;
     ISafeERC20Transfer _safeErc20Transfer;
-    IWithdrawalOutputBuilder _withdrawalOutputBuilder;
+    IUsdWithdrawalOutputBuilder _usdWithdrawalOutputBuilder;
 
     address immutable TOKEN_OWNER = vm.addr(1);
     uint256 constant TOTAL_SUPPLY = type(uint64).max;
@@ -29,8 +31,12 @@ contract UsdWithdrawalOutputBuilderTest is Test {
     function setUp() external {
         _usd = new SimpleERC20(TOKEN_OWNER, TOTAL_SUPPLY);
         _safeErc20Transfer = new SafeERC20Transfer();
-        _withdrawalOutputBuilder =
+        _usdWithdrawalOutputBuilder =
             new UsdWithdrawalOutputBuilder(_safeErc20Transfer, _usd);
+    }
+
+    function testToken() external view {
+        assertEq(address(_usdWithdrawalOutputBuilder.token()), address(_usd));
     }
 
     function testBuildWithdrawalOutput(
@@ -40,7 +46,7 @@ contract UsdWithdrawalOutputBuilderTest is Test {
     ) external view {
         bytes memory account = abi.encodePacked(_encodeAccount(user, balance), padding);
         assertGe(account.length, 28);
-        bytes memory output = _withdrawalOutputBuilder.buildWithdrawalOutput(account);
+        bytes memory output = _usdWithdrawalOutputBuilder.buildWithdrawalOutput(account);
         (bytes4 outputSelector, bytes memory outputArgs) = output.consumeBytes4();
         assertEq(outputSelector, Outputs.DelegateCallVoucher.selector);
         (address destination, bytes memory payload) =
@@ -58,7 +64,7 @@ contract UsdWithdrawalOutputBuilderTest is Test {
     function testBuildWithdrawalOutputReverts(uint256) external {
         bytes memory account = vm.randomBytes(vm.randomUint(0, 27));
         vm.expectRevert("Account is too short");
-        _withdrawalOutputBuilder.buildWithdrawalOutput(account);
+        _usdWithdrawalOutputBuilder.buildWithdrawalOutput(account);
     }
 
     function _encodeAccount(address user, uint64 balance)
