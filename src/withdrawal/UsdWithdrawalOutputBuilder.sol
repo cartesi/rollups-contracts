@@ -8,15 +8,19 @@ import {IERC20} from "@openzeppelin-contracts-5.2.0/token/ERC20/IERC20.sol";
 import {Outputs} from "../common/Outputs.sol";
 import {ISafeERC20Transfer} from "../delegatecall/ISafeERC20Transfer.sol";
 import {LibUsdAccount} from "../library/LibUsdAccount.sol";
-import {IWithdrawalOutputBuilder} from "./IWithdrawalOutputBuilder.sol";
+import {IUsdWithdrawalOutputBuilder} from "./IUsdWithdrawalOutputBuilder.sol";
 
-contract UsdWithdrawalOutputBuilder is IWithdrawalOutputBuilder {
+contract UsdWithdrawalOutputBuilder is IUsdWithdrawalOutputBuilder {
     ISafeERC20Transfer immutable SAFE_ERC20_TRANSFER;
     IERC20 immutable USD;
 
     constructor(ISafeERC20Transfer safeTransfer, IERC20 usd) {
         SAFE_ERC20_TRANSFER = safeTransfer;
         USD = usd;
+    }
+
+    function token() external view override returns (IERC20) {
+        return USD;
     }
 
     function buildWithdrawalOutput(bytes calldata account)
