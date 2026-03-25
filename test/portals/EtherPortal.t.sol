@@ -13,8 +13,9 @@ import {IEtherPortal} from "src/portals/IEtherPortal.sol";
 
 import {InputBoxTestUtils} from "../util/InputBoxTestUtils.sol";
 import {LibBytes} from "../util/LibBytes.sol";
+import {VersionGetterTestUtils} from "../util/VersionGetterTestUtils.sol";
 
-contract EtherPortalTest is Test, InputBoxTestUtils {
+contract EtherPortalTest is Test, InputBoxTestUtils, VersionGetterTestUtils {
     using LibBytes for bytes;
 
     IInputBox _inputBox;
@@ -23,6 +24,10 @@ contract EtherPortalTest is Test, InputBoxTestUtils {
     function setUp() external {
         _inputBox = new InputBox();
         _portal = new EtherPortal(_inputBox);
+    }
+
+    function testVersion() external view {
+        _testVersion(_portal);
     }
 
     function testGetInputBox() external view {

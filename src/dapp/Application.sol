@@ -8,6 +8,7 @@ import {AccountValidityProof} from "../common/AccountValidityProof.sol";
 import {CanonicalMachine} from "../common/CanonicalMachine.sol";
 import {OutputValidityProof} from "../common/OutputValidityProof.sol";
 import {Outputs} from "../common/Outputs.sol";
+import {RollupsContract} from "../common/RollupsContract.sol";
 import {WithdrawalConfig} from "../common/WithdrawalConfig.sol";
 import {IOutputsMerkleRootValidator} from "../consensus/IOutputsMerkleRootValidator.sol";
 import {LibAccountValidityProof} from "../library/LibAccountValidityProof.sol";
@@ -35,7 +36,8 @@ contract Application is
     Ownable,
     ERC721Holder,
     ERC1155Holder,
-    ReentrancyGuard
+    ReentrancyGuard,
+    RollupsContract
 {
     using BitMaps for BitMaps.BitMap;
     using LibAccountValidityProof for AccountValidityProof;

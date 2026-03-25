@@ -17,8 +17,9 @@ import {Test} from "forge-std-1.9.6/src/Test.sol";
 import {Vm} from "forge-std-1.9.6/src/Vm.sol";
 
 import {LibBytes} from "../util/LibBytes.sol";
+import {VersionGetterTestUtils} from "../util/VersionGetterTestUtils.sol";
 
-contract ApplicationFactoryTest is Test {
+contract ApplicationFactoryTest is Test, VersionGetterTestUtils {
     using LibWithdrawalConfig for WithdrawalConfig;
     using LibBytes for bytes;
 
@@ -26,6 +27,10 @@ contract ApplicationFactoryTest is Test {
 
     function setUp() external {
         _factory = new ApplicationFactory();
+    }
+
+    function testVersion() external view {
+        _testVersion(_factory);
     }
 
     function testNewApplication(
@@ -221,6 +226,9 @@ contract ApplicationFactoryTest is Test {
         }
 
         assertEq(numOfApplicationsCreated, 1, "number of ApplicationCreated events");
+
+        _testVersion(appContract);
+
         assertEq(
             address(appContract.getOutputsMerkleRootValidator()),
             address(outputsMerkleRootValidator),

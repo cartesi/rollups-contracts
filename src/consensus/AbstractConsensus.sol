@@ -7,6 +7,7 @@ import {ERC165} from "@openzeppelin-contracts-5.2.0/utils/introspection/ERC165.s
 import {IERC165} from "@openzeppelin-contracts-5.2.0/utils/introspection/IERC165.sol";
 
 import {CanonicalMachine} from "../common/CanonicalMachine.sol";
+import {RollupsContract} from "../common/RollupsContract.sol";
 import {ApplicationChecker} from "../dapp/ApplicationChecker.sol";
 import {LibBinaryMerkleTree} from "../library/LibBinaryMerkleTree.sol";
 import {LibKeccak256} from "../library/LibKeccak256.sol";
@@ -14,7 +15,12 @@ import {IConsensus} from "./IConsensus.sol";
 import {IOutputsMerkleRootValidator} from "./IOutputsMerkleRootValidator.sol";
 
 /// @notice Abstract implementation of IConsensus
-abstract contract AbstractConsensus is IConsensus, ERC165, ApplicationChecker {
+abstract contract AbstractConsensus is
+    IConsensus,
+    ERC165,
+    ApplicationChecker,
+    RollupsContract
+{
     using LibBinaryMerkleTree for bytes32[];
 
     /// @notice The epoch length

@@ -12,12 +12,17 @@ import {IInputBox} from "src/inputs/IInputBox.sol";
 import {InputBox} from "src/inputs/InputBox.sol";
 
 import {InputBoxTestUtils} from "../util/InputBoxTestUtils.sol";
+import {VersionGetterTestUtils} from "../util/VersionGetterTestUtils.sol";
 
-contract InputBoxTest is Test, InputBoxTestUtils {
+contract InputBoxTest is Test, InputBoxTestUtils, VersionGetterTestUtils {
     InputBox _inputBox;
 
     function setUp() external {
         _inputBox = new InputBox();
+    }
+
+    function testVersion() external view {
+        _testVersion(_inputBox);
     }
 
     function testDeploymentBlockNumber(uint256 blockNumber) external {

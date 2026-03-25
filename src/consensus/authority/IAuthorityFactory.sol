@@ -3,10 +3,11 @@
 
 pragma solidity ^0.8.8;
 
+import {IVersionGetter} from "../../common/IVersionGetter.sol";
 import {IAuthority} from "./IAuthority.sol";
 
 /// @title Authority Factory interface
-interface IAuthorityFactory {
+interface IAuthorityFactory is IVersionGetter {
     // Events
 
     /// @notice A new authority was deployed.
