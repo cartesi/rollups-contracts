@@ -1,5 +1,27 @@
 # @cartesi/rollups
 
+## 3.0.0-alpha.2
+
+### Major Changes
+
+- d9e9104: Add machine Merkle root as parameter to `ClaimSubmitted` and `ClaimAccepted` events
+- d9e9104: Add Merkle proof of outputs Merkle root in the machine as parameter to `submitClaim` function
+- 7b116d1: Make Quorum deployment revert if validator set is empty or contains the zero address
+- a160588: Make `addInput` (and consequently all deposit functions) revert if app was not deployed or is foreclosed
+- 7b116d1: Make `submitClaim` function revert if app was not deployed or is foreclosed
+- 15a7d01: Add withdrawal configuration parameter to app deployment entrypoints
+- d9e9104: Make `Quorum` functions `numOfValidatorsInFavorOf` and `isValidatorInFavorOf` receive machine Merkle root instead of outputs Merkle root
+
+### Minor Changes
+
+- ee27af7: Add functions related to foreclosure to app interface: `isForeclosed`, `getGuardian`, `foreclose`
+- 74d225d: Deploy `UsdWithdrawalOutputBuilder` contract (which enables emergency withdrawals for apps backed by USDC) to all supported networks
+- d9e9104: Make `Quorum` functions `numOfValidatorsInFavorOf` and `isValidatorInFavorOf` receive machine Merkle root instead of outputs Merkle root
+- a18eab1: Deploy test token contracts with built-in faucets (ERC-20 `TestFungibleToken`, ERC-721 `TestNonFungibleToken`, ERC-1155 `TestMultiToken`) to devnet
+- 4a40009: Add functions related to accounts drive to app interface: `getLog2LeavesPerAccount`, `getLog2MaxNumOfAccounts`, `getAccountsDriveStartIndex`
+- 7a3463b: Add functions related to withdrawals to app interface: `getWithdrawalOutputBuilder`, `withdraw`, `getNumberOfWithdrawals`, `wereAccountFundsWithdrawn`
+- 7a95b3b: Add functions related to accounts validation to app interface: `validateAccountMerkleRoot`, `validateAccount`
+
 ## 2.2.1-alpha.1
 
 ### Patch Changes
