@@ -5,7 +5,21 @@
     "@cartesi/rollups": "2.2.0"
   },
   "changesets": [
+    "beige-flowers-bow",
+    "calm-facts-wink",
+    "easy-sheep-decide",
+    "forty-mice-hope",
     "honest-singers-sing",
+    "huge-lights-rush",
+    "quick-pets-wish",
+    "ready-peaches-hang",
+    "shy-carrots-pick",
+    "silly-gifts-joke",
+    "silver-steaks-wash",
+    "three-lions-help",
+    "tough-lights-fall",
+    "true-words-learn",
+    "twelve-emus-spend",
     "yummy-dancers-cover"
   ]
 }
