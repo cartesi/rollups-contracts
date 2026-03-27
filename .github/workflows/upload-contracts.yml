@@ -1,7 +1,12 @@
 name: Upload contracts
 
 on:
+  pull_request:
   push:
+    branches:
+      - main
+      - release/*
+      - next/*
     tags:
       - v*
 
@@ -17,10 +22,21 @@ jobs:
 
       - name: Extract version from tag
         id: extract_version
-        run: echo "version=${GITHUB_REF#refs/tags/v}" >> $GITHUB_OUTPUT
+        run: |
+          if [[ "$GITHUB_REF" == refs/tags/v* ]]; then
+            echo "version=${GITHUB_REF#refs/tags/v}" >> $GITHUB_OUTPUT
+          else
+            echo "version=0.0.0-dev" >> $GITHUB_OUTPUT
+          fi
 
       - name: Push package to Soldeer.xyz
-        run: forge soldeer push "cartesi-rollups-contracts~$VERSION"
+        run: |
+          if [ "$DRY_RUN" = "true" ]; then
+            forge soldeer push "cartesi-rollups-contracts~$VERSION" --dry-run
+          else
+            forge soldeer push "cartesi-rollups-contracts~$VERSION"
+          fi
         env:
-          SOLDEER_API_TOKEN: ${{ secrets.SOLDEER_API_TOKEN }}
+          DRY_RUN: ${{ !startsWith(github.ref, 'refs/tags/v') }}
+          SOLDEER_API_TOKEN: ${{ startsWith(github.ref, 'refs/tags/v') && secrets.SOLDEER_API_TOKEN || '' }}
           VERSION: ${{ steps.extract_version.outputs.version }}

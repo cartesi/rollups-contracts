@@ -6,9 +6,6 @@ pragma solidity ^0.8.27;
 library LibBinaryMerkleTreeHelper {
     using LibBinaryMerkleTreeHelper for bytes32[];
 
-    /// @notice The provided node index is invalid.
-    error InvalidNodeIndex();
-
     /// @notice The provided height is invalid.
     error InvalidHeight();
 
@@ -40,7 +37,7 @@ library LibBinaryMerkleTreeHelper {
     /// @param height The height of the Merkle tree
     /// @param nodeFromChildren The function that computes nodes from their children
     /// @return sibs The siblings of the node in bottom-up order
-    /// @dev Raises an `InvalidNodeIndex` error if the provided index is out of bounds.
+    /// @dev Raises an error if the provided index is out of bounds.
     /// @dev Raises an `InvalidHeight` error if more than `2^height` nodes are provided.
     function siblings(
         bytes32[] memory nodes,
@@ -56,7 +53,7 @@ library LibBinaryMerkleTreeHelper {
             defaultNode = nodeFromChildren(defaultNode, defaultNode);
             nodeIndex >>= 1;
         }
-        require(nodeIndex == 0, InvalidNodeIndex());
+        require(nodeIndex == 0, "invalid node index");
         require(nodes.length <= 1, InvalidHeight());
     }
 
