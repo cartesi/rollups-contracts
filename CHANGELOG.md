@@ -1,5 +1,11 @@
 # @cartesi/rollups
 
+## 3.0.0-alpha.3
+
+### Patch Changes
+
+- 8c8ce84: Dry-run release workflows on PRs and pushes to branches
+
 ## 3.0.0-alpha.2
 
 ### Major Changes
