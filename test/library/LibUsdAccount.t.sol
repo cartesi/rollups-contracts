@@ -6,6 +6,9 @@ pragma solidity ^0.8.22;
 import {Test} from "forge-std-1.9.6/src/Test.sol";
 
 import {LibUsdAccount} from "src/library/LibUsdAccount.sol";
+import {
+    IWithdrawalOutputBuilderErrors
+} from "src/withdrawal/IWithdrawalOutputBuilderErrors.sol";
 
 library ExternalLibUsdAccount {
     /// @notice Tail-calls LibUsdAccount.decode.
@@ -34,8 +37,9 @@ contract LibUsdAccountTest is Test {
     }
 
     function testDecodeRevertsAccountIsTooShort(uint256) external {
-        bytes memory account = vm.randomBytes(vm.randomUint(0, 27));
-        vm.expectRevert("Account is too short");
+        uint64 accountSize = uint64(vm.randomUint(0, 27));
+        bytes memory account = vm.randomBytes(accountSize);
+        vm.expectRevert(_encodeAccountTooShort(accountSize));
         ExternalLibUsdAccount.decode(account);
     }
 
@@ -68,5 +72,17 @@ contract LibUsdAccountTest is Test {
         (address user, uint64 balance) = ExternalLibUsdAccount.decode(account);
         assertEq(user, address(0), "user");
         assertEq(balance, uint64(0), "balance");
+    }
+
+    function _encodeAccountTooShort(uint64 attemptedAccountSize)
+        internal
+        pure
+        returns (bytes memory)
+    {
+        return abi.encodeWithSelector(
+            IWithdrawalOutputBuilderErrors.AccountTooShort.selector,
+            attemptedAccountSize,
+            28
+        );
     }
 }

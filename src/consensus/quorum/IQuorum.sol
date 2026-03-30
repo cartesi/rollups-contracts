@@ -12,6 +12,11 @@ import {IConsensus} from "../IConsensus.sol";
 /// @notice You can list the validators in the quorum by calling the `validatorById`
 /// function for each ID from 1 to `n`.
 interface IQuorum is IConsensus {
+    /// @notice This error is raised whenever `submitClaim` is called by
+    /// someone who is not a validator.
+    /// @param caller The caller address
+    error CallerIsNotValidator(address caller);
+
     /// @notice Get the number of validators.
     /// @dev The number of validators is greater than or equal to 1.
     function numOfValidators() external view returns (uint256);

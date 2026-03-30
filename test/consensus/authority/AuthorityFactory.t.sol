@@ -9,6 +9,7 @@ import {Test} from "forge-std-1.9.6/src/Test.sol";
 import {Vm} from "forge-std-1.9.6/src/Vm.sol";
 
 import {IConsensus} from "src/consensus/IConsensus.sol";
+import {IConsensusFactoryErrors} from "src/consensus/IConsensusFactoryErrors.sol";
 import {AuthorityFactory} from "src/consensus/authority/AuthorityFactory.sol";
 import {IAuthority} from "src/consensus/authority/IAuthority.sol";
 import {IAuthorityFactory} from "src/consensus/authority/IAuthorityFactory.sol";
@@ -67,11 +68,8 @@ contract AuthorityFactoryTest is
             _testNewAuthoritySuccess(
                 authorityOwner, epochLength, interfaceId, authority, logs
             );
-        } catch Error(string memory message) {
-            _testNewAuthorityFailure(epochLength, message);
-            return;
         } catch (bytes memory error) {
-            _testNewAuthorityFailure(authorityOwner, error);
+            _testNewAuthorityFailure(authorityOwner, epochLength, error);
             return;
         }
     }
@@ -101,11 +99,8 @@ contract AuthorityFactoryTest is
             _testNewAuthoritySuccess(
                 authorityOwner, epochLength, interfaceId, authority, logs
             );
-        } catch Error(string memory message) {
-            _testNewAuthorityFailure(epochLength, message);
-            return;
         } catch (bytes memory error) {
-            _testNewAuthorityFailure(authorityOwner, error);
+            _testNewAuthorityFailure(authorityOwner, epochLength, error);
             return;
         }
 
@@ -623,27 +618,19 @@ contract AuthorityFactoryTest is
         _testSupportsInterface(authority, interfaceId);
     }
 
-    function _testNewAuthorityFailure(uint256 epochLength, string memory message)
-        internal
-        pure
-    {
-        bytes32 messageHash = keccak256(bytes(message));
-        if (messageHash == keccak256("epoch length must not be zero")) {
-            assertEq(epochLength, 0, "expected epoch length to be zero");
-        } else {
-            revert("Unexpected error message");
-        }
-    }
-
-    function _testNewAuthorityFailure(address authorityOwner, bytes memory error)
-        internal
-        pure
-    {
+    function _testNewAuthorityFailure(
+        address authorityOwner,
+        uint256 epochLength,
+        bytes memory error
+    ) internal pure {
         (bytes4 errorSelector, bytes memory errorArgs) = error.consumeBytes4();
         if (errorSelector == Ownable.OwnableInvalidOwner.selector) {
             address owner = abi.decode(errorArgs, (address));
             assertEq(owner, authorityOwner, "OwnableInvalidOwner.owner != owner");
             assertEq(owner, address(0), "OwnableInvalidOwner.owner != address(0)");
+        } else if (errorSelector == IConsensusFactoryErrors.ZeroEpochLength.selector) {
+            assertEq(errorArgs.length, 0, "expected ZeroEpochLength to have no args");
+            assertEq(epochLength, 0, "expected epoch length to be zero");
         } else {
             revert("Unexpected error");
         }

@@ -4,10 +4,16 @@
 pragma solidity ^0.8.8;
 
 import {IVersionGetter} from "../../common/IVersionGetter.sol";
+import {IConsensusFactoryErrors} from "../IConsensusFactoryErrors.sol";
 import {IQuorum} from "./IQuorum.sol";
+import {IQuorumFactoryErrors} from "./IQuorumFactoryErrors.sol";
 
 /// @title Quorum Factory interface
-interface IQuorumFactory is IVersionGetter {
+interface IQuorumFactory is
+    IVersionGetter,
+    IConsensusFactoryErrors,
+    IQuorumFactoryErrors
+{
     // Events
 
     /// @notice A new quorum was deployed.
