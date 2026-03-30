@@ -5,6 +5,7 @@ pragma solidity ^0.8.8;
 
 import {Create2} from "@openzeppelin-contracts-5.2.0/utils/Create2.sol";
 
+import {RollupsContract} from "../common/RollupsContract.sol";
 import {WithdrawalConfig} from "../common/WithdrawalConfig.sol";
 import {IOutputsMerkleRootValidator} from "../consensus/IOutputsMerkleRootValidator.sol";
 import {Application} from "./Application.sol";
@@ -13,7 +14,7 @@ import {IApplicationFactory} from "./IApplicationFactory.sol";
 
 /// @title Application Factory
 /// @notice Allows anyone to reliably deploy a new `IApplication` contract.
-contract ApplicationFactory is IApplicationFactory {
+contract ApplicationFactory is IApplicationFactory, RollupsContract {
     function newApplication(
         IOutputsMerkleRootValidator outputsMerkleRootValidator,
         address appOwner,

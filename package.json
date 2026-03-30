@@ -8,7 +8,7 @@
     "scripts": {
         "build:contracts": "forge build src",
         "ci:publish": "changeset publish",
-        "ci:version": "changeset version && node script/update-cannonfile-version.mjs",
+        "ci:version": "changeset version && node script/update-version.mjs",
         "clean": "pnpm clean:forge && pnpm clean:cannon",
         "clean:cannon": "rm -rf deployments state.json",
         "clean:forge": "forge clean",

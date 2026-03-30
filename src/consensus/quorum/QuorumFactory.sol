@@ -5,13 +5,14 @@ pragma solidity ^0.8.8;
 
 import {Create2} from "@openzeppelin-contracts-5.2.0/utils/Create2.sol";
 
+import {RollupsContract} from "../../common/RollupsContract.sol";
 import {IQuorum} from "./IQuorum.sol";
 import {IQuorumFactory} from "./IQuorumFactory.sol";
 import {Quorum} from "./Quorum.sol";
 
 /// @title Quorum Factory
 /// @notice Allows anyone to reliably deploy a new `IQuorum` contract.
-contract QuorumFactory is IQuorumFactory {
+contract QuorumFactory is IQuorumFactory, RollupsContract {
     function newQuorum(address[] calldata validators, uint256 epochLength)
         external
         override
