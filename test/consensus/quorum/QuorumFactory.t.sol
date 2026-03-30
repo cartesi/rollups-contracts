@@ -309,6 +309,9 @@ contract QuorumFactoryTest is Test, ERC165Test, ConsensusTestUtils {
 
         address appContract = _newActiveAppMock();
 
+        address[] memory appContractSingleton = new address[](1);
+        appContractSingleton[0] = appContract;
+
         uint256[] memory blockNumbers = _randomEpochFinalBlockNumbers(epochLength);
 
         {
@@ -455,9 +458,9 @@ contract QuorumFactoryTest is Test, ERC165Test, ConsensusTestUtils {
                 }
 
                 uint256 totalNumOfSubmittedClaimsBefore =
-                    quorum.getNumberOfSubmittedClaims();
+                    quorum.getNumberOfSubmittedClaims(appContract);
                 uint256 totalNumOfAcceptedClaimsBefore =
-                    quorum.getNumberOfAcceptedClaims();
+                    quorum.getNumberOfAcceptedClaims(appContract);
 
                 uint256 numOfValidatorsInFavorOfAnyClaimInEpochBefore =
                     quorum.numOfValidatorsInFavorOfAnyClaimInEpoch(
@@ -604,15 +607,29 @@ contract QuorumFactoryTest is Test, ERC165Test, ConsensusTestUtils {
                 );
 
                 assertEq(
-                    quorum.getNumberOfSubmittedClaims(),
+                    quorum.getNumberOfSubmittedClaims(appContract),
                     totalNumOfSubmittedClaimsBefore + numOfClaimSubmittedEvents,
                     "Total number of submitted claims should be increased by number of events"
                 );
 
                 assertEq(
-                    quorum.getNumberOfAcceptedClaims(),
+                    quorum.getNumberOfAcceptedClaims(appContract),
                     totalNumOfAcceptedClaimsBefore + numOfClaimAcceptedEvents,
                     "Total number of accepted claims should be increased by number of events"
+                );
+
+                address notAppContract = vm.randomAddressNotIn(appContractSingleton);
+
+                assertEq(
+                    quorum.getNumberOfSubmittedClaims(notAppContract),
+                    0,
+                    "Total number of submitted claims should be zero for other apps"
+                );
+
+                assertEq(
+                    quorum.getNumberOfAcceptedClaims(notAppContract),
+                    0,
+                    "Total number of submitted claims should be zero for other apps"
                 );
 
                 assertEq(
@@ -623,11 +640,26 @@ contract QuorumFactoryTest is Test, ERC165Test, ConsensusTestUtils {
                     "Number of validators in favor of any claim in epoch should be incremented"
                 );
 
+                assertEq(
+                    quorum.numOfValidatorsInFavorOfAnyClaimInEpoch(
+                        notAppContract, lastProcessedBlockNumber
+                    ),
+                    0,
+                    "Number of validators in favor of any claim in epoch should be zero for other apps"
+                );
+
                 assertTrue(
                     quorum.isValidatorInFavorOfAnyClaimInEpoch(
                         appContract, lastProcessedBlockNumber, id
                     ),
                     "Expected validator to be in favor of any claim in epoch"
+                );
+
+                assertFalse(
+                    quorum.isValidatorInFavorOfAnyClaimInEpoch(
+                        notAppContract, lastProcessedBlockNumber, id
+                    ),
+                    "Validator shouldn't be in favor of any claim in epoch for other apps"
                 );
 
                 assertEq(
@@ -638,11 +670,19 @@ contract QuorumFactoryTest is Test, ERC165Test, ConsensusTestUtils {
                     "Number of validators in favor of claim should be incremented"
                 );
 
-                assertTrue(
-                    quorum.isValidatorInFavorOf(
-                        appContract, lastProcessedBlockNumber, machineMerkleRoot, id
+                assertEq(
+                    quorum.numOfValidatorsInFavorOf(
+                        notAppContract, lastProcessedBlockNumber, machineMerkleRoot
                     ),
-                    "Expected validator to be in favor of claim"
+                    0,
+                    "Number of validators in favor of claim should be zero for other apps"
+                );
+
+                assertFalse(
+                    quorum.isValidatorInFavorOf(
+                        notAppContract, lastProcessedBlockNumber, machineMerkleRoot, id
+                    ),
+                    "Validator shouldn't be in favor of claim for other apps"
                 );
 
                 vm.recordLogs();
@@ -854,14 +894,14 @@ contract QuorumFactoryTest is Test, ERC165Test, ConsensusTestUtils {
 
         // Also, initially, no `ClaimSubmitted` or `ClaimAccepted` were emitted.
         assertEq(
-            quorum.getNumberOfSubmittedClaims(),
+            quorum.getNumberOfSubmittedClaims(vm.randomAddress()),
             0,
-            "initially, getNumberOfSubmittedClaims() == 0"
+            "initially, getNumberOfSubmittedClaims(...) == 0"
         );
         assertEq(
-            quorum.getNumberOfAcceptedClaims(),
+            quorum.getNumberOfAcceptedClaims(vm.randomAddress()),
             0,
-            "initially, getNumberOfAcceptedClaims() == 0"
+            "initially, getNumberOfAcceptedClaims(...) == 0"
         );
 
         // Test ERC-165 interface

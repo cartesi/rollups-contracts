@@ -16,6 +16,7 @@ import {IAuthorityFactory} from "src/consensus/authority/IAuthorityFactory.sol";
 import {Claim} from "../../util/Claim.sol";
 import {ConsensusTestUtils} from "../../util/ConsensusTestUtils.sol";
 import {ERC165Test} from "../../util/ERC165Test.sol";
+import {LibAddressArray} from "../../util/LibAddressArray.sol";
 import {LibBytes} from "../../util/LibBytes.sol";
 import {LibClaim} from "../../util/LibClaim.sol";
 import {LibConsensus} from "../../util/LibConsensus.sol";
@@ -26,6 +27,7 @@ import {OwnableTest} from "../../util/OwnableTest.sol";
 contract AuthorityFactoryTest is Test, ERC165Test, OwnableTest, ConsensusTestUtils {
     using LibUint256Array for uint256[];
     using LibConsensus for IAuthority;
+    using LibAddressArray for Vm;
     using LibTopic for address;
     using LibClaim for Claim;
     using LibBytes for bytes;
@@ -381,6 +383,9 @@ contract AuthorityFactoryTest is Test, ERC165Test, OwnableTest, ConsensusTestUti
 
         claim.appContract = _newActiveAppMock();
 
+        address[] memory appContractSingleton = new address[](1);
+        appContractSingleton[0] = claim.appContract;
+
         uint256[] memory blockNumbers = _randomEpochFinalBlockNumbers(epochLength);
 
         {
@@ -398,8 +403,10 @@ contract AuthorityFactoryTest is Test, ERC165Test, OwnableTest, ConsensusTestUti
 
             bytes32 machineMerkleRoot = claim.computeMachineMerkleRoot();
 
-            uint256 totalNumOfSubmittedClaims = authority.getNumberOfSubmittedClaims();
-            uint256 totalNumOfAcceptedClaims = authority.getNumberOfAcceptedClaims();
+            uint256 totalNumOfSubmittedClaims =
+                authority.getNumberOfSubmittedClaims(claim.appContract);
+            uint256 totalNumOfAcceptedClaims =
+                authority.getNumberOfAcceptedClaims(claim.appContract);
 
             vm.recordLogs();
 
@@ -467,15 +474,29 @@ contract AuthorityFactoryTest is Test, ERC165Test, OwnableTest, ConsensusTestUti
             }
 
             assertEq(
-                authority.getNumberOfSubmittedClaims(),
+                authority.getNumberOfSubmittedClaims(claim.appContract),
                 totalNumOfSubmittedClaims + 1,
                 "Total number of submitted claims should be increased by number of events"
             );
 
             assertEq(
-                authority.getNumberOfAcceptedClaims(),
+                authority.getNumberOfAcceptedClaims(claim.appContract),
                 totalNumOfAcceptedClaims + 1,
                 "Total number of accepted claims should be increased by number of events"
+            );
+
+            address notAppContract = vm.randomAddressNotIn(appContractSingleton);
+
+            assertEq(
+                authority.getNumberOfSubmittedClaims(notAppContract),
+                0,
+                "Total number of submitted claims should be zero for other apps"
+            );
+
+            assertEq(
+                authority.getNumberOfAcceptedClaims(notAppContract),
+                0,
+                "Total number of submitted claims should be zero for other apps"
             );
 
             {
@@ -495,10 +516,21 @@ contract AuthorityFactoryTest is Test, ERC165Test, OwnableTest, ConsensusTestUti
                 "Once a claim is accepted, the outputs Merkle root is valid"
             );
 
+            assertFalse(
+                authority.isOutputsMerkleRootValid(notAppContract, _randomBytes32()),
+                "Valid output Merkle roots for other apps should remain the same"
+            );
+
             assertEq(
                 authority.getLastFinalizedMachineMerkleRoot(claim.appContract),
                 lastFinalizedMachineMerkleRoot,
                 "Check last finalized machine Merkle root"
+            );
+
+            assertEq(
+                authority.getLastFinalizedMachineMerkleRoot(notAppContract),
+                bytes32(0),
+                "Last finalized machine Merkle root for other apps should remain the same"
             );
         }
     }
@@ -564,14 +596,14 @@ contract AuthorityFactoryTest is Test, ERC165Test, OwnableTest, ConsensusTestUti
 
         // Also, initially, no `ClaimSubmitted` or `ClaimAccepted` were emitted.
         assertEq(
-            authority.getNumberOfSubmittedClaims(),
+            authority.getNumberOfSubmittedClaims(vm.randomAddress()),
             0,
-            "initially, getNumberOfSubmittedClaims() == 0"
+            "initially, getNumberOfSubmittedClaims(...) == 0"
         );
         assertEq(
-            authority.getNumberOfAcceptedClaims(),
+            authority.getNumberOfAcceptedClaims(vm.randomAddress()),
             0,
-            "initially, getNumberOfAcceptedClaims() == 0"
+            "initially, getNumberOfAcceptedClaims(...) == 0"
         );
 
         // Test ERC-165 interface
