@@ -31,13 +31,15 @@ abstract contract AbstractConsensus is IConsensus, ERC165, ApplicationChecker {
     /// by application contract address.
     mapping(address => bytes32) private _lastFinalizedMachineMerkleRoots;
 
-    /// @notice Number of claims accepted by the consensus.
+    /// @notice Indexes number of claims accepted to the consensus
+    /// by application contract address.
     /// @dev Must be monotonically non-decreasing in time
-    uint256 private _numOfAcceptedClaims;
+    mapping(address => uint256) private _numOfAcceptedClaims;
 
-    /// @notice Number of claims submitted to the consensus.
+    /// @notice Indexes number of claims submitted to the consensus
+    /// by application contract address.
     /// @dev Must be monotonically non-decreasing in time
-    uint256 private _numOfSubmittedClaims;
+    mapping(address => uint256) private _numOfSubmittedClaims;
 
     /// @param epochLength The epoch length
     /// @dev Reverts if the epoch length is zero.
@@ -71,13 +73,23 @@ abstract contract AbstractConsensus is IConsensus, ERC165, ApplicationChecker {
     }
 
     /// @inheritdoc IConsensus
-    function getNumberOfAcceptedClaims() external view override returns (uint256) {
-        return _numOfAcceptedClaims;
+    function getNumberOfAcceptedClaims(address appContract)
+        external
+        view
+        override
+        returns (uint256)
+    {
+        return _numOfAcceptedClaims[appContract];
     }
 
     /// @inheritdoc IConsensus
-    function getNumberOfSubmittedClaims() external view override returns (uint256) {
-        return _numOfSubmittedClaims;
+    function getNumberOfSubmittedClaims(address appContract)
+        external
+        view
+        override
+        returns (uint256)
+    {
+        return _numOfSubmittedClaims[appContract];
     }
 
     /// @inheritdoc ERC165
@@ -134,7 +146,7 @@ abstract contract AbstractConsensus is IConsensus, ERC165, ApplicationChecker {
             outputsMerkleRoot,
             machineMerkleRoot
         );
-        ++_numOfSubmittedClaims;
+        ++_numOfSubmittedClaims[appContract];
     }
 
     /// @notice Accept a claim.
@@ -160,7 +172,7 @@ abstract contract AbstractConsensus is IConsensus, ERC165, ApplicationChecker {
         emit ClaimAccepted(
             appContract, lastProcessedBlockNumber, outputsMerkleRoot, machineMerkleRoot
         );
-        ++_numOfAcceptedClaims;
+        ++_numOfAcceptedClaims[appContract];
     }
 
     /// @notice Compute the machine Merkle root given an outputs Merkle root and a proof.

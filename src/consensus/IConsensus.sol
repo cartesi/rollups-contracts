@@ -94,9 +94,19 @@ interface IConsensus is IOutputsMerkleRootValidator, IApplicationChecker {
     /// the integer division of the block number by the epoch length.
     function getEpochLength() external view returns (uint256);
 
-    /// @notice Get the number of claims accepted by the consensus.
-    function getNumberOfAcceptedClaims() external view returns (uint256);
+    /// @notice Get the number of claims accepted by the consensus
+    /// regarding a specific app.
+    /// @param appContract The application contract address
+    function getNumberOfAcceptedClaims(address appContract)
+        external
+        view
+        returns (uint256);
 
-    /// @notice Get the number of claims submitted to the consensus.
-    function getNumberOfSubmittedClaims() external view returns (uint256);
+    /// @notice Get the number of claims submitted to the consensus
+    /// regarding a specific app.
+    /// @param appContract The application contract address
+    function getNumberOfSubmittedClaims(address appContract)
+        external
+        view
+        returns (uint256);
 }
