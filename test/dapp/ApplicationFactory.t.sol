@@ -9,6 +9,7 @@ import {IOutputsMerkleRootValidator} from "src/consensus/IOutputsMerkleRootValid
 import {ApplicationFactory} from "src/dapp/ApplicationFactory.sol";
 import {IApplication} from "src/dapp/IApplication.sol";
 import {IApplicationFactory} from "src/dapp/IApplicationFactory.sol";
+import {IApplicationFactoryErrors} from "src/dapp/IApplicationFactoryErrors.sol";
 import {LibWithdrawalConfig} from "src/library/LibWithdrawalConfig.sol";
 
 import {Ownable} from "@openzeppelin-contracts-5.2.0/access/Ownable.sol";
@@ -66,11 +67,8 @@ contract ApplicationFactoryTest is Test, VersionGetterTestUtils {
                 blockNumber,
                 logs
             );
-        } catch Error(string memory message) {
-            _testNewApplicationFailure(withdrawalConfig, message);
-            return;
         } catch (bytes memory error) {
-            _testNewApplicationFailure(appOwner, error);
+            _testNewApplicationFailure(appOwner, withdrawalConfig, error);
             return;
         }
     }
@@ -125,11 +123,8 @@ contract ApplicationFactoryTest is Test, VersionGetterTestUtils {
                 blockNumber,
                 logs
             );
-        } catch Error(string memory message) {
-            _testNewApplicationFailure(withdrawalConfig, message);
-            return;
         } catch (bytes memory error) {
-            _testNewApplicationFailure(appOwner, error);
+            _testNewApplicationFailure(appOwner, withdrawalConfig, error);
             return;
         }
 
@@ -296,30 +291,26 @@ contract ApplicationFactoryTest is Test, VersionGetterTestUtils {
     }
 
     function _testNewApplicationFailure(
+        address appOwner,
         WithdrawalConfig memory withdrawalConfig,
-        string memory message
+        bytes memory error
     ) internal pure {
-        bytes32 messageHash = keccak256(bytes(message));
-        if (messageHash == keccak256("Invalid withdrawal config")) {
-            assertEq(
-                withdrawalConfig.isValid(),
-                false,
-                "expected withdrawal config to be invalid"
-            );
-        } else {
-            revert("Unexpected error message");
-        }
-    }
-
-    function _testNewApplicationFailure(address appOwner, bytes memory error)
-        internal
-        pure
-    {
         (bytes4 errorSelector, bytes memory errorArgs) = error.consumeBytes4();
         if (errorSelector == Ownable.OwnableInvalidOwner.selector) {
             address owner = abi.decode(errorArgs, (address));
             assertEq(owner, appOwner, "OwnableInvalidOwner.owner != owner");
             assertEq(owner, address(0), "OwnableInvalidOwner.owner != address(0)");
+        } else if (
+            errorSelector == IApplicationFactoryErrors.InvalidWithdrawalConfig.selector
+        ) {
+            assertEq(
+                errorArgs,
+                abi.encode(withdrawalConfig),
+                "InvalidWithdrawalConfig.withdrawalConfig != withdrawalConfig"
+            );
+            assertFalse(
+                withdrawalConfig.isValid(), "expected withdrawal config to be invalid"
+            );
         } else {
             revert("Unexpected error");
         }

@@ -22,6 +22,9 @@ import {SafeERC20Transfer} from "src/delegatecall/SafeERC20Transfer.sol";
 import {IInputBox} from "src/inputs/IInputBox.sol";
 import {InputBox} from "src/inputs/InputBox.sol";
 import {LibUsdAccount} from "src/library/LibUsdAccount.sol";
+import {
+    IWithdrawalOutputBuilderErrors
+} from "src/withdrawal/IWithdrawalOutputBuilderErrors.sol";
 import {UsdWithdrawalOutputBuilder} from "src/withdrawal/UsdWithdrawalOutputBuilder.sol";
 
 import {
@@ -601,7 +604,7 @@ contract ApplicationTest is Test, OwnableTest, AddressGenerator, ConsensusTestUt
     }
 
     function testWithdrawalRevertsAccountIsTooShort(uint256) external {
-        uint256 accountSize = vm.randomUint(0, 27);
+        uint64 accountSize = uint64(vm.randomUint(0, 27));
         string memory name = string.concat("RandomBytes", vm.toString(accountSize));
         bytes memory account = _getAccount(name);
         AccountValidityProof memory proof = _getAccountValidityProof(name);
@@ -614,7 +617,7 @@ contract ApplicationTest is Test, OwnableTest, AddressGenerator, ConsensusTestUt
         vm.prank(_appContract.getGuardian());
         _appContract.foreclose();
 
-        vm.expectRevert("Account is too short");
+        vm.expectRevert(_encodeAccountTooShort(accountSize));
         vm.prank(vm.randomAddress());
         _appContract.withdraw(account, proof);
     }
@@ -1187,6 +1190,18 @@ contract ApplicationTest is Test, OwnableTest, AddressGenerator, ConsensusTestUt
         returns (bytes memory)
     {
         return abi.encodeWithSelector(SafeERC20.SafeERC20FailedOperation.selector, token);
+    }
+
+    function _encodeAccountTooShort(uint64 attemptedAccountSize)
+        internal
+        pure
+        returns (bytes memory)
+    {
+        return abi.encodeWithSelector(
+            IWithdrawalOutputBuilderErrors.AccountTooShort.selector,
+            attemptedAccountSize,
+            28
+        );
     }
 
     function _wasOutputExecuted(OutputValidityProof memory proof)

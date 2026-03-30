@@ -5,13 +5,19 @@ pragma solidity ^0.8.8;
 
 import {IVersionGetter} from "../common/IVersionGetter.sol";
 import {WithdrawalConfig} from "../common/WithdrawalConfig.sol";
+import {IConsensusFactoryErrors} from "../consensus/IConsensusFactoryErrors.sol";
 import {IAuthority} from "../consensus/authority/IAuthority.sol";
 import {IAuthorityFactory} from "../consensus/authority/IAuthorityFactory.sol";
 import {IApplication} from "./IApplication.sol";
 import {IApplicationFactory} from "./IApplicationFactory.sol";
+import {IApplicationFactoryErrors} from "./IApplicationFactoryErrors.sol";
 
 /// @title Self-hosted Application Factory interface
-interface ISelfHostedApplicationFactory is IVersionGetter {
+interface ISelfHostedApplicationFactory is
+    IVersionGetter,
+    IConsensusFactoryErrors,
+    IApplicationFactoryErrors
+{
     /// @notice Get the factory used to deploy `IAuthority` contracts
     /// @return The authority factory
     function getAuthorityFactory() external view returns (IAuthorityFactory);

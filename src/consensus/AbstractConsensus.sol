@@ -12,6 +12,7 @@ import {ApplicationChecker} from "../dapp/ApplicationChecker.sol";
 import {LibBinaryMerkleTree} from "../library/LibBinaryMerkleTree.sol";
 import {LibKeccak256} from "../library/LibKeccak256.sol";
 import {IConsensus} from "./IConsensus.sol";
+import {IConsensusFactoryErrors} from "./IConsensusFactoryErrors.sol";
 import {IOutputsMerkleRootValidator} from "./IOutputsMerkleRootValidator.sol";
 
 /// @notice Abstract implementation of IConsensus
@@ -50,7 +51,7 @@ abstract contract AbstractConsensus is
     /// @param epochLength The epoch length
     /// @dev Reverts if the epoch length is zero.
     constructor(uint256 epochLength) {
-        require(epochLength > 0, "epoch length must not be zero");
+        require(epochLength > 0, IConsensusFactoryErrors.ZeroEpochLength());
         EPOCH_LENGTH = epochLength;
     }
 
