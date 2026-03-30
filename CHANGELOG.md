@@ -1,5 +1,11 @@
 # @cartesi/rollups
 
+## 3.0.0-alpha.4
+
+### Major Changes
+
+- c35d26c: Add `appContract` parameter to `getNumberOf{Submitted,Accepted}Claims` functions
+
 ## 3.0.0-alpha.3
 
 ### Patch Changes
