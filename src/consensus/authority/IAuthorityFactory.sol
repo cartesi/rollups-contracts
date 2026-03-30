@@ -4,10 +4,11 @@
 pragma solidity ^0.8.8;
 
 import {IVersionGetter} from "../../common/IVersionGetter.sol";
+import {IConsensusFactoryErrors} from "../IConsensusFactoryErrors.sol";
 import {IAuthority} from "./IAuthority.sol";
 
 /// @title Authority Factory interface
-interface IAuthorityFactory is IVersionGetter {
+interface IAuthorityFactory is IVersionGetter, IConsensusFactoryErrors {
     // Events
 
     /// @notice A new authority was deployed.

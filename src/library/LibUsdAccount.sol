@@ -3,6 +3,10 @@
 
 pragma solidity ^0.8.22;
 
+import {
+    IWithdrawalOutputBuilderErrors
+} from "../withdrawal/IWithdrawalOutputBuilderErrors.sol";
+
 library LibUsdAccount {
     /// @notice Decode an account.
     /// @param account The account
@@ -14,7 +18,7 @@ library LibUsdAccount {
         pure
         returns (address user, uint64 balance)
     {
-        require(account.length >= 28, "Account is too short");
+        require(account.length >= 28, IWithdrawalOutputBuilderErrors.AccountTooShort(28));
 
         user = address(uint160(bytes20(account[8:28])));
 

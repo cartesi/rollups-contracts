@@ -8,6 +8,7 @@ import {BitMaps} from "@openzeppelin-contracts-5.2.0/utils/structs/BitMaps.sol";
 
 import {AbstractConsensus} from "../AbstractConsensus.sol";
 import {IQuorum} from "./IQuorum.sol";
+import {IQuorumFactoryErrors} from "./IQuorumFactoryErrors.sol";
 
 contract Quorum is IQuorum, AbstractConsensus {
     using BitMaps for BitMaps.BitMap;
@@ -59,14 +60,14 @@ contract Quorum is IQuorum, AbstractConsensus {
         uint256 n;
         for (uint256 i; i < validators.length; ++i) {
             address validator = validators[i];
-            require(validator != address(0), "Quorum can't contain address(0)");
+            require(validator != address(0), IQuorumFactoryErrors.ZeroAddressValidator());
             if (_validatorId[validator] == 0) {
                 uint256 id = ++n;
                 _validatorId[validator] = id;
                 _validatorById[id] = validator;
             }
         }
-        require(n >= 1, "Quorum can't be empty");
+        require(n >= 1, IQuorumFactoryErrors.EmptyQuorum());
         NUM_OF_VALIDATORS = n;
     }
 
@@ -77,7 +78,7 @@ contract Quorum is IQuorum, AbstractConsensus {
         bytes32[] calldata proof
     ) external override {
         uint256 id = _validatorId[msg.sender];
-        require(id > 0, "Quorum: caller is not validator");
+        require(id > 0, CallerIsNotValidator(msg.sender));
 
         _validateLastProcessedBlockNumber(lastProcessedBlockNumber);
 

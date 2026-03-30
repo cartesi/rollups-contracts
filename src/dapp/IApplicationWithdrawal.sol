@@ -6,8 +6,14 @@ pragma solidity ^0.8.8;
 import {AccountValidityProof} from "../common/AccountValidityProof.sol";
 import {BinaryMerkleTreeErrors} from "../common/BinaryMerkleTreeErrors.sol";
 import {IWithdrawalOutputBuilder} from "../withdrawal/IWithdrawalOutputBuilder.sol";
+import {
+    IWithdrawalOutputBuilderErrors
+} from "../withdrawal/IWithdrawalOutputBuilderErrors.sol";
 
-interface IApplicationWithdrawal is BinaryMerkleTreeErrors {
+interface IApplicationWithdrawal is
+    BinaryMerkleTreeErrors,
+    IWithdrawalOutputBuilderErrors
+{
     // Events
 
     /// @notice MUST trigger when the funds of an account are withdrawn.

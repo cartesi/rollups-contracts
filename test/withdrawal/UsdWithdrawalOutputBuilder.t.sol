@@ -13,6 +13,9 @@ import {SafeERC20Transfer} from "src/delegatecall/SafeERC20Transfer.sol";
 import {
     IUsdWithdrawalOutputBuilder
 } from "src/withdrawal/IUsdWithdrawalOutputBuilder.sol";
+import {
+    IWithdrawalOutputBuilderErrors
+} from "src/withdrawal/IWithdrawalOutputBuilderErrors.sol";
 import {UsdWithdrawalOutputBuilder} from "src/withdrawal/UsdWithdrawalOutputBuilder.sol";
 
 import {LibBytes} from "../util/LibBytes.sol";
@@ -68,7 +71,7 @@ contract UsdWithdrawalOutputBuilderTest is Test, VersionGetterTestUtils {
 
     function testBuildWithdrawalOutputReverts(uint256) external {
         bytes memory account = vm.randomBytes(vm.randomUint(0, 27));
-        vm.expectRevert("Account is too short");
+        vm.expectRevert(_encodeAccountTooShort());
         _usdWithdrawalOutputBuilder.buildWithdrawalOutput(account);
     }
 
@@ -88,5 +91,11 @@ contract UsdWithdrawalOutputBuilderTest is Test, VersionGetterTestUtils {
         for (uint256 i; i < 20; ++i) {
             account[i + 8] = bytes1((bytes20(user) << (8 * i)) & bytes1(0xff));
         }
+    }
+
+    function _encodeAccountTooShort() internal pure returns (bytes memory) {
+        return abi.encodeWithSelector(
+            IWithdrawalOutputBuilderErrors.AccountTooShort.selector, 28
+        );
     }
 }
