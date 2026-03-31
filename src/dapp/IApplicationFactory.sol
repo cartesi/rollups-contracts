@@ -7,9 +7,10 @@ import {IVersionGetter} from "../common/IVersionGetter.sol";
 import {WithdrawalConfig} from "../common/WithdrawalConfig.sol";
 import {IOutputsMerkleRootValidator} from "../consensus/IOutputsMerkleRootValidator.sol";
 import {IApplication} from "./IApplication.sol";
+import {IApplicationFactoryErrors} from "./IApplicationFactoryErrors.sol";
 
 /// @title Application Factory interface
-interface IApplicationFactory is IVersionGetter {
+interface IApplicationFactory is IVersionGetter, IApplicationFactoryErrors {
     // Events
 
     /// @notice A new application was deployed.

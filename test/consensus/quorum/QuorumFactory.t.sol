@@ -4,8 +4,10 @@
 pragma solidity ^0.8.22;
 
 import {IConsensus} from "src/consensus/IConsensus.sol";
+import {IConsensusFactoryErrors} from "src/consensus/IConsensusFactoryErrors.sol";
 import {IQuorum} from "src/consensus/quorum/IQuorum.sol";
 import {IQuorumFactory} from "src/consensus/quorum/IQuorumFactory.sol";
+import {IQuorumFactoryErrors} from "src/consensus/quorum/IQuorumFactoryErrors.sol";
 import {QuorumFactory} from "src/consensus/quorum/QuorumFactory.sol";
 
 import {Claim} from "../../util/Claim.sol";
@@ -61,11 +63,9 @@ contract QuorumFactoryTest is
         try _factory.newQuorum(validators, epochLength) returns (IQuorum quorum) {
             Vm.Log[] memory logs = vm.getRecordedLogs();
             _testNewQuorumSuccess(validators, epochLength, interfaceId, quorum, logs);
-        } catch Error(string memory message) {
-            _testNewQuorumFailure(validators, epochLength, message);
+        } catch (bytes memory error) {
+            _testNewQuorumFailure(validators, epochLength, error);
             return;
-        } catch {
-            revert("Unexpected error");
         }
     }
 
@@ -91,11 +91,9 @@ contract QuorumFactoryTest is
             );
 
             _testNewQuorumSuccess(validators, epochLength, interfaceId, quorum, logs);
-        } catch Error(string memory message) {
-            _testNewQuorumFailure(validators, epochLength, message);
+        } catch (bytes memory error) {
+            _testNewQuorumFailure(validators, epochLength, error);
             return;
-        } catch {
-            revert("Unexpected error");
         }
 
         assertEq(
@@ -131,8 +129,10 @@ contract QuorumFactoryTest is
 
         claim.proof = _randomLeafProof();
 
-        vm.expectRevert("Quorum: caller is not validator");
-        vm.prank(vm.randomAddressNotIn(validators)); // non-validator address
+        address caller = vm.randomAddressNotIn(validators);
+
+        vm.expectRevert(_encodeCallerIsNotValidator(caller));
+        vm.prank(caller); // non-validator address
         quorum.submitClaim(claim);
     }
 
@@ -923,20 +923,23 @@ contract QuorumFactoryTest is
     function _testNewQuorumFailure(
         address[] memory validators,
         uint256 epochLength,
-        string memory message
+        bytes memory error
     ) internal pure {
-        bytes32 messageHash = keccak256(bytes(message));
-        if (messageHash == keccak256("Quorum can't contain address(0)")) {
+        (bytes4 errorSelector, bytes memory errorArgs) = error.consumeBytes4();
+        if (errorSelector == IQuorumFactoryErrors.ZeroAddressValidator.selector) {
+            assertEq(errorArgs.length, 0, "Expected ZeroAddressValidator to have no args");
             assertTrue(
                 validators.contains(address(0)),
                 "expected validators to contain address(0)"
             );
-        } else if (messageHash == keccak256("Quorum can't be empty")) {
+        } else if (errorSelector == IQuorumFactoryErrors.EmptyQuorum.selector) {
+            assertEq(errorArgs.length, 0, "Expected EmptyQuorum to have no arguments");
             assertEq(validators.length, 0, "expected validators to be empty");
-        } else if (messageHash == keccak256("epoch length must not be zero")) {
+        } else if (errorSelector == IConsensusFactoryErrors.ZeroEpochLength.selector) {
+            assertEq(errorArgs.length, 0, "expected ZeroEpochLength to have no args");
             assertEq(epochLength, 0, "expected epoch length to be zero");
         } else {
-            revert("Unexpected error message");
+            revert("Unexpected error");
         }
     }
 
@@ -953,5 +956,13 @@ contract QuorumFactoryTest is
             vm.assumeNoRevert();
             return _factory.newQuorum(validators, epochLength, salt);
         }
+    }
+
+    function _encodeCallerIsNotValidator(address caller)
+        internal
+        pure
+        returns (bytes memory)
+    {
+        return abi.encodeWithSelector(IQuorum.CallerIsNotValidator.selector, caller);
     }
 }

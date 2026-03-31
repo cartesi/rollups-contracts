@@ -7,12 +7,14 @@ pragma solidity ^0.8.22;
 import {Ownable} from "@openzeppelin-contracts-5.2.0/access/Ownable.sol";
 
 import {WithdrawalConfig} from "src/common/WithdrawalConfig.sol";
+import {IConsensusFactoryErrors} from "src/consensus/IConsensusFactoryErrors.sol";
 import {AuthorityFactory} from "src/consensus/authority/AuthorityFactory.sol";
 import {IAuthority} from "src/consensus/authority/IAuthority.sol";
 import {IAuthorityFactory} from "src/consensus/authority/IAuthorityFactory.sol";
 import {ApplicationFactory} from "src/dapp/ApplicationFactory.sol";
 import {IApplication} from "src/dapp/IApplication.sol";
 import {IApplicationFactory} from "src/dapp/IApplicationFactory.sol";
+import {IApplicationFactoryErrors} from "src/dapp/IApplicationFactoryErrors.sol";
 import {ISelfHostedApplicationFactory} from "src/dapp/ISelfHostedApplicationFactory.sol";
 import {SelfHostedApplicationFactory} from "src/dapp/SelfHostedApplicationFactory.sol";
 import {LibWithdrawalConfig} from "src/library/LibWithdrawalConfig.sol";
@@ -154,19 +156,6 @@ contract SelfHostedApplicationFactoryTest is Test, VersionGetterTestUtils {
                 address(authority),
                 "calculateAddresses(...) is not a pure function"
             );
-        } catch Error(string memory message) {
-            bytes32 messageHash = keccak256(bytes(message));
-            if (messageHash == keccak256("epoch length must not be zero")) {
-                assertEq(epochLength, 0, "Expected epoch length to be zero");
-            } else if (messageHash == keccak256("Invalid withdrawal config")) {
-                assertEq(
-                    withdrawalConfig.isValid(),
-                    false,
-                    "expected withdrawal config to be invalid"
-                );
-            } else {
-                revert("Unexpected error message");
-            }
         } catch (bytes memory error) {
             (bytes4 errorSelector, bytes memory errorArgs) = error.consumeBytes4();
             if (errorSelector == Ownable.OwnableInvalidOwner.selector) {
@@ -175,6 +164,22 @@ contract SelfHostedApplicationFactoryTest is Test, VersionGetterTestUtils {
                 assertTrue(
                     appOwner == address(0) || authorityOwner == address(0),
                     "Expected either app or authority owner to be zero"
+                );
+            } else if (errorSelector == IConsensusFactoryErrors.ZeroEpochLength.selector)
+            {
+                assertEq(errorArgs.length, 0, "expected ZeroEpochLength to have no args");
+                assertEq(epochLength, 0, "expected epoch length to be zero");
+            } else if (
+                errorSelector
+                    == IApplicationFactoryErrors.InvalidWithdrawalConfig.selector
+            ) {
+                assertEq(
+                    errorArgs,
+                    abi.encode(withdrawalConfig),
+                    "InvalidWithdrawalConfig.withdrawalConfig != withdrawalConfig"
+                );
+                assertFalse(
+                    withdrawalConfig.isValid(), "expected withdrawal config to be invalid"
                 );
             } else {
                 revert("Unexpected error");

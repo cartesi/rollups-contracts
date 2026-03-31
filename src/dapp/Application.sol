@@ -20,6 +20,7 @@ import {LibOutputValidityProof} from "../library/LibOutputValidityProof.sol";
 import {LibWithdrawalConfig} from "../library/LibWithdrawalConfig.sol";
 import {IWithdrawalOutputBuilder} from "../withdrawal/IWithdrawalOutputBuilder.sol";
 import {IApplication} from "./IApplication.sol";
+import {IApplicationFactoryErrors} from "./IApplicationFactoryErrors.sol";
 
 import {Ownable} from "@openzeppelin-contracts-5.2.0/access/Ownable.sol";
 import {
@@ -116,7 +117,10 @@ contract Application is
         bytes memory dataAvailability,
         WithdrawalConfig memory withdrawalConfig
     ) Ownable(initialOwner) {
-        require(withdrawalConfig.isValid(), "Invalid withdrawal config");
+        require(
+            withdrawalConfig.isValid(),
+            IApplicationFactoryErrors.InvalidWithdrawalConfig(withdrawalConfig)
+        );
         TEMPLATE_HASH = templateHash;
         GUARDIAN = withdrawalConfig.guardian;
         LOG2_LEAVES_PER_ACCOUNT = withdrawalConfig.log2LeavesPerAccount;

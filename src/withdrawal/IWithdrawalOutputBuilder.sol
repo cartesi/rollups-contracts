@@ -3,7 +3,9 @@
 
 pragma solidity ^0.8.8;
 
-interface IWithdrawalOutputBuilder {
+import {IWithdrawalOutputBuilderErrors} from "./IWithdrawalOutputBuilderErrors.sol";
+
+interface IWithdrawalOutputBuilder is IWithdrawalOutputBuilderErrors {
     /// @notice Build an output that, when executed by the application
     /// contract, transfers the funds of an account to its owner.
     /// The encoding of the account is application-specific.
@@ -14,6 +16,8 @@ interface IWithdrawalOutputBuilder {
     /// of the withdrawal output. These state-changing constraints
     /// are already checked by the Solidity compiler when implementing
     /// this function as either view or pure.
+    /// @param account The input account
+    /// @return output The withdrawal output
     function buildWithdrawalOutput(bytes calldata account)
         external
         view
