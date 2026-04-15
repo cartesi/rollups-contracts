@@ -29,6 +29,7 @@ interface ISelfHostedApplicationFactory is
     /// @notice Deploy new application and authority contracts deterministically.
     /// @param authorityOwner The initial authority owner
     /// @param epochLength The epoch length
+    /// @param claimStagingPeriod The claim staging period
     /// @param appOwner The initial application owner
     /// @param templateHash The initial machine state hash
     /// @param dataAvailability The data availability solution
@@ -42,6 +43,7 @@ interface ISelfHostedApplicationFactory is
     function deployContracts(
         address authorityOwner,
         uint256 epochLength,
+        uint256 claimStagingPeriod,
         address appOwner,
         bytes32 templateHash,
         bytes calldata dataAvailability,
@@ -53,6 +55,7 @@ interface ISelfHostedApplicationFactory is
     /// to be deployed deterministically.
     /// @param authorityOwner The initial authority owner
     /// @param epochLength The epoch length
+    /// @param claimStagingPeriod The claim staging period
     /// @param appOwner The initial application owner
     /// @param templateHash The initial machine state hash
     /// @param dataAvailability The data availability solution
@@ -63,6 +66,7 @@ interface ISelfHostedApplicationFactory is
     function calculateAddresses(
         address authorityOwner,
         uint256 epochLength,
+        uint256 claimStagingPeriod,
         address appOwner,
         bytes32 templateHash,
         bytes calldata dataAvailability,

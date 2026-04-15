@@ -13,22 +13,23 @@ import {Quorum} from "./Quorum.sol";
 /// @title Quorum Factory
 /// @notice Allows anyone to reliably deploy a new `IQuorum` contract.
 contract QuorumFactory is IQuorumFactory, RollupsContract {
-    function newQuorum(address[] calldata validators, uint256 epochLength)
-        external
-        override
-        returns (IQuorum quorum)
-    {
-        quorum = new Quorum(validators, epochLength);
+    function newQuorum(
+        address[] calldata validators,
+        uint256 epochLength,
+        uint256 claimStagingPeriod
+    ) external override returns (IQuorum quorum) {
+        quorum = new Quorum(validators, epochLength, claimStagingPeriod);
 
         emit QuorumCreated(quorum);
     }
 
-    function newQuorum(address[] calldata validators, uint256 epochLength, bytes32 salt)
-        external
-        override
-        returns (IQuorum quorum)
-    {
-        quorum = new Quorum{salt: salt}(validators, epochLength);
+    function newQuorum(
+        address[] calldata validators,
+        uint256 epochLength,
+        uint256 claimStagingPeriod,
+        bytes32 salt
+    ) external override returns (IQuorum quorum) {
+        quorum = new Quorum{salt: salt}(validators, epochLength, claimStagingPeriod);
 
         emit QuorumCreated(quorum);
     }
@@ -36,13 +37,15 @@ contract QuorumFactory is IQuorumFactory, RollupsContract {
     function calculateQuorumAddress(
         address[] calldata validators,
         uint256 epochLength,
+        uint256 claimStagingPeriod,
         bytes32 salt
     ) external view override returns (address) {
         return Create2.computeAddress(
             salt,
             keccak256(
                 abi.encodePacked(
-                    type(Quorum).creationCode, abi.encode(validators, epochLength)
+                    type(Quorum).creationCode,
+                    abi.encode(validators, epochLength, claimStagingPeriod)
                 )
             )
         );

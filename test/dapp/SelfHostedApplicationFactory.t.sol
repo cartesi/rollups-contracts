@@ -55,6 +55,7 @@ contract SelfHostedApplicationFactoryTest is Test, VersionGetterTestUtils {
         uint256 blockNumber,
         address authorityOwner,
         uint256 epochLength,
+        uint256 claimStagingPeriod,
         address appOwner,
         bytes32 templateHash,
         bytes calldata dataAvailability,
@@ -69,6 +70,7 @@ contract SelfHostedApplicationFactoryTest is Test, VersionGetterTestUtils {
         (appAddr, authorityAddr) = _factory.calculateAddresses(
             authorityOwner,
             epochLength,
+            claimStagingPeriod,
             appOwner,
             templateHash,
             dataAvailability,
@@ -79,6 +81,7 @@ contract SelfHostedApplicationFactoryTest is Test, VersionGetterTestUtils {
         try _factory.deployContracts(
             authorityOwner,
             epochLength,
+            claimStagingPeriod,
             appOwner,
             templateHash,
             dataAvailability,
@@ -108,6 +111,12 @@ contract SelfHostedApplicationFactoryTest is Test, VersionGetterTestUtils {
                 authority.getEpochLength(),
                 epochLength,
                 "authority.getEpochLength() != epochLength"
+            );
+            assertGt(epochLength, 0, "getEpochLength() > 0");
+            assertEq(
+                authority.getClaimStagingPeriod(),
+                claimStagingPeriod,
+                "authority.getClaimStagingPeriod() == claimStagingPeriod"
             );
 
             assertEq(
@@ -139,6 +148,7 @@ contract SelfHostedApplicationFactoryTest is Test, VersionGetterTestUtils {
             (appAddr, authorityAddr) = _factory.calculateAddresses(
                 authorityOwner,
                 epochLength,
+                claimStagingPeriod,
                 appOwner,
                 templateHash,
                 dataAvailability,

@@ -21,29 +21,37 @@ interface IAuthorityFactory is IVersionGetter, IConsensusFactoryErrors {
     /// @notice Deploy a new authority.
     /// @param authorityOwner The initial authority owner
     /// @param epochLength The epoch length
+    /// @param claimStagingPeriod The claim staging period
     /// @return The authority
     /// @dev On success, MUST emit an `AuthorityCreated` event.
     /// @dev Reverts if the authority owner address is zero.
     /// @dev Reverts if the epoch length is zero.
-    function newAuthority(address authorityOwner, uint256 epochLength)
-        external
-        returns (IAuthority);
+    function newAuthority(
+        address authorityOwner,
+        uint256 epochLength,
+        uint256 claimStagingPeriod
+    ) external returns (IAuthority);
 
     /// @notice Deploy a new authority deterministically.
     /// @param authorityOwner The initial authority owner
     /// @param epochLength The epoch length
+    /// @param claimStagingPeriod The claim staging period
     /// @param salt The salt used to deterministically generate the authority address
     /// @return The authority
     /// @dev On success, MUST emit an `AuthorityCreated` event.
     /// @dev Reverts if the authority owner address is zero.
     /// @dev Reverts if the epoch length is zero.
-    function newAuthority(address authorityOwner, uint256 epochLength, bytes32 salt)
-        external
-        returns (IAuthority);
+    function newAuthority(
+        address authorityOwner,
+        uint256 epochLength,
+        uint256 claimStagingPeriod,
+        bytes32 salt
+    ) external returns (IAuthority);
 
     /// @notice Calculate the address of an authority to be deployed deterministically.
     /// @param authorityOwner The initial authority owner
     /// @param epochLength The epoch length
+    /// @param claimStagingPeriod The claim staging period
     /// @param salt The salt used to deterministically generate the authority address
     /// @return The deterministic authority address
     /// @dev Beware that only the `newAuthority` function with the `salt` parameter
@@ -51,6 +59,7 @@ interface IAuthorityFactory is IVersionGetter, IConsensusFactoryErrors {
     function calculateAuthorityAddress(
         address authorityOwner,
         uint256 epochLength,
+        uint256 claimStagingPeriod,
         bytes32 salt
     ) external view returns (address);
 }

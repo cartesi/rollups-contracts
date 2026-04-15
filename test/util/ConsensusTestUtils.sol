@@ -5,6 +5,7 @@ pragma solidity ^0.8.22;
 
 import {CanonicalMachine} from "src/common/CanonicalMachine.sol";
 import {IConsensus} from "src/consensus/IConsensus.sol";
+import {IApplicationForeclosure} from "src/dapp/IApplicationForeclosure.sol";
 
 import {ApplicationCheckerTestUtils} from "./ApplicationCheckerTestUtils.sol";
 import {Claim} from "./Claim.sol";
@@ -12,6 +13,49 @@ import {LibClaim} from "./LibClaim.sol";
 
 contract ConsensusTestUtils is ApplicationCheckerTestUtils {
     using LibClaim for Claim;
+
+    /// @notice This function is used to simulate a foreclosure and a claim submission.
+    /// If the claim submission succeeds, then the function reverts with error message "Successful claim submission".
+    /// If the claim submission fails, then the function propagates the error from the app contract.
+    /// @param consensus The consensus contract
+    /// @param validator The validator that will submit the claim
+    /// @param claim The claim to be submitted
+    function simulateForeclosureAndClaimSubmission(
+        IConsensus consensus,
+        address validator,
+        Claim calldata claim
+    ) external {
+        vm.prank(vm.randomAddress());
+        IApplicationForeclosure(claim.appContract).foreclose();
+        vm.prank(validator);
+        consensus.submitClaim(
+            claim.appContract,
+            claim.lastProcessedBlockNumber,
+            claim.outputsMerkleRoot,
+            claim.proof
+        );
+        revert("Successful claim submission");
+    }
+
+    /// @notice This function is used to simulate a foreclosure and a claim acceptance.
+    /// If the claim acceptance succeeds, then the function reverts with error message "Successful claim acceptance".
+    /// If the claim acceptance fails, then the function propagates the error from the app contract.
+    /// @param consensus The consensus contract
+    /// @param claim The claim to be accepted
+    function simulateForeclosureAndClaimAcceptance(
+        IConsensus consensus,
+        Claim calldata claim
+    ) external {
+        vm.prank(vm.randomAddress());
+        IApplicationForeclosure(claim.appContract).foreclose();
+        vm.prank(vm.randomAddress());
+        consensus.acceptClaim(
+            claim.appContract,
+            claim.lastProcessedBlockNumber,
+            claim.computeMachineMerkleRoot()
+        );
+        revert("Successful claim acceptance");
+    }
 
     function _encodeNotPastBlock(uint256 lastProcessedBlockNumber)
         internal
@@ -43,6 +87,38 @@ contract ConsensusTestUtils is ApplicationCheckerTestUtils {
             IConsensus.InvalidOutputsMerkleRootProofSize.selector,
             proofSize,
             CanonicalMachine.MEMORY_TREE_HEIGHT
+        );
+    }
+
+    function _encodeClaimNotStaged(
+        address appContract,
+        uint256 lastProcessedBlockNumber,
+        bytes32 machineMerkleRoot,
+        IConsensus.ClaimStatus claimStatus
+    ) internal pure returns (bytes memory) {
+        return abi.encodeWithSelector(
+            IConsensus.ClaimNotStaged.selector,
+            appContract,
+            lastProcessedBlockNumber,
+            machineMerkleRoot,
+            claimStatus
+        );
+    }
+
+    function _encodeClaimStagingPeriodNotOverYet(
+        address appContract,
+        uint256 lastProcessedBlockNumber,
+        bytes32 machineMerkleRoot,
+        uint256 numberOfBlocksAfterStaging,
+        uint256 claimStagingPeriod
+    ) internal pure returns (bytes memory) {
+        return abi.encodeWithSelector(
+            IConsensus.ClaimStagingPeriodNotOverYet.selector,
+            appContract,
+            lastProcessedBlockNumber,
+            machineMerkleRoot,
+            numberOfBlocksAfterStaging,
+            claimStagingPeriod
         );
     }
 
@@ -157,6 +233,14 @@ contract ConsensusTestUtils is ApplicationCheckerTestUtils {
                 CanonicalMachine.MEMORY_TREE_HEIGHT + 1,
                 2 * CanonicalMachine.MEMORY_TREE_HEIGHT
             );
+        }
+    }
+
+    function _boundedSum(uint256 a, uint256 b) internal pure returns (uint256) {
+        if (b <= type(uint256).max - a) {
+            return a + b;
+        } else {
+            return type(uint256).max;
         }
     }
 }

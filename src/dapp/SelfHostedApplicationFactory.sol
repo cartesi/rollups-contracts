@@ -45,13 +45,16 @@ contract SelfHostedApplicationFactory is ISelfHostedApplicationFactory, RollupsC
     function deployContracts(
         address authorityOwner,
         uint256 epochLength,
+        uint256 claimStagingPeriod,
         address appOwner,
         bytes32 templateHash,
         bytes calldata dataAvailability,
         WithdrawalConfig calldata withdrawalConfig,
         bytes32 salt
     ) external returns (IApplication application, IAuthority authority) {
-        authority = AUTHORITY_FACTORY.newAuthority(authorityOwner, epochLength, salt);
+        authority = AUTHORITY_FACTORY.newAuthority(
+                authorityOwner, epochLength, claimStagingPeriod, salt
+            );
 
         application = APPLICATION_FACTORY.newApplication(
             authority, appOwner, templateHash, dataAvailability, withdrawalConfig, salt
@@ -61,6 +64,7 @@ contract SelfHostedApplicationFactory is ISelfHostedApplicationFactory, RollupsC
     function calculateAddresses(
         address authorityOwner,
         uint256 epochLength,
+        uint256 claimStagingPeriod,
         address appOwner,
         bytes32 templateHash,
         bytes calldata dataAvailability,
@@ -68,7 +72,7 @@ contract SelfHostedApplicationFactory is ISelfHostedApplicationFactory, RollupsC
         bytes32 salt
     ) external view returns (address application, address authority) {
         authority = AUTHORITY_FACTORY.calculateAuthorityAddress(
-                authorityOwner, epochLength, salt
+                authorityOwner, epochLength, claimStagingPeriod, salt
             );
 
         application = APPLICATION_FACTORY.calculateApplicationAddress(

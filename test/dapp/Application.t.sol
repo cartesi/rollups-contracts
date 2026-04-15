@@ -92,6 +92,7 @@ contract ApplicationTest is Test, OwnableTest, AddressGenerator, ConsensusTestUt
     WithdrawalConfig _withdrawalConfig;
 
     uint256 constant EPOCH_LENGTH = 1;
+    uint256 constant CLAIM_STAGING_PERIOD = 0;
     bytes32 constant TEMPLATE_HASH = keccak256("templateHash");
     uint256 constant INITIAL_SUPPLY = 1000000000000000000000000000000000000;
     uint256 constant TOKEN_ID = 88888888;
@@ -774,7 +775,7 @@ contract ApplicationTest is Test, OwnableTest, AddressGenerator, ConsensusTestUt
         _erc1155BatchToken =
             new SimpleBatchERC1155(_tokenOwner, _tokenIds, _initialSupplies);
         _inputBox = new InputBox();
-        _authority = new Authority(_authorityOwner, EPOCH_LENGTH);
+        _authority = new Authority(_authorityOwner, EPOCH_LENGTH, CLAIM_STAGING_PERIOD);
         _dataAvailability = abi.encodeCall(DataAvailability.InputBox, (_inputBox));
         _safeErc20Transfer = new SafeERC20Transfer();
         _usd = new SimpleERC20(_tokenOwner, type(uint64).max);
@@ -1048,6 +1049,9 @@ contract ApplicationTest is Test, OwnableTest, AddressGenerator, ConsensusTestUt
             outputsMerkleRoot,
             _proofComponents.getOutputsMerkleRootProof()
         );
+
+        vm.prank(vm.randomAddress());
+        _authority.acceptClaim(address(_appContract), 0, machineMerkleRoot);
 
         assertEq(
             _authority.getLastFinalizedMachineMerkleRoot(address(_appContract)),
