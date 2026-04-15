@@ -27,8 +27,15 @@ abstract contract AbstractConsensus is
     /// @notice The epoch length
     uint256 immutable EPOCH_LENGTH;
 
-    /// @notice Indexes accepted claims by application contract address.
+    /// @notice The claim staging period
+    uint256 immutable CLAIM_STAGING_PERIOD;
+
+    /// @notice Indexes valid outputs Merkle roots by application contract address.
     mapping(address => mapping(bytes32 => bool)) private _validOutputsMerkleRoots;
+
+    /// @notice Indexes claim information by application contract address,
+    /// last-processed block number, and machine Merkle root.
+    mapping(address => mapping(uint256 => mapping(bytes32 => Claim))) private _claims;
 
     /// @notice Indexes number of the first unprocessed block
     /// by application contract address.
@@ -38,21 +45,25 @@ abstract contract AbstractConsensus is
     /// by application contract address.
     mapping(address => bytes32) private _lastFinalizedMachineMerkleRoots;
 
-    /// @notice Indexes number of claims accepted to the consensus
-    /// by application contract address.
+    /// @notice Indexes number of accepted claims by application contract address.
     /// @dev Must be monotonically non-decreasing in time
     mapping(address => uint256) private _numOfAcceptedClaims;
 
-    /// @notice Indexes number of claims submitted to the consensus
-    /// by application contract address.
+    /// @notice Indexes number of staged claims by application contract address.
+    /// @dev Must be monotonically non-decreasing in time
+    mapping(address => uint256) private _numOfStagedClaims;
+
+    /// @notice Indexes number of submitted claims by application contract address.
     /// @dev Must be monotonically non-decreasing in time
     mapping(address => uint256) private _numOfSubmittedClaims;
 
     /// @param epochLength The epoch length
+    /// @param claimStagingPeriod The claim staging period
     /// @dev Reverts if the epoch length is zero.
-    constructor(uint256 epochLength) {
+    constructor(uint256 epochLength, uint256 claimStagingPeriod) {
         require(epochLength > 0, IConsensusFactoryErrors.ZeroEpochLength());
         EPOCH_LENGTH = epochLength;
+        CLAIM_STAGING_PERIOD = claimStagingPeriod;
     }
 
     /// @inheritdoc IOutputsMerkleRootValidator
@@ -79,6 +90,10 @@ abstract contract AbstractConsensus is
         return EPOCH_LENGTH;
     }
 
+    function getClaimStagingPeriod() public view override returns (uint256) {
+        return CLAIM_STAGING_PERIOD;
+    }
+
     /// @inheritdoc IConsensus
     function getNumberOfAcceptedClaims(address appContract)
         external
@@ -87,6 +102,15 @@ abstract contract AbstractConsensus is
         returns (uint256)
     {
         return _numOfAcceptedClaims[appContract];
+    }
+
+    function getNumberOfStagedClaims(address appContract)
+        external
+        view
+        override
+        returns (uint256)
+    {
+        return _numOfStagedClaims[appContract];
     }
 
     /// @inheritdoc IConsensus
@@ -109,6 +133,67 @@ abstract contract AbstractConsensus is
     {
         return interfaceId == type(IConsensus).interfaceId
             || super.supportsInterface(interfaceId);
+    }
+
+    function getClaim(
+        address appContract,
+        uint256 lastProcessedBlockNumber,
+        bytes32 machineMerkleRoot
+    ) public view override returns (Claim memory claim) {
+        claim = _claims[appContract][lastProcessedBlockNumber][machineMerkleRoot];
+    }
+
+    function acceptClaim(
+        address appContract,
+        uint256 lastProcessedBlockNumber,
+        bytes32 machineMerkleRoot
+    ) external override notForeclosed(appContract) {
+        _validateLastProcessedBlockNumber(lastProcessedBlockNumber);
+        Claim storage claim;
+        claim = _claims[appContract][lastProcessedBlockNumber][machineMerkleRoot];
+        require(
+            claim.status == ClaimStatus.STAGED,
+            ClaimNotStaged(
+                appContract, lastProcessedBlockNumber, machineMerkleRoot, claim.status
+            )
+        );
+        // We assume `block.number >= stagingBlockNumber` because when the claim is
+        // staged, we know `stagingBlockNumber` was assigned an evaluation of
+        // `block.number` in the current or in a previous block. Even if this assumption
+        // were wrong, the evaluation of the subtraction expression would raise an
+        // arithmetic-underflow error, leading to a liveness issue, but not a safety one,
+        // in which case the guardian could foreclose the application, and users could
+        // withdraw their funds. We opt not to phrase the inequality like (the perhaps
+        // more intuitive) `stagingBlockNumber + getClaimStagingPeriod() <= block.number`
+        // because the addition could overflow if the claim staging period were set to an
+        // unusually-high value.
+        {
+            uint256 numberOfBlocksAfterStaging = block.number - claim.stagingBlockNumber;
+            uint256 claimStagingPeriod = getClaimStagingPeriod();
+            require(
+                numberOfBlocksAfterStaging >= claimStagingPeriod,
+                ClaimStagingPeriodNotOverYet(
+                    appContract,
+                    lastProcessedBlockNumber,
+                    machineMerkleRoot,
+                    numberOfBlocksAfterStaging,
+                    claimStagingPeriod
+                )
+            );
+        }
+        claim.status = ClaimStatus.ACCEPTED;
+        _validOutputsMerkleRoots[appContract][claim.stagedOutputsMerkleRoot] = true;
+        if (lastProcessedBlockNumber >= _firstUnprocessedBlockNumbers[appContract]) {
+            _lastFinalizedMachineMerkleRoots[appContract] = machineMerkleRoot;
+            _firstUnprocessedBlockNumbers[appContract] = lastProcessedBlockNumber + 1;
+        }
+        emit ClaimAccepted(
+            appContract,
+            lastProcessedBlockNumber,
+            claim.stagedOutputsMerkleRoot,
+            machineMerkleRoot
+        );
+        ++_numOfAcceptedClaims[appContract];
     }
 
     /// @notice Validate a last processed block number.
@@ -137,6 +222,7 @@ abstract contract AbstractConsensus is
     /// @param outputsMerkleRoot The output Merkle root
     /// @param machineMerkleRoot The machine Merkle root
     /// @dev Assumes outputs Merkle root is proven to be at the start of the machine TX buffer.
+    /// @dev Assumes the last processed block number is valid.
     /// @dev Checks whether the app is foreclosed.
     /// @dev Emits a `ClaimSubmitted` event.
     function _submitClaim(
@@ -156,30 +242,37 @@ abstract contract AbstractConsensus is
         ++_numOfSubmittedClaims[appContract];
     }
 
-    /// @notice Accept a claim.
+    /// @notice Stage a claim (if unstaged).
     /// @param appContract The application contract address
     /// @param lastProcessedBlockNumber The number of the last processed block
     /// @param outputsMerkleRoot The output Merkle root
     /// @param machineMerkleRoot The machine Merkle root
     /// @dev Assumes outputs Merkle root is proven to be at the start of the machine TX buffer.
+    /// @dev Assumes the last processed block number is valid.
+    /// @dev Assumes the claim was previously submitted.
     /// @dev Checks whether the app is foreclosed.
-    /// @dev Marks the outputsMerkleRoot as valid.
-    /// @dev Emits a `ClaimAccepted` event.
-    function _acceptClaim(
+    /// @dev Marks the claim as staged (if unstaged).
+    /// @dev Emits a `ClaimStaged` event (if unstaged).
+    function _stageClaim(
         address appContract,
         uint256 lastProcessedBlockNumber,
         bytes32 outputsMerkleRoot,
         bytes32 machineMerkleRoot
     ) internal notForeclosed(appContract) {
-        _validOutputsMerkleRoots[appContract][outputsMerkleRoot] = true;
-        if (lastProcessedBlockNumber >= _firstUnprocessedBlockNumbers[appContract]) {
-            _lastFinalizedMachineMerkleRoots[appContract] = machineMerkleRoot;
-            _firstUnprocessedBlockNumbers[appContract] = lastProcessedBlockNumber + 1;
+        Claim storage claim;
+        claim = _claims[appContract][lastProcessedBlockNumber][machineMerkleRoot];
+        if (claim.status == ClaimStatus.UNSTAGED) {
+            claim.stagingBlockNumber = block.number;
+            claim.stagedOutputsMerkleRoot = outputsMerkleRoot;
+            claim.status = ClaimStatus.STAGED;
+            emit ClaimStaged(
+                appContract,
+                lastProcessedBlockNumber,
+                outputsMerkleRoot,
+                machineMerkleRoot
+            );
+            ++_numOfStagedClaims[appContract];
         }
-        emit ClaimAccepted(
-            appContract, lastProcessedBlockNumber, outputsMerkleRoot, machineMerkleRoot
-        );
-        ++_numOfAcceptedClaims[appContract];
     }
 
     /// @notice Compute the machine Merkle root given an outputs Merkle root and a proof.

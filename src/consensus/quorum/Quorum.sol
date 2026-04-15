@@ -50,13 +50,16 @@ contract Quorum is IQuorum, AbstractConsensus {
 
     /// @param validators The array of validator addresses
     /// @param epochLength The epoch length
+    /// @param claimStagingPeriod The claim staging period
     /// @dev Duplicates in the `validators` array are ignored.
     /// @dev Zero addresses in the `validators` array are prohibited.
     /// @dev Reverts if the epoch length is zero.
     /// @dev Reverts if the quorum would contain zero validators.
-    constructor(address[] memory validators, uint256 epochLength)
-        AbstractConsensus(epochLength)
-    {
+    constructor(
+        address[] memory validators,
+        uint256 epochLength,
+        uint256 claimStagingPeriod
+    ) AbstractConsensus(epochLength, claimStagingPeriod) {
         uint256 n;
         for (uint256 i; i < validators.length; ++i) {
             address validator = validators[i];
@@ -110,10 +113,10 @@ contract Quorum is IQuorum, AbstractConsensus {
             ++allVotes.inFavorCount;
 
             // Register vote (for the specific claim)
-            // and accept the claim if a majority has been reached
+            // and stage the claim if a majority has been reached
             votes.inFavorById.set(id);
             if (++votes.inFavorCount == 1 + NUM_OF_VALIDATORS / 2) {
-                _acceptClaim(
+                _stageClaim(
                     appContract,
                     lastProcessedBlockNumber,
                     outputsMerkleRoot,

@@ -18,15 +18,16 @@ import {IAuthority} from "./IAuthority.sol";
 contract Authority is IAuthority, AbstractConsensus, Ownable {
     using BitMaps for BitMaps.BitMap;
 
-    /// @notice Epochs with a submitted (and accepted) claim, per application.
+    /// @notice Epochs with a submitted (and staged) claim, per application.
     /// @dev Epochs are stored in bitmap structure by their number (last processed block number / epoch length).
     mapping(address => BitMaps.BitMap) _validatedEpochs;
 
     /// @param initialOwner The initial contract owner
     /// @param epochLength The epoch length
+    /// @param claimStagingPeriod The claim staging period
     /// @dev Reverts if the epoch length is zero.
-    constructor(address initialOwner, uint256 epochLength)
-        AbstractConsensus(epochLength)
+    constructor(address initialOwner, uint256 epochLength, uint256 claimStagingPeriod)
+        AbstractConsensus(epochLength, claimStagingPeriod)
         Ownable(initialOwner)
     {}
 
@@ -57,7 +58,7 @@ contract Authority is IAuthority, AbstractConsensus, Ownable {
             machineMerkleRoot
         );
 
-        _acceptClaim(
+        _stageClaim(
             appContract, lastProcessedBlockNumber, outputsMerkleRoot, machineMerkleRoot
         );
 
