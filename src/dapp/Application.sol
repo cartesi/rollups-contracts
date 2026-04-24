@@ -44,6 +44,7 @@ contract Application is
     using LibAccountValidityProof for AccountValidityProof;
     using LibAddress for address;
     using LibBinaryMerkleTree for bytes;
+    using LibBinaryMerkleTree for bytes32[];
     using LibBytes for bytes;
     using LibOutputValidityProof for OutputValidityProof;
     using LibWithdrawalConfig for WithdrawalConfig;
@@ -94,6 +95,16 @@ contract Application is
     /// @notice Whether the application has been foreclosed by the guardian.
     /// @dev See the `isForeclosed` function.
     bool internal _isForeclosed;
+
+    /// @notice Whether the accounts drive Merkle root was proved.
+    /// @dev See the `getAccountsDriveMerkleRoot` and
+    /// `proveAccountsDriveMerkleRoot` functions.
+    bool internal _wasAccountsDriveMerkleRootProved;
+
+    /// @notice The accounts drive Merkle root.
+    /// @dev See the `getAccountsDriveMerkleRoot` and
+    /// `proveAccountsDriveMerkleRoot` functions.
+    bytes32 internal _accountsDriveMerkleRoot;
 
     /// @notice The number of outputs executed by the application.
     /// @dev See the `getNumberOfExecutedOutputs` function.
@@ -156,6 +167,44 @@ contract Application is
 
         ++_numOfExecutedOutputs;
         emit OutputExecuted(outputIndex, output);
+    }
+
+    function proveAccountsDriveMerkleRoot(
+        bytes32 accountsDriveMerkleRoot,
+        bytes32[] calldata proof
+    ) external override onlyForeclosed {
+        if (_wasAccountsDriveMerkleRootProved) {
+            revert AccountsDriveMerkleRootAlreadyProved();
+        }
+
+        if (
+            proof.length
+                != (CanonicalMachine.LOG2_MEMORY_SIZE - _getLog2AccountsDriveSize())
+        ) {
+            revert InvalidAccountsDriveMerkleRootProofSize();
+        }
+
+        // The Merkle root computation below should not raise an InvalidNodeIndex error
+        // because the LibWithdrawalConfig.isValid function run at the constructor
+        // guarantees that
+        // getAccountsDriveStartIndex() >> proof.length == 0.
+
+        bytes32 machineMerkleRoot = proof.merkleRootAfterReplacement(
+            getAccountsDriveStartIndex(), accountsDriveMerkleRoot, LibKeccak256.hashPair
+        );
+
+        // There is no risk of reentrancy attacks when retrieving the last-finalized
+        // machine Merkle root from the outputs Merkle root validator because it is done
+        // through a static call, which reverts on any state change.
+
+        bytes32 lastFinalizedMachineMerkleRoot = _getLastFinalizedMachineMerkleRoot();
+
+        if (machineMerkleRoot != lastFinalizedMachineMerkleRoot) {
+            revert InvalidMachineMerkleRoot(machineMerkleRoot);
+        }
+
+        _accountsDriveMerkleRoot = accountsDriveMerkleRoot;
+        _wasAccountsDriveMerkleRootProved = true;
     }
 
     function withdraw(bytes calldata account, AccountValidityProof calldata proof)
@@ -260,22 +309,19 @@ contract Application is
         bytes32 accountMerkleRoot,
         AccountValidityProof calldata proof
     ) public view override {
-        if (!proof.isSiblingsArrayLengthValid(getLog2LeavesPerAccount())) {
+        if (!proof.isSiblingsArrayLengthValid(getLog2MaxNumOfAccounts())) {
             revert InvalidAccountRootSiblingsArrayLength();
         }
 
-        if (!proof.isAccountIndexValid(getLog2MaxNumOfAccounts())) {
-            revert InvalidAccountIndex();
+        if (!_wasAccountsDriveMerkleRootProved) {
+            revert AccountsDriveMerkleRootNotProved();
         }
 
-        bytes32 machineMerkleRoot = proof.computeMachineMerkleRoot(
-            accountMerkleRoot, getLog2MaxNumOfAccounts(), getAccountsDriveStartIndex()
-        );
+        bytes32 accountsDriveMerkleRoot =
+            proof.computeAccountsDriveMerkleRoot(accountMerkleRoot);
 
-        bytes32 lastFinalizedMachineMerkleRoot = _getLastFinalizedMachineMerkleRoot();
-
-        if (machineMerkleRoot != lastFinalizedMachineMerkleRoot) {
-            revert InvalidMachineMerkleRoot(machineMerkleRoot);
+        if (accountsDriveMerkleRoot != _accountsDriveMerkleRoot) {
+            revert InvalidAccountsDriveMerkleRoot(accountsDriveMerkleRoot);
         }
     }
 
@@ -342,6 +388,16 @@ contract Application is
         return _isForeclosed;
     }
 
+    function getAccountsDriveMerkleRoot()
+        external
+        view
+        override
+        returns (bool wasAccountsDriveMerkleRootProved, bytes32 accountsDriveMerkleRoot)
+    {
+        wasAccountsDriveMerkleRootProved = _wasAccountsDriveMerkleRootProved;
+        accountsDriveMerkleRoot = _accountsDriveMerkleRoot;
+    }
+
     /// @inheritdoc Ownable
     function owner() public view override(IOwnable, Ownable) returns (address) {
         return super.owner();
@@ -365,6 +421,13 @@ contract Application is
     modifier onlyForeclosed() {
         _ensureAppIsForeclosed();
         _;
+    }
+
+    /// @notice Get the log (base 2) of the number of bytes in the machine memory that are
+    /// reserved for the accounts drive.
+    function _getLog2AccountsDriveSize() internal view returns (uint8) {
+        return getLog2MaxNumOfAccounts() + getLog2LeavesPerAccount()
+            + CanonicalMachine.LOG2_DATA_BLOCK_SIZE;
     }
 
     /// @notice Check if an outputs Merkle root is valid,

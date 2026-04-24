@@ -288,6 +288,14 @@ contract ApplicationFactoryTest is Test, VersionGetterTestUtils {
             withdrawalConfig.isValid(), true, "Expected withdrawal config to be valid"
         );
         assertEq(appContract.isForeclosed(), false, "isForeclosed() != false");
+        {
+            bool wasAccountsDriveMerkleRootProved;
+            (wasAccountsDriveMerkleRootProved,) = appContract.getAccountsDriveMerkleRoot();
+            assertFalse(
+                wasAccountsDriveMerkleRootProved,
+                "initially, getAccountsDriveMerkleRoot() = (false, _)"
+            );
+        }
     }
 
     function _testNewApplicationFailure(
