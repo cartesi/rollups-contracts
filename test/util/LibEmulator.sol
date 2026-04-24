@@ -112,14 +112,14 @@ library LibEmulator {
         return state.accounts[AccountIndex.unwrap(accountIndex)];
     }
 
-    function getAccountValidityProof(
-        State storage state,
-        ProofComponents memory pc,
-        AccountIndex accountIndex
-    ) internal view returns (AccountValidityProof memory) {
+    function getAccountValidityProof(State storage state, AccountIndex accountIndex)
+        internal
+        view
+        returns (AccountValidityProof memory)
+    {
         return AccountValidityProof({
             accountIndex: AccountIndex.unwrap(accountIndex),
-            accountRootSiblings: getAccountRootSiblings(state, pc, accountIndex)
+            accountRootSiblings: getAccountRootSiblings(state, accountIndex)
         });
     }
 
@@ -181,7 +181,7 @@ library LibEmulator {
 
         require(
             outputsMerkleRootProof.length == CanonicalMachine.MEMORY_TREE_HEIGHT,
-            "unexpected outputs Merkle proof length"
+            "unexpected outputs Merkle root proof length"
         );
     }
 
@@ -197,14 +197,11 @@ library LibEmulator {
             );
     }
 
-    function getAccountRootSiblings(
-        State storage state,
-        ProofComponents memory pc,
-        AccountIndex accountIndex
-    ) internal view returns (bytes32[] memory accountRootSiblings) {
-        bytes32[] memory forkNodeChildSibling = new bytes32[](1);
-        forkNodeChildSibling[0] = pc.forkNodeLeftChild;
-
+    function getAccountRootSiblings(State storage state, AccountIndex accountIndex)
+        internal
+        view
+        returns (bytes32[] memory accountRootSiblings)
+    {
         bytes32[] memory accountMerkleRootSiblingsInDrive =
             getAccountMerkleRootSiblingsInDrive(
                 getAccountMerkleRoots(state), AccountIndex.unwrap(accountIndex)
@@ -215,11 +212,22 @@ library LibEmulator {
             "unexpected account Merkle root siblings in drive proof length"
         );
 
+        return accountMerkleRootSiblingsInDrive;
+    }
+
+    function getAccountsDriveMerkleRootProof(ProofComponents memory pc)
+        internal
+        pure
+        returns (bytes32[] memory accountsDriveMerkleRootProof)
+    {
+        bytes32[] memory forkNodeChildSibling = new bytes32[](1);
+        forkNodeChildSibling[0] = pc.forkNodeLeftChild;
+
         require(
             pc.accountsDriveMerkleRootSiblings.length
                 == (FORK_NODE_HEIGHT - 1 - LOG2_MAX_NUM_OF_ACCOUNTS
                         - LOG2_LEAVES_PER_ACCOUNT),
-            "unexpected fork node siblings length"
+            "unexpected accounts drive Merkle root siblings length"
         );
 
         require(
@@ -238,14 +246,13 @@ library LibEmulator {
             "unexpected fork node siblings length"
         );
 
-        accountRootSiblings = accountMerkleRootSiblingsInDrive.concat(
-                pc.accountsDriveMerkleRootSiblings
-            ).concat(forkNodeChildSibling).concat(pc.forkNodeSiblings);
+        accountsDriveMerkleRootProof = pc.accountsDriveMerkleRootSiblings
+            .concat(forkNodeChildSibling).concat(pc.forkNodeSiblings);
 
         require(
-            accountRootSiblings.length
-                == (CanonicalMachine.MEMORY_TREE_HEIGHT - LOG2_LEAVES_PER_ACCOUNT),
-            "unexpected account root siblings length"
+            accountsDriveMerkleRootProof.length + getAccountsDriveRootNodeHeight()
+                == CanonicalMachine.MEMORY_TREE_HEIGHT,
+            "unexpected accounts drive Merkle root proof length"
         );
     }
 

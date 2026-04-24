@@ -190,6 +190,9 @@ contract ApplicationTest is Test, OwnableTest, AddressGenerator, ConsensusTestUt
         vm.prank(_appContract.getGuardian());
         _appContract.foreclose();
         _validateOutputs();
+
+        _proveAccountsDriveMerkleRoot();
+        _validateOutputs();
     }
 
     function testRevertsInvalidOutputHashesSiblingsArrayLength(bytes32[] calldata invalidOutputHashesSiblings)
@@ -260,22 +263,23 @@ contract ApplicationTest is Test, OwnableTest, AddressGenerator, ConsensusTestUt
         _appContract.validateOutputHash(outputHash, proof);
     }
 
-    function testRevertsInvalidNodeIndex(uint256) external {
+    function testValidateOutputRevertsInvalidNodeIndex(uint256) external {
         string memory name = _getRandomOutputName();
         bytes memory output = _getOutput(name);
         OutputValidityProof memory proof = _getOutputValidityProof(name);
 
-        uint256 invalidOutputIndex =
-            vm.randomUint(1 << CanonicalMachine.LOG2_MAX_OUTPUTS, type(uint64).max);
+        uint256 log2MaxNumOfOutputs = CanonicalMachine.LOG2_MAX_OUTPUTS;
+        uint256 maxNumOfOutputs = 1 << log2MaxNumOfOutputs;
+        uint256 invalidOutputIndex = vm.randomUint(maxNumOfOutputs, type(uint64).max);
 
         assertNotEq(invalidOutputIndex, proof.outputIndex);
 
         proof.outputIndex = invalidOutputIndex.toUint64();
 
-        vm.expectRevert(_encodeInvalidNodeIndex(invalidOutputIndex));
+        vm.expectRevert(_encodeInvalidNodeIndex(invalidOutputIndex, log2MaxNumOfOutputs));
         _appContract.validateOutput(output, proof);
 
-        vm.expectRevert(_encodeInvalidNodeIndex(invalidOutputIndex));
+        vm.expectRevert(_encodeInvalidNodeIndex(invalidOutputIndex, log2MaxNumOfOutputs));
         _appContract.validateOutputHash(keccak256(output), proof);
     }
 
@@ -394,17 +398,99 @@ contract ApplicationTest is Test, OwnableTest, AddressGenerator, ConsensusTestUt
         _testErc20Success(output, proof);
     }
 
+    // ----------------------------------
+    // accounts drive Merkle root proving
+    // ----------------------------------
+
+    function testRevertsInvalidAccountsDriveMerkleRootProofSize(bytes32[] calldata invalidProof)
+        external
+    {
+        // We assume the proof provided by the emulator library has the correct length,
+        // and that the proof provided by the fuzzer has a different, incorrect length.
+        vm.assume(invalidProof.length != _getAccountsDriveMerkleRootProof().length);
+
+        vm.prank(_appContract.getGuardian());
+        _appContract.foreclose();
+
+        bytes32 accountsDriveMerkleRoot = _getAccountsDriveMerkleRoot();
+
+        vm.expectRevert(_encodeInvalidAccountsDriveMerkleRootProofSize());
+        vm.prank(vm.randomAddress());
+        _appContract.proveAccountsDriveMerkleRoot(accountsDriveMerkleRoot, invalidProof);
+    }
+
+    function testRevertsInvalidMachineMerkleRoot(bytes32 invalidAccountsDriveMerkleRoot)
+        external
+    {
+        vm.assume(invalidAccountsDriveMerkleRoot != _getAccountsDriveMerkleRoot());
+
+        vm.prank(_appContract.getGuardian());
+        _appContract.foreclose();
+
+        bytes32[] memory proof = _getAccountsDriveMerkleRootProof();
+
+        bytes32 invalidMachineMerkleRoot = proof.merkleRootAfterReplacement(
+            LibEmulator.ACCOUNTS_DRIVE_START_INDEX, invalidAccountsDriveMerkleRoot
+        );
+
+        vm.expectRevert(_encodeInvalidMachineMerkleRoot(invalidMachineMerkleRoot));
+        vm.prank(vm.randomAddress());
+        _appContract.proveAccountsDriveMerkleRoot(invalidAccountsDriveMerkleRoot, proof);
+    }
+
+    function testProveAccountsDriveMerkleRoot() external {
+        bytes32 accountsDriveMerkleRoot = _getAccountsDriveMerkleRoot();
+        bytes32[] memory proof = _getAccountsDriveMerkleRootProof();
+
+        vm.expectRevert(IApplicationWithdrawal.NotForeclosed.selector);
+        vm.prank(vm.randomAddress());
+        _appContract.proveAccountsDriveMerkleRoot(accountsDriveMerkleRoot, proof);
+
+        {
+            bool wasValueProved;
+            (wasValueProved,) = _appContract.getAccountsDriveMerkleRoot();
+            assertFalse(wasValueProved);
+        }
+
+        vm.prank(_appContract.getGuardian());
+        _appContract.foreclose();
+
+        {
+            bool wasValueProved;
+            (wasValueProved,) = _appContract.getAccountsDriveMerkleRoot();
+            assertFalse(wasValueProved);
+        }
+
+        vm.prank(vm.randomAddress());
+        _appContract.proveAccountsDriveMerkleRoot(accountsDriveMerkleRoot, proof);
+
+        {
+            bool wasValueProved;
+            bytes32 value;
+            (wasValueProved, value) = _appContract.getAccountsDriveMerkleRoot();
+            assertTrue(wasValueProved);
+            assertEq(value, accountsDriveMerkleRoot);
+        }
+
+        vm.expectRevert(_encodeAccountsDriveMerkleRootAlreadyProved());
+        vm.prank(vm.randomAddress());
+        _appContract.proveAccountsDriveMerkleRoot(accountsDriveMerkleRoot, proof);
+    }
+
     // ------------------
     // account validation
     // ------------------
 
-    function testValidateAccounts() external view {
-        _validateAccounts();
+    function testValidateAccounts() external {
+        _validateAccounts(_encodeAccountsDriveMerkleRootNotProved());
     }
 
     function testValidateAccountsAfterForeclosure() external {
         vm.prank(_appContract.getGuardian());
         _appContract.foreclose();
+        _validateAccounts(_encodeAccountsDriveMerkleRootNotProved());
+
+        _proveAccountsDriveMerkleRoot();
         _validateAccounts();
     }
 
@@ -429,30 +515,39 @@ contract ApplicationTest is Test, OwnableTest, AddressGenerator, ConsensusTestUt
         _appContract.validateAccountMerkleRoot(accountMerkleRoot, proof);
     }
 
-    function testRevertsInvalidAccountIndex(uint256) external {
+    function testValidateAccountRevertsInvalidNodeIndex(uint256) external {
         string memory name = _getRandomAccountName();
         bytes memory account = _getAccount(name);
         bytes32 accountMerkleRoot = LibEmulator.getAccountMerkleRoot(account);
         AccountValidityProof memory proof = _getAccountValidityProof(name);
 
-        uint256 numOfAccounts = 1 << LibEmulator.getAccountsDriveRootNodeHeight();
-        uint256 invalidAccountIndex = vm.randomUint(numOfAccounts, type(uint64).max);
+        uint256 log2MaxNumOfAccounts = LibEmulator.LOG2_MAX_NUM_OF_ACCOUNTS;
+        uint256 maxNumOfAccounts = 1 << log2MaxNumOfAccounts;
+        uint256 invalidAccountIndex = vm.randomUint(maxNumOfAccounts, type(uint64).max);
 
         assertNotEq(invalidAccountIndex, proof.accountIndex);
 
         proof.accountIndex = invalidAccountIndex.toUint64();
 
-        vm.expectRevert(_encodeInvalidAccountIndex());
+        vm.prank(_appContract.getGuardian());
+        _appContract.foreclose();
+        _proveAccountsDriveMerkleRoot();
+
+        vm.expectRevert(_encodeInvalidNodeIndex(proof.accountIndex, log2MaxNumOfAccounts));
         _appContract.validateAccount(account, proof);
 
-        vm.expectRevert(_encodeInvalidAccountIndex());
+        vm.expectRevert(_encodeInvalidNodeIndex(proof.accountIndex, log2MaxNumOfAccounts));
         _appContract.validateAccountMerkleRoot(accountMerkleRoot, proof);
     }
 
-    function testRevertsInvalidMachineMerkleRoot(uint256) external {
+    function testRevertsInvalidAccountsDriveMerkleRoot(uint256) external {
         string memory name = _getRandomAccountName();
         bytes memory account = _getAccount(name);
         AccountValidityProof memory proof = _getAccountValidityProof(name);
+
+        vm.prank(_appContract.getGuardian());
+        _appContract.foreclose();
+        _proveAccountsDriveMerkleRoot();
 
         bytes memory invalidAccount = _generateAccount();
 
@@ -463,25 +558,17 @@ contract ApplicationTest is Test, OwnableTest, AddressGenerator, ConsensusTestUt
         // the account whose proof we will be using.
         vm.assume(LibEmulator.getAccountMerkleRoot(account) != invalidAccountMerkleRoot);
 
-        (bytes32[] memory siblings1, bytes32[] memory siblings2) =
-            proof.accountRootSiblings.split(LibEmulator.LOG2_MAX_NUM_OF_ACCOUNTS);
-
         bytes32 invalidAccountsDriveMerkleRoot =
-            ExternalLibBinaryMerkleTree.merkleRootAfterReplacement(
-                siblings1, proof.accountIndex, invalidAccountMerkleRoot
-            );
+            proof.accountRootSiblings
+                .merkleRootAfterReplacement(proof.accountIndex, invalidAccountMerkleRoot);
 
-        bytes32 invalidMachineMerkleRoot =
-            ExternalLibBinaryMerkleTree.merkleRootAfterReplacement(
-                siblings2,
-                LibEmulator.ACCOUNTS_DRIVE_START_INDEX,
-                invalidAccountsDriveMerkleRoot
-            );
+        bytes memory invalidAccountsDriveMerkleRootError =
+            _encodeInvalidAccountsDriveMerkleRoot(invalidAccountsDriveMerkleRoot);
 
-        vm.expectRevert(_encodeInvalidMachineMerkleRoot(invalidMachineMerkleRoot));
+        vm.expectRevert(invalidAccountsDriveMerkleRootError);
         _appContract.validateAccount(invalidAccount, proof);
 
-        vm.expectRevert(_encodeInvalidMachineMerkleRoot(invalidMachineMerkleRoot));
+        vm.expectRevert(invalidAccountsDriveMerkleRootError);
         _appContract.validateAccountMerkleRoot(invalidAccountMerkleRoot, proof);
     }
 
@@ -529,6 +616,7 @@ contract ApplicationTest is Test, OwnableTest, AddressGenerator, ConsensusTestUt
 
         vm.prank(_appContract.getGuardian());
         _appContract.foreclose();
+        _proveAccountsDriveMerkleRoot();
 
         vm.expectRevert(_encodeErc20InsufficientBalance(_usd, amount));
 
@@ -553,6 +641,7 @@ contract ApplicationTest is Test, OwnableTest, AddressGenerator, ConsensusTestUt
 
         vm.prank(_appContract.getGuardian());
         _appContract.foreclose();
+        _proveAccountsDriveMerkleRoot();
 
         vm.expectRevert(error);
 
@@ -581,6 +670,7 @@ contract ApplicationTest is Test, OwnableTest, AddressGenerator, ConsensusTestUt
 
         vm.prank(_appContract.getGuardian());
         _appContract.foreclose();
+        _proveAccountsDriveMerkleRoot();
 
         vm.expectRevert(_encodeSafeErc20FailedOperation(address(_usd)));
 
@@ -597,6 +687,7 @@ contract ApplicationTest is Test, OwnableTest, AddressGenerator, ConsensusTestUt
 
         vm.prank(_appContract.getGuardian());
         _appContract.foreclose();
+        _proveAccountsDriveMerkleRoot();
 
         vm.expectRevert(_encodeSafeErc20FailedOperation(address(_usd)));
 
@@ -617,6 +708,7 @@ contract ApplicationTest is Test, OwnableTest, AddressGenerator, ConsensusTestUt
 
         vm.prank(_appContract.getGuardian());
         _appContract.foreclose();
+        _proveAccountsDriveMerkleRoot();
 
         vm.expectRevert(_encodeAccountTooShort(accountSize));
         vm.prank(vm.randomAddress());
@@ -653,6 +745,7 @@ contract ApplicationTest is Test, OwnableTest, AddressGenerator, ConsensusTestUt
 
         vm.prank(_appContract.getGuardian());
         _appContract.foreclose();
+        _proveAccountsDriveMerkleRoot();
 
         vm.recordLogs();
 
@@ -979,14 +1072,28 @@ contract ApplicationTest is Test, OwnableTest, AddressGenerator, ConsensusTestUt
         return vm.randomBytes(accountSize);
     }
 
+    function _getAccountsDriveMerkleRoot()
+        internal
+        view
+        returns (bytes32 accountsDriveMerkleRoot)
+    {
+        return _emulator.getAccountsDriveMerkleRoot();
+    }
+
+    function _getAccountsDriveMerkleRootProof()
+        internal
+        view
+        returns (bytes32[] memory accountsDriveMerkleRootSiblings)
+    {
+        return _proofComponents.getAccountsDriveMerkleRootProof();
+    }
+
     function _getAccountValidityProof(string memory name)
         internal
         view
         returns (AccountValidityProof memory)
     {
-        return _emulator.getAccountValidityProof(
-            _proofComponents, _accountIndexByName[name]
-        );
+        return _emulator.getAccountValidityProof(_accountIndexByName[name]);
     }
 
     /// @notice This function is used to simulate a foreclosure and a withdrawal.
@@ -1027,7 +1134,7 @@ contract ApplicationTest is Test, OwnableTest, AddressGenerator, ConsensusTestUt
 
         // attempt to validate/withdraw accounts
         {
-            bytes memory error = _encodeInvalidMachineMerkleRoot(machineMerkleRoot);
+            bytes memory error = _encodeAccountsDriveMerkleRootNotProved();
             for (uint256 i; i < _accountNames.length; ++i) {
                 string memory name = _accountNames[i];
                 bytes memory account = _getAccount(name);
@@ -1037,6 +1144,9 @@ contract ApplicationTest is Test, OwnableTest, AddressGenerator, ConsensusTestUt
                 _appContract.validateAccountMerkleRoot(accountMerkleRoot, proof);
                 vm.expectRevert(error);
                 _appContract.validateAccount(account, proof);
+                vm.expectRevert(IApplicationWithdrawal.NotForeclosed.selector);
+                vm.prank(vm.randomAddress());
+                _appContract.withdraw(account, proof);
                 vm.expectRevert(error);
                 this.simulateForeclosureAndWithdrawal(account, proof);
             }
@@ -1058,6 +1168,13 @@ contract ApplicationTest is Test, OwnableTest, AddressGenerator, ConsensusTestUt
             machineMerkleRoot,
             "last finalized machine Merkle root"
         );
+    }
+
+    function _proveAccountsDriveMerkleRoot() internal {
+        bytes32 accountsDriveMerkleRoot = _getAccountsDriveMerkleRoot();
+        bytes32[] memory proof = _getAccountsDriveMerkleRootProof();
+        vm.prank(vm.randomAddress());
+        _appContract.proveAccountsDriveMerkleRoot(accountsDriveMerkleRoot, proof);
     }
 
     function _expectEmitOutputExecuted(
@@ -1110,15 +1227,13 @@ contract ApplicationTest is Test, OwnableTest, AddressGenerator, ConsensusTestUt
         );
     }
 
-    function _encodeInvalidNodeIndex(uint256 nodeIndex)
+    function _encodeInvalidNodeIndex(uint256 nodeIndex, uint256 height)
         internal
         pure
         returns (bytes memory)
     {
         return abi.encodeWithSelector(
-            BinaryMerkleTreeErrors.InvalidNodeIndex.selector,
-            nodeIndex,
-            CanonicalMachine.LOG2_MAX_OUTPUTS
+            BinaryMerkleTreeErrors.InvalidNodeIndex.selector, nodeIndex, height
         );
     }
 
@@ -1130,8 +1245,12 @@ contract ApplicationTest is Test, OwnableTest, AddressGenerator, ConsensusTestUt
         return IApplicationWithdrawal.InvalidAccountRootSiblingsArrayLength.selector;
     }
 
-    function _encodeInvalidAccountIndex() internal pure returns (bytes4) {
-        return IApplicationWithdrawal.InvalidAccountIndex.selector;
+    function _encodeInvalidAccountsDriveMerkleRootProofSize()
+        internal
+        pure
+        returns (bytes4)
+    {
+        return IApplicationWithdrawal.InvalidAccountsDriveMerkleRootProofSize.selector;
     }
 
     function _encodeInvalidOutputHashesSiblingsArrayLength()
@@ -1142,6 +1261,26 @@ contract ApplicationTest is Test, OwnableTest, AddressGenerator, ConsensusTestUt
         return IApplication.InvalidOutputHashesSiblingsArrayLength.selector;
     }
 
+    function _encodeAccountsDriveMerkleRootAlreadyProved()
+        internal
+        pure
+        returns (bytes memory)
+    {
+        return abi.encodeWithSelector(
+            IApplicationWithdrawal.AccountsDriveMerkleRootAlreadyProved.selector
+        );
+    }
+
+    function _encodeAccountsDriveMerkleRootNotProved()
+        internal
+        pure
+        returns (bytes memory)
+    {
+        return abi.encodeWithSelector(
+            IApplicationWithdrawal.AccountsDriveMerkleRootNotProved.selector
+        );
+    }
+
     function _encodeInvalidMachineMerkleRoot(bytes32 machineMerkleRoot)
         internal
         pure
@@ -1149,6 +1288,17 @@ contract ApplicationTest is Test, OwnableTest, AddressGenerator, ConsensusTestUt
     {
         return abi.encodeWithSelector(
             IApplicationWithdrawal.InvalidMachineMerkleRoot.selector, machineMerkleRoot
+        );
+    }
+
+    function _encodeInvalidAccountsDriveMerkleRoot(bytes32 accountsDriveMerkleRoot)
+        internal
+        pure
+        returns (bytes memory)
+    {
+        return abi.encodeWithSelector(
+            IApplicationWithdrawal.InvalidAccountsDriveMerkleRoot.selector,
+            accountsDriveMerkleRoot
         );
     }
 
@@ -1523,14 +1673,25 @@ contract ApplicationTest is Test, OwnableTest, AddressGenerator, ConsensusTestUt
         }
     }
 
-    function _validateAccounts() internal view {
+    function _validateAccounts(bool expectError, bytes memory expectedError) internal {
         for (uint256 i; i < _accountNames.length; ++i) {
             string memory name = _accountNames[i];
             bytes memory account = _getAccount(name);
             bytes32 accountMerkleRoot = LibEmulator.getAccountMerkleRoot(account);
             AccountValidityProof memory proof = _getAccountValidityProof(name);
+            if (expectError) vm.expectRevert(expectedError);
             _appContract.validateAccountMerkleRoot(accountMerkleRoot, proof);
+            if (expectError) vm.expectRevert(expectedError);
             _appContract.validateAccount(account, proof);
         }
+    }
+
+    function _validateAccounts(bytes memory expectedError) internal {
+        _validateAccounts(true, expectedError);
+    }
+
+    function _validateAccounts() internal {
+        bytes memory expectedError;
+        _validateAccounts(false, expectedError);
     }
 }
