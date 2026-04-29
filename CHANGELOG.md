@@ -1,5 +1,42 @@
 # @cartesi/rollups
 
+## 3.0.0-alpha.4
+
+### Major Changes
+
+- e8d46d9: Remove `InvalidAccountIndex` (in favor of already-existing `InvalidNodeIndex` error)
+- d7db669: Add `claimStagingPeriod` parameter to functions in the following contracts: `AuthorityFactory`, `SelfHostedApplicationFactory`, and `QuorumFactory`.
+  This parameters controls how many base-layer blocks need to elapse before a staged claim can be accepted.
+- e8d46d9: Reduce account validity proof size by splitting the validation process into two:
+  - First, the accounts drive Merkle root is validated through the new `proveAccountsDriveMerkleRoot` function
+  - Second, the account is validated based on the proved accounts drive Merkle root
+- c35d26c: Add `appContract` parameter to `getNumberOf{Submitted,Accepted}Claims` functions
+- c047ca0: Convert error strings into custom errors
+- d7db669: Change the `submitClaim` function to put claims into a staging phase instead of instantly accepting them.
+
+### Minor Changes
+
+- e8d46d9: Add new definitions to `IApplicationWithdrawal` interface:
+
+  - `getAccountsDriveMerkleRoot` view function: checks whether the accounts drive Merkle root was proved, and its value
+  - `proveAccountsDriveMerkleRoot` function: proves the accounts drive Merkle root based on the last-finalized machine Merkle root
+  - `InvalidAccountsDriveMerkleRootProofSize` error: raised when accounts drive Merkle root proof size is invalid
+  - `AccountsDriveMerkleRootAlreadyProved` error: raised when trying to prove accounts drive Merkle root after it has already been proved
+  - `AccountsDriveMerkleRootNotProved` error: raised when trying to validate account before accounts drive Merkle root has been proved
+  - `InvalidAccountsDriveMerkleRoot` error: raised when account validity proof produces accounts drive Merkle root different from proved one
+
+- 1c87c68: Add `version()` function to all Rollups contracts
+- d7db669: Add definitions to `IConsensus` interface:
+  - `ClaimStatus` enumeration: unstaged, staged, and accepted
+  - `Claim` structure: status, staging block number, and staged outputs Merkle root
+  - `ClaimStaged` event: a submitted claim has met the consensus staging criteria
+  - `getClaimStagingPeriod` view function: get claim staging period in base-layer blocks
+  - `getNumberOfStagedClaims` view function: per-app counter of `ClaimStaged` events
+  - `getClaim` view function: claim information getter
+  - `acceptClaim` function: accepts staged claims
+  - `ClaimNotStaged` error: tried to accept unstaged or already-accepted claim
+  - `ClaimStagingPeriodNotOverYet` error: tried to accept claim during its staging period
+
 ## 3.0.0-alpha.3
 
 ### Patch Changes
