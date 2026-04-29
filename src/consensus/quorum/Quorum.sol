@@ -92,37 +92,34 @@ contract Quorum is IQuorum, AbstractConsensus {
 
         Votes storage allVotes = _getAllVotes(appContract, lastProcessedBlockNumber);
 
-        // Skip if validator already voted for the same exact claim before
-        if (!votes.inFavorById.get(id)) {
-            // Revert if validator has submitted another claim for the same epoch
-            require(
-                !allVotes.inFavorById.get(id),
-                NotFirstClaim(appContract, lastProcessedBlockNumber)
-            );
+        // Revert if the validator has already voted in favor of any claim in the epoch.
+        require(
+            !allVotes.inFavorById.get(id),
+            NotFirstClaim(appContract, lastProcessedBlockNumber)
+        );
 
-            _submitClaim(
-                msg.sender,
+        _submitClaim(
+            msg.sender,
+            appContract,
+            lastProcessedBlockNumber,
+            outputsMerkleRoot,
+            machineMerkleRoot
+        );
+
+        // Register vote (for any claim in the epoch)
+        allVotes.inFavorById.set(id);
+        ++allVotes.inFavorCount;
+
+        // Register vote (for the specific claim)
+        // and stage the claim if a majority has been reached
+        votes.inFavorById.set(id);
+        if (++votes.inFavorCount == 1 + NUM_OF_VALIDATORS / 2) {
+            _stageClaim(
                 appContract,
                 lastProcessedBlockNumber,
                 outputsMerkleRoot,
                 machineMerkleRoot
             );
-
-            // Register vote (for any claim in the epoch)
-            allVotes.inFavorById.set(id);
-            ++allVotes.inFavorCount;
-
-            // Register vote (for the specific claim)
-            // and stage the claim if a majority has been reached
-            votes.inFavorById.set(id);
-            if (++votes.inFavorCount == 1 + NUM_OF_VALIDATORS / 2) {
-                _stageClaim(
-                    appContract,
-                    lastProcessedBlockNumber,
-                    outputsMerkleRoot,
-                    machineMerkleRoot
-                );
-            }
         }
     }
 

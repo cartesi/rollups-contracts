@@ -829,46 +829,15 @@ contract QuorumFactoryTest is
                     "Validator shouldn't be in favor of claim for other apps"
                 );
 
-                vm.recordLogs();
-
+                vm.expectRevert(
+                    abi.encodeWithSelector(
+                        IConsensus.NotFirstClaim.selector,
+                        appContract,
+                        lastProcessedBlockNumber
+                    )
+                );
                 vm.prank(validator);
                 quorum.submitClaim(claim);
-
-                assertEq(
-                    vm.getRecordedLogs().length,
-                    0,
-                    "submitClaim() expected to emit 0 events on subsequent call"
-                );
-
-                assertEq(
-                    quorum.numOfValidatorsInFavorOfAnyClaimInEpoch(
-                        appContract, lastProcessedBlockNumber
-                    ),
-                    numOfValidatorsInFavorOfAnyClaimInEpochBefore + 1,
-                    "Number of validators in favor of any claim in epoch should be incremented"
-                );
-
-                assertTrue(
-                    quorum.isValidatorInFavorOfAnyClaimInEpoch(
-                        appContract, lastProcessedBlockNumber, id
-                    ),
-                    "Expected validator to be in favor of any claim in epoch"
-                );
-
-                assertEq(
-                    quorum.numOfValidatorsInFavorOf(
-                        appContract, lastProcessedBlockNumber, machineMerkleRoot
-                    ),
-                    numOfValidatorsInFavorOfClaimBefore + 1,
-                    "Number of validators in favor of claim should be incremented"
-                );
-
-                assertTrue(
-                    quorum.isValidatorInFavorOf(
-                        appContract, lastProcessedBlockNumber, machineMerkleRoot, id
-                    ),
-                    "Expected validator to be in favor of claim"
-                );
             }
 
             if (!wasEpochStaged) {
