@@ -439,6 +439,7 @@ contract AuthorityFactoryTest is
         }
 
         bytes32 lastFinalizedMachineMerkleRoot;
+        uint256 firstUnprocessedBlockNumber;
 
         for (uint256 claimIndex; claimIndex < blockNumbers.length; ++claimIndex) {
             claim.lastProcessedBlockNumber = blockNumbers[claimIndex];
@@ -607,10 +608,11 @@ contract AuthorityFactoryTest is
             {
                 (bool isEmpty, uint256 max) = blockNumbers.maxBefore(claimIndex);
 
-                // If the claim was successful submitted, then its last processed
+                // If the claim was successfully accepted, then its last processed
                 // block number cannot be equal to any past successful claim.
                 if (isEmpty || claim.lastProcessedBlockNumber > max) {
                     lastFinalizedMachineMerkleRoot = machineMerkleRoot;
+                    firstUnprocessedBlockNumber = claim.lastProcessedBlockNumber + 1;
                 }
             }
 
@@ -751,6 +753,35 @@ contract AuthorityFactoryTest is
                 authority.getLastFinalizedMachineMerkleRoot(claim.appContract),
                 lastFinalizedMachineMerkleRoot,
                 "Check last finalized machine Merkle root"
+            );
+
+            if (firstUnprocessedBlockNumber >= 1) {
+                assertTrue(
+                    authority.wasInputFinalized(
+                        claim.appContract,
+                        vm.randomUint(), // inputIndex
+                        vm.randomUint(0, firstUnprocessedBlockNumber - 1)
+                    ),
+                    "Check all inputs added before the first unprocessed block were finalized"
+                );
+            }
+
+            assertFalse(
+                authority.wasInputFinalized(
+                    claim.appContract,
+                    vm.randomUint(), // inputIndex
+                    vm.randomUint(firstUnprocessedBlockNumber, type(uint256).max)
+                ),
+                "Check all inputs added on the first unproccessed block or after were not finalized"
+            );
+
+            assertFalse(
+                authority.wasInputFinalized(
+                    notAppContract,
+                    vm.randomUint(), // inputIndex
+                    vm.randomUint() // blockNumber
+                ),
+                "Check all inputs from other apps were not finalized"
             );
 
             assertEq(
@@ -1026,6 +1057,17 @@ contract AuthorityFactoryTest is
             authority.getLastFinalizedMachineMerkleRoot(vm.randomAddress()),
             bytes32(0),
             "initially, getLastFinalizedMachineMerkleRoot(...) == bytes32(0)"
+        );
+
+        // We check that initially no input was finalized.
+        assertEq(
+            authority.wasInputFinalized(
+                vm.randomAddress(), // appContract
+                vm.randomUint(), // inputIndex
+                vm.randomUint() // blockNumber
+            ),
+            false,
+            "initially, wasInputFinalized(...) == false"
         );
 
         // We check that initially no claim is staged.

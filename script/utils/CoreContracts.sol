@@ -16,6 +16,7 @@ import {ERC1155SinglePortal} from "src/portals/ERC1155SinglePortal.sol";
 import {ERC20Portal} from "src/portals/ERC20Portal.sol";
 import {ERC721Portal} from "src/portals/ERC721Portal.sol";
 import {EtherPortal} from "src/portals/EtherPortal.sol";
+import {RefundOutputBuilder} from "src/refund/RefundOutputBuilder.sol";
 import {UsdWithdrawalOutputBuilderFactory} from "src/withdrawal/UsdWithdrawalOutputBuilderFactory.sol";
 
 import "./ContractDeployers.sol" as G;
@@ -31,6 +32,7 @@ struct Suite {
     EtherPortal etherPortal;
     InputBox inputBox;
     QuorumFactory quorumFactory;
+    RefundOutputBuilder refundOutputBuilder;
     SafeERC20Transfer safeErc20Transfer;
     SelfHostedApplicationFactory selfHostedApplicationFactory;
     UsdWithdrawalOutputBuilderFactory usdWithdrawalOutputBuilderFactory;
@@ -45,7 +47,16 @@ function deploy() returns (Suite memory) {
     ERC1155BatchPortal erc1155BatchPortal = G.deployERC1155BatchPortal(inputBox);
     SafeERC20Transfer safeErc20Transfer = G.deploySafeERC20Transfer();
     AuthorityFactory authorityFactory = G.deployAuthorityFactory();
-    ApplicationFactory applicationFactory = G.deployApplicationFactory();
+    RefundOutputBuilder refundOutputBuilder = G.deployRefundOutputBuilder(
+        etherPortal,
+        erc20Portal,
+        erc721Portal,
+        erc1155SinglePortal,
+        erc1155BatchPortal,
+        safeErc20Transfer
+    );
+    ApplicationFactory applicationFactory =
+        G.deployApplicationFactory(refundOutputBuilder);
     QuorumFactory quorumFactory = G.deployQuorumFactory();
     UsdWithdrawalOutputBuilderFactory usdWithdrawalOutputBuilderFactory =
         G.deployUsdWithdrawalOutputBuilderFactory(safeErc20Transfer);
@@ -62,6 +73,7 @@ function deploy() returns (Suite memory) {
         etherPortal: etherPortal,
         inputBox: inputBox,
         quorumFactory: quorumFactory,
+        refundOutputBuilder: refundOutputBuilder,
         safeErc20Transfer: safeErc20Transfer,
         selfHostedApplicationFactory: selfHostedApplicationFactory,
         usdWithdrawalOutputBuilderFactory: usdWithdrawalOutputBuilderFactory
@@ -81,6 +93,9 @@ function store(VmSafe vmSafe, Suite memory s) {
     storeDeployment(vmSafe, type(EtherPortal).name, address(s.etherPortal));
     storeDeployment(vmSafe, type(QuorumFactory).name, address(s.quorumFactory));
     storeDeployment(vmSafe, type(SafeERC20Transfer).name, address(s.safeErc20Transfer));
+    storeDeployment(
+        vmSafe, type(RefundOutputBuilder).name, address(s.refundOutputBuilder)
+    );
     storeDeployment(
         vmSafe,
         type(SelfHostedApplicationFactory).name,

@@ -10,7 +10,7 @@ library LibError {
         if (errordata.length == 0) {
             revert();
         } else {
-            assembly {
+            assembly ("memory-safe") {
                 revert(add(32, errordata), mload(errordata))
             }
         }

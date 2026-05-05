@@ -6,11 +6,14 @@ pragma solidity ^0.8.30;
 import {IOwnable} from "../access/IOwnable.sol";
 import {AccountValidityProof} from "../common/AccountValidityProof.sol";
 import {CanonicalMachine} from "../common/CanonicalMachine.sol";
+import {DataAvailability} from "../common/DataAvailability.sol";
+import {Inputs} from "../common/Inputs.sol";
 import {OutputValidityProof} from "../common/OutputValidityProof.sol";
 import {Outputs} from "../common/Outputs.sol";
 import {RollupsContract} from "../common/RollupsContract.sol";
 import {WithdrawalConfig} from "../common/WithdrawalConfig.sol";
 import {IOutputsMerkleRootValidator} from "../consensus/IOutputsMerkleRootValidator.sol";
+import {IInputBox} from "../inputs/IInputBox.sol";
 import {LibAccountValidityProof} from "../library/LibAccountValidityProof.sol";
 import {LibAddress} from "../library/LibAddress.sol";
 import {LibBinaryMerkleTree} from "../library/LibBinaryMerkleTree.sol";
@@ -18,6 +21,7 @@ import {LibBytes} from "../library/LibBytes.sol";
 import {LibKeccak256} from "../library/LibKeccak256.sol";
 import {LibOutputValidityProof} from "../library/LibOutputValidityProof.sol";
 import {LibWithdrawalConfig} from "../library/LibWithdrawalConfig.sol";
+import {IRefundOutputBuilder} from "../refund/IRefundOutputBuilder.sol";
 import {IWithdrawalOutputBuilder} from "../withdrawal/IWithdrawalOutputBuilder.sol";
 import {IApplication} from "./IApplication.sol";
 import {IApplicationFactoryErrors} from "./IApplicationFactoryErrors.sol";
@@ -68,6 +72,10 @@ contract Application is
     /// @dev See the `getAccountsDriveStartIndex` function.
     uint64 immutable ACCOUNTS_DRIVE_START_INDEX;
 
+    /// @notice The refund output builder contract.
+    /// @dev See the `getRefundOutputBuilder` function.
+    IRefundOutputBuilder immutable REFUND_OUTPUT_BUILDER;
+
     /// @notice The withdrawal output builder contract.
     /// @dev See the `getWithdrawalOutputBuilder` function.
     IWithdrawalOutputBuilder immutable WITHDRAWAL_OUTPUT_BUILDER;
@@ -75,6 +83,10 @@ contract Application is
     /// @notice Keeps track of which outputs have been executed.
     /// @dev See the `wasOutputExecuted` function.
     BitMaps.BitMap internal _executed;
+
+    /// @notice Keeps track of which inputs have been refunded.
+    /// @dev See the `wasRefundForInputIssued` function.
+    BitMaps.BitMap internal _refunded;
 
     /// @notice Keeps track of which accounts have been withdrawn.
     /// @dev See the `wereAccountFundsWithdrawn` function.
@@ -106,6 +118,10 @@ contract Application is
     /// @dev See the `getNumberOfExecutedOutputs` function.
     uint256 _numOfExecutedOutputs;
 
+    /// @notice The number of refunds issued by the application.
+    /// @dev See the `getNumberOfIssuedRefunds` function.
+    uint256 _numOfIssuedRefunds;
+
     /// @notice The number of withdrawals from the application.
     /// @dev See the `getNumberOfWithdrawals` function.
     uint256 _numOfWithdrawals;
@@ -115,6 +131,7 @@ contract Application is
     /// @param initialOwner The initial application owner
     /// @param templateHash The initial machine state hash
     /// @param dataAvailability The data availability solution
+    /// @param refundOutputBuilder The refund output builder
     /// @param withdrawalConfig The withdrawal configuration
     /// @dev Reverts if the initial application owner address is zero.
     constructor(
@@ -122,6 +139,7 @@ contract Application is
         address initialOwner,
         bytes32 templateHash,
         bytes memory dataAvailability,
+        IRefundOutputBuilder refundOutputBuilder,
         WithdrawalConfig memory withdrawalConfig
     ) Ownable(initialOwner) {
         require(
@@ -133,6 +151,7 @@ contract Application is
         LOG2_LEAVES_PER_ACCOUNT = withdrawalConfig.log2LeavesPerAccount;
         LOG2_MAX_NUM_OF_ACCOUNTS = withdrawalConfig.log2MaxNumOfAccounts;
         ACCOUNTS_DRIVE_START_INDEX = withdrawalConfig.accountsDriveStartIndex;
+        REFUND_OUTPUT_BUILDER = refundOutputBuilder;
         WITHDRAWAL_OUTPUT_BUILDER = withdrawalConfig.withdrawalOutputBuilder;
         _outputsMerkleRootValidator = outputsMerkleRootValidator;
         _dataAvailability = dataAvailability;
@@ -163,6 +182,33 @@ contract Application is
 
         ++_numOfExecutedOutputs;
         emit OutputExecuted(outputIndex, output);
+    }
+
+    function issueRefund(uint256 inputIndex, bytes calldata input)
+        external
+        override
+        nonReentrant
+        onlyForeclosed
+    {
+        (uint256 blockNumber, address sender, bytes memory payload) =
+            validateInput(inputIndex, input);
+
+        if (_wasInputFinalized(inputIndex, blockNumber)) {
+            revert CannotRefundFinalizedInput(inputIndex);
+        }
+
+        bytes memory output = _buildRefundOutput(sender, payload);
+
+        if (_refunded.get(inputIndex)) {
+            revert RefundAlreadyIssued(inputIndex);
+        }
+
+        _executeOutput(output);
+
+        _refunded.set(inputIndex);
+
+        ++_numOfIssuedRefunds;
+        emit RefundIssued(inputIndex, input, output);
     }
 
     function proveAccountsDriveMerkleRoot(
@@ -255,6 +301,15 @@ contract Application is
         return _executed.get(outputIndex);
     }
 
+    function wasRefundForInputIssued(uint256 inputIndex)
+        external
+        view
+        override
+        returns (bool)
+    {
+        return _refunded.get(inputIndex);
+    }
+
     function wereAccountFundsWithdrawn(uint256 accountIndex)
         external
         view
@@ -287,6 +342,58 @@ contract Application is
         if (!_isOutputsMerkleRootValid(outputsMerkleRoot)) {
             revert InvalidOutputsMerkleRoot(outputsMerkleRoot);
         }
+    }
+
+    function validateInput(uint256 inputIndex, bytes calldata input)
+        public
+        view
+        override
+        returns (uint256 blockNumber, address inputSender, bytes memory inputPayload)
+    {
+        validateInputHash(inputIndex, keccak256(input));
+
+        require(
+            (input.length >= 4) && (bytes4(input[:4]) == Inputs.EvmAdvance.selector),
+            IllFormedInput()
+        );
+
+        uint256 chainId;
+        address appContract;
+        uint256 blockTimestamp;
+        uint256 index;
+
+        (
+            chainId,
+            appContract,
+            inputSender,
+            blockNumber,
+            blockTimestamp,/* prevRandao */,
+            index,
+            inputPayload
+        ) =
+            abi.decode(
+                input[4:],
+                (uint256, address, address, uint256, uint256, uint256, uint256, bytes)
+            );
+
+        require(
+            (chainId == block.chainid) && (appContract == address(this))
+                && (blockNumber <= block.number) && (blockTimestamp <= block.timestamp)
+                && (index == inputIndex),
+            IllFormedInput()
+        );
+    }
+
+    function validateInputHash(uint256 inputIndex, bytes32 inputHash)
+        public
+        view
+        override
+    {
+        IInputBox inputBox = _getInputBox();
+        uint256 numOfInputs = inputBox.getNumberOfInputs(address(this));
+        require(inputIndex < numOfInputs, InvalidInputIndex(inputIndex, numOfInputs));
+        bytes32 stInputHash = inputBox.getInputHash(address(this), inputIndex);
+        require(stInputHash == inputHash, InvalidInputHash(stInputHash, inputHash));
     }
 
     function validateAccount(bytes calldata account, AccountValidityProof calldata proof)
@@ -340,7 +447,7 @@ contract Application is
     }
 
     /// @inheritdoc IApplication
-    function getDataAvailability() external view override returns (bytes memory) {
+    function getDataAvailability() public view override returns (bytes memory) {
         return _dataAvailability;
     }
 
@@ -352,6 +459,10 @@ contract Application is
     /// @inheritdoc IApplication
     function getNumberOfExecutedOutputs() external view override returns (uint256) {
         return _numOfExecutedOutputs;
+    }
+
+    function getNumberOfIssuedRefunds() external view override returns (uint256) {
+        return _numOfIssuedRefunds;
     }
 
     function getNumberOfWithdrawals() external view override returns (uint256) {
@@ -372,6 +483,15 @@ contract Application is
 
     function getGuardian() public view override returns (address) {
         return GUARDIAN;
+    }
+
+    function getRefundOutputBuilder()
+        public
+        view
+        override
+        returns (IRefundOutputBuilder)
+    {
+        return REFUND_OUTPUT_BUILDER;
     }
 
     function getWithdrawalOutputBuilder()
@@ -442,6 +562,25 @@ contract Application is
         _;
     }
 
+    /// @notice Get the input box contract used as data availability.
+    function _getInputBox() internal view returns (IInputBox inputBox) {
+        bool hasSelector;
+        bytes32 selector;
+        bytes memory arguments;
+
+        (hasSelector, selector, arguments) = getDataAvailability().consumeBytes4();
+
+        require(hasSelector, UnknownDataAvailability());
+
+        if (selector == DataAvailability.InputBox.selector) {
+            inputBox = abi.decode(arguments, (IInputBox));
+        } else if (selector == DataAvailability.InputBoxAndEspresso.selector) {
+            (inputBox,,) = abi.decode(arguments, (IInputBox, uint256, uint32));
+        } else {
+            revert UnknownDataAvailability();
+        }
+    }
+
     /// @notice Get the log (base 2) of the number of bytes in the machine memory that are
     /// reserved for the accounts drive.
     function _getLog2AccountsDriveSize() internal view returns (uint8) {
@@ -478,6 +617,32 @@ contract Application is
         if (lastFinalizedMachineMerkleRoot == bytes32(0)) {
             lastFinalizedMachineMerkleRoot = getTemplateHash();
         }
+    }
+
+    /// @notice Check if an input was finalized,
+    /// according to the current outputs Merkle root validator.
+    /// @param inputIndex The index of the input in the application's input box
+    /// @param blockNumber The number of the base-layer block in which the input was added
+    function _wasInputFinalized(uint256 inputIndex, uint256 blockNumber)
+        internal
+        view
+        returns (bool)
+    {
+        return getOutputsMerkleRootValidator()
+            .wasInputFinalized(address(this), inputIndex, blockNumber);
+    }
+
+    /// @notice Build a refund output from an input,
+    /// using the refund output builder contract.
+    /// @param sender The input sender
+    /// @param payload The input payload
+    /// @return output The refund output
+    function _buildRefundOutput(address sender, bytes memory payload)
+        internal
+        view
+        returns (bytes memory output)
+    {
+        return getRefundOutputBuilder().buildRefundOutput(address(this), sender, payload);
     }
 
     /// @notice Build a withdrawal output from an account,

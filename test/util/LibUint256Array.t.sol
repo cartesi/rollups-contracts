@@ -133,6 +133,14 @@ contract LibUint256ArrayTest is Test {
         }
     }
 
+    function testRandomUintGe(uint256[] memory array) external {
+        uint256[] memory newArray = vm.randomUintGe(array);
+        assertEq(newArray.length, array.length);
+        for (uint256 i; i < array.length; ++i) {
+            assertGe(newArray[i], array[i]);
+        }
+    }
+
     function testAddAndSub(uint8 n) external {
         uint256[] memory a = new uint256[](n);
         uint256[] memory b = new uint256[](n);

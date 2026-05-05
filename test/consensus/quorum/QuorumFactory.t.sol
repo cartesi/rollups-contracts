@@ -370,6 +370,7 @@ contract QuorumFactoryTest is
         uint256[] memory blockNumbers = _randomEpochFinalBlockNumbers(epochLength);
 
         bytes32 lastFinalizedMachineMerkleRoot;
+        uint256 firstUnprocessedBlockNumber;
 
         for (uint256 claimIndex; claimIndex < blockNumbers.length; ++claimIndex) {
             uint256 lastProcessedBlockNumber = blockNumbers[claimIndex];
@@ -730,6 +731,26 @@ contract QuorumFactoryTest is
                     "Check last finalized machine Merkle root"
                 );
 
+                if (firstUnprocessedBlockNumber >= 1) {
+                    assertTrue(
+                        quorum.wasInputFinalized(
+                            claim.appContract,
+                            vm.randomUint(), // inputIndex
+                            vm.randomUint(0, firstUnprocessedBlockNumber - 1)
+                        ),
+                        "Check all inputs added before the first unprocessed block were finalized"
+                    );
+                }
+
+                assertFalse(
+                    quorum.wasInputFinalized(
+                        claim.appContract,
+                        vm.randomUint(), // inputIndex
+                        vm.randomUint(firstUnprocessedBlockNumber, type(uint256).max)
+                    ),
+                    "Check all inputs added on the first unproccessed block or after were not finalized"
+                );
+
                 assertEq(
                     quorum.getNumberOfSubmittedClaims(appContract),
                     totalNumOfSubmittedClaimsBefore + numOfClaimSubmittedEvents,
@@ -749,6 +770,15 @@ contract QuorumFactoryTest is
                 );
 
                 address notAppContract = vm.randomAddressNotIn(appContractSingleton);
+
+                assertFalse(
+                    quorum.wasInputFinalized(
+                        notAppContract,
+                        vm.randomUint(), // inputIndex
+                        vm.randomUint() // blockNumber
+                    ),
+                    "Check all inputs from other apps were not finalized"
+                );
 
                 assertEq(
                     quorum.getNumberOfSubmittedClaims(notAppContract),
@@ -1031,10 +1061,11 @@ contract QuorumFactoryTest is
 
                 (bool isEmpty, uint256 max) = blockNumbers.maxBefore(claimIndex);
 
-                // If the claim was successful submitted, then its last processed
+                // If the claim was successful accepted, then its last processed
                 // block number cannot be equal to any past successful claim.
                 if (isEmpty || lastProcessedBlockNumber > max) {
                     lastFinalizedMachineMerkleRoot = winningMachineMerkleRoot;
+                    firstUnprocessedBlockNumber = lastProcessedBlockNumber + 1;
                 }
             }
         }
@@ -1330,6 +1361,17 @@ contract QuorumFactoryTest is
             quorum.getLastFinalizedMachineMerkleRoot(vm.randomAddress()),
             bytes32(0),
             "initially, getLastFinalizedMachineMerkleRoot(...) == bytes32(0)"
+        );
+
+        // We check that initially no input was finalized.
+        assertEq(
+            quorum.wasInputFinalized(
+                vm.randomAddress(), // appContract
+                vm.randomUint(), // inputIndex
+                vm.randomUint() // blockNumber
+            ),
+            false,
+            "initially, wasInputFinalized(...) == false"
         );
 
         // We check that initially no validator is in favor of any claim in an epoch.

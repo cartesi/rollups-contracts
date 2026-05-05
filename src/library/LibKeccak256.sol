@@ -7,8 +7,7 @@ library LibKeccak256 {
     /// @notice Hash a variable-length byte array.
     /// @param b The byte array
     function hashBytes(bytes memory b) internal pure returns (bytes32 result) {
-        /// @solidity memory-safe-assembly
-        assembly {
+        assembly ("memory-safe") {
             result := keccak256(add(b, 0x20), mload(b))
         }
     }
@@ -29,7 +28,7 @@ library LibKeccak256 {
         uint256 dataLength = data.length;
         if (end <= dataLength) {
             // Block is completely within data and can be hashed in-place, without memory allocation
-            assembly {
+            assembly ("memory-safe") {
                 result := keccak256(add(add(data, 0x20), start), dataBlockSize)
             }
         } else {
@@ -37,7 +36,7 @@ library LibKeccak256 {
             bytes memory dataBlock = new bytes(dataBlockSize);
             if (start < dataLength) {
                 // Block is partially within data and requires a memory-copy operation
-                assembly {
+                assembly ("memory-safe") {
                     mcopy(
                         add(dataBlock, 0x20),
                         add(add(data, 0x20), start),
@@ -46,7 +45,7 @@ library LibKeccak256 {
                 }
             }
             // Block is then hashed with a known size
-            assembly {
+            assembly ("memory-safe") {
                 result := keccak256(add(dataBlock, 0x20), dataBlockSize)
             }
         }
@@ -56,8 +55,7 @@ library LibKeccak256 {
     /// @dev Equivalent to keccak256(abi.encode(a, b)).
     /// @dev Uses assembly to avoid memory allocation or expansion.
     function hashPair(bytes32 a, bytes32 b) internal pure returns (bytes32 result) {
-        /// @solidity memory-safe-assembly
-        assembly {
+        assembly ("memory-safe") {
             mstore(0x00, a)
             mstore(0x20, b)
             result := keccak256(0x00, 0x40)

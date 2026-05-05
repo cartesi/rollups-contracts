@@ -7,6 +7,12 @@ import {IERC1155} from "@openzeppelin-contracts-5.2.0/token/ERC1155/IERC1155.sol
 import {IERC20} from "@openzeppelin-contracts-5.2.0/token/ERC20/IERC20.sol";
 import {IERC721} from "@openzeppelin-contracts-5.2.0/token/ERC721/IERC721.sol";
 
+import {Erc1155BatchDeposit} from "./Erc1155BatchDeposit.sol";
+import {Erc1155SingleDeposit} from "./Erc1155SingleDeposit.sol";
+import {Erc20Deposit} from "./Erc20Deposit.sol";
+import {Erc721Deposit} from "./Erc721Deposit.sol";
+import {EtherDeposit} from "./EtherDeposit.sol";
+
 /// @title Input Encoding Library
 
 /// @notice Defines the encoding of inputs added by core trustless and
@@ -29,6 +35,20 @@ library InputEncoding {
         );
     }
 
+    /// @notice Decode an Ether deposit.
+    /// @param payload The encoded input payload
+    /// @return deposit The decoded Ether deposit
+    function decodeEtherDeposit(bytes calldata payload)
+        internal
+        pure
+        returns (EtherDeposit memory deposit)
+    {
+        return EtherDeposit({
+            sender: address(uint160(bytes20(payload[:20]))),
+            value: uint256(bytes32(payload[20:52]))
+        });
+    }
+
     /// @notice Encode an ERC-20 token deposit.
     /// @param token The token contract
     /// @param sender The token sender
@@ -47,6 +67,21 @@ library InputEncoding {
             value, //               32B
             execLayerData //        arbitrary size
         );
+    }
+
+    /// @notice Decode an ERC-20 token deposit.
+    /// @param payload The encoded input payload
+    /// @return deposit The decoded ERC-20 token deposit
+    function decodeErc20Deposit(bytes calldata payload)
+        internal
+        pure
+        returns (Erc20Deposit memory deposit)
+    {
+        return Erc20Deposit({
+            token: IERC20(address(uint160(bytes20(payload[:20])))),
+            sender: address(uint160(bytes20(payload[20:40]))),
+            value: uint256(bytes32(payload[40:72]))
+        });
     }
 
     /// @notice Encode an ERC-721 token deposit.
@@ -71,6 +106,21 @@ library InputEncoding {
             tokenId, //             32B
             data //                 arbitrary size
         );
+    }
+
+    /// @notice Decode an ERC-721 token deposit.
+    /// @param payload The encoded input payload
+    /// @return deposit The decoded ERC-721 token deposit
+    function decodeErc721Deposit(bytes calldata payload)
+        internal
+        pure
+        returns (Erc721Deposit memory deposit)
+    {
+        return Erc721Deposit({
+            token: IERC721(address(uint160(bytes20(payload[:20])))),
+            sender: address(uint160(bytes20(payload[20:40]))),
+            tokenId: uint256(bytes32(payload[40:72]))
+        });
     }
 
     /// @notice Encode an ERC-1155 single token deposit.
@@ -100,6 +150,22 @@ library InputEncoding {
         );
     }
 
+    /// @notice Decode an ERC-1155 single token deposit.
+    /// @param payload The encoded input payload
+    /// @return deposit The decoded ERC-1155 single token deposit
+    function decodeErc1155SingleDeposit(bytes calldata payload)
+        internal
+        pure
+        returns (Erc1155SingleDeposit memory deposit)
+    {
+        return Erc1155SingleDeposit({
+            token: IERC1155(address(uint160(bytes20(payload[:20])))),
+            sender: address(uint160(bytes20(payload[20:40]))),
+            tokenId: uint256(bytes32(payload[40:72])),
+            value: uint256(bytes32(payload[72:104]))
+        });
+    }
+
     /// @notice Encode an ERC-1155 batch token deposit.
     /// @param token The ERC-1155 token contract
     /// @param sender The token sender
@@ -123,5 +189,25 @@ library InputEncoding {
             sender, //                  20B
             data //                     arbitrary size
         );
+    }
+
+    /// @notice Decode an ERC-1155 batch token deposit.
+    /// @param payload The encoded input payload
+    /// @return deposit The decoded ERC-1155 batch token deposit
+    function decodeErc1155BatchDeposit(bytes calldata payload)
+        internal
+        pure
+        returns (Erc1155BatchDeposit memory deposit)
+    {
+        bytes calldata data = payload[40:];
+        uint256[] memory tokenIds;
+        uint256[] memory values;
+        (tokenIds, values,,) = abi.decode(data, (uint256[], uint256[], bytes, bytes));
+        return Erc1155BatchDeposit({
+            token: IERC1155(address(uint160(bytes20(payload[:20])))),
+            sender: address(uint160(bytes20(payload[20:40]))),
+            tokenIds: tokenIds,
+            values: values
+        });
     }
 }

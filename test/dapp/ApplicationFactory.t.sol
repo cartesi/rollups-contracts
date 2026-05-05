@@ -283,6 +283,18 @@ contract ApplicationFactoryTest is RollupsTest, VersionGetterTestUtils {
             appContract.wasOutputExecuted(vm.randomUint()),
             "initially, wasOutputExecuted(...) = false"
         );
+        assertEq(
+            address(appContract.getRefundOutputBuilder()),
+            address(_contracts.core.refundOutputBuilder),
+            "getRefundOutputBuilder() != RefundOutputBuilder"
+        );
+        assertEq(
+            appContract.getNumberOfIssuedRefunds(), 0, "getNumberOfIssuedRefunds() != 0"
+        );
+        assertFalse(
+            appContract.wasRefundForInputIssued(vm.randomUint()),
+            "initially, wasRefundForInputIssued(...) = false"
+        );
         assertEq(appContract.getNumberOfWithdrawals(), 0, "getNumberOfWithdrawals() != 0");
         assertFalse(
             appContract.wereAccountFundsWithdrawn(vm.randomUint()),

@@ -85,6 +85,15 @@ abstract contract AbstractConsensus is
         return _lastFinalizedMachineMerkleRoots[appContract];
     }
 
+    function wasInputFinalized(address appContract, uint256, uint256 blockNumber)
+        public
+        view
+        override
+        returns (bool)
+    {
+        return blockNumber < _firstUnprocessedBlockNumbers[appContract];
+    }
+
     /// @inheritdoc IConsensus
     function getEpochLength() public view override returns (uint256) {
         return EPOCH_LENGTH;
