@@ -23,4 +23,24 @@ contract TestMultiToken is ERC1155 {
         bytes memory data;
         _mintBatch(msg.sender, tokenIds, values, data);
     }
+
+    /// @notice Mint multi-tokens.
+    /// @param to The account that will receive the tokens
+    /// @param tokenId The multi-token ID
+    /// @param value The amount of fungible tokens to mint
+    function mint(address to, uint256 tokenId, uint256 value) external {
+        bytes memory data;
+        _mint(to, tokenId, value, data);
+    }
+
+    /// @notice Mint a batch of multi-tokens.
+    /// @param to The account that will receive the tokens
+    /// @param tokenIds The multi-token IDs
+    /// @param values The amounts of fungible tokens to mint
+    function mintBatch(address to, uint256[] calldata tokenIds, uint256[] calldata values)
+        external
+    {
+        bytes memory data;
+        _mintBatch(to, tokenIds, values, data);
+    }
 }

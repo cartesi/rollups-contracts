@@ -15,6 +15,7 @@ import {IAuthority} from "src/consensus/authority/IAuthority.sol";
 import {IApplication} from "src/dapp/IApplication.sol";
 import {ISafeERC20Transfer} from "src/delegatecall/ISafeERC20Transfer.sol";
 import {LibUsdAccount} from "src/library/LibUsdAccount.sol";
+import {IRefundOutputBuilderErrors} from "src/refund/IRefundOutputBuilderErrors.sol";
 import {IWithdrawalOutputBuilder} from "src/withdrawal/IWithdrawalOutputBuilder.sol";
 import {IWithdrawalOutputBuilderErrors} from "src/withdrawal/IWithdrawalOutputBuilderErrors.sol";
 
@@ -34,10 +35,13 @@ import {ExternalLibUsdAccount} from "../library/LibUsdAccount.t.sol";
 import {AddressGenerator} from "../util/AddressGenerator.sol";
 import {ConsensusTestUtils} from "../util/ConsensusTestUtils.sol";
 import {EtherReceiver, IEtherReceiver} from "../util/EtherReceiver.sol";
+import {InputBoxTestUtils} from "../util/InputBoxTestUtils.sol";
+import {LibAddressArray} from "../util/LibAddressArray.sol";
 import {LibBytes} from "../util/LibBytes.sol";
 import {LibBytes32Array} from "../util/LibBytes32Array.sol";
 import {LibEmulator} from "../util/LibEmulator.sol";
 import {LibTopic} from "../util/LibTopic.sol";
+import {LibUint256Array} from "../util/LibUint256Array.sol";
 import {OwnableTest} from "../util/OwnableTest.sol";
 import {RollupsTest} from "../util/RollupsTest.sol";
 
@@ -45,15 +49,27 @@ contract ApplicationTest is
     RollupsTest,
     OwnableTest,
     AddressGenerator,
+    InputBoxTestUtils,
     ConsensusTestUtils
 {
     using LibBytes for bytes;
     using LibTopic for address;
     using SafeCast for uint256;
+    using LibUint256Array for Vm;
+    using LibUint256Array for uint256[];
     using LibBytes32Array for bytes32[];
+    using LibAddressArray for address;
     using LibEmulator for LibEmulator.State;
     using LibEmulator for LibEmulator.ProofComponents;
     using ExternalLibBinaryMerkleTree for bytes32[];
+
+    enum DepositType {
+        ETHER,
+        ERC20,
+        ERC721,
+        ERC1155_SINGLE,
+        ERC1155_BATCH
+    }
 
     IApplication _appContract;
     IEtherReceiver _etherReceiver;
@@ -71,7 +87,6 @@ contract ApplicationTest is
     address _appOwner;
     address _authorityOwner;
     address _recipient;
-    address _tokenOwner;
     bytes _dataAvailability;
     string[] _outputNames;
     string[] _accountNames;
@@ -93,7 +108,6 @@ contract ApplicationTest is
         _initVariables();
         _computeTemplateHash();
         _deployContracts();
-        _mintTokens();
         _addOutputs();
         _addAccounts();
         _submitClaim();
@@ -628,10 +642,8 @@ contract ApplicationTest is
         (, uint256 amount) = ExternalLibUsdAccount.decode(account);
         AccountValidityProof memory proof = _getAccountValidityProof(name);
 
-        uint256 balance = vm.randomUint(amount, _erc20Token.balanceOf(_tokenOwner));
-
-        vm.prank(_tokenOwner);
-        assertTrue(_erc20Token.transfer(address(_appContract), balance));
+        uint256 balance = vm.randomUint(amount, type(uint256).max);
+        _contracts.dev.testFungibleToken.mint(address(_appContract), balance);
 
         vm.expectRevert(IApplication.NotForeclosed.selector);
 
@@ -646,9 +658,7 @@ contract ApplicationTest is
         AccountValidityProof memory proof = _getAccountValidityProof(name);
 
         uint256 balance = vm.randomUint(0, amount - 1);
-
-        vm.prank(_tokenOwner);
-        assertTrue(_erc20Token.transfer(address(_appContract), balance));
+        _contracts.dev.testFungibleToken.mint(address(_appContract), balance);
 
         vm.prank(_appContract.getGuardian());
         _appContract.foreclose();
@@ -666,10 +676,8 @@ contract ApplicationTest is
         (address user, uint256 amount) = ExternalLibUsdAccount.decode(account);
         AccountValidityProof memory proof = _getAccountValidityProof(name);
 
-        uint256 balance = vm.randomUint(amount, _erc20Token.balanceOf(_tokenOwner));
-
-        vm.prank(_tokenOwner);
-        assertTrue(_erc20Token.transfer(address(_appContract), balance));
+        uint256 balance = vm.randomUint(amount, type(uint256).max);
+        _contracts.dev.testFungibleToken.mint(address(_appContract), balance);
 
         vm.mockCallRevert(
             address(_erc20Token), abi.encodeCall(IERC20.transfer, (user, amount)), error
@@ -693,10 +701,8 @@ contract ApplicationTest is
         (address user, uint256 amount) = ExternalLibUsdAccount.decode(account);
         AccountValidityProof memory proof = _getAccountValidityProof(name);
 
-        uint256 balance = vm.randomUint(amount, _erc20Token.balanceOf(_tokenOwner));
-
-        vm.prank(_tokenOwner);
-        assertTrue(_erc20Token.transfer(address(_appContract), balance));
+        uint256 balance = vm.randomUint(amount, type(uint256).max);
+        _contracts.dev.testFungibleToken.mint(address(_appContract), balance);
 
         vm.mockCall(
             address(_erc20Token),
@@ -738,9 +744,7 @@ contract ApplicationTest is
         AccountValidityProof memory proof = _getAccountValidityProof(name);
 
         // Give the app a random ERC-20 token balance
-        uint256 appBalance = vm.randomUint(0, _erc20Token.balanceOf(_tokenOwner));
-        vm.prank(_tokenOwner);
-        assertTrue(_erc20Token.transfer(address(_appContract), appBalance));
+        _contracts.dev.testFungibleToken.mint(address(_appContract), vm.randomUint());
 
         vm.prank(_appContract.getGuardian());
         _appContract.foreclose();
@@ -767,13 +771,11 @@ contract ApplicationTest is
         (address user, uint256 amount) = ExternalLibUsdAccount.decode(account);
         AccountValidityProof memory proof = _getAccountValidityProof(name);
 
-        uint256 appBalance = vm.randomUint(amount, _erc20Token.balanceOf(_tokenOwner));
-        vm.prank(_tokenOwner);
-        assertTrue(_erc20Token.transfer(address(_appContract), appBalance));
+        uint256 appBalance = vm.randomUint(amount, type(uint256).max);
+        _contracts.dev.testFungibleToken.mint(address(_appContract), appBalance);
 
-        uint256 userBalance = vm.randomUint(0, _erc20Token.balanceOf(_tokenOwner));
-        vm.prank(_tokenOwner);
-        assertTrue(_erc20Token.transfer(user, userBalance));
+        uint256 userBalance = vm.randomUint(0, type(uint256).max - appBalance);
+        _contracts.dev.testFungibleToken.mint(user, userBalance);
 
         uint256 numOfWithdrawalsBefore = _appContract.getNumberOfWithdrawals();
 
@@ -800,6 +802,7 @@ contract ApplicationTest is
 
         uint256 numOfWithdrawalEventsInTx;
         uint256 numOfTransferEventsInTx;
+        bytes memory withdrawalOutput;
 
         for (uint256 i; i < logs.length; ++i) {
             Vm.Log memory log = logs[i];
@@ -815,21 +818,7 @@ contract ApplicationTest is
                     assertEq(arg1, proof.accountIndex);
                     assertEq(arg2, account);
 
-                    // decode output
-                    (bytes4 funcsel1, bytes memory callargs1) = arg3.consumeBytes4();
-                    assertEq(funcsel1, Outputs.DelegateCallVoucher.selector);
-                    (address destination, bytes memory payload) =
-                        abi.decode(callargs1, (address, bytes));
-                    assertEq(destination, address(_safeErc20Transfer));
-
-                    // decode delegatecall payload
-                    (bytes4 funcsel2, bytes memory callargs2) = payload.consumeBytes4();
-                    assertEq(funcsel2, ISafeERC20Transfer.safeTransfer.selector);
-                    (address token, address to, uint256 value) =
-                        abi.decode(callargs2, (address, address, uint256));
-                    assertEq(token, address(_erc20Token));
-                    assertEq(to, user);
-                    assertEq(value, amount);
+                    withdrawalOutput = arg3;
                 } else {
                     revert("unexpected event from app contract");
                 }
@@ -852,6 +841,25 @@ contract ApplicationTest is
 
         assertEq(numOfWithdrawalEventsInTx, 1);
         assertEq(numOfTransferEventsInTx, 1);
+
+        {
+            // decode output
+            (bytes4 funcsel1, bytes memory callargs1) = withdrawalOutput.consumeBytes4();
+            assertEq(funcsel1, Outputs.DelegateCallVoucher.selector);
+            (address destination, bytes memory payload) =
+                abi.decode(callargs1, (address, bytes));
+            assertEq(destination, address(_safeErc20Transfer));
+
+            // decode delegatecall payload
+            (bytes4 funcsel2, bytes memory callargs2) = payload.consumeBytes4();
+            assertEq(funcsel2, ISafeERC20Transfer.safeTransfer.selector);
+            (address token, address to, uint256 value) =
+                abi.decode(callargs2, (address, address, uint256));
+            assertEq(token, address(_erc20Token));
+            assertEq(to, user);
+            assertEq(value, amount);
+        }
+
         assertEq(_appContract.getNumberOfWithdrawals(), numOfWithdrawalsBefore + 1);
         assertTrue(_appContract.wereAccountFundsWithdrawn(proof.accountIndex));
         assertEq(_erc20Token.balanceOf(address(_appContract)), appBalance - amount);
@@ -883,6 +891,692 @@ contract ApplicationTest is
         vm.stopPrank();
     }
 
+    // ------------------------------------
+    // input validation and deposit refunds
+    // ------------------------------------
+
+    function testValidateInputAndAttemptRefund(
+        bytes[] calldata payloads,
+        bytes calldata randomBytes
+    ) external {
+        // 0. Randomize chain ID
+        vm.chainId(vm.randomUint(64));
+
+        bytes[] memory inputs = new bytes[](payloads.length);
+        uint256[] memory blockNumbers = new uint256[](payloads.length);
+        address[] memory inputSenders = new address[](payloads.length);
+
+        // 1. Send all inputs to the application's input box from random EOA senders,
+        // at random (but cronologically consistent) block numbers and timestamps,
+        // and with random block prevrandao values.
+        for (uint256 i; i < payloads.length; ++i) {
+            bytes memory payload = payloads[i];
+            address appContract = address(_appContract);
+            uint256 blockNumber = vm.randomUint(vm.getBlockNumber(), type(uint256).max);
+            blockNumbers[i] = blockNumber;
+            vm.roll(blockNumber);
+            vm.warp(vm.randomUint(vm.getBlockTimestamp(), type(uint256).max));
+            vm.prevrandao(vm.randomUint());
+            address inputSender = vm.addr(boundPrivateKey(vm.randomUint()));
+            vm.assume(inputSender.code.length == 0);
+            inputSenders[i] = inputSender;
+            vm.recordLogs();
+            vm.prank(inputSender);
+            bytes32 inputHash = _contracts.core.inputBox.addInput(appContract, payload);
+            Vm.Log[] memory logs = vm.getRecordedLogs();
+            uint256 numOfInputAdded;
+            for (uint256 j; j < logs.length; ++j) {
+                Vm.Log memory log = logs[j];
+                if (log.emitter == address(_contracts.core.inputBox)) {
+                    (bytes memory decodedInput, bytes memory decodedPayload) =
+                        _decodeInputAdded(log, appContract, inputSender, i);
+                    assertEq(decodedPayload, payload);
+                    assertEq(keccak256(decodedInput), inputHash);
+                    inputs[i] = decodedInput;
+                    ++numOfInputAdded;
+                } else {
+                    revert("unexpected log emitter");
+                }
+            }
+            assertEq(numOfInputAdded, 1);
+            assertEq(_contracts.core.inputBox.getInputHash(appContract, i), inputHash);
+            assertEq(_contracts.core.inputBox.getNumberOfInputs(appContract), i + 1);
+        }
+
+        // 2. Validate each input that was sent
+        for (uint256 i; i < inputs.length; ++i) {
+            _appContract.validateInputHash(i, keccak256(inputs[i]));
+
+            (uint256 blockNumber, address inputSender, bytes memory inputPayload) =
+                _appContract.validateInput(i, inputs[i]);
+
+            assertEq(blockNumber, blockNumbers[i]);
+            assertEq(inputSender, inputSenders[i]);
+            assertEq(inputPayload, payloads[i]);
+        }
+
+        // 3. Attempt to validate an input with an invalid index and random bytes
+        uint256 invalidInputIndex = vm.randomUint(inputs.length, type(uint256).max);
+        vm.expectRevert(_encodeInvalidInputIndex(invalidInputIndex, inputs.length));
+        _appContract.validateInput(invalidInputIndex, randomBytes);
+        vm.expectRevert(_encodeInvalidInputIndex(invalidInputIndex, inputs.length));
+        _appContract.validateInputHash(invalidInputIndex, bytes32(vm.randomUint()));
+
+        // 4. Attempt to validate an input with a different hash (if an input was sent)
+        if (inputs.length >= 1) {
+            uint256 inputIndex = vm.randomUint(0, inputs.length - 1);
+            bytes32 inputHash = keccak256(inputs[inputIndex]);
+            bytes memory invalidInput;
+            bytes32 invalidInputHash;
+            while (true) {
+                invalidInput = vm.randomBytes(vm.randomUint(0, (1 << 10)));
+                invalidInputHash = keccak256(invalidInput);
+                if (inputHash != invalidInputHash) {
+                    break; // Found input with different hash
+                }
+            }
+            vm.expectRevert(_encodeInvalidInputHash(inputHash, invalidInputHash));
+            _appContract.validateInput(inputIndex, invalidInput);
+            vm.expectRevert(_encodeInvalidInputHash(inputHash, invalidInputHash));
+            _appContract.validateInputHash(inputIndex, invalidInputHash);
+        }
+
+        // 5. Make guardian foreclose the application
+        vm.prank(_appContract.getGuardian());
+        _appContract.foreclose();
+
+        // 6. Attempt to issue refunds for non-deposit inputs
+        for (uint256 i; i < inputs.length; ++i) {
+            vm.expectRevert(
+                abi.encodeWithSelector(
+                    IRefundOutputBuilderErrors.UnknownInputSender.selector,
+                    inputSenders[i]
+                )
+            );
+            vm.prank(vm.randomAddress());
+            _appContract.issueRefund(i, inputs[i]);
+        }
+    }
+
+    function testIssueRefund(
+        bytes[] calldata payloads,
+        uint256 tokenId,
+        uint256 value,
+        uint256[] calldata values,
+        bytes calldata baseLayerData,
+        bytes calldata execLayerData
+    ) external {
+        // Assume the depositor is an EOA (to avoid transfer failures)
+        address depositor = vm.addr(boundPrivateKey(vm.randomUint()));
+        vm.assume(depositor.code.length == 0);
+
+        bytes memory input;
+        bytes memory payload;
+        address appContract = address(_appContract);
+        uint256 balance = vm.randomUint(value, type(uint256).max);
+        uint256 blockNumber = vm.randomUint(vm.getBlockNumber(), type(uint256).max);
+
+        // 0. Randomize environment
+        vm.chainId(vm.randomUint(64));
+
+        // 1. Add some prior inputs
+        _addInputs(_contracts.core.inputBox, appContract, payloads);
+        uint256 inputIndex = _contracts.core.inputBox.getNumberOfInputs(appContract);
+
+        // 2. Randomize deposit environment
+        vm.roll(blockNumber);
+        vm.warp(vm.randomUint(vm.getBlockTimestamp(), type(uint256).max));
+        vm.prevrandao(vm.randomUint());
+
+        DepositType depositType =
+            DepositType(vm.randomUint(0, uint256(type(DepositType).max)));
+
+        // 3. Deposit funds
+        address portalAddress;
+        uint256[] memory tokenIds;
+        uint256[] memory balances;
+        if (depositType == DepositType.ETHER) {
+            portalAddress = address(_contracts.core.etherPortal);
+            vm.deal(depositor, balance);
+            vm.recordLogs();
+            vm.prank(depositor);
+            _contracts.core.etherPortal.depositEther{value: value}(
+                appContract, execLayerData
+            );
+        } else if (depositType == DepositType.ERC20) {
+            portalAddress = address(_contracts.core.erc20Portal);
+            vm.startPrank(depositor);
+            _contracts.dev.testFungibleToken.mint(balance);
+            _contracts.dev.testFungibleToken
+                .approve(portalAddress, vm.randomUint(value, balance));
+            vm.recordLogs();
+            _contracts.core.erc20Portal
+                .depositERC20Tokens(
+                    _contracts.dev.testFungibleToken, appContract, value, execLayerData
+                );
+            vm.stopPrank();
+        } else if (depositType == DepositType.ERC721) {
+            portalAddress = address(_contracts.core.erc721Portal);
+            vm.startPrank(depositor);
+            _contracts.dev.testNonFungibleToken.mint(tokenId);
+            _contracts.dev.testNonFungibleToken.approve(portalAddress, tokenId);
+            vm.recordLogs();
+            _contracts.core.erc721Portal
+                .depositERC721Token(
+                    _contracts.dev.testNonFungibleToken,
+                    appContract,
+                    tokenId,
+                    baseLayerData,
+                    execLayerData
+                );
+            vm.stopPrank();
+        } else if (depositType == DepositType.ERC1155_SINGLE) {
+            portalAddress = address(_contracts.core.erc1155SinglePortal);
+            vm.startPrank(depositor);
+            _contracts.dev.testMultiToken.mint(tokenId, balance);
+            _contracts.dev.testMultiToken.setApprovalForAll(portalAddress, true);
+            vm.recordLogs();
+            _contracts.core.erc1155SinglePortal
+                .depositSingleERC1155Token(
+                    _contracts.dev.testMultiToken,
+                    appContract,
+                    tokenId,
+                    value,
+                    baseLayerData,
+                    execLayerData
+                );
+            vm.stopPrank();
+        } else if (depositType == DepositType.ERC1155_BATCH) {
+            portalAddress = address(_contracts.core.erc1155BatchPortal);
+            tokenIds = vm.randomUniqueUint256Array(values.length);
+            balances = vm.randomUintGe(values);
+            vm.startPrank(depositor);
+            _contracts.dev.testMultiToken.mintBatch(tokenIds, balances);
+            _contracts.dev.testMultiToken.setApprovalForAll(portalAddress, true);
+            vm.recordLogs();
+            _contracts.core.erc1155BatchPortal
+                .depositBatchERC1155Token(
+                    _contracts.dev.testMultiToken,
+                    appContract,
+                    tokenIds,
+                    values,
+                    baseLayerData,
+                    execLayerData
+                );
+            vm.stopPrank();
+        } else {
+            revert("unexpected deposit type");
+        }
+
+        // 3.1. Parse deposit tx logs
+        {
+            Vm.Log[] memory logs = vm.getRecordedLogs();
+
+            uint256 numOfInputAdded;
+            uint256 numOfErc20Transfers;
+            uint256 numOfErc721Transfers;
+            uint256 numOfErc1155SingleTransfers;
+            uint256 numOfErc1155BatchTransfers;
+
+            for (uint256 i; i < logs.length; ++i) {
+                Vm.Log memory log = logs[i];
+                if (log.emitter == address(_contracts.core.inputBox)) {
+                    (input, payload) =
+                        _decodeInputAdded(log, appContract, portalAddress, inputIndex);
+                    ++numOfInputAdded;
+                } else if (log.emitter == address(_contracts.dev.testFungibleToken)) {
+                    assertGe(log.topics.length, 1);
+                    if (log.topics[0] == IERC20.Transfer.selector) {
+                        assertEq(log.topics[1], depositor.asTopic());
+                        assertEq(log.topics[2], address(_appContract).asTopic());
+                        assertEq(abi.decode(log.data, (uint256)), value);
+                        ++numOfErc20Transfers;
+                    } else {
+                        revert("unexpected event from ERC-20 token contract");
+                    }
+                } else if (log.emitter == address(_contracts.dev.testNonFungibleToken)) {
+                    assertGe(log.topics.length, 1);
+                    if (log.topics[0] == IERC721.Transfer.selector) {
+                        assertEq(log.topics[1], depositor.asTopic());
+                        assertEq(log.topics[2], address(_appContract).asTopic());
+                        assertEq(log.topics[3], bytes32(tokenId));
+                        ++numOfErc721Transfers;
+                    } else {
+                        revert("unexpected event from ERC-721 token contract");
+                    }
+                } else if (log.emitter == address(_contracts.dev.testMultiToken)) {
+                    assertGe(log.topics.length, 1);
+                    if (log.topics[0] == IERC1155.TransferSingle.selector) {
+                        assertEq(log.topics[2], depositor.asTopic());
+                        assertEq(log.topics[3], address(_appContract).asTopic());
+
+                        (uint256 arg1, uint256 arg2) =
+                            abi.decode(log.data, (uint256, uint256));
+
+                        if (depositType == DepositType.ERC1155_SINGLE) {
+                            assertEq(
+                                log.topics[1],
+                                address(_contracts.core.erc1155SinglePortal).asTopic()
+                            );
+                            assertEq(arg1, tokenId);
+                            assertEq(arg2, value);
+                        } else if (depositType == DepositType.ERC1155_BATCH) {
+                            assertEq(
+                                log.topics[1],
+                                address(_contracts.core.erc1155BatchPortal).asTopic()
+                            );
+                            assertEq(tokenIds.length, 1);
+                            assertEq(arg1, tokenIds[0]);
+                            assertEq(arg2, values[0]);
+                        } else {
+                            revert("unexpected deposit type");
+                        }
+
+                        ++numOfErc1155SingleTransfers;
+                    } else if (log.topics[0] == IERC1155.TransferBatch.selector) {
+                        assertEq(
+                            log.topics[1],
+                            address(_contracts.core.erc1155BatchPortal).asTopic()
+                        );
+                        assertEq(log.topics[2], depositor.asTopic());
+                        assertEq(log.topics[3], address(_appContract).asTopic());
+
+                        (uint256[] memory arg1, uint256[] memory arg2) =
+                            abi.decode(log.data, (uint256[], uint256[]));
+
+                        assertEq(arg1, tokenIds);
+                        assertEq(arg2, values);
+
+                        ++numOfErc1155BatchTransfers;
+                    } else {
+                        revert("unexpected event from ERC-1155 token contract");
+                    }
+                } else {
+                    revert("unexpected log emitter");
+                }
+            }
+
+            assertEq(numOfInputAdded, 1);
+            assertEq(numOfErc20Transfers, (depositType == DepositType.ERC20) ? 1 : 0);
+            assertEq(numOfErc721Transfers, (depositType == DepositType.ERC721) ? 1 : 0);
+            assertEq(
+                numOfErc1155SingleTransfers,
+                ((depositType == DepositType.ERC1155_SINGLE)
+                        || ((depositType == DepositType.ERC1155_BATCH)
+                            && (tokenIds.length == 1)))
+                    ? 1
+                    : 0
+            );
+            assertEq(
+                numOfErc1155BatchTransfers,
+                ((depositType == DepositType.ERC1155_BATCH) && (tokenIds.length != 1))
+                    ? 1
+                    : 0
+            );
+        }
+
+        // 3.2. Check deposit effects
+        if (depositType == DepositType.ETHER) {
+            assertEq(depositor.balance, balance - value);
+        } else if (depositType == DepositType.ERC20) {
+            assertEq(
+                _contracts.dev.testFungibleToken.balanceOf(depositor), balance - value
+            );
+        } else if (depositType == DepositType.ERC721) {
+            assertEq(
+                _contracts.dev.testNonFungibleToken.ownerOf(tokenId),
+                address(_appContract)
+            );
+        } else if (depositType == DepositType.ERC1155_SINGLE) {
+            assertEq(
+                _contracts.dev.testMultiToken.balanceOf(depositor, tokenId),
+                balance - value
+            );
+        } else if (depositType == DepositType.ERC1155_BATCH) {
+            assertEq(
+                _contracts.dev.testMultiToken
+                    .balanceOfBatch(depositor.repeat(tokenIds.length), tokenIds),
+                balances.sub(values)
+            );
+        } else {
+            revert("unexpected deposit type");
+        }
+
+        // 4. Randomize validation environment
+        vm.roll(vm.randomUint(vm.getBlockNumber(), type(uint256).max));
+        vm.warp(vm.randomUint(vm.getBlockTimestamp(), type(uint256).max));
+
+        // 5. Validate deposit input on input box
+        vm.prank(vm.randomAddress());
+        assertEq(_contracts.core.inputBox.getNumberOfInputs(appContract), 1 + inputIndex);
+        vm.prank(vm.randomAddress());
+        assertEq(
+            _contracts.core.inputBox.getInputHash(appContract, inputIndex),
+            keccak256(input)
+        );
+
+        // 6. Validate deposit input hash on application
+        vm.prank(vm.randomAddress());
+        _appContract.validateInputHash(inputIndex, keccak256(input));
+
+        // 7. Validate deposit input on application
+        {
+            uint256 decodedBlockNumber;
+            address decodedInputSender;
+            bytes memory decodedInputPayload;
+
+            vm.prank(vm.randomAddress());
+            (decodedBlockNumber, decodedInputSender, decodedInputPayload) =
+                _appContract.validateInput(inputIndex, input);
+
+            assertEq(decodedBlockNumber, blockNumber);
+            assertEq(decodedInputSender, portalAddress);
+            assertEq(decodedInputPayload, payload);
+        }
+
+        // 8. Try issuing refund before foreclosure
+        vm.expectRevert(IApplication.NotForeclosed.selector);
+        vm.prank(vm.randomAddress());
+        _appContract.issueRefund(inputIndex, input);
+
+        // 8.1 Try issuing refund of finalized input after foreclosure
+        vm.expectRevert(_encodeCannotRefundFinalizedInput(inputIndex));
+        this.simulateClaimSubmissionAcceptanceForeclosureAndRefund(inputIndex, input);
+
+        // 9. Make guardian foreclose the application
+        vm.prank(_appContract.getGuardian());
+        _appContract.foreclose();
+
+        // 10. Issue refund for deposit
+        vm.prank(vm.randomAddress());
+        vm.recordLogs();
+        _appContract.issueRefund(inputIndex, input);
+
+        {
+            Vm.Log[] memory logs = vm.getRecordedLogs();
+
+            uint256 numOfRefundsIssued;
+            bytes4 refundOutputSelector;
+            bytes memory refundOutputArgs;
+
+            uint256 numOfErc20Transfers;
+            uint256 numOfErc721Transfers;
+            uint256 numOfErc1155SingleTransfers;
+            uint256 numOfErc1155BatchTransfers;
+
+            for (uint256 i; i < logs.length; ++i) {
+                Vm.Log memory log = logs[i];
+                if (log.emitter == address(_appContract)) {
+                    assertEq(log.topics[0], IApplication.RefundIssued.selector);
+                    ++numOfRefundsIssued;
+
+                    (uint256 arg1, bytes memory arg2, bytes memory arg3) =
+                        abi.decode(log.data, (uint256, bytes, bytes));
+
+                    assertEq(arg1, inputIndex);
+                    assertEq(arg2, input);
+
+                    (refundOutputSelector, refundOutputArgs) = arg3.consumeBytes4();
+                } else if (log.emitter == address(_contracts.dev.testFungibleToken)) {
+                    assertGe(log.topics.length, 1);
+                    if (log.topics[0] == IERC20.Transfer.selector) {
+                        assertEq(log.topics[1], address(_appContract).asTopic());
+                        assertEq(log.topics[2], depositor.asTopic());
+                        assertEq(abi.decode(log.data, (uint256)), value);
+                        ++numOfErc20Transfers;
+                    } else {
+                        revert("unexpected event from ERC-20 token contract");
+                    }
+                } else if (log.emitter == address(_contracts.dev.testNonFungibleToken)) {
+                    assertGe(log.topics.length, 1);
+                    if (log.topics[0] == IERC721.Transfer.selector) {
+                        assertEq(log.topics[1], address(_appContract).asTopic());
+                        assertEq(log.topics[2], depositor.asTopic());
+                        assertEq(log.topics[3], bytes32(tokenId));
+                        ++numOfErc721Transfers;
+                    } else {
+                        revert("unexpected event from ERC-721 token contract");
+                    }
+                } else if (log.emitter == address(_contracts.dev.testMultiToken)) {
+                    assertGe(log.topics.length, 1);
+                    if (log.topics[0] == IERC1155.TransferSingle.selector) {
+                        assertEq(log.topics[1], address(_appContract).asTopic());
+                        assertEq(log.topics[2], address(_appContract).asTopic());
+                        assertEq(log.topics[3], depositor.asTopic());
+
+                        (uint256 arg1, uint256 arg2) =
+                            abi.decode(log.data, (uint256, uint256));
+
+                        if (depositType == DepositType.ERC1155_SINGLE) {
+                            assertEq(arg1, tokenId);
+                            assertEq(arg2, value);
+                        } else if (depositType == DepositType.ERC1155_BATCH) {
+                            assertEq(tokenIds.length, 1);
+                            assertEq(arg1, tokenIds[0]);
+                            assertEq(arg2, values[0]);
+                        } else {
+                            revert("unexpected deposit type");
+                        }
+
+                        ++numOfErc1155SingleTransfers;
+                    } else if (log.topics[0] == IERC1155.TransferBatch.selector) {
+                        assertEq(log.topics[1], address(_appContract).asTopic());
+                        assertEq(log.topics[2], address(_appContract).asTopic());
+                        assertEq(log.topics[3], depositor.asTopic());
+
+                        (uint256[] memory arg1, uint256[] memory arg2) =
+                            abi.decode(log.data, (uint256[], uint256[]));
+
+                        assertEq(arg1, tokenIds);
+                        assertEq(arg2, values);
+
+                        ++numOfErc1155BatchTransfers;
+                    } else {
+                        revert("unexpected event from ERC-1155 token contract");
+                    }
+                } else {
+                    revert("unexpected log emitter");
+                }
+            }
+
+            assertEq(numOfRefundsIssued, 1);
+            assertEq(numOfErc20Transfers, (depositType == DepositType.ERC20) ? 1 : 0);
+            assertEq(numOfErc721Transfers, (depositType == DepositType.ERC721) ? 1 : 0);
+            assertEq(
+                numOfErc1155SingleTransfers,
+                ((depositType == DepositType.ERC1155_SINGLE)
+                        || ((depositType == DepositType.ERC1155_BATCH)
+                            && (tokenIds.length == 1)))
+                    ? 1
+                    : 0
+            );
+            assertEq(
+                numOfErc1155BatchTransfers,
+                ((depositType == DepositType.ERC1155_BATCH) && (tokenIds.length != 1))
+                    ? 1
+                    : 0
+            );
+
+            if (depositType == DepositType.ETHER) {
+                assertEq(refundOutputSelector, Outputs.Voucher.selector);
+
+                address voucherDestination;
+                uint256 voucherValue;
+                bytes memory voucherPayload;
+
+                (voucherDestination, voucherValue, voucherPayload) =
+                    abi.decode(refundOutputArgs, (address, uint256, bytes));
+
+                assertEq(voucherDestination, depositor);
+                assertEq(voucherValue, value);
+                assertEq(voucherPayload, new bytes(0));
+
+                assertEq(depositor.balance, balance);
+            } else if (depositType == DepositType.ERC20) {
+                assertEq(refundOutputSelector, Outputs.DelegateCallVoucher.selector);
+
+                address voucherDestination;
+                bytes memory voucherPayload;
+
+                (voucherDestination, voucherPayload) =
+                    abi.decode(refundOutputArgs, (address, bytes));
+
+                assertEq(voucherDestination, address(_safeErc20Transfer));
+
+                bytes4 selector;
+                bytes memory arguments;
+
+                (selector, arguments) = voucherPayload.consumeBytes4();
+                assertEq(selector, ISafeERC20Transfer.safeTransfer.selector);
+
+                (address refundToken, address refundRecipient, uint256 refundAmount) =
+                    abi.decode(arguments, (address, address, uint256));
+
+                assertEq(refundToken, address(_contracts.dev.testFungibleToken));
+                assertEq(refundRecipient, depositor);
+                assertEq(refundAmount, value);
+
+                assertEq(_contracts.dev.testFungibleToken.balanceOf(depositor), balance);
+            } else if (depositType == DepositType.ERC721) {
+                assertEq(refundOutputSelector, Outputs.Voucher.selector);
+
+                address voucherDestination;
+                uint256 voucherValue;
+                bytes memory voucherPayload;
+
+                (voucherDestination, voucherValue, voucherPayload) =
+                    abi.decode(refundOutputArgs, (address, uint256, bytes));
+
+                assertEq(voucherDestination, address(_contracts.dev.testNonFungibleToken));
+                assertEq(voucherValue, 0);
+
+                bytes4 selector;
+                bytes memory arguments;
+
+                (selector, arguments) = voucherPayload.consumeBytes4();
+                assertEq(
+                    selector,
+                    bytes4(keccak256("safeTransferFrom(address,address,uint256)"))
+                );
+
+                address refundFrom;
+                address refundTo;
+                uint256 refundTokenId;
+
+                (refundFrom, refundTo, refundTokenId) =
+                    abi.decode(arguments, (address, address, uint256));
+
+                assertEq(refundFrom, address(_appContract));
+                assertEq(refundTo, depositor);
+                assertEq(refundTokenId, tokenId);
+
+                assertEq(_contracts.dev.testNonFungibleToken.ownerOf(tokenId), depositor);
+            } else if (depositType == DepositType.ERC1155_SINGLE) {
+                assertEq(refundOutputSelector, Outputs.Voucher.selector);
+
+                address voucherDestination;
+                uint256 voucherValue;
+                bytes memory voucherPayload;
+
+                (voucherDestination, voucherValue, voucherPayload) =
+                    abi.decode(refundOutputArgs, (address, uint256, bytes));
+
+                assertEq(voucherDestination, address(_contracts.dev.testMultiToken));
+                assertEq(voucherValue, 0);
+
+                bytes4 selector;
+                bytes memory arguments;
+
+                (selector, arguments) = voucherPayload.consumeBytes4();
+                assertEq(selector, IERC1155.safeTransferFrom.selector);
+
+                address refundFrom;
+                address refundTo;
+                uint256 refundTokenId;
+                uint256 refundValue;
+
+                (refundFrom, refundTo, refundTokenId, refundValue,) =
+                    abi.decode(arguments, (address, address, uint256, uint256, bytes));
+
+                assertEq(refundFrom, address(_appContract));
+                assertEq(refundTo, depositor);
+                assertEq(refundTokenId, tokenId);
+                assertEq(refundValue, value);
+
+                assertEq(
+                    _contracts.dev.testMultiToken.balanceOf(depositor, tokenId), balance
+                );
+            } else if (depositType == DepositType.ERC1155_BATCH) {
+                assertEq(refundOutputSelector, Outputs.Voucher.selector);
+
+                address voucherDestination;
+                uint256 voucherValue;
+                bytes memory voucherPayload;
+
+                (voucherDestination, voucherValue, voucherPayload) =
+                    abi.decode(refundOutputArgs, (address, uint256, bytes));
+
+                assertEq(voucherDestination, address(_contracts.dev.testMultiToken));
+                assertEq(voucherValue, 0);
+
+                bytes4 selector;
+                bytes memory arguments;
+
+                (selector, arguments) = voucherPayload.consumeBytes4();
+                assertEq(selector, IERC1155.safeBatchTransferFrom.selector);
+
+                address refundFrom;
+                address refundTo;
+                uint256[] memory refundTokenIds;
+                uint256[] memory refundValues;
+
+                (refundFrom, refundTo, refundTokenIds, refundValues,) = abi.decode(
+                    arguments, (address, address, uint256[], uint256[], bytes)
+                );
+
+                assertEq(refundFrom, address(_appContract));
+                assertEq(refundTo, depositor);
+                assertEq(refundTokenIds, tokenIds);
+                assertEq(refundValues, values);
+
+                assertEq(
+                    _contracts.dev.testMultiToken
+                        .balanceOfBatch(depositor.repeat(tokenIds.length), tokenIds),
+                    balances
+                );
+            } else {
+                revert("unexpected deposit type");
+            }
+        }
+
+        assertEq(_appContract.getNumberOfIssuedRefunds(), 1);
+        assertTrue(_appContract.wasRefundForInputIssued(inputIndex));
+
+        // 11. Re-validate deposit input hash on application
+        vm.prank(vm.randomAddress());
+        _appContract.validateInputHash(inputIndex, keccak256(input));
+
+        // 12. Re-validate deposit input on application
+        {
+            uint256 decodedBlockNumber;
+            address decodedInputSender;
+            bytes memory decodedInputPayload;
+
+            vm.prank(vm.randomAddress());
+            (decodedBlockNumber, decodedInputSender, decodedInputPayload) =
+                _appContract.validateInput(inputIndex, input);
+
+            assertEq(decodedBlockNumber, blockNumber);
+            assertEq(decodedInputSender, portalAddress);
+            assertEq(decodedInputPayload, payload);
+        }
+
+        // 13. Try re-issuing refund for the same deposit
+        vm.prank(vm.randomAddress());
+        vm.expectRevert(_encodeRefundAlreadyIssued(inputIndex));
+        _appContract.issueRefund(inputIndex, input);
+    }
+
     // ------------------
     // internal functions
     // ------------------
@@ -891,7 +1585,6 @@ contract ApplicationTest is
         _authorityOwner = _nextAddress();
         _appOwner = _nextAddress();
         _recipient = _nextAddress();
-        _tokenOwner = _nextAddress();
         _withdrawalConfig = WithdrawalConfig({
             guardian: _nextAddress(),
             log2LeavesPerAccount: LibEmulator.LOG2_LEAVES_PER_ACCOUNT,
@@ -932,15 +1625,6 @@ contract ApplicationTest is
                     _withdrawalConfig,
                     SALT
                 );
-    }
-
-    function _mintTokens() internal {
-        vm.startPrank(_tokenOwner);
-        _contracts.dev.testFungibleToken.mint(INITIAL_SUPPLY);
-        _contracts.dev.testNonFungibleToken.mint(TOKEN_ID);
-        _contracts.dev.testMultiToken.mint(TOKEN_ID, INITIAL_SUPPLY);
-        _contracts.dev.testMultiToken.mintBatch(_tokenIds, _initialSupplies);
-        vm.stopPrank();
     }
 
     function _addOutputs() internal {
@@ -1194,6 +1878,37 @@ contract ApplicationTest is
         revert("Successful proof");
     }
 
+    /// @notice This function is used to simulate a claim acceptance, a foreclosure and
+    /// a refund issuance. If the proof succeeds, then the function reverts with
+    /// error message "Successful refund". If the proof fails, then the function propagates
+    /// the error from the app contract.
+    function simulateClaimSubmissionAcceptanceForeclosureAndRefund(
+        uint256 inputIndex,
+        bytes calldata input
+    ) external {
+        assertEq(msg.sender, address(this), "called by external account");
+        uint256 lastProcessedBlockNumber = vm.getBlockNumber();
+        vm.roll(vm.randomUint(lastProcessedBlockNumber + 1, type(uint256).max));
+        vm.prank(_authorityOwner);
+        _authority.submitClaim(
+            address(_appContract),
+            lastProcessedBlockNumber,
+            _proofComponents.outputsMerkleRoot,
+            _proofComponents.getOutputsMerkleRootProof()
+        );
+        vm.prank(vm.randomAddress());
+        _authority.acceptClaim(
+            address(_appContract),
+            lastProcessedBlockNumber,
+            _proofComponents.getMachineMerkleRoot()
+        );
+        vm.prank(_appContract.getGuardian());
+        _appContract.foreclose();
+        vm.prank(vm.randomAddress());
+        _appContract.issueRefund(inputIndex, input);
+        revert("Successful proof");
+    }
+
     function _submitClaim() internal {
         _proofComponents = _emulator.buildProofComponents();
         bytes32 outputsMerkleRoot = _proofComponents.outputsMerkleRoot;
@@ -1286,6 +2001,45 @@ contract ApplicationTest is
         returns (bytes memory)
     {
         return abi.encodeWithSelector(IApplication.OutputNotReexecutable.selector, output);
+    }
+
+    function _encodeInvalidInputIndex(uint256 invalidInputIndex, uint256 numOfInputs)
+        internal
+        pure
+        returns (bytes memory)
+    {
+        return abi.encodeWithSelector(
+            IApplication.InvalidInputIndex.selector, invalidInputIndex, numOfInputs
+        );
+    }
+
+    function _encodeInvalidInputHash(bytes32 storedInputHash, bytes32 invalidInputHash)
+        internal
+        pure
+        returns (bytes memory)
+    {
+        return abi.encodeWithSelector(
+            IApplication.InvalidInputHash.selector, storedInputHash, invalidInputHash
+        );
+    }
+
+    function _encodeRefundAlreadyIssued(uint256 inputIndex)
+        internal
+        pure
+        returns (bytes memory)
+    {
+        return
+            abi.encodeWithSelector(IApplication.RefundAlreadyIssued.selector, inputIndex);
+    }
+
+    function _encodeCannotRefundFinalizedInput(uint256 inputIndex)
+        internal
+        pure
+        returns (bytes memory)
+    {
+        return abi.encodeWithSelector(
+            IApplication.CannotRefundFinalizedInput.selector, inputIndex
+        );
     }
 
     function _expectIncrementInNumberOfExecutedOutputs(uint256 before) internal view {
@@ -1547,24 +2301,16 @@ contract ApplicationTest is
         internal
     {
         uint256 numberOfExecutedOutputsBefore = _appContract.getNumberOfExecutedOutputs();
-        assertEq(
-            _erc721Token.ownerOf(TOKEN_ID),
-            _tokenOwner,
-            "The NFT is initially owned by `_tokenOwner`"
-        );
 
         vm.expectRevert(
             abi.encodeWithSelector(
-                IERC721Errors.ERC721InsufficientApproval.selector,
-                address(_appContract),
-                TOKEN_ID
+                IERC721Errors.ERC721NonexistentToken.selector, TOKEN_ID
             )
         );
         _appContract.executeOutput(output, proof);
         _expectNoChangeInNumberOfExecutedOutputs(numberOfExecutedOutputsBefore);
 
-        vm.prank(_tokenOwner);
-        _erc721Token.safeTransferFrom(_tokenOwner, address(_appContract), TOKEN_ID);
+        _contracts.dev.testNonFungibleToken.mint(address(_appContract), TOKEN_ID);
 
         _expectEmitOutputExecuted(output, proof);
         _appContract.executeOutput(output, proof);
@@ -1619,9 +2365,7 @@ contract ApplicationTest is
         internal
     {
         uint256 numberOfExecutedOutputsBefore = _appContract.getNumberOfExecutedOutputs();
-        vm.prank(_tokenOwner);
-        bool success = _erc20Token.transfer(address(_appContract), TRANSFER_AMOUNT);
-        assertTrue(success, "");
+        _contracts.dev.testFungibleToken.mint(address(_appContract), TRANSFER_AMOUNT);
 
         uint256 recipientBalance = _erc20Token.balanceOf(address(_recipient));
         uint256 appBalance = _erc20Token.balanceOf(address(_appContract));
@@ -1665,10 +2409,8 @@ contract ApplicationTest is
         _appContract.executeOutput(output, proof);
         _expectNoChangeInNumberOfExecutedOutputs(numberOfExecutedOutputsBefore);
 
-        vm.prank(_tokenOwner);
-        _erc1155Token.safeTransferFrom(
-            _tokenOwner, address(_appContract), TOKEN_ID, INITIAL_SUPPLY, ""
-        );
+        _contracts.dev.testMultiToken
+            .mint(address(_appContract), TOKEN_ID, INITIAL_SUPPLY);
 
         uint256 recipientBalance = _erc1155Token.balanceOf(_recipient, TOKEN_ID);
         uint256 appBalance = _erc1155Token.balanceOf(address(_appContract), TOKEN_ID);
@@ -1711,10 +2453,8 @@ contract ApplicationTest is
         _appContract.executeOutput(output, proof);
         _expectNoChangeInNumberOfExecutedOutputs(numberOfExecutedOutputsBefore);
 
-        vm.prank(_tokenOwner);
-        _erc1155Token.safeBatchTransferFrom(
-            _tokenOwner, address(_appContract), _tokenIds, _initialSupplies, ""
-        );
+        _contracts.dev.testMultiToken
+            .mintBatch(address(_appContract), _tokenIds, _initialSupplies);
 
         uint256 batchLength = _initialSupplies.length;
         uint256[] memory appBalances = new uint256[](batchLength);

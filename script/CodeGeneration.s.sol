@@ -96,6 +96,13 @@ contract DeployersCodeGenerationScript is CodeGenerationScript {
         _addImport("src/portals", "ERC20Portal");
         _addImport("src/portals", "ERC721Portal");
         _addImport("src/portals", "EtherPortal");
+        _addImport("src/portals", "IERC1155BatchPortal");
+        _addImport("src/portals", "IERC1155SinglePortal");
+        _addImport("src/portals", "IERC20Portal");
+        _addImport("src/portals", "IERC721Portal");
+        _addImport("src/portals", "IEtherPortal");
+        _addImport("src/refund", "IRefundOutputBuilder");
+        _addImport("src/refund", "RefundOutputBuilder");
         _addImport("src/withdrawal", "IUsdWithdrawalOutputBuilder");
         _addImport("src/withdrawal", "IUsdWithdrawalOutputBuilderFactory");
         _addImport("src/withdrawal", "UsdWithdrawalOutputBuilderFactory");
@@ -112,7 +119,6 @@ contract DeployersCodeGenerationScript is CodeGenerationScript {
 
         {
             string[] memory paramTypes = new string[](0);
-            _addDeployer("ApplicationFactory", paramTypes);
             _addDeployer("AuthorityFactory", paramTypes);
             _addDeployer("InputBox", paramTypes);
             _addDeployer("QuorumFactory", paramTypes);
@@ -130,6 +136,23 @@ contract DeployersCodeGenerationScript is CodeGenerationScript {
             _addDeployer("ERC20Portal", paramTypes);
             _addDeployer("ERC721Portal", paramTypes);
             _addDeployer("EtherPortal", paramTypes);
+        }
+
+        {
+            string[] memory paramTypes = new string[](6);
+            paramTypes[0] = "IEtherPortal";
+            paramTypes[1] = "IERC20Portal";
+            paramTypes[2] = "IERC721Portal";
+            paramTypes[3] = "IERC1155SinglePortal";
+            paramTypes[4] = "IERC1155BatchPortal";
+            paramTypes[5] = "ISafeERC20Transfer";
+            _addDeployer("RefundOutputBuilder", paramTypes);
+        }
+
+        {
+            string[] memory paramTypes = new string[](1);
+            paramTypes[0] = "IRefundOutputBuilder";
+            _addDeployer("ApplicationFactory", paramTypes);
         }
 
         {

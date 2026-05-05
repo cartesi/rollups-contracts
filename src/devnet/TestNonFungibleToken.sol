@@ -13,4 +13,11 @@ contract TestNonFungibleToken is ERC721 {
     function mint(uint256 tokenId) external {
         _mint(msg.sender, tokenId);
     }
+
+    /// @notice Mint a non-fungible token.
+    /// @param to The account that will receive the token
+    /// @param tokenId The non-fungible token ID
+    function mint(address to, uint256 tokenId) external {
+        _mint(to, tokenId);
+    }
 }

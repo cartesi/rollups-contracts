@@ -23,6 +23,13 @@ import {ERC1155SinglePortal} from "src/portals/ERC1155SinglePortal.sol";
 import {ERC20Portal} from "src/portals/ERC20Portal.sol";
 import {ERC721Portal} from "src/portals/ERC721Portal.sol";
 import {EtherPortal} from "src/portals/EtherPortal.sol";
+import {IERC1155BatchPortal} from "src/portals/IERC1155BatchPortal.sol";
+import {IERC1155SinglePortal} from "src/portals/IERC1155SinglePortal.sol";
+import {IERC20Portal} from "src/portals/IERC20Portal.sol";
+import {IERC721Portal} from "src/portals/IERC721Portal.sol";
+import {IEtherPortal} from "src/portals/IEtherPortal.sol";
+import {IRefundOutputBuilder} from "src/refund/IRefundOutputBuilder.sol";
+import {RefundOutputBuilder} from "src/refund/RefundOutputBuilder.sol";
 import {IUsdWithdrawalOutputBuilder} from "src/withdrawal/IUsdWithdrawalOutputBuilder.sol";
 import {IUsdWithdrawalOutputBuilderFactory} from "src/withdrawal/IUsdWithdrawalOutputBuilderFactory.sol";
 import {UsdWithdrawalOutputBuilderFactory} from "src/withdrawal/UsdWithdrawalOutputBuilderFactory.sol";
@@ -42,22 +49,6 @@ function computeAddress(bytes32 salt, bytes32 initCodeHash) pure returns (addres
             )
         )
     );
-}
-
-function deployApplicationFactory() returns (ApplicationFactory deployment) {
-    bytes32 salt;
-    bytes memory creationCode = type(ApplicationFactory).creationCode;
-    bytes memory encodedArgs = abi.encode();
-    bytes memory initCode = abi.encodePacked(creationCode, encodedArgs);
-    bytes32 initCodeHash = keccak256(initCode);
-    address precomputedAddress = computeAddress(salt, initCodeHash);
-    if (precomputedAddress.code.length == 0) {
-        deployment = new ApplicationFactory{salt: salt}();
-        assert(address(deployment) == precomputedAddress);
-        assert(address(deployment).code.length > 0);
-    } else {
-        deployment = ApplicationFactory(precomputedAddress);
-    }
 }
 
 function deployAuthorityFactory() returns (AuthorityFactory deployment) {
@@ -253,6 +244,49 @@ function deployEtherPortal(IInputBox param1) returns (EtherPortal deployment) {
         assert(address(deployment).code.length > 0);
     } else {
         deployment = EtherPortal(precomputedAddress);
+    }
+}
+
+function deployRefundOutputBuilder(
+    IEtherPortal param1,
+    IERC20Portal param2,
+    IERC721Portal param3,
+    IERC1155SinglePortal param4,
+    IERC1155BatchPortal param5,
+    ISafeERC20Transfer param6
+) returns (RefundOutputBuilder deployment) {
+    bytes32 salt;
+    bytes memory creationCode = type(RefundOutputBuilder).creationCode;
+    bytes memory encodedArgs = abi.encode(param1, param2, param3, param4, param5, param6);
+    bytes memory initCode = abi.encodePacked(creationCode, encodedArgs);
+    bytes32 initCodeHash = keccak256(initCode);
+    address precomputedAddress = computeAddress(salt, initCodeHash);
+    if (precomputedAddress.code.length == 0) {
+        deployment = new RefundOutputBuilder{salt: salt}(
+            param1, param2, param3, param4, param5, param6
+        );
+        assert(address(deployment) == precomputedAddress);
+        assert(address(deployment).code.length > 0);
+    } else {
+        deployment = RefundOutputBuilder(precomputedAddress);
+    }
+}
+
+function deployApplicationFactory(IRefundOutputBuilder param1)
+    returns (ApplicationFactory deployment)
+{
+    bytes32 salt;
+    bytes memory creationCode = type(ApplicationFactory).creationCode;
+    bytes memory encodedArgs = abi.encode(param1);
+    bytes memory initCode = abi.encodePacked(creationCode, encodedArgs);
+    bytes32 initCodeHash = keccak256(initCode);
+    address precomputedAddress = computeAddress(salt, initCodeHash);
+    if (precomputedAddress.code.length == 0) {
+        deployment = new ApplicationFactory{salt: salt}(param1);
+        assert(address(deployment) == precomputedAddress);
+        assert(address(deployment).code.length > 0);
+    } else {
+        deployment = ApplicationFactory(precomputedAddress);
     }
 }
 

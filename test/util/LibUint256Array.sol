@@ -36,6 +36,16 @@ library LibUint256Array {
         }
     }
 
+    function randomUintGe(Vm vm, uint256[] memory array)
+        internal
+        returns (uint256[] memory newArray)
+    {
+        newArray = new uint256[](array.length);
+        for (uint256 i; i < array.length; ++i) {
+            newArray[i] = vm.randomUint(array[i], type(uint256).max);
+        }
+    }
+
     function sequence(uint256 start, uint256 n)
         internal
         pure

@@ -10,6 +10,8 @@ import {IVersionGetter} from "../common/IVersionGetter.sol";
 import {OutputValidityProof} from "../common/OutputValidityProof.sol";
 import {WithdrawalConfig} from "../common/WithdrawalConfig.sol";
 import {IOutputsMerkleRootValidator} from "../consensus/IOutputsMerkleRootValidator.sol";
+import {IRefundOutputBuilder} from "../refund/IRefundOutputBuilder.sol";
+import {IRefundOutputBuilderErrors} from "../refund/IRefundOutputBuilderErrors.sol";
 import {IWithdrawalOutputBuilder} from "../withdrawal/IWithdrawalOutputBuilder.sol";
 import {IWithdrawalOutputBuilderErrors} from "../withdrawal/IWithdrawalOutputBuilderErrors.sol";
 
@@ -33,6 +35,7 @@ import {IWithdrawalOutputBuilderErrors} from "../withdrawal/IWithdrawalOutputBui
 interface IApplication is
     IOwnable,
     BinaryMerkleTreeErrors,
+    IRefundOutputBuilderErrors,
     IWithdrawalOutputBuilderErrors,
     IVersionGetter
 {
@@ -49,6 +52,12 @@ interface IApplication is
 
     /// @notice MUST trigger when the application is foreclosed.
     event Foreclosure();
+
+    /// @notice MUST trigger when a refund for an input is issued.
+    /// @param inputIndex The index of the input
+    /// @param input The input
+    /// @param output The refund output
+    event RefundIssued(uint256 inputIndex, bytes input, bytes output);
 
     /// @notice MUST trigger when the accounts drive Merkle root is proved.
     /// @param accountsDriveMerkleRoot The accounts drive Merkle root
@@ -93,6 +102,35 @@ interface IApplication is
     /// @notice Raised when the application has been foreclosed
     /// and therefore some actions cannot be performed anymore.
     error Foreclosed();
+
+    /// @notice Raised when trying to decode the data availability byte array,
+    /// but either it is ill-formed or encodes an unknown data availability solution.
+    error UnknownDataAvailability();
+
+    /// @notice Raised when trying to validate an input with an invalid index.
+    /// @param invalidInputIndex The invalid input index provided for validation
+    /// @param numOfInputs The actual number of inputs to the application
+    /// @dev This error is raised when invalidInputIndex >= numOfInputs.
+    error InvalidInputIndex(uint256 invalidInputIndex, uint256 numOfInputs);
+
+    /// @notice Raised when trying to validate an input with an invalid hash.
+    /// @param storedInputHash The hash of the input stored in the input box
+    /// @param invalidInputHash The invalid input hash provided for validation
+    /// @dev This error is raised when storedInputHash != invalidInputHash.
+    error InvalidInputHash(bytes32 storedInputHash, bytes32 invalidInputHash);
+
+    /// @notice Raised when decoding an ill-formed input.
+    /// @dev This error should never be raised if the application uses
+    /// the canonical input box contract as on-chain data availability.
+    error IllFormedInput();
+
+    /// @notice Raised when trying to issue a refund for a finalized input.
+    /// @param inputIndex The input index
+    error CannotRefundFinalizedInput(uint256 inputIndex);
+
+    /// @notice Raised when trying to re-issue a refund for the same input.
+    /// @param inputIndex The input index
+    error RefundAlreadyIssued(uint256 inputIndex);
 
     /// @notice Raised when the accounts drive Merkle root proof size is invalid.
     /// @dev The array length should be log2 of the machine memory size - log2 of the
@@ -159,6 +197,14 @@ interface IApplication is
     /// as well as `OutputNotExecutable` and `OutputNotReexecutable`.
     function executeOutput(bytes calldata output, OutputValidityProof calldata proof)
         external;
+
+    /// @notice Issue a refund for an unprocessed input.
+    /// @param inputIndex The index of the input in the application's input box.
+    /// @param input The input that was sent to the application
+    /// @dev May raise `CannotRefundFinalizedInput`, `RefundAlreadyIssued`,
+    /// `UnknownInputSender`, as well as any of the errors raised by `validateInput`.
+    /// On success, marks the input as refunded, and emits a `RefundIssued` event.
+    function issueRefund(uint256 inputIndex, bytes calldata input) external;
 
     /// @notice Prove the accounts drive Merkle root in the last-finalized machine state
     /// provided by the application's outputs Merkle root validator or in the initial
@@ -248,6 +294,14 @@ interface IApplication is
         view
         returns (WithdrawalConfig memory withdrawalConfig);
 
+    /// @notice Get the number of issued refunds.
+    /// Useful for fast-syncing `RefundIssued` events.
+    function getNumberOfIssuedRefunds() external view returns (uint256);
+
+    /// @notice Check whether a refund had been issued for an input.
+    /// @param inputIndex The index of the input in the application's input box
+    function wasRefundForInputIssued(uint256 inputIndex) external view returns (bool);
+
     /// @notice Check whether the accounts drive Merkle root was proved and its value.
     /// @return wasAccountsDriveMerkleRootProved Whether the accounts drive Merkle root was proved
     /// @return accountsDriveMerkleRoot The accounts drive Merkle root (if proved)
@@ -281,6 +335,28 @@ interface IApplication is
     /// and `c = getAccountsDriveStartIndex()`, then the accounts drive starts
     /// at memory address `c*2^{a+b+5}` and has `2^{a+b+5}` bytes in size.
     function getAccountsDriveStartIndex() external view returns (uint64);
+
+    /// @notice Get the refund output builder, which gets static-called
+    /// whenever a deposit is to be refunded to the original depositor.
+    function getRefundOutputBuilder() external view returns (IRefundOutputBuilder);
+
+    /// @notice Validates an input that was sent to the application.
+    /// @param inputIndex The index of the input in the application's input box.
+    /// @param input The input that was sent to the application
+    /// @return blockNumber The number of the base-layer block in which the input was added
+    /// @return inputSender The input sender
+    /// @return inputPayload The input payload
+    /// @dev May raise `IllFormedInput` as well as any of the errors raised by `validateInputHash`.
+    function validateInput(uint256 inputIndex, bytes calldata input)
+        external
+        view
+        returns (uint256 blockNumber, address inputSender, bytes memory inputPayload);
+
+    /// @notice Validates an input that was sent to the application.
+    /// @param inputIndex The index of the input in the application's input box.
+    /// @param inputHash The hash of the input that was sent to the application
+    /// @dev May raise `UnknownDataAvailability`, `InvalidInputIndex` or `InvalidInputHash`.
+    function validateInputHash(uint256 inputIndex, bytes32 inputHash) external view;
 
     /// @notice Get the withdrawal output builder, which gets static-called
     /// whenever the funds of an account are to be withdrawn.
