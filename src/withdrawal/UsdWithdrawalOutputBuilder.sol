@@ -15,8 +15,8 @@ contract UsdWithdrawalOutputBuilder is IUsdWithdrawalOutputBuilder, RollupsContr
     ISafeERC20Transfer immutable SAFE_ERC20_TRANSFER;
     IERC20 immutable USD;
 
-    constructor(ISafeERC20Transfer safeTransfer, IERC20 usd) {
-        SAFE_ERC20_TRANSFER = safeTransfer;
+    constructor(ISafeERC20Transfer safeErc20Transfer, IERC20 usd) {
+        SAFE_ERC20_TRANSFER = safeErc20Transfer;
         USD = usd;
     }
 

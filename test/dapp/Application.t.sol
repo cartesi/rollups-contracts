@@ -960,7 +960,7 @@ contract ApplicationTest is Test, OwnableTest, AddressGenerator, ConsensusTestUt
                 _encodeDelegateCallVoucher(
                     address(_safeErc20Transfer),
                     abi.encodeCall(
-                        SafeERC20Transfer.safeTransfer,
+                        ISafeERC20Transfer.safeTransfer,
                         (_erc20Token, _recipient, TRANSFER_AMOUNT)
                     )
                 )

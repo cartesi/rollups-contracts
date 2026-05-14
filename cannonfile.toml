@@ -76,3 +76,31 @@ artifact = "SafeERC20Transfer"
 create2 = true
 salt = "<%= zeroHash %>"
 ifExists = "continue"
+
+[deploy.TestFungibleToken]
+artifact = "TestFungibleToken"
+chains = [13370]
+create2 = true
+salt = "<%= zeroHash %>"
+ifExists = "continue"
+
+[deploy.TestNonFungibleToken]
+artifact = "TestNonFungibleToken"
+chains = [13370]
+create2 = true
+salt = "<%= zeroHash %>"
+ifExists = "continue"
+
+[deploy.TestMultiToken]
+artifact = "TestMultiToken"
+chains = [13370]
+create2 = true
+salt = "<%= zeroHash %>"
+ifExists = "continue"
+
+[deploy.UsdWithdrawalOutputBuilderFactory]
+artifact = "UsdWithdrawalOutputBuilderFactory"
+args = ["<%= contracts.SafeERC20Transfer.address %>"]
+create2 = true
+salt = "<%= zeroHash %>"
+ifExists = "continue"
