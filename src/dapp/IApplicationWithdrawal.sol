@@ -5,6 +5,7 @@ pragma solidity ^0.8.8;
 
 import {AccountValidityProof} from "../common/AccountValidityProof.sol";
 import {BinaryMerkleTreeErrors} from "../common/BinaryMerkleTreeErrors.sol";
+import {WithdrawalConfig} from "../common/WithdrawalConfig.sol";
 import {IWithdrawalOutputBuilder} from "../withdrawal/IWithdrawalOutputBuilder.sol";
 import {
     IWithdrawalOutputBuilderErrors
@@ -93,6 +94,13 @@ interface IApplicationWithdrawal is
         external;
 
     // View Functions
+
+    /// @notice Get the withdrawal configuration set upon construction.
+    /// @return withdrawalConfig The withdrawal configuration
+    function getWithdrawalConfig()
+        external
+        view
+        returns (WithdrawalConfig memory withdrawalConfig);
 
     /// @notice Check whether the accounts drive Merkle root was proved and its value.
     /// @return wasAccountsDriveMerkleRootProved Whether the accounts drive Merkle root was proved

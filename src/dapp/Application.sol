@@ -388,6 +388,21 @@ contract Application is
         return _isForeclosed;
     }
 
+    function getWithdrawalConfig()
+        external
+        view
+        override
+        returns (WithdrawalConfig memory withdrawalConfig)
+    {
+        return WithdrawalConfig({
+            guardian: getGuardian(),
+            log2LeavesPerAccount: getLog2LeavesPerAccount(),
+            log2MaxNumOfAccounts: getLog2MaxNumOfAccounts(),
+            accountsDriveStartIndex: getAccountsDriveStartIndex(),
+            withdrawalOutputBuilder: getWithdrawalOutputBuilder()
+        });
+    }
+
     function getAccountsDriveMerkleRoot()
         external
         view
