@@ -140,6 +140,16 @@ contract ApplicationTest is Test, OwnableTest, AddressGenerator, ConsensusTestUt
         _appContract.migrateToOutputsMerkleRootValidator(newOutputsMerkleRootValidator);
     }
 
+    function testMigrateToOutputsMerkleRootValidatorRevertsForeclosed(IOutputsMerkleRootValidator newOutputsMerkleRootValidator)
+        external
+    {
+        vm.prank(_appContract.getGuardian());
+        _appContract.foreclose();
+        vm.prank(_appOwner);
+        vm.expectRevert(IApplication.Foreclosed.selector);
+        _appContract.migrateToOutputsMerkleRootValidator(newOutputsMerkleRootValidator);
+    }
+
     function testMigrateToOutputsMerkleRootValidator(IOutputsMerkleRootValidator newOutputsMerkleRootValidator)
         external
     {

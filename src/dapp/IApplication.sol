@@ -66,11 +66,16 @@ interface IApplication is
     /// @notice Raised when the computed outputs Merkle root is invalid, according to the current outputs Merkle root validator.
     error InvalidOutputsMerkleRoot(bytes32 outputsMerkleRoot);
 
+    /// @notice Raised when the application has been foreclosed
+    /// and therefore some actions cannot be performed anymore.
+    error Foreclosed();
+
     // Permissioned functions
 
     /// @notice Migrate the application to a new outputs Merkle root validator.
     /// @param newOutputsMerkleRootValidator The new outputs Merkle root validator
     /// @dev Can only be called by the application owner.
+    /// May raise `OwnableUnauthorizedAccount` or `Foreclosed`.
     function migrateToOutputsMerkleRootValidator(IOutputsMerkleRootValidator newOutputsMerkleRootValidator)
         external;
 
