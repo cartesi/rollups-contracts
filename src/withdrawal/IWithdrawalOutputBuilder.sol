@@ -16,9 +16,13 @@ interface IWithdrawalOutputBuilder is IWithdrawalOutputBuilderErrors {
     /// of the withdrawal output. These state-changing constraints
     /// are already checked by the Solidity compiler when implementing
     /// this function as either view or pure.
+    /// @param appContract The application contract address
     /// @param account The input account
     /// @return output The withdrawal output
-    function buildWithdrawalOutput(bytes calldata account)
+    /// @dev The application contract address might be necessary for vouchers that
+    /// transfer assets from the application contract's account to the account owner's
+    /// account (e.g. in the case of ERC-721 and ERC-1155 transfers).
+    function buildWithdrawalOutput(address appContract, bytes calldata account)
         external
         view
         returns (bytes memory output);

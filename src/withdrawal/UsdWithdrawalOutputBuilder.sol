@@ -24,7 +24,7 @@ contract UsdWithdrawalOutputBuilder is IUsdWithdrawalOutputBuilder, RollupsContr
         return USD;
     }
 
-    function buildWithdrawalOutput(bytes calldata account)
+    function buildWithdrawalOutput(address, bytes calldata account)
         external
         view
         override

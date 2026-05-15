@@ -112,6 +112,7 @@ contract UsdWithdrawalOutputBuilderTest is Test, VersionGetterTestUtils {
     }
 
     function testBuildWithdrawalOutput(
+        address appContract,
         IERC20 token,
         bytes32 salt,
         address user,
@@ -122,7 +123,8 @@ contract UsdWithdrawalOutputBuilderTest is Test, VersionGetterTestUtils {
         usdWithdrawalOutputBuilder = _factory.newUsdWithdrawalOutputBuilder(token, salt);
         bytes memory account = abi.encodePacked(_encodeAccount(user, balance), padding);
         assertGe(account.length, 28);
-        bytes memory output = usdWithdrawalOutputBuilder.buildWithdrawalOutput(account);
+        bytes memory output;
+        output = usdWithdrawalOutputBuilder.buildWithdrawalOutput(appContract, account);
         (bytes4 outputSelector, bytes memory outputArgs) = output.consumeBytes4();
         assertEq(outputSelector, Outputs.DelegateCallVoucher.selector);
         (address destination, bytes memory payload) =
@@ -137,13 +139,17 @@ contract UsdWithdrawalOutputBuilderTest is Test, VersionGetterTestUtils {
         assertEq(value, balance);
     }
 
-    function testBuildWithdrawalOutputReverts(IERC20 token, bytes32 salt) external {
+    function testBuildWithdrawalOutputReverts(
+        address appContract,
+        IERC20 token,
+        bytes32 salt
+    ) external {
         IUsdWithdrawalOutputBuilder usdWithdrawalOutputBuilder;
         usdWithdrawalOutputBuilder = _factory.newUsdWithdrawalOutputBuilder(token, salt);
         uint64 accountSize = uint64(vm.randomUint(0, 27));
         bytes memory account = vm.randomBytes(accountSize);
         vm.expectRevert(_encodeAccountTooShort(accountSize));
-        usdWithdrawalOutputBuilder.buildWithdrawalOutput(account);
+        usdWithdrawalOutputBuilder.buildWithdrawalOutput(appContract, account);
     }
 
     function _encodeAccount(address user, uint64 balance)

@@ -478,7 +478,7 @@ contract Application is
         view
         returns (bytes memory output)
     {
-        return getWithdrawalOutputBuilder().buildWithdrawalOutput(account);
+        return getWithdrawalOutputBuilder().buildWithdrawalOutput(address(this), account);
     }
 
     /// @notice Executes an output
