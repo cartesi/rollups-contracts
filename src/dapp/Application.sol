@@ -236,6 +236,7 @@ contract Application is
         external
         override
         onlyOwner
+        notForeclosed
     {
         _outputsMerkleRootValidator = newOutputsMerkleRootValidator;
         emit OutputsMerkleRootValidatorChanged(newOutputsMerkleRootValidator);
@@ -433,6 +434,11 @@ contract Application is
         _;
     }
 
+    modifier notForeclosed() {
+        _ensureAppIsNotForeclosed();
+        _;
+    }
+
     modifier onlyForeclosed() {
         _ensureAppIsForeclosed();
         _;
@@ -534,6 +540,11 @@ contract Application is
     /// @notice Ensures the message sender is the guardian.
     function _ensureMsgSenderIsGuardian() internal view {
         require(msg.sender == getGuardian(), NotGuardian());
+    }
+
+    /// @notice Ensures the application is not foreclosed.
+    function _ensureAppIsNotForeclosed() internal view {
+        require(!isForeclosed(), Foreclosed());
     }
 
     /// @notice Ensures the application is foreclosed.
