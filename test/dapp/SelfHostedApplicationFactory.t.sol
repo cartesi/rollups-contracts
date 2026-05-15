@@ -131,6 +131,36 @@ contract SelfHostedApplicationFactoryTest is Test, VersionGetterTestUtils {
                 "app.getTemplateHash() != templateHash"
             );
             assertEq(
+                abi.encode(application.getWithdrawalConfig()),
+                abi.encode(withdrawalConfig),
+                "app.getWithdrawalConfig() != withdrawalConfig"
+            );
+            assertEq(
+                application.getGuardian(),
+                withdrawalConfig.guardian,
+                "app.getGuardian() != withdrawalConfig.guardian"
+            );
+            assertEq(
+                application.getLog2LeavesPerAccount(),
+                withdrawalConfig.log2LeavesPerAccount,
+                "app.getLog2LeavesPerAccount() != withdrawalConfig.log2LeavesPerAccount"
+            );
+            assertEq(
+                application.getLog2MaxNumOfAccounts(),
+                withdrawalConfig.log2MaxNumOfAccounts,
+                "app.getLog2MaxNumOfAccounts() != withdrawalConfig.log2MaxNumOfAccounts"
+            );
+            assertEq(
+                application.getAccountsDriveStartIndex(),
+                withdrawalConfig.accountsDriveStartIndex,
+                "app.getAccountsDriveStartIndex() != withdrawalConfig.accountsDriveStartIndex"
+            );
+            assertEq(
+                address(application.getWithdrawalOutputBuilder()),
+                address(withdrawalConfig.withdrawalOutputBuilder),
+                "app.getWithdrawalOutputBuilder() != withdrawalConfig.withdrawalOutputBuilder"
+            );
+            assertEq(
                 application.getDataAvailability(),
                 dataAvailability,
                 "app.getDataAvailability() != dataAvailability"

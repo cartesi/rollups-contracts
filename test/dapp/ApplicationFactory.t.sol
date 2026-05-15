@@ -236,6 +236,11 @@ contract ApplicationFactoryTest is Test, VersionGetterTestUtils {
             "getTemplateHash() != templateHash"
         );
         assertEq(
+            abi.encode(appContract.getWithdrawalConfig()),
+            abi.encode(withdrawalConfig),
+            "getWithdrawalConfig() != withdrawalConfig"
+        );
+        assertEq(
             appContract.getGuardian(),
             withdrawalConfig.guardian,
             "getGuardian() != withdrawalConfig.guardian"
