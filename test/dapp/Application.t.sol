@@ -22,6 +22,7 @@ import {SafeERC20Transfer} from "src/delegatecall/SafeERC20Transfer.sol";
 import {IInputBox} from "src/inputs/IInputBox.sol";
 import {InputBox} from "src/inputs/InputBox.sol";
 import {LibUsdAccount} from "src/library/LibUsdAccount.sol";
+import {IWithdrawalOutputBuilder} from "src/withdrawal/IWithdrawalOutputBuilder.sol";
 import {
     IWithdrawalOutputBuilderErrors
 } from "src/withdrawal/IWithdrawalOutputBuilderErrors.sol";
@@ -756,6 +757,14 @@ contract ApplicationTest is Test, OwnableTest, AddressGenerator, ConsensusTestUt
         vm.prank(_appContract.getGuardian());
         _appContract.foreclose();
         _proveAccountsDriveMerkleRoot();
+
+        vm.expectCall(
+            address(_withdrawalConfig.withdrawalOutputBuilder),
+            abi.encodeCall(
+                IWithdrawalOutputBuilder.buildWithdrawalOutput,
+                (address(_appContract), account)
+            )
+        );
 
         vm.recordLogs();
 
