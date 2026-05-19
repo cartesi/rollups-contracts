@@ -1,5 +1,27 @@
 # @cartesi/rollups
 
+## 3.0.0-alpha.5
+
+### Major Changes
+
+- d26a08d: Add application contract address parameter to `buildWithdrawalOutput` function
+- 077af6f: Make deployment addresses chain-independent
+
+  - Add `UsdWithdrawalOutputBuilderFactory` contract, which deploys `UsdWithdrawalOutputBuilder` contracts for any ERC-20 token
+  - Add `UsdWithdrawalOutputBuilderFactory` to Cannonfile and Forge deployment script
+  - Remove deployment of `UsdWithdrawalOutputBuilder` with chain-dependent USDC token contract address from Forge deployment script
+
+- b435fb5: Disable app owner privileges (consensus migration) after foreclosure
+
+### Minor Changes
+
+- 077af6f: Add test tokens (`TestFungibleToken`, `TestNonFungibleToken`, and `TestMultiToken`) to Cannonfile (only deployed to devnet)
+- dd6b4d5: Distribute deterministic deployment addresses as `rollups-contracts-<version>-deployment-addresses.tar.gz` release artifacts.
+  The tarball contains `deployments/<chain-id>/<contract>.json` files for Ethereum, Optimism, Base, and Arbitrum mainnets and their Sepolia testnets.
+  Clients should check whether `eth_getCode` (or `cast code`) returns non-empty bytecode at any given address before using it.
+  Devnet deployment addresses are still distributed through `rollups-contracts-<version>-anvil-<foundry-version>.tar.gz`.
+- a119d23: Add `getWithdrawalConfig` function to `IApplicationWithdrawal`
+
 ## 3.0.0-alpha.4
 
 ### Major Changes
