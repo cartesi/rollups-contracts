@@ -205,6 +205,8 @@ contract Application is
 
         _accountsDriveMerkleRoot = accountsDriveMerkleRoot;
         _wasAccountsDriveMerkleRootProved = true;
+
+        emit AccountsDriveMerkleRootProved(accountsDriveMerkleRoot);
     }
 
     function withdraw(bytes calldata account, AccountValidityProof calldata proof)

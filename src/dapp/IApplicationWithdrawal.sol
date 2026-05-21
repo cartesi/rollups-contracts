@@ -17,6 +17,10 @@ interface IApplicationWithdrawal is
 {
     // Events
 
+    /// @notice MUST trigger when the accounts drive Merkle root is proved.
+    /// @param accountsDriveMerkleRoot The accounts drive Merkle root
+    event AccountsDriveMerkleRootProved(bytes32 accountsDriveMerkleRoot);
+
     /// @notice MUST trigger when the funds of an account are withdrawn.
     /// @param accountIndex The account index in the accounts drive
     /// @param account The account as encoded in the accounts drive
@@ -76,7 +80,8 @@ interface IApplicationWithdrawal is
     /// @param proof Siblings of the accounts drive Merkle root in the machine
     /// @dev May raise `NotForeclosed`, `AccountsDriveMerkleRootAlreadyProved`,
     /// `InvalidAccountsDriveMerkleRootProofSize` or `InvalidMachineMerkleRoot`.
-    /// On success, stores the proved accounts drive Merkle root.
+    /// On success, stores the proved accounts drive Merkle root and emits an
+    /// `AccountsDriveMerkleRootProved` event.
     function proveAccountsDriveMerkleRoot(
         bytes32 accountsDriveMerkleRoot,
         bytes32[] calldata proof
