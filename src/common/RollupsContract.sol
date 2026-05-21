@@ -21,7 +21,7 @@ abstract contract RollupsContract is IVersionGetter {
         major = 3;
         minor = 0;
         patch = 0;
-        preRelease = "alpha.5";
+        preRelease = "alpha.6";
         buildMetadata = "";
     }
 }
