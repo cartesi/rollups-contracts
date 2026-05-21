@@ -472,8 +472,35 @@ contract ApplicationTest is Test, OwnableTest, AddressGenerator, ConsensusTestUt
             assertFalse(wasValueProved);
         }
 
+        vm.recordLogs();
+
         vm.prank(vm.randomAddress());
         _appContract.proveAccountsDriveMerkleRoot(accountsDriveMerkleRoot, proof);
+
+        Vm.Log[] memory logs = vm.getRecordedLogs();
+
+        uint256 numOfAccountsDriveMerkleRootProvedEvents;
+
+        for (uint256 i; i < logs.length; ++i) {
+            Vm.Log memory log = logs[i];
+            if (log.emitter == address(_appContract)) {
+                assertGe(log.topics.length, 1);
+                if (
+                    log.topics[0]
+                        == IApplicationWithdrawal.AccountsDriveMerkleRootProved.selector
+                ) {
+                    bytes32 arg1 = abi.decode(log.data, (bytes32));
+                    assertEq(arg1, accountsDriveMerkleRoot);
+                    ++numOfAccountsDriveMerkleRootProvedEvents;
+                } else {
+                    revert("unexpected event from app contract");
+                }
+            } else {
+                revert("unexpected log emitter");
+            }
+        }
+
+        assertEq(numOfAccountsDriveMerkleRootProvedEvents, 1);
 
         {
             bool wasValueProved;
