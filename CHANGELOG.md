@@ -1,5 +1,11 @@
 # @cartesi/rollups
 
+## 3.0.0-alpha.6
+
+### Minor Changes
+
+- 10c5b00: Make `proveAccountsDriveMerkleRoot` function emit (new) `AccountsDriveMerkleRootProved` event
+
 ## 3.0.0-alpha.5
 
 ### Major Changes
