@@ -18,7 +18,6 @@ jobs:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
 
       - uses: ./.github/actions/setup
-        id: setup
 
       - name: Extract version from tag
         id: extract_version
@@ -39,6 +38,7 @@ jobs:
             --alloy-version "1.0"
         env:
           VERSION: ${{ steps.extract_version.outputs.version }}
+
       - name: Upload package to crates.io
         working-directory: out/bindings
         run: |
