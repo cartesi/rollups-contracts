@@ -17,7 +17,7 @@ library LibWithdrawalConfig {
             + uint256(withdrawalConfig.log2MaxNumOfAccounts)
             + uint256(withdrawalConfig.log2LeavesPerAccount);
 
-        // The addition below cannot overflow because `type(uint8).max + 1 <= type(uint256).max`.
+        // The addition below cannot overflow because `type(uint64).max + 1 <= type(uint256).max`.
         uint256 accountsDriveEndIndex =
             uint256(withdrawalConfig.accountsDriveStartIndex) + 1;
 
@@ -27,9 +27,9 @@ library LibWithdrawalConfig {
             return false;
         }
 
-        uint256 memorySize = 1 << CanonicalMachine.LOG2_MEMORY_SIZE;
+        uint256 addressSpaceEnd = 1 << CanonicalMachine.LOG2_MEMORY_SIZE;
 
-        // Check if the accounts drive would end past the machine memory boundaries.
-        return (accountsDriveEnd <= memorySize);
+        // Check if the accounts drive would end past the machine address space.
+        return (accountsDriveEnd <= addressSpaceEnd);
     }
 }
