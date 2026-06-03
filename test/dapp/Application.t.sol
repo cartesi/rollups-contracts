@@ -11,22 +11,17 @@ import {OutputValidityProof} from "src/common/OutputValidityProof.sol";
 import {Outputs} from "src/common/Outputs.sol";
 import {WithdrawalConfig} from "src/common/WithdrawalConfig.sol";
 import {IOutputsMerkleRootValidator} from "src/consensus/IOutputsMerkleRootValidator.sol";
-import {Authority} from "src/consensus/authority/Authority.sol";
 import {IAuthority} from "src/consensus/authority/IAuthority.sol";
-import {Application} from "src/dapp/Application.sol";
 import {IApplication} from "src/dapp/IApplication.sol";
 import {IApplicationForeclosure} from "src/dapp/IApplicationForeclosure.sol";
 import {IApplicationWithdrawal} from "src/dapp/IApplicationWithdrawal.sol";
 import {ISafeERC20Transfer} from "src/delegatecall/ISafeERC20Transfer.sol";
-import {SafeERC20Transfer} from "src/delegatecall/SafeERC20Transfer.sol";
 import {IInputBox} from "src/inputs/IInputBox.sol";
-import {InputBox} from "src/inputs/InputBox.sol";
 import {LibUsdAccount} from "src/library/LibUsdAccount.sol";
 import {IWithdrawalOutputBuilder} from "src/withdrawal/IWithdrawalOutputBuilder.sol";
 import {
     IWithdrawalOutputBuilderErrors
 } from "src/withdrawal/IWithdrawalOutputBuilderErrors.sol";
-import {UsdWithdrawalOutputBuilder} from "src/withdrawal/UsdWithdrawalOutputBuilder.sol";
 
 import {
     IERC1155Errors,
@@ -39,7 +34,6 @@ import {SafeERC20} from "@openzeppelin-contracts-5.2.0/token/ERC20/utils/SafeERC
 import {IERC721} from "@openzeppelin-contracts-5.2.0/token/ERC721/IERC721.sol";
 import {SafeCast} from "@openzeppelin-contracts-5.2.0/utils/math/SafeCast.sol";
 
-import {Test} from "forge-std-1.9.6/src/Test.sol";
 import {Vm} from "forge-std-1.9.6/src/Vm.sol";
 
 import {ExternalLibBinaryMerkleTree} from "../library/LibBinaryMerkleTree.t.sol";
@@ -52,11 +46,14 @@ import {LibBytes32Array} from "../util/LibBytes32Array.sol";
 import {LibEmulator} from "../util/LibEmulator.sol";
 import {LibTopic} from "../util/LibTopic.sol";
 import {OwnableTest} from "../util/OwnableTest.sol";
-import {SimpleBatchERC1155, SimpleSingleERC1155} from "../util/SimpleERC1155.sol";
-import {SimpleERC20} from "../util/SimpleERC20.sol";
-import {SimpleERC721} from "../util/SimpleERC721.sol";
+import {RollupsTest} from "../util/RollupsTest.sol";
 
-contract ApplicationTest is Test, OwnableTest, AddressGenerator, ConsensusTestUtils {
+contract ApplicationTest is
+    RollupsTest,
+    OwnableTest,
+    AddressGenerator,
+    ConsensusTestUtils
+{
     using LibBytes for bytes;
     using LibTopic for address;
     using SafeCast for uint256;
@@ -69,10 +66,8 @@ contract ApplicationTest is Test, OwnableTest, AddressGenerator, ConsensusTestUt
     IEtherReceiver _etherReceiver;
     IAuthority _authority;
     IERC20 _erc20Token;
-    IERC20 _usd;
     IERC721 _erc721Token;
-    IERC1155 _erc1155SingleToken;
-    IERC1155 _erc1155BatchToken;
+    IERC1155 _erc1155Token;
     ISafeERC20Transfer _safeErc20Transfer;
     IInputBox _inputBox;
 
@@ -95,13 +90,15 @@ contract ApplicationTest is Test, OwnableTest, AddressGenerator, ConsensusTestUt
     uint256 constant EPOCH_LENGTH = 1;
     uint256 constant CLAIM_STAGING_PERIOD = 0;
     bytes32 constant TEMPLATE_HASH = keccak256("templateHash");
-    uint256 constant INITIAL_SUPPLY = 1000000000000000000000000000000000000;
+    uint256 constant INITIAL_SUPPLY = type(uint64).max;
     uint256 constant TOKEN_ID = 88888888;
     uint256 constant TRANSFER_AMOUNT = 42;
+    bytes32 constant SALT = bytes32(0);
 
     function setUp() public {
         _initVariables();
         _deployContracts();
+        _mintTokens();
         _addOutputs();
         _addAccounts();
         _submitClaim();
@@ -630,10 +627,10 @@ contract ApplicationTest is Test, OwnableTest, AddressGenerator, ConsensusTestUt
         (, uint256 amount) = ExternalLibUsdAccount.decode(account);
         AccountValidityProof memory proof = _getAccountValidityProof(name);
 
-        uint256 balance = vm.randomUint(amount, _usd.balanceOf(_tokenOwner));
+        uint256 balance = vm.randomUint(amount, _erc20Token.balanceOf(_tokenOwner));
 
         vm.prank(_tokenOwner);
-        assertTrue(_usd.transfer(address(_appContract), balance));
+        assertTrue(_erc20Token.transfer(address(_appContract), balance));
 
         vm.expectRevert(IApplicationWithdrawal.NotForeclosed.selector);
 
@@ -650,13 +647,13 @@ contract ApplicationTest is Test, OwnableTest, AddressGenerator, ConsensusTestUt
         uint256 balance = vm.randomUint(0, amount - 1);
 
         vm.prank(_tokenOwner);
-        assertTrue(_usd.transfer(address(_appContract), balance));
+        assertTrue(_erc20Token.transfer(address(_appContract), balance));
 
         vm.prank(_appContract.getGuardian());
         _appContract.foreclose();
         _proveAccountsDriveMerkleRoot();
 
-        vm.expectRevert(_encodeErc20InsufficientBalance(_usd, amount));
+        vm.expectRevert(_encodeErc20InsufficientBalance(_erc20Token, amount));
 
         vm.prank(vm.randomAddress());
         _appContract.withdraw(account, proof);
@@ -668,13 +665,13 @@ contract ApplicationTest is Test, OwnableTest, AddressGenerator, ConsensusTestUt
         (address user, uint256 amount) = ExternalLibUsdAccount.decode(account);
         AccountValidityProof memory proof = _getAccountValidityProof(name);
 
-        uint256 balance = vm.randomUint(amount, _usd.balanceOf(_tokenOwner));
+        uint256 balance = vm.randomUint(amount, _erc20Token.balanceOf(_tokenOwner));
 
         vm.prank(_tokenOwner);
-        assertTrue(_usd.transfer(address(_appContract), balance));
+        assertTrue(_erc20Token.transfer(address(_appContract), balance));
 
         vm.mockCallRevert(
-            address(_usd), abi.encodeCall(IERC20.transfer, (user, amount)), error
+            address(_erc20Token), abi.encodeCall(IERC20.transfer, (user, amount)), error
         );
 
         vm.prank(_appContract.getGuardian());
@@ -695,13 +692,13 @@ contract ApplicationTest is Test, OwnableTest, AddressGenerator, ConsensusTestUt
         (address user, uint256 amount) = ExternalLibUsdAccount.decode(account);
         AccountValidityProof memory proof = _getAccountValidityProof(name);
 
-        uint256 balance = vm.randomUint(amount, _usd.balanceOf(_tokenOwner));
+        uint256 balance = vm.randomUint(amount, _erc20Token.balanceOf(_tokenOwner));
 
         vm.prank(_tokenOwner);
-        assertTrue(_usd.transfer(address(_appContract), balance));
+        assertTrue(_erc20Token.transfer(address(_appContract), balance));
 
         vm.mockCall(
-            address(_usd),
+            address(_erc20Token),
             abi.encodeCall(IERC20.transfer, (user, amount)),
             abi.encode(returnValue)
         );
@@ -710,7 +707,7 @@ contract ApplicationTest is Test, OwnableTest, AddressGenerator, ConsensusTestUt
         _appContract.foreclose();
         _proveAccountsDriveMerkleRoot();
 
-        vm.expectRevert(_encodeSafeErc20FailedOperation(address(_usd)));
+        vm.expectRevert(_encodeSafeErc20FailedOperation(address(_erc20Token)));
 
         vm.prank(vm.randomAddress());
         _appContract.withdraw(account, proof);
@@ -721,13 +718,13 @@ contract ApplicationTest is Test, OwnableTest, AddressGenerator, ConsensusTestUt
         bytes memory account = _getAccount(name);
         AccountValidityProof memory proof = _getAccountValidityProof(name);
 
-        vm.etch(address(_usd), abi.encode());
+        vm.etch(address(_erc20Token), abi.encode());
 
         vm.prank(_appContract.getGuardian());
         _appContract.foreclose();
         _proveAccountsDriveMerkleRoot();
 
-        vm.expectRevert(_encodeSafeErc20FailedOperation(address(_usd)));
+        vm.expectRevert(_encodeSafeErc20FailedOperation(address(_erc20Token)));
 
         vm.prank(vm.randomAddress());
         _appContract.withdraw(account, proof);
@@ -740,9 +737,9 @@ contract ApplicationTest is Test, OwnableTest, AddressGenerator, ConsensusTestUt
         AccountValidityProof memory proof = _getAccountValidityProof(name);
 
         // Give the app a random ERC-20 token balance
-        uint256 appBalance = vm.randomUint(0, _usd.balanceOf(_tokenOwner));
+        uint256 appBalance = vm.randomUint(0, _erc20Token.balanceOf(_tokenOwner));
         vm.prank(_tokenOwner);
-        assertTrue(_usd.transfer(address(_appContract), appBalance));
+        assertTrue(_erc20Token.transfer(address(_appContract), appBalance));
 
         vm.prank(_appContract.getGuardian());
         _appContract.foreclose();
@@ -769,13 +766,13 @@ contract ApplicationTest is Test, OwnableTest, AddressGenerator, ConsensusTestUt
         (address user, uint256 amount) = ExternalLibUsdAccount.decode(account);
         AccountValidityProof memory proof = _getAccountValidityProof(name);
 
-        uint256 appBalance = vm.randomUint(amount, _usd.balanceOf(_tokenOwner));
+        uint256 appBalance = vm.randomUint(amount, _erc20Token.balanceOf(_tokenOwner));
         vm.prank(_tokenOwner);
-        assertTrue(_usd.transfer(address(_appContract), appBalance));
+        assertTrue(_erc20Token.transfer(address(_appContract), appBalance));
 
-        uint256 userBalance = vm.randomUint(0, _usd.balanceOf(_tokenOwner));
+        uint256 userBalance = vm.randomUint(0, _erc20Token.balanceOf(_tokenOwner));
         vm.prank(_tokenOwner);
-        assertTrue(_usd.transfer(user, userBalance));
+        assertTrue(_erc20Token.transfer(user, userBalance));
 
         uint256 numOfWithdrawalsBefore = _appContract.getNumberOfWithdrawals();
 
@@ -829,13 +826,13 @@ contract ApplicationTest is Test, OwnableTest, AddressGenerator, ConsensusTestUt
                     assertEq(funcsel2, ISafeERC20Transfer.safeTransfer.selector);
                     (address token, address to, uint256 value) =
                         abi.decode(callargs2, (address, address, uint256));
-                    assertEq(token, address(_usd));
+                    assertEq(token, address(_erc20Token));
                     assertEq(to, user);
                     assertEq(value, amount);
                 } else {
                     revert("unexpected event from app contract");
                 }
-            } else if (log.emitter == address(_usd)) {
+            } else if (log.emitter == address(_erc20Token)) {
                 assertGe(log.topics.length, 1);
                 bytes32 topic0 = log.topics[0];
                 if (topic0 == IERC20.Transfer.selector) {
@@ -856,8 +853,8 @@ contract ApplicationTest is Test, OwnableTest, AddressGenerator, ConsensusTestUt
         assertEq(numOfTransferEventsInTx, 1);
         assertEq(_appContract.getNumberOfWithdrawals(), numOfWithdrawalsBefore + 1);
         assertTrue(_appContract.wereAccountFundsWithdrawn(proof.accountIndex));
-        assertEq(_usd.balanceOf(address(_appContract)), appBalance - amount);
-        assertEq(_usd.balanceOf(user), userBalance + amount);
+        assertEq(_erc20Token.balanceOf(address(_appContract)), appBalance - amount);
+        assertEq(_erc20Token.balanceOf(user), userBalance + amount);
 
         {
             uint64 otherAccountIndex;
@@ -907,22 +904,36 @@ contract ApplicationTest is Test, OwnableTest, AddressGenerator, ConsensusTestUt
 
     function _deployContracts() internal {
         _etherReceiver = new EtherReceiver();
-        _erc20Token = new SimpleERC20(_tokenOwner, INITIAL_SUPPLY);
-        _erc721Token = new SimpleERC721(_tokenOwner, TOKEN_ID);
-        _erc1155SingleToken =
-            new SimpleSingleERC1155(_tokenOwner, TOKEN_ID, INITIAL_SUPPLY);
-        _erc1155BatchToken =
-            new SimpleBatchERC1155(_tokenOwner, _tokenIds, _initialSupplies);
-        _inputBox = new InputBox();
-        _authority = new Authority(_authorityOwner, EPOCH_LENGTH, CLAIM_STAGING_PERIOD);
+        _erc20Token = _contracts.dev.testFungibleToken;
+        _erc721Token = _contracts.dev.testNonFungibleToken;
+        _erc1155Token = _contracts.dev.testMultiToken;
+        _inputBox = _contracts.core.inputBox;
         _dataAvailability = abi.encodeCall(DataAvailability.InputBox, (_inputBox));
-        _safeErc20Transfer = new SafeERC20Transfer();
-        _usd = new SimpleERC20(_tokenOwner, type(uint64).max);
-        _withdrawalConfig.withdrawalOutputBuilder =
-            new UsdWithdrawalOutputBuilder(_safeErc20Transfer, _usd);
-        _appContract = new Application(
-            _authority, _appOwner, TEMPLATE_HASH, _dataAvailability, _withdrawalConfig
-        );
+        _safeErc20Transfer = _contracts.core.safeErc20Transfer;
+        _withdrawalConfig.withdrawalOutputBuilder = _contracts.core
+            .usdWithdrawalOutputBuilderFactory
+            .newUsdWithdrawalOutputBuilder(_erc20Token, SALT);
+        (_appContract, _authority) =
+            _contracts.core.selfHostedApplicationFactory
+                .deployContracts(
+                    _authorityOwner,
+                    EPOCH_LENGTH,
+                    CLAIM_STAGING_PERIOD,
+                    _appOwner,
+                    TEMPLATE_HASH,
+                    _dataAvailability,
+                    _withdrawalConfig,
+                    SALT
+                );
+    }
+
+    function _mintTokens() internal {
+        vm.startPrank(_tokenOwner);
+        _contracts.dev.testFungibleToken.mint(INITIAL_SUPPLY);
+        _contracts.dev.testNonFungibleToken.mint(TOKEN_ID);
+        _contracts.dev.testMultiToken.mint(TOKEN_ID, INITIAL_SUPPLY);
+        _contracts.dev.testMultiToken.mintBatch(_tokenIds, _initialSupplies);
+        vm.stopPrank();
     }
 
     function _addOutputs() internal {
@@ -972,7 +983,7 @@ contract ApplicationTest is Test, OwnableTest, AddressGenerator, ConsensusTestUt
             "ERC1155SingleTransferVoucher",
             _addOutput(
                 _encodeVoucher(
-                    address(_erc1155SingleToken),
+                    address(_erc1155Token),
                     0,
                     abi.encodeCall(
                         IERC1155.safeTransferFrom,
@@ -985,7 +996,7 @@ contract ApplicationTest is Test, OwnableTest, AddressGenerator, ConsensusTestUt
             "ERC1155BatchTransferVoucher",
             _addOutput(
                 _encodeVoucher(
-                    address(_erc1155BatchToken),
+                    address(_erc1155Token),
                     0,
                     abi.encodeCall(
                         IERC1155.safeBatchTransferFrom,
@@ -1626,24 +1637,23 @@ contract ApplicationTest is Test, OwnableTest, AddressGenerator, ConsensusTestUt
         _expectNoChangeInNumberOfExecutedOutputs(numberOfExecutedOutputsBefore);
 
         vm.prank(_tokenOwner);
-        _erc1155SingleToken.safeTransferFrom(
+        _erc1155Token.safeTransferFrom(
             _tokenOwner, address(_appContract), TOKEN_ID, INITIAL_SUPPLY, ""
         );
 
-        uint256 recipientBalance = _erc1155SingleToken.balanceOf(_recipient, TOKEN_ID);
-        uint256 appBalance =
-            _erc1155SingleToken.balanceOf(address(_appContract), TOKEN_ID);
+        uint256 recipientBalance = _erc1155Token.balanceOf(_recipient, TOKEN_ID);
+        uint256 appBalance = _erc1155Token.balanceOf(address(_appContract), TOKEN_ID);
 
         _expectEmitOutputExecuted(output, proof);
         _appContract.executeOutput(output, proof);
 
         assertEq(
-            _erc1155SingleToken.balanceOf(address(_appContract), TOKEN_ID),
+            _erc1155Token.balanceOf(address(_appContract), TOKEN_ID),
             appBalance - TRANSFER_AMOUNT,
             "Application contract should have the transfer amount deducted"
         );
         assertEq(
-            _erc1155SingleToken.balanceOf(_recipient, TOKEN_ID),
+            _erc1155Token.balanceOf(_recipient, TOKEN_ID),
             recipientBalance + TRANSFER_AMOUNT,
             "Recipient should have received the transfer amount"
         );
@@ -1673,7 +1683,7 @@ contract ApplicationTest is Test, OwnableTest, AddressGenerator, ConsensusTestUt
         _expectNoChangeInNumberOfExecutedOutputs(numberOfExecutedOutputsBefore);
 
         vm.prank(_tokenOwner);
-        _erc1155BatchToken.safeBatchTransferFrom(
+        _erc1155Token.safeBatchTransferFrom(
             _tokenOwner, address(_appContract), _tokenIds, _initialSupplies, ""
         );
 
@@ -1681,9 +1691,8 @@ contract ApplicationTest is Test, OwnableTest, AddressGenerator, ConsensusTestUt
         uint256[] memory appBalances = new uint256[](batchLength);
         uint256[] memory recipientBalances = new uint256[](batchLength);
         for (uint256 i; i < batchLength; ++i) {
-            appBalances[i] =
-                _erc1155BatchToken.balanceOf(address(_appContract), _tokenIds[i]);
-            recipientBalances[i] = _erc1155BatchToken.balanceOf(_recipient, _tokenIds[i]);
+            appBalances[i] = _erc1155Token.balanceOf(address(_appContract), _tokenIds[i]);
+            recipientBalances[i] = _erc1155Token.balanceOf(_recipient, _tokenIds[i]);
         }
 
         _expectEmitOutputExecuted(output, proof);
@@ -1691,12 +1700,12 @@ contract ApplicationTest is Test, OwnableTest, AddressGenerator, ConsensusTestUt
 
         for (uint256 i; i < _tokenIds.length; ++i) {
             assertEq(
-                _erc1155BatchToken.balanceOf(address(_appContract), _tokenIds[i]),
+                _erc1155Token.balanceOf(address(_appContract), _tokenIds[i]),
                 appBalances[i] - _transferAmounts[i],
                 "Application contract should have the transfer amount deducted"
             );
             assertEq(
-                _erc1155BatchToken.balanceOf(_recipient, _tokenIds[i]),
+                _erc1155Token.balanceOf(_recipient, _tokenIds[i]),
                 recipientBalances[i] + _transferAmounts[i],
                 "Recipient should have received the transfer amount"
             );

@@ -8,7 +8,6 @@ import {IConsensusFactoryErrors} from "src/consensus/IConsensusFactoryErrors.sol
 import {IQuorum} from "src/consensus/quorum/IQuorum.sol";
 import {IQuorumFactory} from "src/consensus/quorum/IQuorumFactory.sol";
 import {IQuorumFactoryErrors} from "src/consensus/quorum/IQuorumFactoryErrors.sol";
-import {QuorumFactory} from "src/consensus/quorum/QuorumFactory.sol";
 import {IApplicationChecker} from "src/dapp/IApplicationChecker.sol";
 
 import {ApplicationForeclosureMock} from "../../util/ApplicationForeclosureMock.sol";
@@ -21,13 +20,13 @@ import {LibClaim} from "../../util/LibClaim.sol";
 import {LibConsensus} from "../../util/LibConsensus.sol";
 import {LibTopic} from "../../util/LibTopic.sol";
 import {LibUint256Array} from "../../util/LibUint256Array.sol";
+import {RollupsTest} from "../../util/RollupsTest.sol";
 import {VersionGetterTestUtils} from "../../util/VersionGetterTestUtils.sol";
 
-import {Test} from "forge-std-1.9.6/src/Test.sol";
 import {Vm} from "forge-std-1.9.6/src/Vm.sol";
 
 contract QuorumFactoryTest is
-    Test,
+    RollupsTest,
     ERC165Test,
     ConsensusTestUtils,
     VersionGetterTestUtils
@@ -45,7 +44,7 @@ contract QuorumFactoryTest is
     bytes4[] _supportedInterfaces;
 
     function setUp() public {
-        _factory = new QuorumFactory();
+        _factory = _contracts.core.quorumFactory;
         _supportedInterfaces.push(type(IConsensus).interfaceId);
         _supportedInterfaces.push(type(IQuorum).interfaceId);
         _registerSupportedInterfaces(_supportedInterfaces);

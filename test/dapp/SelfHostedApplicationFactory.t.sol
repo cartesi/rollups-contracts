@@ -8,23 +8,19 @@ import {Ownable} from "@openzeppelin-contracts-5.2.0/access/Ownable.sol";
 
 import {WithdrawalConfig} from "src/common/WithdrawalConfig.sol";
 import {IConsensusFactoryErrors} from "src/consensus/IConsensusFactoryErrors.sol";
-import {AuthorityFactory} from "src/consensus/authority/AuthorityFactory.sol";
 import {IAuthority} from "src/consensus/authority/IAuthority.sol";
 import {IAuthorityFactory} from "src/consensus/authority/IAuthorityFactory.sol";
-import {ApplicationFactory} from "src/dapp/ApplicationFactory.sol";
 import {IApplication} from "src/dapp/IApplication.sol";
 import {IApplicationFactory} from "src/dapp/IApplicationFactory.sol";
 import {IApplicationFactoryErrors} from "src/dapp/IApplicationFactoryErrors.sol";
 import {ISelfHostedApplicationFactory} from "src/dapp/ISelfHostedApplicationFactory.sol";
-import {SelfHostedApplicationFactory} from "src/dapp/SelfHostedApplicationFactory.sol";
 import {LibWithdrawalConfig} from "src/library/LibWithdrawalConfig.sol";
 
-import {Test} from "forge-std-1.9.6/src/Test.sol";
-
 import {LibBytes} from "../util/LibBytes.sol";
+import {RollupsTest} from "../util/RollupsTest.sol";
 import {VersionGetterTestUtils} from "../util/VersionGetterTestUtils.sol";
 
-contract SelfHostedApplicationFactoryTest is Test, VersionGetterTestUtils {
+contract SelfHostedApplicationFactoryTest is RollupsTest, VersionGetterTestUtils {
     using LibWithdrawalConfig for WithdrawalConfig;
     using LibBytes for bytes;
 
@@ -33,10 +29,9 @@ contract SelfHostedApplicationFactoryTest is Test, VersionGetterTestUtils {
     ISelfHostedApplicationFactory _factory;
 
     function setUp() external {
-        _authorityFactory = new AuthorityFactory();
-        _applicationFactory = new ApplicationFactory();
-        _factory =
-            new SelfHostedApplicationFactory(_authorityFactory, _applicationFactory);
+        _authorityFactory = _contracts.core.authorityFactory;
+        _applicationFactory = _contracts.core.applicationFactory;
+        _factory = _contracts.core.selfHostedApplicationFactory;
     }
 
     function testVersion() external view {

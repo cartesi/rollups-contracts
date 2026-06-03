@@ -8,21 +8,18 @@ import {
     IERC721Receiver
 } from "@openzeppelin-contracts-5.2.0/token/ERC721/IERC721Receiver.sol";
 
-import {Test} from "forge-std-1.9.6/src/Test.sol";
 import {Vm} from "forge-std-1.9.6/src/Vm.sol";
 
 import {IInputBox} from "src/inputs/IInputBox.sol";
-import {InputBox} from "src/inputs/InputBox.sol";
-import {ERC721Portal} from "src/portals/ERC721Portal.sol";
 import {IERC721Portal} from "src/portals/IERC721Portal.sol";
 
 import {InputBoxTestUtils} from "../util/InputBoxTestUtils.sol";
 import {LibBytes} from "../util/LibBytes.sol";
 import {LibTopic} from "../util/LibTopic.sol";
-import {SimpleERC721} from "../util/SimpleERC721.sol";
+import {RollupsTest} from "../util/RollupsTest.sol";
 import {VersionGetterTestUtils} from "../util/VersionGetterTestUtils.sol";
 
-contract ERC721PortalTest is Test, InputBoxTestUtils, VersionGetterTestUtils {
+contract ERC721PortalTest is RollupsTest, InputBoxTestUtils, VersionGetterTestUtils {
     using LibTopic for address;
     using LibBytes for bytes;
 
@@ -30,8 +27,8 @@ contract ERC721PortalTest is Test, InputBoxTestUtils, VersionGetterTestUtils {
     IERC721Portal _portal;
 
     function setUp() public {
-        _inputBox = new InputBox();
-        _portal = new ERC721Portal(_inputBox);
+        _inputBox = _contracts.core.inputBox;
+        _portal = _contracts.core.erc721Portal;
     }
 
     function testVersion() external view {
@@ -232,8 +229,12 @@ contract ERC721PortalTest is Test, InputBoxTestUtils, VersionGetterTestUtils {
         internal
         returns (IERC721 token)
     {
-        // Deploy the ERC-721 token contract with the sender's NFT pre-minted
-        token = new SimpleERC721(sender, tokenId);
+        // Get the pre-deployed ERC-721 token contract
+        token = _contracts.dev.testNonFungibleToken;
+
+        // Make the sender mint the token
+        vm.prank(sender);
+        _contracts.dev.testNonFungibleToken.mint(tokenId);
 
         // Mine a random number of blocks
         vm.roll(vm.randomUint(vm.getBlockNumber(), type(uint256).max));

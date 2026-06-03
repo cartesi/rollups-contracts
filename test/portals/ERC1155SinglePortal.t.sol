@@ -8,21 +8,22 @@ import {
     IERC1155Receiver
 } from "@openzeppelin-contracts-5.2.0/token/ERC1155/IERC1155Receiver.sol";
 
-import {Test} from "forge-std-1.9.6/src/Test.sol";
 import {Vm} from "forge-std-1.9.6/src/Vm.sol";
 
 import {IInputBox} from "src/inputs/IInputBox.sol";
-import {InputBox} from "src/inputs/InputBox.sol";
-import {ERC1155SinglePortal} from "src/portals/ERC1155SinglePortal.sol";
 import {IERC1155SinglePortal} from "src/portals/IERC1155SinglePortal.sol";
 
 import {InputBoxTestUtils} from "../util/InputBoxTestUtils.sol";
 import {LibBytes} from "../util/LibBytes.sol";
 import {LibTopic} from "../util/LibTopic.sol";
-import {SimpleSingleERC1155} from "../util/SimpleERC1155.sol";
+import {RollupsTest} from "../util/RollupsTest.sol";
 import {VersionGetterTestUtils} from "../util/VersionGetterTestUtils.sol";
 
-contract ERC1155SinglePortalTest is Test, InputBoxTestUtils, VersionGetterTestUtils {
+contract ERC1155SinglePortalTest is
+    RollupsTest,
+    InputBoxTestUtils,
+    VersionGetterTestUtils
+{
     using LibTopic for address;
     using LibBytes for bytes;
 
@@ -30,8 +31,8 @@ contract ERC1155SinglePortalTest is Test, InputBoxTestUtils, VersionGetterTestUt
     IERC1155SinglePortal _portal;
 
     function setUp() public {
-        _inputBox = new InputBox();
-        _portal = new ERC1155SinglePortal(_inputBox);
+        _inputBox = _contracts.core.inputBox;
+        _portal = _contracts.core.erc1155SinglePortal;
     }
 
     function testVersion() external view {
@@ -241,8 +242,12 @@ contract ERC1155SinglePortalTest is Test, InputBoxTestUtils, VersionGetterTestUt
         internal
         returns (IERC1155 token)
     {
-        // Deploy the ERC-1155 token contract with the sender's tokens pre-minted
-        token = new SimpleSingleERC1155(sender, tokenId, value);
+        // Get the pre-deployed ERC-1155 token contract
+        token = _contracts.dev.testMultiToken;
+
+        // Make the sender mint the tokens
+        vm.prank(sender);
+        _contracts.dev.testMultiToken.mint(tokenId, value);
 
         // Mine a random number of blocks
         vm.roll(vm.randomUint(vm.getBlockNumber(), type(uint256).max));

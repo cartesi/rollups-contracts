@@ -3,7 +3,6 @@
 
 pragma solidity ^0.8.22;
 
-import {Test} from "forge-std-1.9.6/src/Test.sol";
 import {Vm} from "forge-std-1.9.6/src/Vm.sol";
 
 import {CanonicalMachine} from "src/common/CanonicalMachine.sol";
@@ -12,13 +11,14 @@ import {IInputBox} from "src/inputs/IInputBox.sol";
 import {InputBox} from "src/inputs/InputBox.sol";
 
 import {InputBoxTestUtils} from "../util/InputBoxTestUtils.sol";
+import {RollupsTest} from "../util/RollupsTest.sol";
 import {VersionGetterTestUtils} from "../util/VersionGetterTestUtils.sol";
 
-contract InputBoxTest is Test, InputBoxTestUtils, VersionGetterTestUtils {
-    InputBox _inputBox;
+contract InputBoxTest is RollupsTest, InputBoxTestUtils, VersionGetterTestUtils {
+    IInputBox _inputBox;
 
     function setUp() external {
-        _inputBox = new InputBox();
+        _inputBox = _contracts.core.inputBox;
     }
 
     function testVersion() external view {

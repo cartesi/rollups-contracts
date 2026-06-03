@@ -5,7 +5,6 @@
 pragma solidity ^0.8.22;
 
 import {Ownable} from "@openzeppelin-contracts-5.2.0/access/Ownable.sol";
-import {Test} from "forge-std-1.9.6/src/Test.sol";
 import {Vm} from "forge-std-1.9.6/src/Vm.sol";
 
 import {IConsensus} from "src/consensus/IConsensus.sol";
@@ -26,10 +25,11 @@ import {LibConsensus} from "../../util/LibConsensus.sol";
 import {LibTopic} from "../../util/LibTopic.sol";
 import {LibUint256Array} from "../../util/LibUint256Array.sol";
 import {OwnableTest} from "../../util/OwnableTest.sol";
+import {RollupsTest} from "../../util/RollupsTest.sol";
 import {VersionGetterTestUtils} from "../../util/VersionGetterTestUtils.sol";
 
 contract AuthorityFactoryTest is
-    Test,
+    RollupsTest,
     ERC165Test,
     OwnableTest,
     ConsensusTestUtils,
@@ -46,7 +46,7 @@ contract AuthorityFactoryTest is
     bytes4[] _supportedInterfaces;
 
     function setUp() public {
-        _factory = new AuthorityFactory();
+        _factory = _contracts.core.authorityFactory;
         _supportedInterfaces.push(type(IConsensus).interfaceId);
         _supportedInterfaces.push(type(IAuthority).interfaceId);
         _registerSupportedInterfaces(_supportedInterfaces);
