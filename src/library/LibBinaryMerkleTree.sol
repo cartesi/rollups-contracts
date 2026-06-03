@@ -122,14 +122,14 @@ library LibBinaryMerkleTree {
 
                 numOfJoins = numOfHashes;
             } else {
-                // since padding happens in LibBytes.getBlock,
+                // since leafFromDataAt does the padding,
                 // we only need to complete the stack with
                 // pristine Merkle roots
                 topStackLevel = numOfHashes.ctz();
 
                 stack[stackDepth] = pristineNodes[topStackLevel];
 
-                //Empty Tree Hash summarizes many hashes
+                // empty tree hash summarizes many hashes
                 numOfHashes = numOfHashes + (1 << topStackLevel);
                 numOfJoins = numOfHashes >> topStackLevel;
             }
