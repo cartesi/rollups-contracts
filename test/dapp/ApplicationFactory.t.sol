@@ -6,7 +6,6 @@ pragma solidity ^0.8.22;
 
 import {WithdrawalConfig} from "src/common/WithdrawalConfig.sol";
 import {IOutputsMerkleRootValidator} from "src/consensus/IOutputsMerkleRootValidator.sol";
-import {ApplicationFactory} from "src/dapp/ApplicationFactory.sol";
 import {IApplication} from "src/dapp/IApplication.sol";
 import {IApplicationFactory} from "src/dapp/IApplicationFactory.sol";
 import {IApplicationFactoryErrors} from "src/dapp/IApplicationFactoryErrors.sol";
@@ -14,20 +13,20 @@ import {LibWithdrawalConfig} from "src/library/LibWithdrawalConfig.sol";
 
 import {Ownable} from "@openzeppelin-contracts-5.2.0/access/Ownable.sol";
 
-import {Test} from "forge-std-1.9.6/src/Test.sol";
 import {Vm} from "forge-std-1.9.6/src/Vm.sol";
 
 import {LibBytes} from "../util/LibBytes.sol";
+import {RollupsTest} from "../util/RollupsTest.sol";
 import {VersionGetterTestUtils} from "../util/VersionGetterTestUtils.sol";
 
-contract ApplicationFactoryTest is Test, VersionGetterTestUtils {
+contract ApplicationFactoryTest is RollupsTest, VersionGetterTestUtils {
     using LibWithdrawalConfig for WithdrawalConfig;
     using LibBytes for bytes;
 
-    ApplicationFactory _factory;
+    IApplicationFactory _factory;
 
     function setUp() external {
-        _factory = new ApplicationFactory();
+        _factory = _contracts.core.applicationFactory;
     }
 
     function testVersion() external view {

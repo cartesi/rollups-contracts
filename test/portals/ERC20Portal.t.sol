@@ -5,21 +5,18 @@ pragma solidity ^0.8.22;
 
 import {IERC20} from "@openzeppelin-contracts-5.2.0/token/ERC20/IERC20.sol";
 
-import {Test} from "forge-std-1.9.6/src/Test.sol";
 import {Vm} from "forge-std-1.9.6/src/Vm.sol";
 
 import {IInputBox} from "src/inputs/IInputBox.sol";
-import {InputBox} from "src/inputs/InputBox.sol";
-import {ERC20Portal} from "src/portals/ERC20Portal.sol";
 import {IERC20Portal} from "src/portals/IERC20Portal.sol";
 
 import {InputBoxTestUtils} from "../util/InputBoxTestUtils.sol";
 import {LibBytes} from "../util/LibBytes.sol";
 import {LibTopic} from "../util/LibTopic.sol";
-import {SimpleERC20} from "../util/SimpleERC20.sol";
+import {RollupsTest} from "../util/RollupsTest.sol";
 import {VersionGetterTestUtils} from "../util/VersionGetterTestUtils.sol";
 
-contract ERC20PortalTest is Test, InputBoxTestUtils, VersionGetterTestUtils {
+contract ERC20PortalTest is RollupsTest, InputBoxTestUtils, VersionGetterTestUtils {
     using LibTopic for address;
     using LibBytes for bytes;
 
@@ -27,13 +24,10 @@ contract ERC20PortalTest is Test, InputBoxTestUtils, VersionGetterTestUtils {
     IERC20Portal _portal;
     IERC20 _token;
 
-    address immutable TOKEN_OWNER = vm.addr(1);
-    uint256 immutable TOTAL_SUPPLY = type(uint256).max;
-
     function setUp() public {
-        _inputBox = new InputBox();
-        _portal = new ERC20Portal(_inputBox);
-        _token = new SimpleERC20(TOKEN_OWNER, TOTAL_SUPPLY);
+        _inputBox = _contracts.core.inputBox;
+        _portal = _contracts.core.erc20Portal;
+        _token = _contracts.dev.testFungibleToken;
     }
 
     function testVersion() external view {
@@ -240,19 +234,25 @@ contract ERC20PortalTest is Test, InputBoxTestUtils, VersionGetterTestUtils {
         // Mine a random number of blocks
         vm.roll(vm.randomUint(vm.getBlockNumber(), type(uint256).max));
 
-        // Transfer a random amount of tokens to each participant
-        vm.startPrank(TOKEN_OWNER);
-        assertTrue(_token.transfer(sender, _randomAmountGe(value)));
-        assertTrue(_token.transfer(address(_portal), _randomAmountGe(0)));
-        assertTrue(_token.transfer(appContract, _randomAmountGe(0)));
-        vm.stopPrank();
+        // Pick random token amounts for each participant
+        uint256 totalSupply = type(uint256).max;
+        uint256 senderBalance = vm.randomUint(value, totalSupply);
+        totalSupply -= senderBalance;
+        uint256 portalBalance = vm.randomUint(0, totalSupply);
+        totalSupply -= portalBalance;
+        uint256 appBalance = vm.randomUint(0, totalSupply);
+        totalSupply -= appBalance;
+
+        // Mint the tokens
+        _contracts.dev.testFungibleToken.mint(senderBalance + portalBalance + appBalance);
+
+        // Transfer the tokens to each participant
+        assertTrue(_token.transfer(sender, senderBalance));
+        assertTrue(_token.transfer(address(_portal), portalBalance));
+        assertTrue(_token.transfer(appContract, appBalance));
 
         // Make the sender give enough allowance to the portal
         vm.prank(sender);
         _token.approve(address(_portal), vm.randomUint(value, type(uint256).max));
-    }
-
-    function _randomAmountGe(uint256 min) internal returns (uint256) {
-        return vm.randomUint(min, _token.balanceOf(TOKEN_OWNER));
     }
 }

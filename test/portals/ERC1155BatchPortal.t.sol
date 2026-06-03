@@ -8,12 +8,9 @@ import {
     IERC1155Receiver
 } from "@openzeppelin-contracts-5.2.0/token/ERC1155/IERC1155Receiver.sol";
 
-import {Test} from "forge-std-1.9.6/src/Test.sol";
 import {Vm} from "forge-std-1.9.6/src/Vm.sol";
 
 import {IInputBox} from "src/inputs/IInputBox.sol";
-import {InputBox} from "src/inputs/InputBox.sol";
-import {ERC1155BatchPortal} from "src/portals/ERC1155BatchPortal.sol";
 import {IERC1155BatchPortal} from "src/portals/IERC1155BatchPortal.sol";
 
 import {InputBoxTestUtils} from "../util/InputBoxTestUtils.sol";
@@ -21,10 +18,14 @@ import {LibAddressArray} from "../util/LibAddressArray.sol";
 import {LibBytes} from "../util/LibBytes.sol";
 import {LibTopic} from "../util/LibTopic.sol";
 import {LibUint256Array} from "../util/LibUint256Array.sol";
-import {SimpleBatchERC1155} from "../util/SimpleERC1155.sol";
+import {RollupsTest} from "../util/RollupsTest.sol";
 import {VersionGetterTestUtils} from "../util/VersionGetterTestUtils.sol";
 
-contract ERC1155BatchPortalTest is Test, InputBoxTestUtils, VersionGetterTestUtils {
+contract ERC1155BatchPortalTest is
+    RollupsTest,
+    InputBoxTestUtils,
+    VersionGetterTestUtils
+{
     using LibUint256Array for uint256[];
     using LibAddressArray for address;
     using LibUint256Array for Vm;
@@ -35,8 +36,8 @@ contract ERC1155BatchPortalTest is Test, InputBoxTestUtils, VersionGetterTestUti
     IERC1155BatchPortal _portal;
 
     function setUp() public {
-        _inputBox = new InputBox();
-        _portal = new ERC1155BatchPortal(_inputBox);
+        _inputBox = _contracts.core.inputBox;
+        _portal = _contracts.core.erc1155BatchPortal;
     }
 
     function testVersion() external view {
@@ -269,8 +270,12 @@ contract ERC1155BatchPortalTest is Test, InputBoxTestUtils, VersionGetterTestUti
         // Generate an array of unique uint256 values with the same size as `values`.
         tokenIds = vm.randomUniqueUint256Array(values.length);
 
-        // Deploy the ERC-1155 token contract with the sender's tokens pre-minted
-        token = new SimpleBatchERC1155(sender, tokenIds, values);
+        // Get the pre-deployed ERC-1155 token contract
+        token = _contracts.dev.testMultiToken;
+
+        // Make the sender mint the batch of tokens
+        vm.prank(sender);
+        _contracts.dev.testMultiToken.mintBatch(tokenIds, values);
 
         // Mine a random number of blocks
         vm.roll(vm.randomUint(vm.getBlockNumber(), type(uint256).max));

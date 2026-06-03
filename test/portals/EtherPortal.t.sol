@@ -3,27 +3,25 @@
 
 pragma solidity ^0.8.22;
 
-import {Test} from "forge-std-1.9.6/src/Test.sol";
 import {Vm} from "forge-std-1.9.6/src/Vm.sol";
 
 import {IInputBox} from "src/inputs/IInputBox.sol";
-import {InputBox} from "src/inputs/InputBox.sol";
-import {EtherPortal} from "src/portals/EtherPortal.sol";
 import {IEtherPortal} from "src/portals/IEtherPortal.sol";
 
 import {InputBoxTestUtils} from "../util/InputBoxTestUtils.sol";
 import {LibBytes} from "../util/LibBytes.sol";
+import {RollupsTest} from "../util/RollupsTest.sol";
 import {VersionGetterTestUtils} from "../util/VersionGetterTestUtils.sol";
 
-contract EtherPortalTest is Test, InputBoxTestUtils, VersionGetterTestUtils {
+contract EtherPortalTest is RollupsTest, InputBoxTestUtils, VersionGetterTestUtils {
     using LibBytes for bytes;
 
     IInputBox _inputBox;
     IEtherPortal _portal;
 
     function setUp() external {
-        _inputBox = new InputBox();
-        _portal = new EtherPortal(_inputBox);
+        _inputBox = _contracts.core.inputBox;
+        _portal = _contracts.core.etherPortal;
     }
 
     function testVersion() external view {

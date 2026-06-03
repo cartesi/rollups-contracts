@@ -3,14 +3,12 @@
 
 pragma solidity ^0.8.22;
 
-import {Test} from "forge-std-1.9.6/src/Test.sol";
 import {Vm} from "forge-std-1.9.6/src/Vm.sol";
 
 import {IERC20} from "@openzeppelin-contracts-5.2.0/token/ERC20/IERC20.sol";
 
 import {Outputs} from "src/common/Outputs.sol";
 import {ISafeERC20Transfer} from "src/delegatecall/ISafeERC20Transfer.sol";
-import {SafeERC20Transfer} from "src/delegatecall/SafeERC20Transfer.sol";
 import {
     IUsdWithdrawalOutputBuilder
 } from "src/withdrawal/IUsdWithdrawalOutputBuilder.sol";
@@ -20,22 +18,20 @@ import {
 import {
     IWithdrawalOutputBuilderErrors
 } from "src/withdrawal/IWithdrawalOutputBuilderErrors.sol";
-import {
-    UsdWithdrawalOutputBuilderFactory
-} from "src/withdrawal/UsdWithdrawalOutputBuilderFactory.sol";
 
 import {LibBytes} from "../util/LibBytes.sol";
+import {RollupsTest} from "../util/RollupsTest.sol";
 import {VersionGetterTestUtils} from "../util/VersionGetterTestUtils.sol";
 
-contract UsdWithdrawalOutputBuilderTest is Test, VersionGetterTestUtils {
+contract UsdWithdrawalOutputBuilderTest is RollupsTest, VersionGetterTestUtils {
     using LibBytes for bytes;
 
     ISafeERC20Transfer _safeErc20Transfer;
     IUsdWithdrawalOutputBuilderFactory _factory;
 
     function setUp() external {
-        _safeErc20Transfer = new SafeERC20Transfer();
-        _factory = new UsdWithdrawalOutputBuilderFactory(_safeErc20Transfer);
+        _safeErc20Transfer = _contracts.core.safeErc20Transfer;
+        _factory = _contracts.core.usdWithdrawalOutputBuilderFactory;
     }
 
     function testVersion() external view {
