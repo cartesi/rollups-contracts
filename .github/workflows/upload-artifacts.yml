@@ -40,10 +40,12 @@ jobs:
         env:
           FILEPATH: upload/rollups-contracts-${{ steps.extract_version.outputs.version }}-artifacts.tar.gz
 
+      - name: Build all contracts
+        run: forge build
+
       - name: Simulate deployment to supported testnets and mainnets
         run: |
-          ./script/deploy-testnets.sh
-          ./script/deploy-mainnets.sh
+          make -j4 deploy-testnets deploy-mainnets
 
       - name: Compress testnet and mainnet deployment simulation artifacts
         run: tar -czf "$FILEPATH" deployments
@@ -51,7 +53,7 @@ jobs:
           FILEPATH: upload/rollups-contracts-${{ steps.extract_version.outputs.version }}-deployment-addresses.tar.gz
 
       - name: Build devnet
-        run: ./script/build-devnet.sh
+        run: make devnet
 
       - name: Compress devnet artifacts
         run: tar -czf "$FILEPATH" deployments/31337 state.json

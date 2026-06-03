@@ -20,20 +20,22 @@ forge soldeer install
    For example, let us assume we want to deploy to Ethereum Mainnet.
 
 ```bash
-RPC_URL='https://ethereum-rpc.publicnode.com'
+export ETHEREUM_MAINNET_RPC_URL='https://ethereum-rpc.publicnode.com'
 ```
 
 4. Simulate the deployment in the target chain.
    If any warnings arise, please consult the [Troubleshooting](#troubleshooting) section and address them.
    Ignoring such warnings is strongly discouraged.
+   Deployment options are passed down through the `DEPLOY_OPTS` variable.
 
 ```bash
-./script/deploy.sh --rpc-url "$RPC_URL"
+make deploy-ethereum-mainnet DEPLOY_OPTS="--non-interactive"
 ```
 
 5. If simulation succeeds without warnings, check if a deployment cost estimate (like the one below) is displayed.
    If so, you may fund your wallet with the estimated amount.
    If not, this means that all contracts have been deployed to the target chain already!
+   In this case, you can already find the deployment addresses under the `deployments/<chain-id>`.
 
 ```
 ==========================

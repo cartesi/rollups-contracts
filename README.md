@@ -46,11 +46,11 @@ forge soldeer install
 ```
 
 Having done that, you can build a local devnet.
-The following Bash script dumps the Anvil state into a `state.json` file
+The following Makefile target dumps the Anvil state into a `state.json` file
 and the deployment addresses into the `deployments/31337` directory.
 
 ```sh
-./script/build-devnet.sh
+make devnet
 ```
 
 Once built, you can run the local devnet with Anvil.

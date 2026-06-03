@@ -12,6 +12,7 @@ remappings = [
 ]
 fs_permissions = [
     { access = "read-write", path = "deployments" },
+    { access = "read-write", path = "script/utils/ContractDeployers.sol" },
 ]
 
 [fmt]
@@ -36,5 +37,15 @@ exclude_lints = ["incorrect-shift"]
 "@openzeppelin-contracts" = "5.2.0"
 forge-std = "1.9.6"
 cartesi-machine-solidity-step = { version = "0.13.0", git = "https://github.com/cartesi/machine-solidity-step.git", tag = "v0.13.0" }
+
+[rpc_endpoints]
+arbitrum_mainnet = "${ARBITRUM_MAINNET_RPC_URL}"
+arbitrum_sepolia = "${ARBITRUM_SEPOLIA_RPC_URL}"
+base_mainnet = "${BASE_MAINNET_RPC_URL}"
+base_sepolia = "${BASE_SEPOLIA_RPC_URL}"
+ethereum_mainnet = "${ETHEREUM_MAINNET_RPC_URL}"
+ethereum_sepolia = "${ETHEREUM_SEPOLIA_RPC_URL}"
+op_mainnet = "${OP_MAINNET_RPC_URL}"
+op_sepolia = "${OP_SEPOLIA_RPC_URL}"
 
 # See more config options https://book.getfoundry.sh/reference/config/
