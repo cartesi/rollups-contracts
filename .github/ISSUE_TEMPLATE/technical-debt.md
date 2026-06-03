@@ -2,7 +2,6 @@
 name: 🏗️ Technical debt
 about: Propose solutions to technical debts
 title: ""
-labels: T-debt
 assignees: ""
 ---
 
