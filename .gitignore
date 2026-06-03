@@ -4,7 +4,6 @@
 /dependencies
 /deployments
 /forge-docs
-/node_modules
 /out
 lcov.info
 state.json

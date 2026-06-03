@@ -31,10 +31,7 @@ deposit assets, submit claims, execute asset withdrawal orders, and more.
 
 ## Getting started
 
-First, please ensure the following dependencies are installed:
-
-- [corepack]
-- [foundry] 1.4.3
+First, please ensure [Foundry] 1.4.3 is installed.
 
 Then, you may clone the repository...
 
@@ -42,10 +39,9 @@ Then, you may clone the repository...
 git clone https://github.com/cartesi/rollups-contracts.git
 ```
 
-... and install the Node.js and Solidity packages.
+... and install the Solidity dependencies from Soldeer.
 
 ```sh
-pnpm install
 forge soldeer install
 ```
 
@@ -123,7 +119,6 @@ The project is licensed under Apache-2.0.
 [ZzzzHui]: https://github.com/ZzzzHui
 [`CALL`]: https://www.evm.codes/?fork=cancun#f1
 [`DELEGATECALL`]: https://www.evm.codes/?fork=cancun#f4
-[corepack]: https://nodejs.org/api/corepack.html
-[foundry]: https://book.getfoundry.sh/getting-started/installation
+[Foundry]: https://book.getfoundry.sh/getting-started/installation
 [guidanoli]: https://github.com/guidanoli
 [pedroargento]: https://github.com/pedroargento

@@ -14,7 +14,6 @@ Are there any clear downsides? (requires refactoring, bugs were introduced, etc)
 
 ## 📈 Subtasks
 
-- [ ] Update major versions in `packages.json`.
 - [ ] If an update requires major work, create the corresponding issue.
-- [ ] Update the dependencies in `pnpm-lock.yaml`.
+- [ ] Update the dependencies.
 - [ ] Verify whether everything is working as expected.

@@ -32,11 +32,8 @@ jobs:
             echo "version=0.0.0-dev" >> $GITHUB_OUTPUT
           fi
 
-      - name: Clean artifacts
-        run: pnpm clean
-
-      - name: Build contracts
-        run: pnpm build:contracts
+      - name: Build source contracts
+        run: forge build src
 
       - name: Compress contract artifacts
         run: tar -czf "$FILEPATH" -C out .

@@ -17,4 +17,4 @@ jobs:
       - uses: ./.github/actions/setup
 
       - name: Check code format
-        run: pnpm fmt:check
+        run: forge fmt --check

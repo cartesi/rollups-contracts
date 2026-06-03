@@ -3,12 +3,17 @@
 
 pragma solidity ^0.8.22;
 
-import {VersionGetterTestUtils} from "./VersionGetterTestUtils.sol";
+import {Test} from "forge-std-1.9.6/src/Test.sol";
 
-contract VersionGetterTestUtilsTest is VersionGetterTestUtils {
+import "../util/Semver.sol" as Semver;
+
+import "src/common/Version.sol" as Version;
+
+contract VersionTest is Test {
     string[] _strings;
 
     function testValidPreReleases() external {
+        _strings.push("");
         _strings.push("alpha");
         _strings.push("beta");
         _strings.push("rc");
@@ -45,17 +50,14 @@ contract VersionGetterTestUtilsTest is VersionGetterTestUtils {
         _strings.push("A.B.C");
         _strings.push("0.alpha.1");
         _strings.push("alpha.0");
+        _strings.push(Version.PRE_RELEASE);
 
         for (uint256 i; i < _strings.length; ++i) {
-            assertTrue(
-                _isPreReleaseValid(bytes(_strings[i])),
-                string.concat("Expected ", _strings[i], " to be valid")
-            );
+            assertTrue(Semver.isPreReleaseValid(bytes(_strings[i])), _strings[i]);
         }
     }
 
     function testInvalidPreReleases() external {
-        _strings.push("");
         _strings.push("00");
         _strings.push("01");
         _strings.push("09");
@@ -85,14 +87,12 @@ contract VersionGetterTestUtilsTest is VersionGetterTestUtils {
         _strings.push(".1.2.3");
 
         for (uint256 i; i < _strings.length; ++i) {
-            assertFalse(
-                _isPreReleaseValid(bytes(_strings[i])),
-                string.concat("Expected ", _strings[i], " to be invalid")
-            );
+            assertFalse(Semver.isPreReleaseValid(bytes(_strings[i])), _strings[i]);
         }
     }
 
     function testValidBuildMetadatas() external {
+        _strings.push("");
         _strings.push("001");
         _strings.push("000");
         _strings.push("00");
@@ -127,17 +127,14 @@ contract VersionGetterTestUtilsTest is VersionGetterTestUtils {
         _strings.push("x.7.z.92");
         _strings.push("1-2-3");
         _strings.push("alpha--beta");
+        _strings.push(Version.BUILD_METADATA);
 
         for (uint256 i; i < _strings.length; ++i) {
-            assertTrue(
-                _isBuildMetadataValid(bytes(_strings[i])),
-                string.concat("Expected ", _strings[i], " to be valid")
-            );
+            assertTrue(Semver.isBuildMetadataValid(bytes(_strings[i])), _strings[i]);
         }
     }
 
     function testInvalidBuildMetadatas() external {
-        _strings.push("");
         _strings.push(".");
         _strings.push(".build");
         _strings.push("build.");
@@ -158,10 +155,7 @@ contract VersionGetterTestUtilsTest is VersionGetterTestUtils {
         _strings.push("build.#1");
 
         for (uint256 i; i < _strings.length; ++i) {
-            assertFalse(
-                _isBuildMetadataValid(bytes(_strings[i])),
-                string.concat("Expected ", _strings[i], " to be invalid")
-            );
+            assertFalse(Semver.isBuildMetadataValid(bytes(_strings[i])), _strings[i]);
         }
     }
 }
