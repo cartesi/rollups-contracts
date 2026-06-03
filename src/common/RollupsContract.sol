@@ -4,6 +4,7 @@
 pragma solidity ^0.8.26;
 
 import {IVersionGetter} from "./IVersionGetter.sol";
+import "./Version.sol" as Version;
 
 abstract contract RollupsContract is IVersionGetter {
     function version()
@@ -18,10 +19,10 @@ abstract contract RollupsContract is IVersionGetter {
             string memory buildMetadata
         )
     {
-        major = 3;
-        minor = 0;
-        patch = 0;
-        preRelease = "alpha.6";
-        buildMetadata = "";
+        major = Version.MAJOR;
+        minor = Version.MINOR;
+        patch = Version.PATCH;
+        preRelease = Version.PRE_RELEASE;
+        buildMetadata = Version.BUILD_METADATA;
     }
 }

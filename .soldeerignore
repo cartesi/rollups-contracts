@@ -1,9 +1,6 @@
-.changeset
 .github
 .gitignore
 .soldeerignore
 AUTHORS
 CHANGELOG.md
-package.json
-pnpm-lock.yaml
 test

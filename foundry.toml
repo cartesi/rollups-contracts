@@ -12,7 +12,6 @@ remappings = [
 ]
 fs_permissions = [
     { access = "read-write", path = "deployments" },
-    { access = "read", path = "package.json" },
 ]
 
 [fmt]
