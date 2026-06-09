@@ -13,8 +13,6 @@ import {WithdrawalConfig} from "src/common/WithdrawalConfig.sol";
 import {IOutputsMerkleRootValidator} from "src/consensus/IOutputsMerkleRootValidator.sol";
 import {IAuthority} from "src/consensus/authority/IAuthority.sol";
 import {IApplication} from "src/dapp/IApplication.sol";
-import {IApplicationForeclosure} from "src/dapp/IApplicationForeclosure.sol";
-import {IApplicationWithdrawal} from "src/dapp/IApplicationWithdrawal.sol";
 import {ISafeERC20Transfer} from "src/delegatecall/ISafeERC20Transfer.sol";
 import {IInputBox} from "src/inputs/IInputBox.sol";
 import {LibUsdAccount} from "src/library/LibUsdAccount.sol";
@@ -168,7 +166,7 @@ contract ApplicationTest is
     function testForecloseRevertsNotGuardian(address caller) external {
         vm.assume(caller != _appContract.getGuardian());
         assertFalse(_appContract.isForeclosed());
-        vm.expectRevert(IApplicationForeclosure.NotGuardian.selector);
+        vm.expectRevert(IApplication.NotGuardian.selector);
         vm.prank(caller);
         _appContract.foreclose();
     }
@@ -179,7 +177,7 @@ contract ApplicationTest is
         // check the idempotence of the `foreclose()` function.
         for (uint256 i; i < 3; ++i) {
             vm.expectEmit(true, true, true, true, address(_appContract));
-            emit IApplicationForeclosure.Foreclosure();
+            emit IApplication.Foreclosure();
             vm.prank(_appContract.getGuardian());
             _appContract.foreclose();
             assertTrue(_appContract.isForeclosed());
@@ -450,7 +448,7 @@ contract ApplicationTest is
         bytes32 accountsDriveMerkleRoot = _getAccountsDriveMerkleRoot();
         bytes32[] memory proof = _getAccountsDriveMerkleRootProof();
 
-        vm.expectRevert(IApplicationWithdrawal.NotForeclosed.selector);
+        vm.expectRevert(IApplication.NotForeclosed.selector);
         vm.prank(vm.randomAddress());
         _appContract.proveAccountsDriveMerkleRoot(accountsDriveMerkleRoot, proof);
 
@@ -482,10 +480,8 @@ contract ApplicationTest is
             Vm.Log memory log = logs[i];
             if (log.emitter == address(_appContract)) {
                 assertGe(log.topics.length, 1);
-                if (
-                    log.topics[0]
-                        == IApplicationWithdrawal.AccountsDriveMerkleRootProved.selector
-                ) {
+                if (log.topics[0] == IApplication.AccountsDriveMerkleRootProved.selector)
+                {
                     bytes32 arg1 = abi.decode(log.data, (bytes32));
                     assertEq(arg1, accountsDriveMerkleRoot);
                     ++numOfAccountsDriveMerkleRootProvedEvents;
@@ -632,7 +628,7 @@ contract ApplicationTest is
         vm.prank(_tokenOwner);
         assertTrue(_erc20Token.transfer(address(_appContract), balance));
 
-        vm.expectRevert(IApplicationWithdrawal.NotForeclosed.selector);
+        vm.expectRevert(IApplication.NotForeclosed.selector);
 
         vm.prank(vm.randomAddress());
         _appContract.withdraw(account, proof);
@@ -805,7 +801,7 @@ contract ApplicationTest is
             if (log.emitter == address(_appContract)) {
                 assertGe(log.topics.length, 1);
                 bytes32 topic0 = log.topics[0];
-                if (topic0 == IApplicationWithdrawal.Withdrawal.selector) {
+                if (topic0 == IApplication.Withdrawal.selector) {
                     ++numOfWithdrawalEventsInTx;
 
                     // decode log data
@@ -1201,7 +1197,7 @@ contract ApplicationTest is
                 _appContract.validateAccountMerkleRoot(accountMerkleRoot, proof);
                 vm.expectRevert(error);
                 _appContract.validateAccount(account, proof);
-                vm.expectRevert(IApplicationWithdrawal.NotForeclosed.selector);
+                vm.expectRevert(IApplication.NotForeclosed.selector);
                 vm.prank(vm.randomAddress());
                 _appContract.withdraw(account, proof);
                 vm.expectRevert(error);
@@ -1299,7 +1295,7 @@ contract ApplicationTest is
         pure
         returns (bytes4)
     {
-        return IApplicationWithdrawal.InvalidAccountRootSiblingsArrayLength.selector;
+        return IApplication.InvalidAccountRootSiblingsArrayLength.selector;
     }
 
     function _encodeInvalidAccountsDriveMerkleRootProofSize()
@@ -1307,7 +1303,7 @@ contract ApplicationTest is
         pure
         returns (bytes4)
     {
-        return IApplicationWithdrawal.InvalidAccountsDriveMerkleRootProofSize.selector;
+        return IApplication.InvalidAccountsDriveMerkleRootProofSize.selector;
     }
 
     function _encodeInvalidOutputHashesSiblingsArrayLength()
@@ -1324,7 +1320,7 @@ contract ApplicationTest is
         returns (bytes memory)
     {
         return abi.encodeWithSelector(
-            IApplicationWithdrawal.AccountsDriveMerkleRootAlreadyProved.selector
+            IApplication.AccountsDriveMerkleRootAlreadyProved.selector
         );
     }
 
@@ -1334,7 +1330,7 @@ contract ApplicationTest is
         returns (bytes memory)
     {
         return abi.encodeWithSelector(
-            IApplicationWithdrawal.AccountsDriveMerkleRootNotProved.selector
+            IApplication.AccountsDriveMerkleRootNotProved.selector
         );
     }
 
@@ -1344,7 +1340,7 @@ contract ApplicationTest is
         returns (bytes memory)
     {
         return abi.encodeWithSelector(
-            IApplicationWithdrawal.InvalidMachineMerkleRoot.selector, machineMerkleRoot
+            IApplication.InvalidMachineMerkleRoot.selector, machineMerkleRoot
         );
     }
 
@@ -1354,8 +1350,7 @@ contract ApplicationTest is
         returns (bytes memory)
     {
         return abi.encodeWithSelector(
-            IApplicationWithdrawal.InvalidAccountsDriveMerkleRoot.selector,
-            accountsDriveMerkleRoot
+            IApplication.InvalidAccountsDriveMerkleRoot.selector, accountsDriveMerkleRoot
         );
     }
 
@@ -1391,7 +1386,7 @@ contract ApplicationTest is
         returns (bytes memory)
     {
         return abi.encodeWithSelector(
-            IApplicationWithdrawal.AccountFundsAlreadyWithdrawn.selector, accountIndex
+            IApplication.AccountFundsAlreadyWithdrawn.selector, accountIndex
         );
     }
 
