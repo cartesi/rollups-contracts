@@ -171,17 +171,25 @@ contract ApplicationTest is
         _appContract.foreclose();
     }
 
-    function testForeclose() external {
+    function testForeclose(address caller) external {
+        address guardian = _appContract.getGuardian();
+        vm.assume(caller != guardian);
+
         assertFalse(_appContract.isForeclosed());
 
-        // check the idempotence of the `foreclose()` function.
-        for (uint256 i; i < 3; ++i) {
-            vm.expectEmit(true, true, true, true, address(_appContract));
-            emit IApplication.Foreclosure();
-            vm.prank(_appContract.getGuardian());
-            _appContract.foreclose();
-            assertTrue(_appContract.isForeclosed());
-        }
+        vm.expectEmit(true, true, true, true, address(_appContract));
+        emit IApplication.Foreclosure();
+        vm.prank(guardian);
+        _appContract.foreclose();
+        assertTrue(_appContract.isForeclosed());
+
+        vm.expectRevert(IApplication.Foreclosed.selector);
+        vm.prank(guardian);
+        _appContract.foreclose();
+
+        vm.expectRevert(IApplication.NotGuardian.selector);
+        vm.prank(caller);
+        _appContract.foreclose();
     }
 
     // -----------------
