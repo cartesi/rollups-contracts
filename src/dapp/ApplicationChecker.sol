@@ -3,8 +3,8 @@
 
 pragma solidity ^0.8.8;
 
+import {IApplication} from "./IApplication.sol";
 import {IApplicationChecker} from "./IApplicationChecker.sol";
-import {IApplicationForeclosure} from "./IApplicationForeclosure.sol";
 
 abstract contract ApplicationChecker is IApplicationChecker {
     /// @notice Ensure that a given application is not foreclosed.
@@ -22,9 +22,8 @@ abstract contract ApplicationChecker is IApplicationChecker {
         // We perform a low-level call to the application contract address
         // so that we can decode the return data in a more fault-tolerant way.
 
-        (bool success, bytes memory returndata) = appContract.staticcall(
-            abi.encodeCall(IApplicationForeclosure.isForeclosed, ())
-        );
+        (bool success, bytes memory returndata) =
+            appContract.staticcall(abi.encodeCall(IApplication.isForeclosed, ()));
 
         // If the call reverts, we wrap the error data in our `ApplicationReverted`
         // error so that malicious application cannot inject arbitrary errors.

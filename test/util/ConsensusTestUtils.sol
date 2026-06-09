@@ -5,7 +5,7 @@ pragma solidity ^0.8.22;
 
 import {CanonicalMachine} from "src/common/CanonicalMachine.sol";
 import {IConsensus} from "src/consensus/IConsensus.sol";
-import {IApplicationForeclosure} from "src/dapp/IApplicationForeclosure.sol";
+import {IApplication} from "src/dapp/IApplication.sol";
 
 import {ApplicationCheckerTestUtils} from "./ApplicationCheckerTestUtils.sol";
 import {Claim} from "./Claim.sol";
@@ -26,7 +26,7 @@ contract ConsensusTestUtils is ApplicationCheckerTestUtils {
         Claim calldata claim
     ) external {
         vm.prank(vm.randomAddress());
-        IApplicationForeclosure(claim.appContract).foreclose();
+        IApplication(claim.appContract).foreclose();
         vm.prank(validator);
         consensus.submitClaim(
             claim.appContract,
@@ -47,7 +47,7 @@ contract ConsensusTestUtils is ApplicationCheckerTestUtils {
         Claim calldata claim
     ) external {
         vm.prank(vm.randomAddress());
-        IApplicationForeclosure(claim.appContract).foreclose();
+        IApplication(claim.appContract).foreclose();
         vm.prank(vm.randomAddress());
         consensus.acceptClaim(
             claim.appContract,

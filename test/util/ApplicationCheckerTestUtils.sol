@@ -3,8 +3,8 @@
 
 pragma solidity ^0.8.22;
 
+import {IApplication} from "src/dapp/IApplication.sol";
 import {IApplicationChecker} from "src/dapp/IApplicationChecker.sol";
-import {IApplicationForeclosure} from "src/dapp/IApplicationForeclosure.sol";
 
 import {Test} from "forge-std-1.9.6/src/Test.sol";
 
@@ -49,7 +49,7 @@ contract ApplicationCheckerTestUtils is Test {
     }
 
     function _encodeIsForeclosed() internal pure returns (bytes memory) {
-        return abi.encodeCall(IApplicationForeclosure.isForeclosed, ());
+        return abi.encodeCall(IApplication.isForeclosed, ());
     }
 
     function _randomAccountWithNoCode() internal returns (address) {
