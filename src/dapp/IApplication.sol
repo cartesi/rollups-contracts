@@ -145,6 +145,7 @@ interface IApplication is
     /// @notice Forecloses the application, allowing users to withdraw their funds
     /// by providing Merkle proofs of their in-app accounts.
     /// @dev Can only be called by the application guardian.
+    /// May raise `NotGuardian` or `Foreclosed`.
     function foreclose() external;
 
     // Permissionless functions

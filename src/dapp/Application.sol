@@ -244,7 +244,7 @@ contract Application is
         emit OutputsMerkleRootValidatorChanged(newOutputsMerkleRootValidator);
     }
 
-    function foreclose() external override onlyGuardian {
+    function foreclose() external override onlyGuardian notForeclosed {
         _isForeclosed = true;
         emit Foreclosure();
     }
