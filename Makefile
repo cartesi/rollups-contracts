@@ -16,12 +16,12 @@
 MAKEFLAGS += --no-print-directory
 
 ANVIL := anvil
-CAST := cast
+CAST  := cast
 FORGE := forge
 
 ANVIL_RPC_URL := http://127.0.0.1:8545
-ANVIL_PK := 0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80
-ANVIL_STATE := state.json
+ANVIL_PK      := 0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80
+ANVIL_STATE   := state.json
 
 ANVIL_RUNTIME_OPTS += --dump-state $(ANVIL_STATE)
 ANVIL_RUNTIME_OPTS += --preserve-historical-states
@@ -92,7 +92,6 @@ devnet:
 	$(ANVIL) $(ANVIL_RUNTIME_OPTS) & \
 	anvil_pid=$$!; \
 	echo "✅ Anvil spawned!"; \
-	delay=1; \
 	listening=0; \
 	i=0; \
 	while [ "$$i" -lt 5 ]; do \
@@ -102,8 +101,8 @@ devnet:
 			listening=1; \
 			break; \
 		else \
-			echo "🚧 Anvil is not listening yet. Waiting $${delay} s..."; \
-			sleep "$${delay}"; \
+			echo "🚧 Anvil is not listening yet. Waiting 1s..."; \
+			sleep 1; \
 		fi; \
 		i=$$((i+1)); \
 	done; \
