@@ -37,6 +37,6 @@ abstract contract RollupsTest is Test {
         }
 
         _contracts.core = CoreContracts.deploy();
-        _contracts.dev = DevContracts.deploy();
+        _contracts.dev = DevContracts.deploy(_contracts.core);
     }
 }

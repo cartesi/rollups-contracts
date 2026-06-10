@@ -25,6 +25,33 @@ abstract contract CodeGenerationScript is Script {
         _addLine(string.concat("import {", contractName, '} from "', path, '";'));
     }
 
+    function _buildParamsAndArgs(string[] memory paramTypes)
+        internal
+        pure
+        returns (string memory params, string memory args)
+    {
+        for (uint256 i; i < paramTypes.length; ++i) {
+            string memory paramName = string.concat("param", vmSafe.toString(i + 1));
+            string memory paramType = paramTypes[i];
+            params = _join(params, string.concat(paramType, " ", paramName));
+            args = _join(args, paramName);
+        }
+    }
+
+    function _join(string memory a, string memory b)
+        internal
+        pure
+        returns (string memory c)
+    {
+        if (bytes(a).length == 0) {
+            return b;
+        } else if (bytes(b).length == 0) {
+            return a;
+        } else {
+            return string.concat(a, ", ", b);
+        }
+    }
+
     function _writeCodeToFile(string memory path) internal {
         // forge-lint: disable-next-line(unsafe-cheatcode)
         vmSafe.writeFile(path, _code);
@@ -34,6 +61,8 @@ abstract contract CodeGenerationScript is Script {
 contract DeployersCodeGenerationScript is CodeGenerationScript {
     function run() external {
         _addPreamble();
+        _addImport("@openzeppelin-contracts-5.2.0/token/ERC20", "IERC20");
+        _addLine("");
         _addImport("src/consensus/authority", "AuthorityFactory");
         _addImport("src/consensus/authority", "IAuthorityFactory");
         _addImport("src/consensus/quorum", "QuorumFactory");
@@ -52,6 +81,8 @@ contract DeployersCodeGenerationScript is CodeGenerationScript {
         _addImport("src/portals", "ERC20Portal");
         _addImport("src/portals", "ERC721Portal");
         _addImport("src/portals", "EtherPortal");
+        _addImport("src/withdrawal", "IUsdWithdrawalOutputBuilder");
+        _addImport("src/withdrawal", "IUsdWithdrawalOutputBuilderFactory");
         _addImport("src/withdrawal", "UsdWithdrawalOutputBuilderFactory");
         _addLine("");
         _addLine("function computeAddress(bytes32 salt, bytes32 initCodeHash)");
@@ -99,29 +130,25 @@ contract DeployersCodeGenerationScript is CodeGenerationScript {
             _addDeployer("SelfHostedApplicationFactory", paramTypes);
         }
 
+        {
+            string[] memory paramTypes = new string[](1);
+            paramTypes[0] = "IERC20";
+            _addFactoryDeployer("UsdWithdrawalOutputBuilder", paramTypes);
+        }
+
         _writeCodeToFile("script/utils/ContractDeployers.sol");
     }
 
     function _addDeployer(string memory contractName, string[] memory paramTypes)
         internal
     {
-        string memory parameters;
-        string memory arguments;
-
-        for (uint256 i; i < paramTypes.length; ++i) {
-            string memory paramName = string.concat("param", vmSafe.toString(i + 1));
-            string memory paramType = paramTypes[i];
-            string memory sep = (i == 0) ? "" : ", ";
-            parameters = string.concat(parameters, sep, paramType, " ", paramName);
-            arguments = string.concat(arguments, sep, paramName);
-        }
-
+        (string memory params, string memory args) = _buildParamsAndArgs(paramTypes);
         string memory funcName = string.concat("deploy", contractName);
-        string memory funcSig = string.concat(funcName, "(", parameters, ")");
+        string memory funcSig = string.concat(funcName, "(", params, ")");
         string memory returnTuple = string.concat("(", contractName, " deployment)");
         string memory contractType = string.concat("type(", contractName, ")");
         string memory creationCode = string.concat(contractType, ".creationCode");
-        string memory encodedArgs = string.concat("abi.encode(", arguments, ")");
+        string memory encodedArgs = string.concat("abi.encode(", args, ")");
         string memory newContract = string.concat("new ", contractName, "{salt: salt}");
 
         _addLine("");
@@ -133,10 +160,44 @@ contract DeployersCodeGenerationScript is CodeGenerationScript {
         _addLine("bytes32 initCodeHash = keccak256(initCode);");
         _addLine("address precomputedAddress = computeAddress(salt, initCodeHash);");
         _addLine("if (precomputedAddress.code.length == 0) {");
-        _addLine(string.concat("deployment = ", newContract, "(", arguments, ");"));
+        _addLine(string.concat("deployment = ", newContract, "(", args, ");"));
         _addLine("assert(address(deployment) == precomputedAddress);");
+        _addLine("assert(address(deployment).code.length > 0);");
         _addLine("} else {");
         _addLine(string.concat("deployment = ", contractName, "(precomputedAddress);"));
+        _addLine("}"); // if
+        _addLine("}"); // function
+    }
+
+    function _addFactoryDeployer(string memory contractName, string[] memory paramTypes)
+        internal
+    {
+        (string memory params, string memory args) = _buildParamsAndArgs(paramTypes);
+        string memory interfaceName = string.concat("I", contractName);
+        string memory factoryName = string.concat(interfaceName, "Factory");
+        string memory factoryParam = string.concat(factoryName, " factory");
+        string memory funcName = string.concat("deploy", contractName);
+        string memory returnTuple = string.concat("(", interfaceName, " deployment)");
+        string memory calcFuncName = string.concat("calculate", contractName, "Address");
+        string memory newFuncName = string.concat("new", contractName);
+
+        params = _join(factoryParam, params);
+        args = _join(args, "salt");
+
+        string memory funcSig = string.concat(funcName, "(", params, ")");
+        string memory calcFuncCall = string.concat(calcFuncName, "(", args, ")");
+        string memory newFuncCall = string.concat(newFuncName, "(", args, ")");
+
+        _addLine("");
+        _addLine(string.concat("function ", funcSig, " returns ", returnTuple, " {"));
+        _addLine("bytes32 salt;");
+        _addLine(string.concat("address addr = factory.", calcFuncCall, ";"));
+        _addLine("if (addr.code.length == 0) {");
+        _addLine(string.concat("deployment = factory.", newFuncCall, ";"));
+        _addLine("assert(address(deployment) == addr);");
+        _addLine("assert(addr.code.length > 0);");
+        _addLine("} else {");
+        _addLine(string.concat("deployment = ", interfaceName, "(addr);"));
         _addLine("}"); // if
         _addLine("}"); // function
     }
