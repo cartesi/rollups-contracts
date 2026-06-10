@@ -329,7 +329,7 @@ contract Application is
     }
 
     /// @inheritdoc IApplication
-    function getTemplateHash() external view override returns (bytes32) {
+    function getTemplateHash() public view override returns (bytes32) {
         return TEMPLATE_HASH;
     }
 
@@ -468,13 +468,20 @@ contract Application is
     /// @notice Get the last finalized machine Merkle root,
     /// according to the current outputs Merkle root validator.
     /// @return lastFinalizedMachineMerkleRoot The last finalized machine Merkle root
+    /// @dev If the outputs Merkle root validator returns a zeroed bytes32 value,
+    /// signaling that no machine Merkle root has been finalized yet, we instead use the
+    /// immutable template hash value set at construction time.
     function _getLastFinalizedMachineMerkleRoot()
         internal
         view
         returns (bytes32 lastFinalizedMachineMerkleRoot)
     {
-        return getOutputsMerkleRootValidator()
+        lastFinalizedMachineMerkleRoot = getOutputsMerkleRootValidator()
             .getLastFinalizedMachineMerkleRoot(address(this));
+
+        if (lastFinalizedMachineMerkleRoot == bytes32(0)) {
+            lastFinalizedMachineMerkleRoot = getTemplateHash();
+        }
     }
 
     /// @notice Build a withdrawal output from an account,

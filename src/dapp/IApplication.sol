@@ -119,7 +119,9 @@ interface IApplication is
     error InvalidAccountRootSiblingsArrayLength();
 
     /// @notice Raised when the computed machine Merkle root differs from the
-    /// last-finalized machine Merkle root provided by the outputs Merkle root validator.
+    /// last-finalized machine Merkle root provided by the outputs Merkle root validator
+    /// or from the initial machine Merkle root (template hash) if no machine Merkle root
+    /// has been finalized yet.
     /// @param machineMerkleRoot The computed machine Merkle root
     error InvalidMachineMerkleRoot(bytes32 machineMerkleRoot);
 
@@ -161,9 +163,10 @@ interface IApplication is
         external;
 
     /// @notice Prove the accounts drive Merkle root in the last-finalized machine state
-    /// provided by the application's outputs Merkle root validator. This function can be
-    /// called by anyone after the app is foreclosed so that accounts can be validated and
-    /// their funds can be withdrawn.
+    /// provided by the application's outputs Merkle root validator or in the initial
+    /// machine Merkle root (template hash) if no machine Merkle root has been finalized
+    /// yet. This function can be called by anyone after the app is foreclosed so that
+    /// accounts can be validated and their funds can be withdrawn.
     /// @param accountsDriveMerkleRoot The accounts drive Merkle root
     /// @param proof Siblings of the accounts drive Merkle root in the machine
     /// @dev May raise `NotForeclosed`, `AccountsDriveMerkleRootAlreadyProved`,
