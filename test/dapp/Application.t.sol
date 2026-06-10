@@ -14,7 +14,6 @@ import {IOutputsMerkleRootValidator} from "src/consensus/IOutputsMerkleRootValid
 import {IAuthority} from "src/consensus/authority/IAuthority.sol";
 import {IApplication} from "src/dapp/IApplication.sol";
 import {ISafeERC20Transfer} from "src/delegatecall/ISafeERC20Transfer.sol";
-import {IInputBox} from "src/inputs/IInputBox.sol";
 import {LibUsdAccount} from "src/library/LibUsdAccount.sol";
 import {IWithdrawalOutputBuilder} from "src/withdrawal/IWithdrawalOutputBuilder.sol";
 import {
@@ -67,7 +66,6 @@ contract ApplicationTest is
     IERC721 _erc721Token;
     IERC1155 _erc1155Token;
     ISafeERC20Transfer _safeErc20Transfer;
-    IInputBox _inputBox;
 
     LibEmulator.State _emulator;
     LibEmulator.ProofComponents _proofComponents;
@@ -895,28 +893,28 @@ contract ApplicationTest is
         _appOwner = _nextAddress();
         _recipient = _nextAddress();
         _tokenOwner = _nextAddress();
-        _withdrawalConfig.guardian = _nextAddress();
-        _withdrawalConfig.log2LeavesPerAccount = LibEmulator.LOG2_LEAVES_PER_ACCOUNT;
-        _withdrawalConfig.log2MaxNumOfAccounts = LibEmulator.LOG2_MAX_NUM_OF_ACCOUNTS;
-        _withdrawalConfig.accountsDriveStartIndex = LibEmulator.ACCOUNTS_DRIVE_START_INDEX;
+        _withdrawalConfig = WithdrawalConfig({
+            guardian: _nextAddress(),
+            log2LeavesPerAccount: LibEmulator.LOG2_LEAVES_PER_ACCOUNT,
+            log2MaxNumOfAccounts: LibEmulator.LOG2_MAX_NUM_OF_ACCOUNTS,
+            accountsDriveStartIndex: LibEmulator.ACCOUNTS_DRIVE_START_INDEX,
+            withdrawalOutputBuilder: _contracts.dev.testUsdWithdrawalOutputBuilder
+        });
         for (uint256 i; i < 7; ++i) {
             _tokenIds.push(i);
             _initialSupplies.push(INITIAL_SUPPLY);
             _transferAmounts.push(vm.randomUint(1, INITIAL_SUPPLY));
         }
+        _erc20Token = _contracts.dev.testFungibleToken;
+        _erc721Token = _contracts.dev.testNonFungibleToken;
+        _erc1155Token = _contracts.dev.testMultiToken;
+        _dataAvailability =
+            abi.encodeCall(DataAvailability.InputBox, (_contracts.core.inputBox));
+        _safeErc20Transfer = _contracts.core.safeErc20Transfer;
     }
 
     function _deployContracts() internal {
         _etherReceiver = new EtherReceiver();
-        _erc20Token = _contracts.dev.testFungibleToken;
-        _erc721Token = _contracts.dev.testNonFungibleToken;
-        _erc1155Token = _contracts.dev.testMultiToken;
-        _inputBox = _contracts.core.inputBox;
-        _dataAvailability = abi.encodeCall(DataAvailability.InputBox, (_inputBox));
-        _safeErc20Transfer = _contracts.core.safeErc20Transfer;
-        _withdrawalConfig.withdrawalOutputBuilder = _contracts.core
-            .usdWithdrawalOutputBuilderFactory
-            .newUsdWithdrawalOutputBuilder(_erc20Token, SALT);
         (_appContract, _authority) =
             _contracts.core.selfHostedApplicationFactory
                 .deployContracts(

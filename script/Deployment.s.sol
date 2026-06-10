@@ -19,7 +19,7 @@ contract DeploymentScript is Script {
 
         if (block.chainid == ANVIL_CHAIN_ID) {
             vmSafe.startBroadcast();
-            DevContracts.Suite memory dev = DevContracts.deploy();
+            DevContracts.Suite memory dev = DevContracts.deploy(core);
             vmSafe.stopBroadcast();
             DevContracts.store(vmSafe, dev);
         }
