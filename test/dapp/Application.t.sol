@@ -68,6 +68,9 @@ contract ApplicationTest is
     ISafeERC20Transfer _safeErc20Transfer;
 
     LibEmulator.State _emulator;
+    bytes32 _templateHash;
+    bytes32 _initialAccountsDriveMerkleRoot;
+    LibEmulator.ProofComponents _initialProofComponents;
     LibEmulator.ProofComponents _proofComponents;
     address _appOwner;
     address _authorityOwner;
@@ -85,7 +88,6 @@ contract ApplicationTest is
 
     uint256 constant EPOCH_LENGTH = 1;
     uint256 constant CLAIM_STAGING_PERIOD = 0;
-    bytes32 constant TEMPLATE_HASH = keccak256("templateHash");
     uint256 constant INITIAL_SUPPLY = type(uint64).max;
     uint256 constant TOKEN_ID = 88888888;
     uint256 constant TRANSFER_AMOUNT = 42;
@@ -93,6 +95,7 @@ contract ApplicationTest is
 
     function setUp() public {
         _initVariables();
+        _computeTemplateHash();
         _deployContracts();
         _mintTokens();
         _addOutputs();
@@ -913,6 +916,12 @@ contract ApplicationTest is
         _safeErc20Transfer = _contracts.core.safeErc20Transfer;
     }
 
+    function _computeTemplateHash() internal {
+        _initialProofComponents = _emulator.buildProofComponents();
+        _initialAccountsDriveMerkleRoot = _getAccountsDriveMerkleRoot();
+        _templateHash = _initialProofComponents.getMachineMerkleRoot();
+    }
+
     function _deployContracts() internal {
         _etherReceiver = new EtherReceiver();
         (_appContract, _authority) =
@@ -922,7 +931,7 @@ contract ApplicationTest is
                     EPOCH_LENGTH,
                     CLAIM_STAGING_PERIOD,
                     _appOwner,
-                    TEMPLATE_HASH,
+                    _templateHash,
                     _dataAvailability,
                     _withdrawalConfig,
                     SALT
@@ -1170,6 +1179,25 @@ contract ApplicationTest is
         revert("Successful withdrawal");
     }
 
+    /// @notice This function is used to simulate a foreclosure and an initial accounts
+    /// drive Merkle root proof. If the proof succeeds, then the function reverts with
+    /// error message "Successful proof". If the proof fails, then the function propagates
+    /// the error from the app contract.
+    function simulateForeclosureAndInitialAccountsDriveProof() external {
+        assertEq(msg.sender, address(this), "called by external account");
+        vm.prank(_appContract.getGuardian());
+        _appContract.foreclose();
+        bytes32[] memory proof = _initialProofComponents.getAccountsDriveMerkleRootProof();
+        vm.prank(vm.randomAddress());
+        _appContract.proveAccountsDriveMerkleRoot(_initialAccountsDriveMerkleRoot, proof);
+        bool wasValueProved;
+        bytes32 value;
+        (wasValueProved, value) = _appContract.getAccountsDriveMerkleRoot();
+        assertTrue(wasValueProved, "Expected value to be proved");
+        assertEq(value, _initialAccountsDriveMerkleRoot);
+        revert("Successful proof");
+    }
+
     function _submitClaim() internal {
         _proofComponents = _emulator.buildProofComponents();
         bytes32 outputsMerkleRoot = _proofComponents.outputsMerkleRoot;
@@ -1210,6 +1238,10 @@ contract ApplicationTest is
                 this.simulateForeclosureAndWithdrawal(account, proof);
             }
         }
+
+        // attempt to prove accounts drive Merkle root from template hash
+        vm.expectRevert("Successful proof");
+        this.simulateForeclosureAndInitialAccountsDriveProof();
 
         vm.prank(_authorityOwner);
         _authority.submitClaim(
