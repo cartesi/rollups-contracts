@@ -29,10 +29,11 @@ contract ApplicationCheckerTestUtils is Test {
         );
     }
 
-    function _encodeIllformedApplicationReturnData(
-        address appContract,
-        bytes memory data
-    ) internal pure returns (bytes memory) {
+    function _encodeIllformedApplicationReturnData(address appContract, bytes memory data)
+        internal
+        pure
+        returns (bytes memory)
+    {
         return abi.encodeWithSelector(
             IApplicationChecker.IllformedApplicationReturnData.selector, appContract, data
         );

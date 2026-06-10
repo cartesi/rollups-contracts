@@ -31,7 +31,7 @@ deposit assets, submit claims, execute asset withdrawal orders, and more.
 
 ## Getting started
 
-First, please ensure [Foundry] 1.4.3 is installed.
+First, please ensure [Foundry] 1.5.1 is installed.
 
 Then, you may clone the repository...
 
