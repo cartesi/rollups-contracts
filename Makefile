@@ -8,6 +8,7 @@
 .PHONY: deploy-base-sepolia
 .PHONY: deploy-ethereum-mainnet
 .PHONY: deploy-ethereum-sepolia
+.PHONY: deploy-livenets
 .PHONY: deploy-mainnets
 .PHONY: deploy-op-mainnet
 .PHONY: deploy-op-sepolia
@@ -113,7 +114,7 @@ codegen:
 		src/common/Version.sol
 	@echo "✅ Successfully generated and formatted code."
 
-deploy-all: devnet deploy-testnets deploy-mainnets
+deploy-all: devnet deploy-livenets
 
 devnet: build
 	@set -eu; \
@@ -165,6 +166,8 @@ devnet: build
 	echo "🔨 Deploying to Anvil (Chain ID: $(ANVIL_CHAIN_ID))..."; \
 	$(DEPLOY_CMD) $(ANVIL_DEPLOY_OPTS) ; \
 	echo "✅ Successfully built Anvil devnet."
+
+deploy-livenets: deploy-testnets deploy-mainnets
 
 deploy-testnets: deploy-ethereum-sepolia
 deploy-testnets: deploy-op-sepolia
