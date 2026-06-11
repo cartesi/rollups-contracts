@@ -1,3 +1,4 @@
+.PHONY: build
 .PHONY: codegen
 .PHONY: deploy
 .PHONY: deploy-all
@@ -93,6 +94,9 @@ OP_MAINNET_DEPLOY_OPTS        += --chain-id $(OP_MAINNET_CHAIN_ID)
 OP_SEPOLIA_DEPLOY_OPTS        += --rpc-url op_sepolia
 OP_SEPOLIA_DEPLOY_OPTS        += --chain-id $(OP_SEPOLIA_CHAIN_ID)
 
+build:
+	@$(FORGE) build
+
 codegen:
 	@echo "🚧 Generating code..."
 	@$(FORGE) script script/CodeGeneration.s.sol:DeployersCodeGenerationScript
@@ -111,7 +115,7 @@ codegen:
 
 deploy-all: devnet deploy-testnets deploy-mainnets
 
-devnet:
+devnet: build
 	@set -eu; \
 	echo "🔨 Building Anvil devnet..." ; \
 	cleanup() { \
@@ -172,42 +176,42 @@ deploy-mainnets: deploy-op-mainnet
 deploy-mainnets: deploy-base-mainnet
 deploy-mainnets: deploy-arbitrum-mainnet
 
-deploy-ethereum-sepolia:
+deploy-ethereum-sepolia: build
 	@echo "🌐 Running deployment script against Ethereum Sepolia..."
 	@$(DEPLOY_CMD) $(ETHEREUM_SEPOLIA_DEPLOY_OPTS) $(DEPLOY_OPTS)
 	@echo "✅ Deployment script successfully ran against Ethereum Sepolia."
 
-deploy-op-sepolia:
+deploy-op-sepolia: build
 	@echo "🌐 Running deployment script against OP Sepolia..."
 	@$(DEPLOY_CMD) $(OP_SEPOLIA_DEPLOY_OPTS) $(DEPLOY_OPTS)
 	@echo "✅ Deployment script successfully ran against OP Sepolia."
 
-deploy-base-sepolia:
+deploy-base-sepolia: build
 	@echo "🌐 Running deployment script against Base Sepolia..."
 	@$(DEPLOY_CMD) $(BASE_SEPOLIA_DEPLOY_OPTS) $(DEPLOY_OPTS)
 	@echo "✅ Deployment script successfully ran against Base Sepolia."
 
-deploy-arbitrum-sepolia:
+deploy-arbitrum-sepolia: build
 	@echo "🌐 Running deployment script against Arbitrum Sepolia..."
 	@$(DEPLOY_CMD) $(ARBITRUM_SEPOLIA_DEPLOY_OPTS) $(DEPLOY_OPTS)
 	@echo "✅ Deployment script successfully ran against Arbitrum Sepolia."
 
-deploy-ethereum-mainnet:
+deploy-ethereum-mainnet: build
 	@echo "🌐 Running deployment script against Ethereum Mainnet..."
 	@$(DEPLOY_CMD) $(ETHEREUM_MAINNET_DEPLOY_OPTS) $(DEPLOY_OPTS)
 	@echo "✅ Deployment script successfully ran against Ethereum Mainnet."
 
-deploy-op-mainnet:
+deploy-op-mainnet: build
 	@echo "🌐 Running deployment script against OP Mainnet..."
 	@$(DEPLOY_CMD) $(OP_MAINNET_DEPLOY_OPTS) $(DEPLOY_OPTS)
 	@echo "✅ Deployment script successfully ran against OP Mainnet."
 
-deploy-base-mainnet:
+deploy-base-mainnet: build
 	@echo "🌐 Running deployment script against Base Mainnet..."
 	@$(DEPLOY_CMD) $(BASE_MAINNET_DEPLOY_OPTS) $(DEPLOY_OPTS)
 	@echo "✅ Deployment script successfully ran against Base Mainnet."
 
-deploy-arbitrum-mainnet:
+deploy-arbitrum-mainnet: build
 	@echo "🌐 Running deployment script against Arbitrum Mainnet..."
 	@$(DEPLOY_CMD) $(ARBITRUM_MAINNET_DEPLOY_OPTS) $(DEPLOY_OPTS)
 	@echo "✅ Deployment script successfully ran against Arbitrum Mainnet."
