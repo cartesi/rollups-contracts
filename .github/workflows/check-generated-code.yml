@@ -26,3 +26,8 @@ jobs:
             echo "Regenerate it locally and commit the result: make codegen"
             exit 1
           fi
+          if ! git diff --exit-code -- src/common/Version.sol; then
+            echo "::error::src/common/Version.sol is out of sync with its generator."
+            echo "Regenerate it locally and commit the result: make codegen"
+            exit 1
+          fi

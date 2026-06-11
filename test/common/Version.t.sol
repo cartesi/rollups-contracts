@@ -5,7 +5,7 @@ pragma solidity ^0.8.22;
 
 import {Test} from "forge-std-1.9.6/src/Test.sol";
 
-import "../util/Semver.sol" as Semver;
+import "script/utils/SemanticVersioning.sol" as SemanticVersioning;
 
 import "src/common/Version.sol" as Version;
 
@@ -53,7 +53,10 @@ contract VersionTest is Test {
         _strings.push(Version.PRE_RELEASE);
 
         for (uint256 i; i < _strings.length; ++i) {
-            assertTrue(Semver.isPreReleaseValid(bytes(_strings[i])), _strings[i]);
+            assertTrue(
+                SemanticVersioning.isPreReleaseValid(bytes(_strings[i])),
+                string.concat("invalid string: ", _strings[i])
+            );
         }
     }
 
@@ -87,7 +90,10 @@ contract VersionTest is Test {
         _strings.push(".1.2.3");
 
         for (uint256 i; i < _strings.length; ++i) {
-            assertFalse(Semver.isPreReleaseValid(bytes(_strings[i])), _strings[i]);
+            assertFalse(
+                SemanticVersioning.isPreReleaseValid(bytes(_strings[i])),
+                string.concat("invalid string: ", _strings[i])
+            );
         }
     }
 
@@ -130,7 +136,10 @@ contract VersionTest is Test {
         _strings.push(Version.BUILD_METADATA);
 
         for (uint256 i; i < _strings.length; ++i) {
-            assertTrue(Semver.isBuildMetadataValid(bytes(_strings[i])), _strings[i]);
+            assertTrue(
+                SemanticVersioning.isBuildMetadataValid(bytes(_strings[i])),
+                string.concat("invalid string: ", _strings[i])
+            );
         }
     }
 
@@ -155,7 +164,10 @@ contract VersionTest is Test {
         _strings.push("build.#1");
 
         for (uint256 i; i < _strings.length; ++i) {
-            assertFalse(Semver.isBuildMetadataValid(bytes(_strings[i])), _strings[i]);
+            assertFalse(
+                SemanticVersioning.isBuildMetadataValid(bytes(_strings[i])),
+                string.concat("invalid string: ", _strings[i])
+            );
         }
     }
 }

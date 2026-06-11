@@ -13,6 +13,12 @@
 .PHONY: deploy-testnets
 .PHONY: devnet
 
+PROJECT_MAJOR_VERSION  := 3
+PROJECT_MINOR_VERSION  := 0
+PROJECT_PATCH_VERSION  := 0
+PROJECT_PRE_RELEASE    := alpha.6
+PROJECT_BUILD_METADATA :=
+
 MAKEFLAGS += --no-print-directory
 
 ANVIL := anvil
@@ -54,8 +60,17 @@ export OP_SEPOLIA_RPC_URL
 codegen:
 	@echo "🚧 Generating code..."
 	@$(FORGE) script script/CodeGeneration.s.sol:DeployersCodeGenerationScript
+	@$(FORGE) script script/CodeGeneration.s.sol:VersionCodeGenerationScript \
+		--sig 'run(uint64,uint64,uint64,string,string)' -- \
+		"$(PROJECT_MAJOR_VERSION)" \
+		"$(PROJECT_MINOR_VERSION)" \
+		"$(PROJECT_PATCH_VERSION)" \
+		"$(PROJECT_PRE_RELEASE)" \
+		"$(PROJECT_BUILD_METADATA)"
 	@echo "🚧 Formatting generated code..."
-	@$(FORGE) fmt script/utils/ContractDeployers.sol
+	@$(FORGE) fmt \
+		script/utils/ContractDeployers.sol \
+		src/common/Version.sol
 	@echo "✅ Successfully generated and formatted code."
 
 deploy:
