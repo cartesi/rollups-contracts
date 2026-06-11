@@ -25,6 +25,8 @@ ANVIL := anvil
 CAST  := cast
 FORGE := forge
 
+DEPLOY_CMD := $(FORGE) script script/Deployment.s.sol:DeploymentScript
+
 ANVIL_RPC_URL := http://127.0.0.1:8545
 ANVIL_PK      := 0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80
 ANVIL_STATE   := state.json
@@ -57,6 +59,40 @@ export ETHEREUM_SEPOLIA_RPC_URL
 export OP_MAINNET_RPC_URL
 export OP_SEPOLIA_RPC_URL
 
+ANVIL_CHAIN_ID             := 31337
+ARBITRUM_MAINNET_CHAIN_ID  := 42161
+ARBITRUM_SEPOLIA_CHAIN_ID  := 421614
+BASE_MAINNET_CHAIN_ID      := 8453
+BASE_SEPOLIA_CHAIN_ID      := 84532
+ETHEREUM_MAINNET_CHAIN_ID  := 1
+ETHEREUM_SEPOLIA_CHAIN_ID  := 11155111
+OP_MAINNET_CHAIN_ID        := 10
+OP_SEPOLIA_CHAIN_ID        := 11155420
+
+ARBITRUM_MAINNET_DEPLOY_OPTS  += --rpc-url arbitrum_mainnet
+ARBITRUM_MAINNET_DEPLOY_OPTS  += --chain-id $(ARBITRUM_MAINNET_CHAIN_ID)
+
+ARBITRUM_SEPOLIA_DEPLOY_OPTS  += --rpc-url arbitrum_sepolia
+ARBITRUM_SEPOLIA_DEPLOY_OPTS  += --chain-id $(ARBITRUM_SEPOLIA_CHAIN_ID)
+
+BASE_MAINNET_DEPLOY_OPTS      += --rpc-url base_mainnet
+BASE_MAINNET_DEPLOY_OPTS      += --chain-id $(BASE_MAINNET_CHAIN_ID)
+
+BASE_SEPOLIA_DEPLOY_OPTS      += --rpc-url base_sepolia
+BASE_SEPOLIA_DEPLOY_OPTS      += --chain-id $(BASE_SEPOLIA_CHAIN_ID)
+
+ETHEREUM_MAINNET_DEPLOY_OPTS  += --rpc-url ethereum_mainnet
+ETHEREUM_MAINNET_DEPLOY_OPTS  += --chain-id $(ETHEREUM_MAINNET_CHAIN_ID)
+
+ETHEREUM_SEPOLIA_DEPLOY_OPTS  += --rpc-url ethereum_sepolia
+ETHEREUM_SEPOLIA_DEPLOY_OPTS  += --chain-id $(ETHEREUM_SEPOLIA_CHAIN_ID)
+
+OP_MAINNET_DEPLOY_OPTS        += --rpc-url op_mainnet
+OP_MAINNET_DEPLOY_OPTS        += --chain-id $(OP_MAINNET_CHAIN_ID)
+
+OP_SEPOLIA_DEPLOY_OPTS        += --rpc-url op_sepolia
+OP_SEPOLIA_DEPLOY_OPTS        += --chain-id $(OP_SEPOLIA_CHAIN_ID)
+
 codegen:
 	@echo "🚧 Generating code..."
 	@$(FORGE) script script/CodeGeneration.s.sol:DeployersCodeGenerationScript
@@ -72,9 +108,6 @@ codegen:
 		script/utils/ContractDeployers.sol \
 		src/common/Version.sol
 	@echo "✅ Successfully generated and formatted code."
-
-deploy:
-	@$(FORGE) script script/Deployment.s.sol:DeploymentScript $(DEPLOY_OPTS)
 
 deploy-all: devnet deploy-testnets deploy-mainnets
 
@@ -125,8 +158,8 @@ devnet:
 		echo "❌ Anvil did not respond within a reasonable amount of time." >&2; \
 		exit 1; \
 	fi; \
-	echo "🔨 Deploying to Anvil (Chain ID: 31337)..."; \
-	$(MAKE) deploy DEPLOY_OPTS="$(ANVIL_DEPLOY_OPTS)" ; \
+	echo "🔨 Deploying to Anvil (Chain ID: $(ANVIL_CHAIN_ID))..."; \
+	$(DEPLOY_CMD) $(ANVIL_DEPLOY_OPTS) ; \
 	echo "✅ Successfully built Anvil devnet."
 
 deploy-testnets: deploy-ethereum-sepolia
@@ -141,40 +174,40 @@ deploy-mainnets: deploy-arbitrum-mainnet
 
 deploy-ethereum-sepolia:
 	@echo "🌐 Running deployment script against Ethereum Sepolia..."
-	@$(MAKE) deploy DEPLOY_OPTS="--chain-id 11155111 --rpc-url ethereum_sepolia $(DEPLOY_OPTS)"
+	@$(DEPLOY_CMD) $(ETHEREUM_SEPOLIA_DEPLOY_OPTS) $(DEPLOY_OPTS)
 	@echo "✅ Deployment script successfully ran against Ethereum Sepolia."
 
 deploy-op-sepolia:
 	@echo "🌐 Running deployment script against OP Sepolia..."
-	@$(MAKE) deploy DEPLOY_OPTS="--chain-id 11155420 --rpc-url op_sepolia $(DEPLOY_OPTS)"
+	@$(DEPLOY_CMD) $(OP_SEPOLIA_DEPLOY_OPTS) $(DEPLOY_OPTS)
 	@echo "✅ Deployment script successfully ran against OP Sepolia."
 
 deploy-base-sepolia:
 	@echo "🌐 Running deployment script against Base Sepolia..."
-	@$(MAKE) deploy DEPLOY_OPTS="--chain-id 84532 --rpc-url base_sepolia $(DEPLOY_OPTS)"
+	@$(DEPLOY_CMD) $(BASE_SEPOLIA_DEPLOY_OPTS) $(DEPLOY_OPTS)
 	@echo "✅ Deployment script successfully ran against Base Sepolia."
 
 deploy-arbitrum-sepolia:
 	@echo "🌐 Running deployment script against Arbitrum Sepolia..."
-	@$(MAKE) deploy DEPLOY_OPTS="--chain-id 421614 --rpc-url arbitrum_sepolia $(DEPLOY_OPTS)"
+	@$(DEPLOY_CMD) $(ARBITRUM_SEPOLIA_DEPLOY_OPTS) $(DEPLOY_OPTS)
 	@echo "✅ Deployment script successfully ran against Arbitrum Sepolia."
 
 deploy-ethereum-mainnet:
 	@echo "🌐 Running deployment script against Ethereum Mainnet..."
-	@$(MAKE) deploy DEPLOY_OPTS="--chain-id 1 --rpc-url ethereum_mainnet $(DEPLOY_OPTS)"
+	@$(DEPLOY_CMD) $(ETHEREUM_MAINNET_DEPLOY_OPTS) $(DEPLOY_OPTS)
 	@echo "✅ Deployment script successfully ran against Ethereum Mainnet."
 
 deploy-op-mainnet:
 	@echo "🌐 Running deployment script against OP Mainnet..."
-	@$(MAKE) deploy DEPLOY_OPTS="--chain-id 10 --rpc-url op_mainnet $(DEPLOY_OPTS)"
+	@$(DEPLOY_CMD) $(OP_MAINNET_DEPLOY_OPTS) $(DEPLOY_OPTS)
 	@echo "✅ Deployment script successfully ran against OP Mainnet."
 
 deploy-base-mainnet:
 	@echo "🌐 Running deployment script against Base Mainnet..."
-	@$(MAKE) deploy DEPLOY_OPTS="--chain-id 8453 --rpc-url base_mainnet $(DEPLOY_OPTS)"
+	@$(DEPLOY_CMD) $(BASE_MAINNET_DEPLOY_OPTS) $(DEPLOY_OPTS)
 	@echo "✅ Deployment script successfully ran against Base Mainnet."
 
 deploy-arbitrum-mainnet:
 	@echo "🌐 Running deployment script against Arbitrum Mainnet..."
-	@$(MAKE) deploy DEPLOY_OPTS="--chain-id 42161 --rpc-url arbitrum_mainnet $(DEPLOY_OPTS)"
+	@$(DEPLOY_CMD) $(ARBITRUM_MAINNET_DEPLOY_OPTS) $(DEPLOY_OPTS)
 	@echo "✅ Deployment script successfully ran against Arbitrum Mainnet."
