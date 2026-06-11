@@ -15,6 +15,9 @@
 .PHONY: deploy-testnets
 .PHONY: devnet
 .PHONY: print-foundry-version
+.PHONY: release-artifacts
+
+PROJECT_NAME := cartesi-rollups-contracts
 
 PROJECT_MAJOR_VERSION  := 3
 PROJECT_MINOR_VERSION  := 0
@@ -22,7 +25,18 @@ PROJECT_PATCH_VERSION  := 0
 PROJECT_PRE_RELEASE    := alpha.6
 PROJECT_BUILD_METADATA :=
 
+PROJECT_VERSION := $(PROJECT_MAJOR_VERSION).$(PROJECT_MINOR_VERSION).$(PROJECT_PATCH_VERSION)
+PROJECT_VERSION := $(PROJECT_VERSION)$(if $(PROJECT_PRE_RELEASE),-$(PROJECT_PRE_RELEASE))
+PROJECT_VERSION := $(PROJECT_VERSION)$(if $(PROJECT_BUILD_METADATA),+$(PROJECT_BUILD_METADATA))
+
 FOUNDRY_VERSION := 1.5.1
+
+DIST := dist
+
+BUNDLE_PREFIX               := $(DIST)/$(PROJECT_NAME)-$(PROJECT_VERSION)
+ARTIFACTS_BUNDLE            := $(BUNDLE_PREFIX)-artifacts.tar.gz
+DEPLOYMENT_ADDRESSES_BUNDLE := $(BUNDLE_PREFIX)-deployment-addresses.tar.gz
+DEVNET_BUNDLE               := $(BUNDLE_PREFIX)-anvil-$(FOUNDRY_VERSION).tar.gz
 
 MAKEFLAGS += --no-print-directory
 
@@ -97,6 +111,18 @@ OP_MAINNET_DEPLOY_OPTS        += --chain-id $(OP_MAINNET_CHAIN_ID)
 
 OP_SEPOLIA_DEPLOY_OPTS        += --rpc-url op_sepolia
 OP_SEPOLIA_DEPLOY_OPTS        += --chain-id $(OP_SEPOLIA_CHAIN_ID)
+
+TESTNET_CHAIN_IDS  += $(ARBITRUM_SEPOLIA_CHAIN_ID)
+TESTNET_CHAIN_IDS  += $(BASE_SEPOLIA_CHAIN_ID)
+TESTNET_CHAIN_IDS  += $(ETHEREUM_SEPOLIA_CHAIN_ID)
+TESTNET_CHAIN_IDS  += $(OP_SEPOLIA_CHAIN_ID)
+
+MAINNET_CHAIN_IDS  += $(ARBITRUM_MAINNET_CHAIN_ID)
+MAINNET_CHAIN_IDS  += $(BASE_MAINNET_CHAIN_ID)
+MAINNET_CHAIN_IDS  += $(ETHEREUM_MAINNET_CHAIN_ID)
+MAINNET_CHAIN_IDS  += $(OP_MAINNET_CHAIN_ID)
+
+LIVENET_CHAIN_IDS  := $(TESTNET_CHAIN_IDS) $(MAINNET_CHAIN_IDS)
 
 build:
 	@$(FORGE) build
@@ -224,3 +250,27 @@ deploy-arbitrum-mainnet: build
 
 print-foundry-version:
 	@echo "$(FOUNDRY_VERSION)"
+
+release-artifacts: $(ARTIFACTS_BUNDLE) $(DEPLOYMENT_ADDRESSES_BUNDLE) $(DEVNET_BUNDLE)
+
+$(ARTIFACTS_BUNDLE): build | $(DIST)
+	@set -eu; \
+	echo "📦 Creating $@..."; \
+	OUT_DIR=$$(mktemp -d); \
+	trap 'rm -rf -- "$${OUT_DIR}"' EXIT; \
+	$(FORGE) build --out "$${OUT_DIR}" src; \
+	tar -czf $@ -C "$${OUT_DIR}" .; \
+	echo "✅ Created $@."
+
+$(DEPLOYMENT_ADDRESSES_BUNDLE): deploy-livenets | $(DIST)
+	@echo "📦 Creating $@..."
+	@tar -czf $@ $(foreach id, $(LIVENET_CHAIN_IDS), deployments/$(id))
+	@echo "✅ Created $@."
+
+$(DEVNET_BUNDLE): devnet | $(DIST)
+	@echo "📦 Creating $@..."
+	@tar -czf $@ deployments/$(ANVIL_CHAIN_ID) $(ANVIL_STATE)
+	@echo "✅ Created $@."
+
+$(DIST):
+	mkdir -p "$@"

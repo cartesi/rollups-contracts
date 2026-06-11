@@ -18,51 +18,13 @@ jobs:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
 
       - uses: ./.github/actions/setup
-        id: setup
 
-      - name: Create upload folder
-        run: mkdir -p upload
-
-      - name: Extract version from tag
-        id: extract_version
-        run: |
-          if [[ "$GITHUB_REF" == refs/tags/v* ]]; then
-            echo "version=${GITHUB_REF#refs/tags/v}" >> $GITHUB_OUTPUT
-          else
-            echo "version=0.0.0-dev" >> $GITHUB_OUTPUT
-          fi
-
-      - name: Build source contracts
-        run: forge build src
-
-      - name: Compress contract artifacts
-        run: tar -czf "$FILEPATH" -C out .
-        env:
-          FILEPATH: upload/rollups-contracts-${{ steps.extract_version.outputs.version }}-artifacts.tar.gz
-
-      - name: Build all contracts
-        run: forge build
-
-      - name: Simulate deployment to supported testnets and mainnets
-        run: |
-          make -j4 deploy-testnets deploy-mainnets
-
-      - name: Compress testnet and mainnet deployment simulation artifacts
-        run: tar -czf "$FILEPATH" deployments
-        env:
-          FILEPATH: upload/rollups-contracts-${{ steps.extract_version.outputs.version }}-deployment-addresses.tar.gz
-
-      - name: Build devnet
-        run: make devnet
-
-      - name: Compress devnet artifacts
-        run: tar -czf "$FILEPATH" deployments/31337 state.json
-        env:
-          FILEPATH: upload/rollups-contracts-${{ steps.extract_version.outputs.version }}-anvil-${{ steps.setup.outputs.foundry-version }}.tar.gz
+      - name: Build release artifacts
+        run: make -j release-artifacts
 
       - name: Upload assets to release on GitHub
         if: startsWith(github.ref, 'refs/tags/v')
-        run: gh release upload "$TAG" upload/* --clobber
+        run: gh release upload "$TAG" dist/* --clobber
         env:
           GH_TOKEN: ${{ github.token }}
           TAG: ${{ github.ref_name }}
