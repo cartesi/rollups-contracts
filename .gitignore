@@ -3,6 +3,7 @@
 /coverage
 /dependencies
 /deployments
+/dist
 /forge-docs
 /out
 lcov.info
