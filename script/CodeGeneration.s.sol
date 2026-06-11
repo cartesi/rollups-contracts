@@ -5,6 +5,8 @@ pragma solidity ^0.8.8;
 
 import {Script} from "forge-std-1.9.6/src/Script.sol";
 
+import "./utils/SemanticVersioning.sol" as SemanticVersioning;
+
 abstract contract CodeGenerationScript is Script {
     string private _code;
 
@@ -23,6 +25,15 @@ abstract contract CodeGenerationScript is Script {
     function _addImport(string memory directory, string memory contractName) internal {
         string memory path = string.concat(directory, "/", contractName, ".sol");
         _addLine(string.concat("import {", contractName, '} from "', path, '";'));
+    }
+
+    function _addConstant(
+        string memory constantType,
+        string memory constantName,
+        string memory rhs
+    ) internal {
+        string memory lhs = string.concat(constantType, " constant ", constantName);
+        _addLine(string.concat(lhs, " = ", rhs, ";"));
     }
 
     function _buildParamsAndArgs(string[] memory paramTypes)
@@ -50,6 +61,10 @@ abstract contract CodeGenerationScript is Script {
         } else {
             return string.concat(a, ", ", b);
         }
+    }
+
+    function _quote(string memory str) internal pure returns (string memory) {
+        return string.concat("\"", str, "\"");
     }
 
     function _writeCodeToFile(string memory path) internal {
@@ -200,5 +215,49 @@ contract DeployersCodeGenerationScript is CodeGenerationScript {
         _addLine(string.concat("deployment = ", interfaceName, "(addr);"));
         _addLine("}"); // if
         _addLine("}"); // function
+    }
+}
+
+contract VersionCodeGenerationScript is CodeGenerationScript {
+    /// @notice This error is raised whenever the script is run with
+    /// an invalid semantic version pre-release string.
+    /// @param preRelease The pre-release string
+    error InvalidPreRelease(string preRelease);
+
+    /// @notice This error is raised whenever the script is run with
+    /// an invalid semantic version build metadata string.
+    /// @param buildMetadata The build metadata string
+    error InvalidBuildMetadata(string buildMetadata);
+
+    function run(
+        uint64 major,
+        uint64 minor,
+        uint64 patch,
+        string memory preRelease,
+        string memory buildMetadata
+    ) external {
+        // First, we validate the pre-release and build metadata strings against the
+        // grammar at <https://semver.org/>. If this script is run with an invalid
+        // semantic version, then an appropriate custom error will be raised and the
+        // Version.sol file will remain intact. This avoids the production of ill-formed
+        // Solidity code, given that pre-release and build metadata strings disallow
+        // quotes and other characters that might result in compilation errors.
+        require(
+            SemanticVersioning.isPreReleaseValid(bytes(preRelease)),
+            InvalidPreRelease(preRelease)
+        );
+        require(
+            SemanticVersioning.isBuildMetadataValid(bytes(buildMetadata)),
+            InvalidBuildMetadata(buildMetadata)
+        );
+
+        _addPreamble();
+        _addConstant("uint64", "MAJOR", vmSafe.toString(major));
+        _addConstant("uint64", "MINOR", vmSafe.toString(minor));
+        _addConstant("uint64", "PATCH", vmSafe.toString(patch));
+        _addConstant("string", "PRE_RELEASE", _quote(preRelease));
+        _addConstant("string", "BUILD_METADATA", _quote(buildMetadata));
+
+        _writeCodeToFile("src/common/Version.sol");
     }
 }
