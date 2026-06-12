@@ -1,5 +1,6 @@
 .PHONY: build
 .PHONY: codegen
+.PHONY: coverage
 .PHONY: deploy
 .PHONY: deploy-all
 .PHONY: deploy-arbitrum-mainnet
@@ -32,6 +33,7 @@ PROJECT_VERSION := $(PROJECT_VERSION)$(if $(PROJECT_PRE_RELEASE),-$(PROJECT_PRE_
 PROJECT_VERSION := $(PROJECT_VERSION)$(if $(PROJECT_BUILD_METADATA),+$(PROJECT_BUILD_METADATA))
 
 FOUNDRY_VERSION := 1.5.1
+LCOV_VERSION    := 2.0
 
 DIST := dist
 
@@ -42,9 +44,11 @@ DEVNET_BUNDLE               := $(BUNDLE_PREFIX)-anvil-$(FOUNDRY_VERSION).tar.gz
 
 MAKEFLAGS += --no-print-directory
 
-ANVIL := anvil
-CAST  := cast
-FORGE := forge
+ANVIL   := anvil
+CAST    := cast
+FORGE   := forge
+GENHTML := genhtml
+LCOV    := lcov
 
 DEPLOY_CMD := $(FORGE) script script/Deployment.s.sol:DeploymentScript
 
@@ -150,6 +154,13 @@ codegen:
 		script/utils/ContractDeployers.sol \
 		src/common/Version.sol
 	@echo "✅ Successfully generated and formatted code."
+
+coverage:
+	@echo "🚧 Generating coverage data..."
+	@$(FORGE) coverage --ir-minimum --report lcov --lcov-version "$(LCOV_VERSION)"
+	@echo "🚧 Generating coverage report..."
+	@$(GENHTML) -o coverage lcov.info --rc derive_function_end_line=0
+	@echo "✅ Successfully generated coverage report."
 
 deploy-all: devnet deploy-livenets
 
