@@ -15,6 +15,7 @@
 .PHONY: deploy-testnets
 .PHONY: devnet
 .PHONY: print-foundry-version
+.PHONY: publish-soldeer-package
 .PHONY: release-artifacts
 
 PROJECT_NAME := cartesi-rollups-contracts
@@ -250,6 +251,9 @@ deploy-arbitrum-mainnet: build
 
 print-foundry-version:
 	@echo "$(FOUNDRY_VERSION)"
+
+publish-soldeer-package:
+	@$(FORGE) soldeer push "$(PROJECT_NAME)~$(PROJECT_VERSION)" $(if $(DRY_RUN),--dry-run)
 
 release-artifacts: $(ARTIFACTS_BUNDLE) $(DEPLOYMENT_ADDRESSES_BUNDLE) $(DEVNET_BUNDLE)
 
