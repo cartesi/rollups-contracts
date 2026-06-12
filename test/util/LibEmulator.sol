@@ -202,17 +202,14 @@ library LibEmulator {
         view
         returns (bytes32[] memory accountRootSiblings)
     {
-        bytes32[] memory accountMerkleRootSiblingsInDrive =
-            getAccountMerkleRootSiblingsInDrive(
-                getAccountMerkleRoots(state), AccountIndex.unwrap(accountIndex)
-            );
-
-        require(
-            accountMerkleRootSiblingsInDrive.length == LOG2_MAX_NUM_OF_ACCOUNTS,
-            "unexpected account Merkle root siblings in drive proof length"
+        accountRootSiblings = getAccountMerkleRootSiblingsInDrive(
+            getAccountMerkleRoots(state), AccountIndex.unwrap(accountIndex)
         );
 
-        return accountMerkleRootSiblingsInDrive;
+        require(
+            accountRootSiblings.length == LOG2_MAX_NUM_OF_ACCOUNTS,
+            "unexpected account Merkle root siblings in drive proof length"
+        );
     }
 
     function getAccountsDriveMerkleRootProof(ProofComponents memory pc)
