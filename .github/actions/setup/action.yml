@@ -12,9 +12,9 @@ runs:
     - name: Set Foundry version
       id: set-foundry-version
       shell: bash
-      run: echo "foundry-version=v1.5.1" >> $GITHUB_OUTPUT
+      run: echo "foundry-version=$(make print-foundry-version)" >> $GITHUB_OUTPUT
 
-    - uses: foundry-rs/foundry-toolchain@de808b1eea699e761c404bda44ba8f21aba30b2c # 1.3.1
+    - uses: foundry-rs/foundry-toolchain@c7450ba673e133f5ee30098b3b54f444d3a2ca2d # v1.8.0
       with:
         version: ${{ steps.set-foundry-version.outputs.foundry-version }}
 
