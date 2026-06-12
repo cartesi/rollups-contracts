@@ -23,12 +23,8 @@ import {IApplication} from "./IApplication.sol";
 import {IApplicationFactoryErrors} from "./IApplicationFactoryErrors.sol";
 
 import {Ownable} from "@openzeppelin-contracts-5.2.0/access/Ownable.sol";
-import {
-    ERC1155Holder
-} from "@openzeppelin-contracts-5.2.0/token/ERC1155/utils/ERC1155Holder.sol";
-import {
-    ERC721Holder
-} from "@openzeppelin-contracts-5.2.0/token/ERC721/utils/ERC721Holder.sol";
+import {ERC1155Holder} from "@openzeppelin-contracts-5.2.0/token/ERC1155/utils/ERC1155Holder.sol";
+import {ERC721Holder} from "@openzeppelin-contracts-5.2.0/token/ERC721/utils/ERC721Holder.sol";
 import {ReentrancyGuard} from "@openzeppelin-contracts-5.2.0/utils/ReentrancyGuard.sol";
 import {BitMaps} from "@openzeppelin-contracts-5.2.0/utils/structs/BitMaps.sol";
 

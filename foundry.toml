@@ -20,6 +20,8 @@ fs_permissions = [
 [fmt]
 line_length = 90
 sort_imports = true
+single_line_imports = true
+docs_style = "line"
 
 [doc]
 out = "forge-docs"

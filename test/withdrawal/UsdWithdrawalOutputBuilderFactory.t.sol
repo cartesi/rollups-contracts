@@ -9,15 +9,9 @@ import {IERC20} from "@openzeppelin-contracts-5.2.0/token/ERC20/IERC20.sol";
 
 import {Outputs} from "src/common/Outputs.sol";
 import {ISafeERC20Transfer} from "src/delegatecall/ISafeERC20Transfer.sol";
-import {
-    IUsdWithdrawalOutputBuilder
-} from "src/withdrawal/IUsdWithdrawalOutputBuilder.sol";
-import {
-    IUsdWithdrawalOutputBuilderFactory
-} from "src/withdrawal/IUsdWithdrawalOutputBuilderFactory.sol";
-import {
-    IWithdrawalOutputBuilderErrors
-} from "src/withdrawal/IWithdrawalOutputBuilderErrors.sol";
+import {IUsdWithdrawalOutputBuilder} from "src/withdrawal/IUsdWithdrawalOutputBuilder.sol";
+import {IUsdWithdrawalOutputBuilderFactory} from "src/withdrawal/IUsdWithdrawalOutputBuilderFactory.sol";
+import {IWithdrawalOutputBuilderErrors} from "src/withdrawal/IWithdrawalOutputBuilderErrors.sol";
 
 import {LibBytes} from "../util/LibBytes.sol";
 import {RollupsTest} from "../util/RollupsTest.sol";

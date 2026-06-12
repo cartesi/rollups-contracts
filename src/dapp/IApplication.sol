@@ -11,9 +11,7 @@ import {OutputValidityProof} from "../common/OutputValidityProof.sol";
 import {WithdrawalConfig} from "../common/WithdrawalConfig.sol";
 import {IOutputsMerkleRootValidator} from "../consensus/IOutputsMerkleRootValidator.sol";
 import {IWithdrawalOutputBuilder} from "../withdrawal/IWithdrawalOutputBuilder.sol";
-import {
-    IWithdrawalOutputBuilderErrors
-} from "../withdrawal/IWithdrawalOutputBuilderErrors.sol";
+import {IWithdrawalOutputBuilderErrors} from "../withdrawal/IWithdrawalOutputBuilderErrors.sol";
 
 /// @notice The base layer incarnation of an application running on the execution layer.
 /// @notice The state of the application advances through inputs sent to an `IInputBox` contract.

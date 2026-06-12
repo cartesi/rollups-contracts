@@ -3,9 +3,7 @@
 
 pragma solidity ^0.8.22;
 
-import {
-    IWithdrawalOutputBuilderErrors
-} from "../withdrawal/IWithdrawalOutputBuilderErrors.sol";
+import {IWithdrawalOutputBuilderErrors} from "../withdrawal/IWithdrawalOutputBuilderErrors.sol";
 
 library LibUsdAccount {
     uint64 constant MIN_ACCOUNT_SIZE = 28;

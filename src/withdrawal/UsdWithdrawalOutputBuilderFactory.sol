@@ -9,9 +9,7 @@ import {Create2} from "@openzeppelin-contracts-5.2.0/utils/Create2.sol";
 import {RollupsContract} from "../common/RollupsContract.sol";
 import {ISafeERC20Transfer} from "../delegatecall/ISafeERC20Transfer.sol";
 import {IUsdWithdrawalOutputBuilder} from "./IUsdWithdrawalOutputBuilder.sol";
-import {
-    IUsdWithdrawalOutputBuilderFactory
-} from "./IUsdWithdrawalOutputBuilderFactory.sol";
+import {IUsdWithdrawalOutputBuilderFactory} from "./IUsdWithdrawalOutputBuilderFactory.sol";
 import {UsdWithdrawalOutputBuilder} from "./UsdWithdrawalOutputBuilder.sol";
 
 /// @title USD Withdrawal Output Builder Factory

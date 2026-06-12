@@ -3,9 +3,7 @@
 
 pragma solidity ^0.8.8;
 
-import {
-    EmulatorConstants
-} from "cartesi-machine-solidity-step-0.14.0/src/EmulatorConstants.sol";
+import {EmulatorConstants} from "cartesi-machine-solidity-step-0.14.0/src/EmulatorConstants.sol";
 import {Memory} from "cartesi-machine-solidity-step-0.14.0/src/Memory.sol";
 
 /// @title Canonical Machine Constants Library

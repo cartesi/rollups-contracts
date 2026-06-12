@@ -6,9 +6,7 @@ pragma solidity ^0.8.22;
 import {Test} from "forge-std-1.9.6/src/Test.sol";
 
 import {LibUsdAccount} from "src/library/LibUsdAccount.sol";
-import {
-    IWithdrawalOutputBuilderErrors
-} from "src/withdrawal/IWithdrawalOutputBuilderErrors.sol";
+import {IWithdrawalOutputBuilderErrors} from "src/withdrawal/IWithdrawalOutputBuilderErrors.sol";
 
 library ExternalLibUsdAccount {
     /// @notice Tail-calls LibUsdAccount.decode.
