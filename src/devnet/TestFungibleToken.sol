@@ -13,4 +13,19 @@ contract TestFungibleToken is ERC20 {
     function mint(uint256 value) external {
         _mint(msg.sender, value);
     }
+
+    /// @notice Mint fungible tokens.
+    /// @param to The account that will receive the tokens
+    /// @param value The amount of fungible tokens to mint
+    /// @dev Compatible with `cast erc20 mint <TOKEN> <TO> <VALUE>`.
+    function mint(address to, uint256 value) external {
+        _mint(to, value);
+    }
+
+    /// @notice Burn fungible tokens from one's balance.
+    /// @param value The amount of fungible tokens to burn
+    /// @dev Compatible with `cast erc20 burn <TOKEN> <VALUE>`.
+    function burn(uint256 value) external {
+        _burn(msg.sender, value);
+    }
 }
