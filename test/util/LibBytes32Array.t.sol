@@ -39,4 +39,14 @@ contract LibBytes32ArrayTest is Test {
         }
         assertEq(head.concat(tail), array);
     }
+
+    function testSplitRevertsInvalidArrayIndex(bytes32[] calldata array) external {
+        uint256 index = vm.randomUint(array.length + 1, type(uint256).max);
+        vm.expectRevert(
+            abi.encodeWithSelector(
+                LibBytes32Array.InvalidArrayIndex.selector, array, index
+            )
+        );
+        array.split(index);
+    }
 }
