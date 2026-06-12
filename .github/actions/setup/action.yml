@@ -1,11 +1,6 @@
 name: "Install dependencies"
 description: "Installs Foundry and Solidity packages"
 
-outputs:
-  foundry-version:
-    description: "The version of Foundry that was installed"
-    value: ${{ steps.set-foundry-version.outputs.foundry-version }}
-
 runs:
   using: "composite"
   steps:

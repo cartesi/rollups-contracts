@@ -17,6 +17,7 @@
 .PHONY: print-foundry-version
 .PHONY: publish-soldeer-package
 .PHONY: release-artifacts
+.PHONY: rust-bindings
 
 PROJECT_NAME := cartesi-rollups-contracts
 
@@ -124,6 +125,12 @@ MAINNET_CHAIN_IDS  += $(ETHEREUM_MAINNET_CHAIN_ID)
 MAINNET_CHAIN_IDS  += $(OP_MAINNET_CHAIN_ID)
 
 LIVENET_CHAIN_IDS  := $(TESTNET_CHAIN_IDS) $(MAINNET_CHAIN_IDS)
+
+FORGE_BIND_OPTS  += --crate-name "$(PROJECT_NAME)"
+FORGE_BIND_OPTS  += --crate-version "$(PROJECT_VERSION)"
+FORGE_BIND_OPTS  += --crate-license "Apache-2.0"
+FORGE_BIND_OPTS  += --crate-description "Rust bindings for Cartesi Rollups contracts"
+FORGE_BIND_OPTS  += --alloy-version "1.0"
 
 build:
 	@$(FORGE) build
@@ -278,3 +285,6 @@ $(DEVNET_BUNDLE): devnet | $(DIST)
 
 $(DIST):
 	mkdir -p "$@"
+
+rust-bindings:
+	@$(FORGE) bind $(FORGE_BIND_OPTS)

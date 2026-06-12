@@ -19,25 +19,8 @@ jobs:
 
       - uses: ./.github/actions/setup
 
-      - name: Extract version from tag
-        id: extract_version
-        run: |
-          if [[ "$GITHUB_REF" == refs/tags/v* ]]; then
-            echo "version=${GITHUB_REF#refs/tags/v}" >> $GITHUB_OUTPUT
-          else
-            echo "version=0.0.0-dev" >> $GITHUB_OUTPUT
-          fi
-
       - name: Generate Rust bindings
-        run: |
-          forge bind \
-            --crate-name cartesi-rollups-contracts \
-            --crate-version "$VERSION" \
-            --crate-license "Apache-2.0" \
-            --crate-description "Rust bindings for Cartesi Rollups smart contracts" \
-            --alloy-version "1.0"
-        env:
-          VERSION: ${{ steps.extract_version.outputs.version }}
+        run: make rust-bindings
 
       - name: Upload package to crates.io
         working-directory: out/bindings
