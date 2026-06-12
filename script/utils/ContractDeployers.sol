@@ -23,15 +23,9 @@ import {ERC1155SinglePortal} from "src/portals/ERC1155SinglePortal.sol";
 import {ERC20Portal} from "src/portals/ERC20Portal.sol";
 import {ERC721Portal} from "src/portals/ERC721Portal.sol";
 import {EtherPortal} from "src/portals/EtherPortal.sol";
-import {
-    IUsdWithdrawalOutputBuilder
-} from "src/withdrawal/IUsdWithdrawalOutputBuilder.sol";
-import {
-    IUsdWithdrawalOutputBuilderFactory
-} from "src/withdrawal/IUsdWithdrawalOutputBuilderFactory.sol";
-import {
-    UsdWithdrawalOutputBuilderFactory
-} from "src/withdrawal/UsdWithdrawalOutputBuilderFactory.sol";
+import {IUsdWithdrawalOutputBuilder} from "src/withdrawal/IUsdWithdrawalOutputBuilder.sol";
+import {IUsdWithdrawalOutputBuilderFactory} from "src/withdrawal/IUsdWithdrawalOutputBuilderFactory.sol";
+import {UsdWithdrawalOutputBuilderFactory} from "src/withdrawal/UsdWithdrawalOutputBuilderFactory.sol";
 
 function computeAddress(bytes32 salt, bytes32 initCodeHash) pure returns (address) {
     return address(

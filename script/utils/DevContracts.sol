@@ -8,9 +8,7 @@ import {VmSafe} from "forge-std-1.9.6/src/Vm.sol";
 import {TestFungibleToken} from "src/devnet/TestFungibleToken.sol";
 import {TestMultiToken} from "src/devnet/TestMultiToken.sol";
 import {TestNonFungibleToken} from "src/devnet/TestNonFungibleToken.sol";
-import {
-    IUsdWithdrawalOutputBuilder
-} from "src/withdrawal/IUsdWithdrawalOutputBuilder.sol";
+import {IUsdWithdrawalOutputBuilder} from "src/withdrawal/IUsdWithdrawalOutputBuilder.sol";
 import {UsdWithdrawalOutputBuilder} from "src/withdrawal/UsdWithdrawalOutputBuilder.sol";
 
 import "./ContractDeployers.sol" as G;

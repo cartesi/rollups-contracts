@@ -4,9 +4,7 @@
 pragma solidity ^0.8.22;
 
 import {IERC1155} from "@openzeppelin-contracts-5.2.0/token/ERC1155/IERC1155.sol";
-import {
-    IERC1155Receiver
-} from "@openzeppelin-contracts-5.2.0/token/ERC1155/IERC1155Receiver.sol";
+import {IERC1155Receiver} from "@openzeppelin-contracts-5.2.0/token/ERC1155/IERC1155Receiver.sol";
 
 import {Vm} from "forge-std-1.9.6/src/Vm.sol";
 

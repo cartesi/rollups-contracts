@@ -16,15 +16,11 @@ import {IApplication} from "src/dapp/IApplication.sol";
 import {ISafeERC20Transfer} from "src/delegatecall/ISafeERC20Transfer.sol";
 import {LibUsdAccount} from "src/library/LibUsdAccount.sol";
 import {IWithdrawalOutputBuilder} from "src/withdrawal/IWithdrawalOutputBuilder.sol";
-import {
-    IWithdrawalOutputBuilderErrors
-} from "src/withdrawal/IWithdrawalOutputBuilderErrors.sol";
+import {IWithdrawalOutputBuilderErrors} from "src/withdrawal/IWithdrawalOutputBuilderErrors.sol";
 
-import {
-    IERC1155Errors,
-    IERC20Errors,
-    IERC721Errors
-} from "@openzeppelin-contracts-5.2.0/interfaces/draft-IERC6093.sol";
+import {IERC20Errors} from "@openzeppelin-contracts-5.2.0/interfaces/draft-IERC6093.sol";
+import {IERC1155Errors} from "@openzeppelin-contracts-5.2.0/interfaces/draft-IERC6093.sol";
+import {IERC721Errors} from "@openzeppelin-contracts-5.2.0/interfaces/draft-IERC6093.sol";
 import {IERC1155} from "@openzeppelin-contracts-5.2.0/token/ERC1155/IERC1155.sol";
 import {IERC20} from "@openzeppelin-contracts-5.2.0/token/ERC20/IERC20.sol";
 import {SafeERC20} from "@openzeppelin-contracts-5.2.0/token/ERC20/utils/SafeERC20.sol";

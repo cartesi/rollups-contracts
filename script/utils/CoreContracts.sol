@@ -16,9 +16,7 @@ import {ERC1155SinglePortal} from "src/portals/ERC1155SinglePortal.sol";
 import {ERC20Portal} from "src/portals/ERC20Portal.sol";
 import {ERC721Portal} from "src/portals/ERC721Portal.sol";
 import {EtherPortal} from "src/portals/EtherPortal.sol";
-import {
-    UsdWithdrawalOutputBuilderFactory
-} from "src/withdrawal/UsdWithdrawalOutputBuilderFactory.sol";
+import {UsdWithdrawalOutputBuilderFactory} from "src/withdrawal/UsdWithdrawalOutputBuilderFactory.sol";
 
 import "./ContractDeployers.sol" as G;
 import {storeDeployment} from "./DeploymentStorage.sol";
