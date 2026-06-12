@@ -14,12 +14,15 @@
 .PHONY: deploy-op-sepolia
 .PHONY: deploy-testnets
 .PHONY: devnet
+.PHONY: print-foundry-version
 
 PROJECT_MAJOR_VERSION  := 3
 PROJECT_MINOR_VERSION  := 0
 PROJECT_PATCH_VERSION  := 0
 PROJECT_PRE_RELEASE    := alpha.6
 PROJECT_BUILD_METADATA :=
+
+FOUNDRY_VERSION := 1.5.1
 
 MAKEFLAGS += --no-print-directory
 
@@ -218,3 +221,6 @@ deploy-arbitrum-mainnet: build
 	@echo "🌐 Running deployment script against Arbitrum Mainnet..."
 	@$(DEPLOY_CMD) $(ARBITRUM_MAINNET_DEPLOY_OPTS) $(DEPLOY_OPTS)
 	@echo "✅ Deployment script successfully ran against Arbitrum Mainnet."
+
+print-foundry-version:
+	@echo "$(FOUNDRY_VERSION)"
