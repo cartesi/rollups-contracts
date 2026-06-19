@@ -2,16 +2,16 @@
 .PHONY: codegen
 .PHONY: coverage
 .PHONY: deploy-all
-.PHONY: deploy-arbitrum-mainnet
-.PHONY: deploy-arbitrum-sepolia
+.PHONY: deploy-arb-mainnet
+.PHONY: deploy-arb-sepolia
 .PHONY: deploy-base-mainnet
 .PHONY: deploy-base-sepolia
-.PHONY: deploy-ethereum-mainnet
-.PHONY: deploy-ethereum-sepolia
+.PHONY: deploy-eth-mainnet
+.PHONY: deploy-eth-sepolia
 .PHONY: deploy-livenets
 .PHONY: deploy-mainnets
-.PHONY: deploy-op-mainnet
-.PHONY: deploy-op-sepolia
+.PHONY: deploy-opt-mainnet
+.PHONY: deploy-opt-sepolia
 .PHONY: deploy-testnets
 .PHONY: devnet
 .PHONY: print-foundry-version
@@ -65,67 +65,67 @@ ANVIL_DEPLOY_OPTS += --non-interactive
 ANVIL_DEPLOY_OPTS += --broadcast
 ANVIL_DEPLOY_OPTS += --slow
 
-ARBITRUM_MAINNET_RPC_URL  ?= https://arb1.arbitrum.io/rpc
-ARBITRUM_SEPOLIA_RPC_URL  ?= https://sepolia-rollup.arbitrum.io/rpc
-BASE_MAINNET_RPC_URL      ?= https://mainnet.base.org
-BASE_SEPOLIA_RPC_URL      ?= https://sepolia.base.org
-ETHEREUM_MAINNET_RPC_URL  ?= https://eth.drpc.org
-ETHEREUM_SEPOLIA_RPC_URL  ?= https://sepolia.drpc.org
-OP_MAINNET_RPC_URL        ?= https://mainnet.optimism.io
-OP_SEPOLIA_RPC_URL        ?= https://sepolia.optimism.io
+ARB_MAINNET_RPC_URL   ?= https://arb1.arbitrum.io/rpc
+ARB_SEPOLIA_RPC_URL   ?= https://sepolia-rollup.arbitrum.io/rpc
+BASE_MAINNET_RPC_URL  ?= https://mainnet.base.org
+BASE_SEPOLIA_RPC_URL  ?= https://sepolia.base.org
+ETH_MAINNET_RPC_URL   ?= https://eth.drpc.org
+ETH_SEPOLIA_RPC_URL   ?= https://sepolia.drpc.org
+OPT_MAINNET_RPC_URL   ?= https://mainnet.optimism.io
+OPT_SEPOLIA_RPC_URL   ?= https://sepolia.optimism.io
 
-export ARBITRUM_MAINNET_RPC_URL
-export ARBITRUM_SEPOLIA_RPC_URL
+export ARB_MAINNET_RPC_URL
+export ARB_SEPOLIA_RPC_URL
 export BASE_MAINNET_RPC_URL
 export BASE_SEPOLIA_RPC_URL
-export ETHEREUM_MAINNET_RPC_URL
-export ETHEREUM_SEPOLIA_RPC_URL
-export OP_MAINNET_RPC_URL
-export OP_SEPOLIA_RPC_URL
+export ETH_MAINNET_RPC_URL
+export ETH_SEPOLIA_RPC_URL
+export OPT_MAINNET_RPC_URL
+export OPT_SEPOLIA_RPC_URL
 
-ANVIL_CHAIN_ID             := 31337
-ARBITRUM_MAINNET_CHAIN_ID  := 42161
-ARBITRUM_SEPOLIA_CHAIN_ID  := 421614
-BASE_MAINNET_CHAIN_ID      := 8453
-BASE_SEPOLIA_CHAIN_ID      := 84532
-ETHEREUM_MAINNET_CHAIN_ID  := 1
-ETHEREUM_SEPOLIA_CHAIN_ID  := 11155111
-OP_MAINNET_CHAIN_ID        := 10
-OP_SEPOLIA_CHAIN_ID        := 11155420
+ANVIL_CHAIN_ID         := 31337
+ARB_MAINNET_CHAIN_ID   := 42161
+ARB_SEPOLIA_CHAIN_ID   := 421614
+BASE_MAINNET_CHAIN_ID  := 8453
+BASE_SEPOLIA_CHAIN_ID  := 84532
+ETH_MAINNET_CHAIN_ID   := 1
+ETH_SEPOLIA_CHAIN_ID   := 11155111
+OPT_MAINNET_CHAIN_ID   := 10
+OPT_SEPOLIA_CHAIN_ID   := 11155420
 
-ARBITRUM_MAINNET_DEPLOY_OPTS  += --rpc-url arbitrum_mainnet
-ARBITRUM_MAINNET_DEPLOY_OPTS  += --chain-id $(ARBITRUM_MAINNET_CHAIN_ID)
+ARB_MAINNET_DEPLOY_OPTS   += --rpc-url arb_mainnet
+ARB_MAINNET_DEPLOY_OPTS   += --chain-id $(ARB_MAINNET_CHAIN_ID)
 
-ARBITRUM_SEPOLIA_DEPLOY_OPTS  += --rpc-url arbitrum_sepolia
-ARBITRUM_SEPOLIA_DEPLOY_OPTS  += --chain-id $(ARBITRUM_SEPOLIA_CHAIN_ID)
+ARB_SEPOLIA_DEPLOY_OPTS   += --rpc-url arb_sepolia
+ARB_SEPOLIA_DEPLOY_OPTS   += --chain-id $(ARB_SEPOLIA_CHAIN_ID)
 
-BASE_MAINNET_DEPLOY_OPTS      += --rpc-url base_mainnet
-BASE_MAINNET_DEPLOY_OPTS      += --chain-id $(BASE_MAINNET_CHAIN_ID)
+BASE_MAINNET_DEPLOY_OPTS  += --rpc-url base_mainnet
+BASE_MAINNET_DEPLOY_OPTS  += --chain-id $(BASE_MAINNET_CHAIN_ID)
 
-BASE_SEPOLIA_DEPLOY_OPTS      += --rpc-url base_sepolia
-BASE_SEPOLIA_DEPLOY_OPTS      += --chain-id $(BASE_SEPOLIA_CHAIN_ID)
+BASE_SEPOLIA_DEPLOY_OPTS  += --rpc-url base_sepolia
+BASE_SEPOLIA_DEPLOY_OPTS  += --chain-id $(BASE_SEPOLIA_CHAIN_ID)
 
-ETHEREUM_MAINNET_DEPLOY_OPTS  += --rpc-url ethereum_mainnet
-ETHEREUM_MAINNET_DEPLOY_OPTS  += --chain-id $(ETHEREUM_MAINNET_CHAIN_ID)
+ETH_MAINNET_DEPLOY_OPTS   += --rpc-url eth_mainnet
+ETH_MAINNET_DEPLOY_OPTS   += --chain-id $(ETH_MAINNET_CHAIN_ID)
 
-ETHEREUM_SEPOLIA_DEPLOY_OPTS  += --rpc-url ethereum_sepolia
-ETHEREUM_SEPOLIA_DEPLOY_OPTS  += --chain-id $(ETHEREUM_SEPOLIA_CHAIN_ID)
+ETH_SEPOLIA_DEPLOY_OPTS   += --rpc-url eth_sepolia
+ETH_SEPOLIA_DEPLOY_OPTS   += --chain-id $(ETH_SEPOLIA_CHAIN_ID)
 
-OP_MAINNET_DEPLOY_OPTS        += --rpc-url op_mainnet
-OP_MAINNET_DEPLOY_OPTS        += --chain-id $(OP_MAINNET_CHAIN_ID)
+OPT_MAINNET_DEPLOY_OPTS   += --rpc-url opt_mainnet
+OPT_MAINNET_DEPLOY_OPTS   += --chain-id $(OPT_MAINNET_CHAIN_ID)
 
-OP_SEPOLIA_DEPLOY_OPTS        += --rpc-url op_sepolia
-OP_SEPOLIA_DEPLOY_OPTS        += --chain-id $(OP_SEPOLIA_CHAIN_ID)
+OPT_SEPOLIA_DEPLOY_OPTS   += --rpc-url opt_sepolia
+OPT_SEPOLIA_DEPLOY_OPTS   += --chain-id $(OPT_SEPOLIA_CHAIN_ID)
 
-TESTNET_CHAIN_IDS  += $(ARBITRUM_SEPOLIA_CHAIN_ID)
+TESTNET_CHAIN_IDS  += $(ARB_SEPOLIA_CHAIN_ID)
 TESTNET_CHAIN_IDS  += $(BASE_SEPOLIA_CHAIN_ID)
-TESTNET_CHAIN_IDS  += $(ETHEREUM_SEPOLIA_CHAIN_ID)
-TESTNET_CHAIN_IDS  += $(OP_SEPOLIA_CHAIN_ID)
+TESTNET_CHAIN_IDS  += $(ETH_SEPOLIA_CHAIN_ID)
+TESTNET_CHAIN_IDS  += $(OPT_SEPOLIA_CHAIN_ID)
 
-MAINNET_CHAIN_IDS  += $(ARBITRUM_MAINNET_CHAIN_ID)
+MAINNET_CHAIN_IDS  += $(ARB_MAINNET_CHAIN_ID)
 MAINNET_CHAIN_IDS  += $(BASE_MAINNET_CHAIN_ID)
-MAINNET_CHAIN_IDS  += $(ETHEREUM_MAINNET_CHAIN_ID)
-MAINNET_CHAIN_IDS  += $(OP_MAINNET_CHAIN_ID)
+MAINNET_CHAIN_IDS  += $(ETH_MAINNET_CHAIN_ID)
+MAINNET_CHAIN_IDS  += $(OPT_MAINNET_CHAIN_ID)
 
 LIVENET_CHAIN_IDS  := $(TESTNET_CHAIN_IDS) $(MAINNET_CHAIN_IDS)
 
@@ -216,24 +216,24 @@ devnet: build
 
 deploy-livenets: deploy-testnets deploy-mainnets
 
-deploy-testnets: deploy-ethereum-sepolia
-deploy-testnets: deploy-op-sepolia
+deploy-testnets: deploy-eth-sepolia
+deploy-testnets: deploy-opt-sepolia
 deploy-testnets: deploy-base-sepolia
-deploy-testnets: deploy-arbitrum-sepolia
+deploy-testnets: deploy-arb-sepolia
 
-deploy-mainnets: deploy-ethereum-mainnet
-deploy-mainnets: deploy-op-mainnet
+deploy-mainnets: deploy-eth-mainnet
+deploy-mainnets: deploy-opt-mainnet
 deploy-mainnets: deploy-base-mainnet
-deploy-mainnets: deploy-arbitrum-mainnet
+deploy-mainnets: deploy-arb-mainnet
 
-deploy-ethereum-sepolia: build
+deploy-eth-sepolia: build
 	@echo "🌐 Running deployment script against Ethereum Sepolia..."
-	@$(DEPLOY_CMD) $(ETHEREUM_SEPOLIA_DEPLOY_OPTS) $(DEPLOY_OPTS)
+	@$(DEPLOY_CMD) $(ETH_SEPOLIA_DEPLOY_OPTS) $(DEPLOY_OPTS)
 	@echo "✅ Deployment script successfully ran against Ethereum Sepolia."
 
-deploy-op-sepolia: build
+deploy-opt-sepolia: build
 	@echo "🌐 Running deployment script against OP Sepolia..."
-	@$(DEPLOY_CMD) $(OP_SEPOLIA_DEPLOY_OPTS) $(DEPLOY_OPTS)
+	@$(DEPLOY_CMD) $(OPT_SEPOLIA_DEPLOY_OPTS) $(DEPLOY_OPTS)
 	@echo "✅ Deployment script successfully ran against OP Sepolia."
 
 deploy-base-sepolia: build
@@ -241,19 +241,19 @@ deploy-base-sepolia: build
 	@$(DEPLOY_CMD) $(BASE_SEPOLIA_DEPLOY_OPTS) $(DEPLOY_OPTS)
 	@echo "✅ Deployment script successfully ran against Base Sepolia."
 
-deploy-arbitrum-sepolia: build
+deploy-arb-sepolia: build
 	@echo "🌐 Running deployment script against Arbitrum Sepolia..."
-	@$(DEPLOY_CMD) $(ARBITRUM_SEPOLIA_DEPLOY_OPTS) $(DEPLOY_OPTS)
+	@$(DEPLOY_CMD) $(ARB_SEPOLIA_DEPLOY_OPTS) $(DEPLOY_OPTS)
 	@echo "✅ Deployment script successfully ran against Arbitrum Sepolia."
 
-deploy-ethereum-mainnet: build
+deploy-eth-mainnet: build
 	@echo "🌐 Running deployment script against Ethereum Mainnet..."
-	@$(DEPLOY_CMD) $(ETHEREUM_MAINNET_DEPLOY_OPTS) $(DEPLOY_OPTS)
+	@$(DEPLOY_CMD) $(ETH_MAINNET_DEPLOY_OPTS) $(DEPLOY_OPTS)
 	@echo "✅ Deployment script successfully ran against Ethereum Mainnet."
 
-deploy-op-mainnet: build
+deploy-opt-mainnet: build
 	@echo "🌐 Running deployment script against OP Mainnet..."
-	@$(DEPLOY_CMD) $(OP_MAINNET_DEPLOY_OPTS) $(DEPLOY_OPTS)
+	@$(DEPLOY_CMD) $(OPT_MAINNET_DEPLOY_OPTS) $(DEPLOY_OPTS)
 	@echo "✅ Deployment script successfully ran against OP Mainnet."
 
 deploy-base-mainnet: build
@@ -261,9 +261,9 @@ deploy-base-mainnet: build
 	@$(DEPLOY_CMD) $(BASE_MAINNET_DEPLOY_OPTS) $(DEPLOY_OPTS)
 	@echo "✅ Deployment script successfully ran against Base Mainnet."
 
-deploy-arbitrum-mainnet: build
+deploy-arb-mainnet: build
 	@echo "🌐 Running deployment script against Arbitrum Mainnet..."
-	@$(DEPLOY_CMD) $(ARBITRUM_MAINNET_DEPLOY_OPTS) $(DEPLOY_OPTS)
+	@$(DEPLOY_CMD) $(ARB_MAINNET_DEPLOY_OPTS) $(DEPLOY_OPTS)
 	@echo "✅ Deployment script successfully ran against Arbitrum Mainnet."
 
 print-foundry-version:
