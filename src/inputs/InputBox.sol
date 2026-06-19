@@ -1,7 +1,7 @@
 // (c) Cartesi and individual authors (see AUTHORS)
 // SPDX-License-Identifier: Apache-2.0 (see LICENSE)
 
-pragma solidity ^0.8.18;
+pragma solidity ^0.8.30;
 
 import {CanonicalMachine} from "../common/CanonicalMachine.sol";
 import {Inputs} from "../common/Inputs.sol";

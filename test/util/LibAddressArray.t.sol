@@ -1,7 +1,7 @@
 // (c) Cartesi and individual authors (see AUTHORS)
 // SPDX-License-Identifier: Apache-2.0 (see LICENSE)
 
-pragma solidity ^0.8.22;
+pragma solidity ^0.8.30;
 
 import {Test} from "forge-std-1.9.6/src/Test.sol";
 import {Vm} from "forge-std-1.9.6/src/Vm.sol";

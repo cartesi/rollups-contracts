@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0 (see LICENSE)
 
 /// @title Self-hosted Application Factory Test
-pragma solidity ^0.8.22;
+pragma solidity ^0.8.30;
 
 import {Ownable} from "@openzeppelin-contracts-5.2.0/access/Ownable.sol";
 

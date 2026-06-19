@@ -1,7 +1,7 @@
 // (c) Cartesi and individual authors (see AUTHORS)
 // SPDX-License-Identifier: Apache-2.0 (see LICENSE)
 
-pragma solidity ^0.8.8;
+pragma solidity ^0.8.30;
 
 /// @notice Proof of inclusion of an output in the output Merkle tree.
 /// @param outputIndex Index of output in the Merkle tree
