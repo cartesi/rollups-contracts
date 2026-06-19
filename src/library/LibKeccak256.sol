@@ -1,7 +1,7 @@
 // (c) Cartesi and individual authors (see AUTHORS)
 // SPDX-License-Identifier: Apache-2.0 (see LICENSE)
 
-pragma solidity ^0.8.22;
+pragma solidity ^0.8.30;
 
 library LibKeccak256 {
     /// @notice Hash a variable-length byte array.
