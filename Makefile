@@ -1,7 +1,6 @@
 .PHONY: build
 .PHONY: codegen
 .PHONY: coverage
-.PHONY: deploy
 .PHONY: deploy-all
 .PHONY: deploy-arbitrum-mainnet
 .PHONY: deploy-arbitrum-sepolia
