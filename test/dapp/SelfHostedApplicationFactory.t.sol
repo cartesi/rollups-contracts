@@ -14,6 +14,7 @@ import {IApplication} from "src/dapp/IApplication.sol";
 import {IApplicationFactory} from "src/dapp/IApplicationFactory.sol";
 import {IApplicationFactoryErrors} from "src/dapp/IApplicationFactoryErrors.sol";
 import {ISelfHostedApplicationFactory} from "src/dapp/ISelfHostedApplicationFactory.sol";
+import {IInputBox} from "src/inputs/IInputBox.sol";
 import {LibWithdrawalConfig} from "src/library/LibWithdrawalConfig.sol";
 
 import {LibBytes} from "../util/LibBytes.sol";
@@ -53,7 +54,7 @@ contract SelfHostedApplicationFactoryTest is RollupsTest, VersionGetterTestUtils
         uint256 claimStagingPeriod,
         address appOwner,
         bytes32 templateHash,
-        bytes calldata dataAvailability,
+        IInputBox inputBox,
         WithdrawalConfig calldata withdrawalConfig,
         bytes32 salt
     ) external {
@@ -68,7 +69,7 @@ contract SelfHostedApplicationFactoryTest is RollupsTest, VersionGetterTestUtils
             claimStagingPeriod,
             appOwner,
             templateHash,
-            dataAvailability,
+            inputBox,
             withdrawalConfig,
             salt
         );
@@ -79,7 +80,7 @@ contract SelfHostedApplicationFactoryTest is RollupsTest, VersionGetterTestUtils
             claimStagingPeriod,
             appOwner,
             templateHash,
-            dataAvailability,
+            inputBox,
             withdrawalConfig,
             salt
         ) returns (
@@ -156,9 +157,9 @@ contract SelfHostedApplicationFactoryTest is RollupsTest, VersionGetterTestUtils
                 "app.getWithdrawalOutputBuilder() != withdrawalConfig.withdrawalOutputBuilder"
             );
             assertEq(
-                application.getDataAvailability(),
-                dataAvailability,
-                "app.getDataAvailability() != dataAvailability"
+                address(application.getInputBox()),
+                address(inputBox),
+                "app.getInputBox() != inputBox"
             );
             assertEq(
                 application.getDeploymentBlockNumber(),
@@ -176,7 +177,7 @@ contract SelfHostedApplicationFactoryTest is RollupsTest, VersionGetterTestUtils
                 claimStagingPeriod,
                 appOwner,
                 templateHash,
-                dataAvailability,
+                inputBox,
                 withdrawalConfig,
                 salt
             );

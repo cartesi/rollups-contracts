@@ -8,6 +8,7 @@ import {Create2} from "@openzeppelin-contracts-5.2.0/utils/Create2.sol";
 import {RollupsContract} from "../common/RollupsContract.sol";
 import {WithdrawalConfig} from "../common/WithdrawalConfig.sol";
 import {IOutputsMerkleRootValidator} from "../consensus/IOutputsMerkleRootValidator.sol";
+import {IInputBox} from "../inputs/IInputBox.sol";
 import {IRefundOutputBuilder} from "../refund/IRefundOutputBuilder.sol";
 import {Application} from "./Application.sol";
 import {IApplication} from "./IApplication.sol";
@@ -28,14 +29,14 @@ contract ApplicationFactory is IApplicationFactory, RollupsContract {
         IOutputsMerkleRootValidator outputsMerkleRootValidator,
         address appOwner,
         bytes32 templateHash,
-        bytes calldata dataAvailability,
+        IInputBox inputBox,
         WithdrawalConfig calldata withdrawalConfig
     ) external override returns (IApplication appContract) {
         appContract = new Application(
             outputsMerkleRootValidator,
             appOwner,
             templateHash,
-            dataAvailability,
+            inputBox,
             REFUND_OUTPUT_BUILDER,
             withdrawalConfig
         );
@@ -44,7 +45,7 @@ contract ApplicationFactory is IApplicationFactory, RollupsContract {
             outputsMerkleRootValidator,
             appOwner,
             templateHash,
-            dataAvailability,
+            inputBox,
             withdrawalConfig,
             appContract
         );
@@ -54,7 +55,7 @@ contract ApplicationFactory is IApplicationFactory, RollupsContract {
         IOutputsMerkleRootValidator outputsMerkleRootValidator,
         address appOwner,
         bytes32 templateHash,
-        bytes calldata dataAvailability,
+        IInputBox inputBox,
         WithdrawalConfig calldata withdrawalConfig,
         bytes32 salt
     ) external override returns (IApplication appContract) {
@@ -62,7 +63,7 @@ contract ApplicationFactory is IApplicationFactory, RollupsContract {
             outputsMerkleRootValidator,
             appOwner,
             templateHash,
-            dataAvailability,
+            inputBox,
             REFUND_OUTPUT_BUILDER,
             withdrawalConfig
         );
@@ -71,7 +72,7 @@ contract ApplicationFactory is IApplicationFactory, RollupsContract {
             outputsMerkleRootValidator,
             appOwner,
             templateHash,
-            dataAvailability,
+            inputBox,
             withdrawalConfig,
             appContract
         );
@@ -81,7 +82,7 @@ contract ApplicationFactory is IApplicationFactory, RollupsContract {
         IOutputsMerkleRootValidator outputsMerkleRootValidator,
         address appOwner,
         bytes32 templateHash,
-        bytes calldata dataAvailability,
+        IInputBox inputBox,
         WithdrawalConfig calldata withdrawalConfig,
         bytes32 salt
     ) external view override returns (address) {
@@ -94,7 +95,7 @@ contract ApplicationFactory is IApplicationFactory, RollupsContract {
                         outputsMerkleRootValidator,
                         appOwner,
                         templateHash,
-                        dataAvailability,
+                        inputBox,
                         REFUND_OUTPUT_BUILDER,
                         withdrawalConfig
                     )

@@ -8,6 +8,7 @@ import {WithdrawalConfig} from "../common/WithdrawalConfig.sol";
 import {IOutputsMerkleRootValidator} from "../consensus/IOutputsMerkleRootValidator.sol";
 import {IAuthority} from "../consensus/authority/IAuthority.sol";
 import {IAuthorityFactory} from "../consensus/authority/IAuthorityFactory.sol";
+import {IInputBox} from "../inputs/IInputBox.sol";
 import {IApplication} from "./IApplication.sol";
 import {IApplicationFactory} from "./IApplicationFactory.sol";
 import {ISelfHostedApplicationFactory} from "./ISelfHostedApplicationFactory.sol";
@@ -48,7 +49,7 @@ contract SelfHostedApplicationFactory is ISelfHostedApplicationFactory, RollupsC
         uint256 claimStagingPeriod,
         address appOwner,
         bytes32 templateHash,
-        bytes calldata dataAvailability,
+        IInputBox inputBox,
         WithdrawalConfig calldata withdrawalConfig,
         bytes32 salt
     ) external returns (IApplication application, IAuthority authority) {
@@ -57,7 +58,7 @@ contract SelfHostedApplicationFactory is ISelfHostedApplicationFactory, RollupsC
             );
 
         application = APPLICATION_FACTORY.newApplication(
-            authority, appOwner, templateHash, dataAvailability, withdrawalConfig, salt
+            authority, appOwner, templateHash, inputBox, withdrawalConfig, salt
         );
     }
 
@@ -67,7 +68,7 @@ contract SelfHostedApplicationFactory is ISelfHostedApplicationFactory, RollupsC
         uint256 claimStagingPeriod,
         address appOwner,
         bytes32 templateHash,
-        bytes calldata dataAvailability,
+        IInputBox inputBox,
         WithdrawalConfig calldata withdrawalConfig,
         bytes32 salt
     ) external view returns (address application, address authority) {
@@ -79,7 +80,7 @@ contract SelfHostedApplicationFactory is ISelfHostedApplicationFactory, RollupsC
             IOutputsMerkleRootValidator(authority),
             appOwner,
             templateHash,
-            dataAvailability,
+            inputBox,
             withdrawalConfig,
             salt
         );

@@ -9,6 +9,7 @@ import {IOutputsMerkleRootValidator} from "src/consensus/IOutputsMerkleRootValid
 import {IApplication} from "src/dapp/IApplication.sol";
 import {IApplicationFactory} from "src/dapp/IApplicationFactory.sol";
 import {IApplicationFactoryErrors} from "src/dapp/IApplicationFactoryErrors.sol";
+import {IInputBox} from "src/inputs/IInputBox.sol";
 import {LibWithdrawalConfig} from "src/library/LibWithdrawalConfig.sol";
 
 import {Ownable} from "@openzeppelin-contracts-5.2.0/access/Ownable.sol";
@@ -38,7 +39,7 @@ contract ApplicationFactoryTest is RollupsTest, VersionGetterTestUtils {
         IOutputsMerkleRootValidator outputsMerkleRootValidator,
         address appOwner,
         bytes32 templateHash,
-        bytes calldata dataAvailability,
+        IInputBox inputBox,
         WithdrawalConfig calldata withdrawalConfig
     ) external {
         vm.roll(blockNumber);
@@ -46,11 +47,7 @@ contract ApplicationFactoryTest is RollupsTest, VersionGetterTestUtils {
         vm.recordLogs();
 
         try _factory.newApplication(
-            outputsMerkleRootValidator,
-            appOwner,
-            templateHash,
-            dataAvailability,
-            withdrawalConfig
+            outputsMerkleRootValidator, appOwner, templateHash, inputBox, withdrawalConfig
         ) returns (
             IApplication appContract
         ) {
@@ -60,7 +57,7 @@ contract ApplicationFactoryTest is RollupsTest, VersionGetterTestUtils {
                 outputsMerkleRootValidator,
                 appOwner,
                 templateHash,
-                dataAvailability,
+                inputBox,
                 withdrawalConfig,
                 appContract,
                 blockNumber,
@@ -77,7 +74,7 @@ contract ApplicationFactoryTest is RollupsTest, VersionGetterTestUtils {
         IOutputsMerkleRootValidator outputsMerkleRootValidator,
         address appOwner,
         bytes32 templateHash,
-        bytes calldata dataAvailability,
+        IInputBox inputBox,
         WithdrawalConfig calldata withdrawalConfig,
         bytes32 salt
     ) external {
@@ -87,7 +84,7 @@ contract ApplicationFactoryTest is RollupsTest, VersionGetterTestUtils {
             outputsMerkleRootValidator,
             appOwner,
             templateHash,
-            dataAvailability,
+            inputBox,
             withdrawalConfig,
             salt
         );
@@ -98,7 +95,7 @@ contract ApplicationFactoryTest is RollupsTest, VersionGetterTestUtils {
             outputsMerkleRootValidator,
             appOwner,
             templateHash,
-            dataAvailability,
+            inputBox,
             withdrawalConfig,
             salt
         ) returns (
@@ -116,7 +113,7 @@ contract ApplicationFactoryTest is RollupsTest, VersionGetterTestUtils {
                 outputsMerkleRootValidator,
                 appOwner,
                 templateHash,
-                dataAvailability,
+                inputBox,
                 withdrawalConfig,
                 appContract,
                 blockNumber,
@@ -132,7 +129,7 @@ contract ApplicationFactoryTest is RollupsTest, VersionGetterTestUtils {
                 outputsMerkleRootValidator,
                 appOwner,
                 templateHash,
-                dataAvailability,
+                inputBox,
                 withdrawalConfig,
                 salt
             ),
@@ -145,7 +142,7 @@ contract ApplicationFactoryTest is RollupsTest, VersionGetterTestUtils {
             outputsMerkleRootValidator,
             appOwner,
             templateHash,
-            dataAvailability,
+            inputBox,
             withdrawalConfig,
             salt
         ) {
@@ -163,7 +160,7 @@ contract ApplicationFactoryTest is RollupsTest, VersionGetterTestUtils {
         IOutputsMerkleRootValidator outputsMerkleRootValidator,
         address appOwner,
         bytes32 templateHash,
-        bytes calldata dataAvailability,
+        IInputBox inputBox,
         WithdrawalConfig memory withdrawalConfig,
         IApplication appContract,
         uint256 blockNumber,
@@ -188,11 +185,12 @@ contract ApplicationFactoryTest is RollupsTest, VersionGetterTestUtils {
                 (
                     address appOwner_,
                     bytes32 templateHash_,
-                    bytes memory dataAvailability_,
+                    IInputBox inputBox_,
                     WithdrawalConfig memory withdrawalConfig_,
                     IApplication app_
                 ) = abi.decode(
-                    log.data, (address, bytes32, bytes, WithdrawalConfig, IApplication)
+                    log.data,
+                    (address, bytes32, IInputBox, WithdrawalConfig, IApplication)
                 );
 
                 assertEq(appOwner, appOwner_, "ApplicationCreated.owner != owner");
@@ -202,9 +200,9 @@ contract ApplicationFactoryTest is RollupsTest, VersionGetterTestUtils {
                     "ApplicationCreated.templateHash != templateHash"
                 );
                 assertEq(
-                    dataAvailability,
-                    dataAvailability_,
-                    "ApplicationCreated.dataAvailability != dataAvailability"
+                    address(inputBox),
+                    address(inputBox_),
+                    "ApplicationCreated.inputBox != inputBox"
                 );
                 assertEq(
                     abi.encode(withdrawalConfig),
@@ -265,9 +263,9 @@ contract ApplicationFactoryTest is RollupsTest, VersionGetterTestUtils {
             "getWithdrawalOutputBuilder() != withdrawalConfig.withdrawalOutputBuilder"
         );
         assertEq(
-            appContract.getDataAvailability(),
-            dataAvailability,
-            "getDataAvailability() != dataAvailability"
+            address(appContract.getInputBox()),
+            address(inputBox),
+            "getInputBox() != inputBox"
         );
         assertEq(
             appContract.getDeploymentBlockNumber(),

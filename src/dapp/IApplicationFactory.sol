@@ -6,6 +6,7 @@ pragma solidity ^0.8.30;
 import {IVersionGetter} from "../common/IVersionGetter.sol";
 import {WithdrawalConfig} from "../common/WithdrawalConfig.sol";
 import {IOutputsMerkleRootValidator} from "../consensus/IOutputsMerkleRootValidator.sol";
+import {IInputBox} from "../inputs/IInputBox.sol";
 import {IApplication} from "./IApplication.sol";
 import {IApplicationFactoryErrors} from "./IApplicationFactoryErrors.sol";
 
@@ -17,14 +18,14 @@ interface IApplicationFactory is IVersionGetter, IApplicationFactoryErrors {
     /// @param outputsMerkleRootValidator The initial outputs Merkle root validator contract
     /// @param appOwner The initial application owner
     /// @param templateHash The initial machine state hash
-    /// @param dataAvailability The data availability solution
+    /// @param inputBox The input box contract
     /// @param appContract The application contract
     /// @dev MUST be triggered on a successful call to `newApplication`.
     event ApplicationCreated(
         IOutputsMerkleRootValidator indexed outputsMerkleRootValidator,
         address appOwner,
         bytes32 templateHash,
-        bytes dataAvailability,
+        IInputBox inputBox,
         WithdrawalConfig withdrawalConfig,
         IApplication appContract
     );
@@ -35,7 +36,7 @@ interface IApplicationFactory is IVersionGetter, IApplicationFactoryErrors {
     /// @param outputsMerkleRootValidator The initial outputs Merkle root validator contract
     /// @param appOwner The initial application owner
     /// @param templateHash The initial machine state hash
-    /// @param dataAvailability The data availability solution
+    /// @param inputBox The input box contract
     /// @param withdrawalConfig The withdrawal configuration
     /// @return The application
     /// @dev On success, MUST emit an `ApplicationCreated` event.
@@ -44,7 +45,7 @@ interface IApplicationFactory is IVersionGetter, IApplicationFactoryErrors {
         IOutputsMerkleRootValidator outputsMerkleRootValidator,
         address appOwner,
         bytes32 templateHash,
-        bytes calldata dataAvailability,
+        IInputBox inputBox,
         WithdrawalConfig calldata withdrawalConfig
     ) external returns (IApplication);
 
@@ -52,7 +53,7 @@ interface IApplicationFactory is IVersionGetter, IApplicationFactoryErrors {
     /// @param outputsMerkleRootValidator The initial outputs Merkle root validator contract
     /// @param appOwner The initial application owner
     /// @param templateHash The initial machine state hash
-    /// @param dataAvailability The data availability solution
+    /// @param inputBox The input box contract
     /// @param withdrawalConfig The withdrawal configuration
     /// @param salt The salt used to deterministically generate the application contract address
     /// @return The application
@@ -62,7 +63,7 @@ interface IApplicationFactory is IVersionGetter, IApplicationFactoryErrors {
         IOutputsMerkleRootValidator outputsMerkleRootValidator,
         address appOwner,
         bytes32 templateHash,
-        bytes calldata dataAvailability,
+        IInputBox inputBox,
         WithdrawalConfig calldata withdrawalConfig,
         bytes32 salt
     ) external returns (IApplication);
@@ -71,7 +72,7 @@ interface IApplicationFactory is IVersionGetter, IApplicationFactoryErrors {
     /// @param outputsMerkleRootValidator The initial outputs Merkle root validator contract
     /// @param appOwner The initial application owner
     /// @param templateHash The initial machine state hash
-    /// @param dataAvailability The data availability solution
+    /// @param inputBox The input box contract
     /// @param withdrawalConfig The withdrawal configuration
     /// @param salt The salt used to deterministically generate the application contract address
     /// @return The deterministic application contract address
@@ -81,7 +82,7 @@ interface IApplicationFactory is IVersionGetter, IApplicationFactoryErrors {
         IOutputsMerkleRootValidator outputsMerkleRootValidator,
         address appOwner,
         bytes32 templateHash,
-        bytes calldata dataAvailability,
+        IInputBox inputBox,
         WithdrawalConfig calldata withdrawalConfig,
         bytes32 salt
     ) external view returns (address);
