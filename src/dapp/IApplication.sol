@@ -10,6 +10,7 @@ import {IVersionGetter} from "../common/IVersionGetter.sol";
 import {OutputValidityProof} from "../common/OutputValidityProof.sol";
 import {WithdrawalConfig} from "../common/WithdrawalConfig.sol";
 import {IOutputsMerkleRootValidator} from "../consensus/IOutputsMerkleRootValidator.sol";
+import {IInputBox} from "../inputs/IInputBox.sol";
 import {IRefundOutputBuilder} from "../refund/IRefundOutputBuilder.sol";
 import {IRefundOutputBuilderErrors} from "../refund/IRefundOutputBuilderErrors.sol";
 import {IWithdrawalOutputBuilder} from "../withdrawal/IWithdrawalOutputBuilder.sol";
@@ -103,10 +104,6 @@ interface IApplication is
     /// and therefore some actions cannot be performed anymore.
     error Foreclosed();
 
-    /// @notice Raised when trying to decode the data availability byte array,
-    /// but either it is ill-formed or encodes an unknown data availability solution.
-    error UnknownDataAvailability();
-
     /// @notice Raised when trying to validate an input with an invalid index.
     /// @param invalidInputIndex The invalid input index provided for validation
     /// @param numOfInputs The actual number of inputs to the application
@@ -121,7 +118,7 @@ interface IApplication is
 
     /// @notice Raised when decoding an ill-formed input.
     /// @dev This error should never be raised if the application uses
-    /// the canonical input box contract as on-chain data availability.
+    /// the canonical input box contract.
     error IllFormedInput();
 
     /// @notice Raised when trying to issue a refund for a finalized input.
@@ -268,10 +265,8 @@ interface IApplication is
         view
         returns (IOutputsMerkleRootValidator);
 
-    /// @notice Get the data availability solution used by application.
-    /// @return Solidity ABI-encoded function call that describes
-    /// the source of inputs that should be fed to the application.
-    function getDataAvailability() external view returns (bytes memory);
+    /// @notice Get the input box contract used by application.
+    function getInputBox() external view returns (IInputBox);
 
     /// @notice Get number of block in which contract was deployed
     function getDeploymentBlockNumber() external view returns (uint256);
@@ -355,7 +350,7 @@ interface IApplication is
     /// @notice Validates an input that was sent to the application.
     /// @param inputIndex The index of the input in the application's input box.
     /// @param inputHash The hash of the input that was sent to the application
-    /// @dev May raise `UnknownDataAvailability`, `InvalidInputIndex` or `InvalidInputHash`.
+    /// @dev May raise `InvalidInputIndex` or `InvalidInputHash`.
     function validateInputHash(uint256 inputIndex, bytes32 inputHash) external view;
 
     /// @notice Get the withdrawal output builder, which gets static-called

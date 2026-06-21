@@ -6,7 +6,6 @@ pragma solidity ^0.8.30;
 import {AccountValidityProof} from "src/common/AccountValidityProof.sol";
 import {BinaryMerkleTreeErrors} from "src/common/BinaryMerkleTreeErrors.sol";
 import {CanonicalMachine} from "src/common/CanonicalMachine.sol";
-import {DataAvailability} from "src/common/DataAvailability.sol";
 import {OutputValidityProof} from "src/common/OutputValidityProof.sol";
 import {Outputs} from "src/common/Outputs.sol";
 import {WithdrawalConfig} from "src/common/WithdrawalConfig.sol";
@@ -87,7 +86,6 @@ contract ApplicationTest is
     address _appOwner;
     address _authorityOwner;
     address _recipient;
-    bytes _dataAvailability;
     string[] _outputNames;
     string[] _accountNames;
     uint256[] _tokenIds;
@@ -1600,8 +1598,6 @@ contract ApplicationTest is
         _erc20Token = _contracts.dev.testFungibleToken;
         _erc721Token = _contracts.dev.testNonFungibleToken;
         _erc1155Token = _contracts.dev.testMultiToken;
-        _dataAvailability =
-            abi.encodeCall(DataAvailability.InputBox, (_contracts.core.inputBox));
         _safeErc20Transfer = _contracts.core.safeErc20Transfer;
     }
 
@@ -1621,7 +1617,7 @@ contract ApplicationTest is
                     CLAIM_STAGING_PERIOD,
                     _appOwner,
                     _templateHash,
-                    _dataAvailability,
+                    _contracts.core.inputBox,
                     _withdrawalConfig,
                     SALT
                 );

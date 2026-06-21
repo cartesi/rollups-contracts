@@ -8,6 +8,7 @@ import {WithdrawalConfig} from "../common/WithdrawalConfig.sol";
 import {IConsensusFactoryErrors} from "../consensus/IConsensusFactoryErrors.sol";
 import {IAuthority} from "../consensus/authority/IAuthority.sol";
 import {IAuthorityFactory} from "../consensus/authority/IAuthorityFactory.sol";
+import {IInputBox} from "../inputs/IInputBox.sol";
 import {IApplication} from "./IApplication.sol";
 import {IApplicationFactory} from "./IApplicationFactory.sol";
 import {IApplicationFactoryErrors} from "./IApplicationFactoryErrors.sol";
@@ -32,7 +33,7 @@ interface ISelfHostedApplicationFactory is
     /// @param claimStagingPeriod The claim staging period
     /// @param appOwner The initial application owner
     /// @param templateHash The initial machine state hash
-    /// @param dataAvailability The data availability solution
+    /// @param inputBox The input box contract
     /// @param withdrawalConfig The withdrawal configuration
     /// @param salt The salt used to deterministically generate the addresses
     /// @return The application contract
@@ -46,7 +47,7 @@ interface ISelfHostedApplicationFactory is
         uint256 claimStagingPeriod,
         address appOwner,
         bytes32 templateHash,
-        bytes calldata dataAvailability,
+        IInputBox inputBox,
         WithdrawalConfig calldata withdrawalConfig,
         bytes32 salt
     ) external returns (IApplication, IAuthority);
@@ -58,7 +59,7 @@ interface ISelfHostedApplicationFactory is
     /// @param claimStagingPeriod The claim staging period
     /// @param appOwner The initial application owner
     /// @param templateHash The initial machine state hash
-    /// @param dataAvailability The data availability solution
+    /// @param inputBox The input box contract
     /// @param withdrawalConfig The withdrawal configuration
     /// @param salt The salt used to deterministically generate the addresses
     /// @return The application address
@@ -69,7 +70,7 @@ interface ISelfHostedApplicationFactory is
         uint256 claimStagingPeriod,
         address appOwner,
         bytes32 templateHash,
-        bytes calldata dataAvailability,
+        IInputBox inputBox,
         WithdrawalConfig calldata withdrawalConfig,
         bytes32 salt
     ) external view returns (address, address);

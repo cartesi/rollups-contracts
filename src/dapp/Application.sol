@@ -6,7 +6,6 @@ pragma solidity ^0.8.30;
 import {IOwnable} from "../access/IOwnable.sol";
 import {AccountValidityProof} from "../common/AccountValidityProof.sol";
 import {CanonicalMachine} from "../common/CanonicalMachine.sol";
-import {DataAvailability} from "../common/DataAvailability.sol";
 import {Inputs} from "../common/Inputs.sol";
 import {OutputValidityProof} from "../common/OutputValidityProof.sol";
 import {Outputs} from "../common/Outputs.sol";
@@ -56,6 +55,10 @@ contract Application is
     /// @dev See the `getTemplateHash` function.
     bytes32 immutable TEMPLATE_HASH;
 
+    /// @notice The input box contract.
+    /// @dev See the `getInputBox` function.
+    IInputBox immutable INPUT_BOX;
+
     /// @notice The guardian address.
     /// @dev See the `getGuardian` function.
     address immutable GUARDIAN;
@@ -96,10 +99,6 @@ contract Application is
     /// @dev See the `getOutputsMerkleRootValidator` and `migrateToOutputsMerkleRootValidator` functions.
     IOutputsMerkleRootValidator internal _outputsMerkleRootValidator;
 
-    /// @notice The data availability solution.
-    /// @dev See the `getDataAvailability` function.
-    bytes internal _dataAvailability;
-
     /// @notice Whether the application has been foreclosed by the guardian.
     /// @dev See the `isForeclosed` function.
     bool internal _isForeclosed;
@@ -130,7 +129,7 @@ contract Application is
     /// @param outputsMerkleRootValidator The initial outputs Merkle root validator contract
     /// @param initialOwner The initial application owner
     /// @param templateHash The initial machine state hash
-    /// @param dataAvailability The data availability solution
+    /// @param inputBox The input box contract
     /// @param refundOutputBuilder The refund output builder
     /// @param withdrawalConfig The withdrawal configuration
     /// @dev Reverts if the initial application owner address is zero.
@@ -138,7 +137,7 @@ contract Application is
         IOutputsMerkleRootValidator outputsMerkleRootValidator,
         address initialOwner,
         bytes32 templateHash,
-        bytes memory dataAvailability,
+        IInputBox inputBox,
         IRefundOutputBuilder refundOutputBuilder,
         WithdrawalConfig memory withdrawalConfig
     ) Ownable(initialOwner) {
@@ -147,6 +146,7 @@ contract Application is
             IApplicationFactoryErrors.InvalidWithdrawalConfig(withdrawalConfig)
         );
         TEMPLATE_HASH = templateHash;
+        INPUT_BOX = inputBox;
         GUARDIAN = withdrawalConfig.guardian;
         LOG2_LEAVES_PER_ACCOUNT = withdrawalConfig.log2LeavesPerAccount;
         LOG2_MAX_NUM_OF_ACCOUNTS = withdrawalConfig.log2MaxNumOfAccounts;
@@ -154,7 +154,6 @@ contract Application is
         REFUND_OUTPUT_BUILDER = refundOutputBuilder;
         WITHDRAWAL_OUTPUT_BUILDER = withdrawalConfig.withdrawalOutputBuilder;
         _outputsMerkleRootValidator = outputsMerkleRootValidator;
-        _dataAvailability = dataAvailability;
     }
 
     /// @notice Accept Ether transfers.
@@ -389,7 +388,7 @@ contract Application is
         view
         override
     {
-        IInputBox inputBox = _getInputBox();
+        IInputBox inputBox = getInputBox();
         uint256 numOfInputs = inputBox.getNumberOfInputs(address(this));
         require(inputIndex < numOfInputs, InvalidInputIndex(inputIndex, numOfInputs));
         bytes32 stInputHash = inputBox.getInputHash(address(this), inputIndex);
@@ -446,9 +445,8 @@ contract Application is
         return _outputsMerkleRootValidator;
     }
 
-    /// @inheritdoc IApplication
-    function getDataAvailability() public view override returns (bytes memory) {
-        return _dataAvailability;
+    function getInputBox() public view override returns (IInputBox) {
+        return INPUT_BOX;
     }
 
     /// @inheritdoc IApplication
@@ -560,25 +558,6 @@ contract Application is
     modifier onlyForeclosed() {
         _ensureAppIsForeclosed();
         _;
-    }
-
-    /// @notice Get the input box contract used as data availability.
-    function _getInputBox() internal view returns (IInputBox inputBox) {
-        bool hasSelector;
-        bytes32 selector;
-        bytes memory arguments;
-
-        (hasSelector, selector, arguments) = getDataAvailability().consumeBytes4();
-
-        require(hasSelector, UnknownDataAvailability());
-
-        if (selector == DataAvailability.InputBox.selector) {
-            inputBox = abi.decode(arguments, (IInputBox));
-        } else if (selector == DataAvailability.InputBoxAndEspresso.selector) {
-            (inputBox,,) = abi.decode(arguments, (IInputBox, uint256, uint32));
-        } else {
-            revert UnknownDataAvailability();
-        }
     }
 
     /// @notice Get the log (base 2) of the number of bytes in the machine memory that are
