@@ -36,19 +36,19 @@ The encoding of an output with `N` arguments starts with a 4-byte function selec
 
 | 0xaed682a1 (Output1) | arg0 | 0x40 (offset) | length | data |
 |---|---|---|---|---|
-| 4 bytes | 32 bytes | 32 bytes | 32 bytes | $32 \cdot \left\lceil \frac{\text{left}}{32} \right\rceil$ bytes |
+| 4 bytes | 32 bytes | 32 bytes | 32 bytes | $32 \cdot \left\lceil \frac{\text{length}}{32} \right\rceil$ bytes |
 
 | 0x50b41f12 (Output2) | arg0 | arg1 | 0x60 (offset) | length | data |
 |---|---|---|---|---|---|
-| 4 bytes | 32 bytes | 32 bytes | 32 bytes | 32 bytes | $32 \cdot \left\lceil \frac{\text{left}}{32} \right\rceil$ bytes |
+| 4 bytes | 32 bytes | 32 bytes | 32 bytes | 32 bytes | $32 \cdot \left\lceil \frac{\text{length}}{32} \right\rceil$ bytes |
 
 | 0x1cd62f99 (Output3) | arg0 | arg1 | arg2 | 0x80 (offset) | length | data |
 |---|---|---|---|---|---|---|
-| 4 bytes | 32 bytes | 32 bytes | 32 bytes | 32 bytes | 32 bytes | $32 \cdot \left\lceil \frac{\text{left}}{32} \right\rceil$ bytes |
+| 4 bytes | 32 bytes | 32 bytes | 32 bytes | 32 bytes | 32 bytes | $32 \cdot \left\lceil \frac{\text{length}}{32} \right\rceil$ bytes |
 
 | 0x77edf709 (Output4) | arg0 | arg1 | arg2 | arg3 | 0xa0 (offset) | length | data |
 |---|---|---|---|---|---|---|---|
-| 4 bytes | 32 bytes | 32 bytes | 32 bytes | 32 bytes | 32 bytes | 32 bytes | $32 \cdot \left\lceil \frac{\text{left}}{32} \right\rceil$ bytes |
+| 4 bytes | 32 bytes | 32 bytes | 32 bytes | 32 bytes | 32 bytes | 32 bytes | $32 \cdot \left\lceil \frac{\text{length}}{32} \right\rceil$ bytes |
 
 The selector picks the argument count, and argument offsets are therefore uniform across every envelope that has that argument:
 
