@@ -117,7 +117,7 @@ Generic piece of information. Now encoded as:
 - `arg1` (optional): Application-specific
 - `arg2` (optional): Application-specific
 - `arg3` (optional): Application-specific
-- `data`: `abi.encode(payload)`
+- `data`: `payload`
 
 ### 3.2. CALL Vouchers
 
@@ -146,7 +146,7 @@ Execute a generic `DELEGATECALL` instruction from the context of the application
 - `arg1`: `bytes32(uint256(uint160(destination)))`
 - `arg2` (optional): Application-specific
 - `arg3` (optional): Application-specific
-- `data`: `abi.encode(payload)`
+- `data`: `payload`
 
 ### 3.4. Ether Transfers
 
@@ -182,16 +182,15 @@ Execute a generic `DELEGATECALL` instruction from the context of the application
 - `recipient`: `address` - The address of the Ethereum account that will receive the ERC-721 token
 - `token`: `address` - The address of the ERC-721 token contract
 - `tokenId`: `uint256` - The ID of ERC-721 token to be transferred to the recipient
-- `data`: `bytes` - Additional data provided to the ERC-721 token contract upon transfer
 
-(New!) Transfers an ERC-721 token locked in the application contract to an Ethereum account. More precisely, it calls `IERC721(token).safeTransferFrom(appContract, recipient, tokenId, data)`. We can filter them by recipient address and by token contract address.
+(New!) Transfers an ERC-721 token locked in the application contract to an Ethereum account. More precisely, it calls `IERC721(token).safeTransferFrom(appContract, recipient, tokenId)`. We can filter them by recipient address and by token contract address.
 
 - Envelope: `Output3`..`Output4`
 - `arg0`: `ERC721_TRANSFER`
 - `arg1`: `bytes32(uint256(uint160(recipient)))`
 - `arg2`: `bytes32(uint256(uint160(token)))`
 - `arg3` (optional): Application-specific
-- `data`: `abi.encode(tokenId, data)`
+- `data`: `abi.encode(tokenId)`
 
 ### 3.7. ERC-1155 Single Transfers
 
@@ -199,33 +198,30 @@ Execute a generic `DELEGATECALL` instruction from the context of the application
 - `token`: `address` - The address of the ERC-1155 token contract
 - `tokenId`: `uint256` - The ID of ERC-1155 token(s) to be transferred to the recipient
 - `value`: `uint256` - The amount of ERC-1155 tokens to be transferred to the recipient
-- `data`: `bytes` - Additional data provided to the ERC-1155 token contract upon transfer
 
-(New!) Transfers ERC-1155 token(s) of a single ID locked in the application contract to an Ethereum account. More precisely, it calls `IERC1155(token).safeTransferFrom(appContract, recipient, tokenId, value, data)`. We can filter them by recipient address and by token contract address.
+(New!) Transfers ERC-1155 token(s) of a single ID locked in the application contract to an Ethereum account. More precisely, it calls `IERC1155(token).safeTransferFrom(appContract, recipient, tokenId, value, "")`. We can filter them by recipient address and by token contract address.
 
 - Envelope: `Output3`..`Output4`
 - `arg0`: `ERC1155_SINGLE_TRANSFER`
 - `arg1`: `bytes32(uint256(uint160(recipient)))`
 - `arg2`: `bytes32(uint256(uint160(token)))`
 - `arg3` (optional): Application-specific
-- `data`: `abi.encode(tokenId, value, data)`
+- `data`: `abi.encode(tokenId, value)`
 
 ### 3.8. ERC-1155 Batch Transfers
 
 - `recipient`: `address` - The address of the Ethereum account that will receive the ERC-1155 token(s)
 - `token`: `address` - The address of the ERC-1155 token contract
-- `tokenIds`: `uint256[]` - The IDs of ERC-1155 token(s) to be transferred to the recipient
-- `values`: `uint256[]` - The amounts of ERC-1155 tokens (per ID) to be transferred to the recipient
-- `data`: `bytes` - Additional data provided to the ERC-1155 token contract upon transfer
+- `tokenIdsAndValues`: `(uint256,uint256)[]` - The IDs and amounts of ERC-1155 token(s) to be transferred to the recipient
 
-(New!) Transfers ERC-1155 token(s) of multiple IDs locked in the application contract to an Ethereum account. More precisely, it calls `IERC1155(token).safeBatchTransferFrom(appContract, recipient, tokenIds, values, data)`. We can filter them by recipient address and by token contract address. Also note that, per the ERC-1155 spec, `tokenIds` and `values` should have the same length.
+(New!) Transfers ERC-1155 token(s) of multiple IDs locked in the application contract to an Ethereum account. More precisely, it calls `IERC1155(token).safeBatchTransferFrom(appContract, recipient, tokenIds, values, "")`. We can filter them by recipient address and by token contract address.
 
 - Envelopes: `Output3`..`Output4`
 - `arg0`: `ERC1155_BATCH_TRANSFER`
 - `arg1`: `bytes32(uint256(uint160(recipient)))`
 - `arg2`: `bytes32(uint256(uint160(token)))`
 - `arg3` (optional): Application-specific
-- `data`: `abi.encode(tokenIds, values, data)`
+- `data`: `abi.encode(tokenIdsAndValues)`
 
 ## 4. Contract Impact
 
