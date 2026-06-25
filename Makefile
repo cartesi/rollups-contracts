@@ -19,6 +19,9 @@
 .PHONY: release-artifacts
 .PHONY: rust-bindings
 
+NOOP  =
+SPACE = $(NOOP) $(NOOP)
+
 PROJECT_NAME := cartesi-rollups-contracts
 
 PROJECT_MAJOR_VERSION  := 3
@@ -129,6 +132,33 @@ MAINNET_CHAIN_IDS  += $(OPT_MAINNET_CHAIN_ID)
 
 LIVENET_CHAIN_IDS  := $(TESTNET_CHAIN_IDS) $(MAINNET_CHAIN_IDS)
 
+FORGE_BIND_CONTRACTS += IApplication
+FORGE_BIND_CONTRACTS += IApplicationFactory
+FORGE_BIND_CONTRACTS += IAuthority
+FORGE_BIND_CONTRACTS += IAuthorityFactory
+FORGE_BIND_CONTRACTS += IConsensus
+FORGE_BIND_CONTRACTS += IERC1155BatchPortal
+FORGE_BIND_CONTRACTS += IERC1155SinglePortal
+FORGE_BIND_CONTRACTS += IERC20Portal
+FORGE_BIND_CONTRACTS += IERC721Portal
+FORGE_BIND_CONTRACTS += IEtherPortal
+FORGE_BIND_CONTRACTS += IInputBox
+FORGE_BIND_CONTRACTS += Inputs
+FORGE_BIND_CONTRACTS += IOutputsMerkleRootValidator
+FORGE_BIND_CONTRACTS += IQuorum
+FORGE_BIND_CONTRACTS += IQuorumFactory
+FORGE_BIND_CONTRACTS += IRefundOutputBuilder
+FORGE_BIND_CONTRACTS += ISafeERC20Transfer
+FORGE_BIND_CONTRACTS += ISelfHostedApplicationFactory
+FORGE_BIND_CONTRACTS += IUsdWithdrawalOutputBuilder
+FORGE_BIND_CONTRACTS += IUsdWithdrawalOutputBuilderFactory
+FORGE_BIND_CONTRACTS += IWithdrawalOutputBuilder
+FORGE_BIND_CONTRACTS += Outputs
+FORGE_BIND_CONTRACTS += TestFungibleToken
+FORGE_BIND_CONTRACTS += TestMultiToken
+FORGE_BIND_CONTRACTS += TestNonFungibleToken
+
+FORGE_BIND_OPTS  += --select "^($(subst $(SPACE),|,$(FORGE_BIND_CONTRACTS)))$$"
 FORGE_BIND_OPTS  += --crate-name "$(PROJECT_NAME)"
 FORGE_BIND_OPTS  += --crate-version "$(PROJECT_VERSION)"
 FORGE_BIND_OPTS  += --crate-license "Apache-2.0"
