@@ -9,6 +9,7 @@ import {Vm} from "forge-std-1.9.6/src/Vm.sol";
 
 import {IConsensus} from "src/consensus/IConsensus.sol";
 import {IConsensusFactoryErrors} from "src/consensus/IConsensusFactoryErrors.sol";
+import {IOutputsMerkleRootValidator} from "src/consensus/IOutputsMerkleRootValidator.sol";
 import {AuthorityFactory} from "src/consensus/authority/AuthorityFactory.sol";
 import {IAuthority} from "src/consensus/authority/IAuthority.sol";
 import {IAuthorityFactory} from "src/consensus/authority/IAuthorityFactory.sol";
@@ -43,13 +44,12 @@ contract AuthorityFactoryTest is
     using LibBytes for bytes;
 
     AuthorityFactory _factory;
-    bytes4[] _supportedInterfaces;
 
     function setUp() public {
         _factory = _contracts.core.authorityFactory;
+        _supportedInterfaces.push(type(IOutputsMerkleRootValidator).interfaceId);
         _supportedInterfaces.push(type(IConsensus).interfaceId);
         _supportedInterfaces.push(type(IAuthority).interfaceId);
-        _registerSupportedInterfaces(_supportedInterfaces);
     }
 
     function testVersion() external view {
@@ -59,8 +59,7 @@ contract AuthorityFactoryTest is
     function testNewAuthority(
         address authorityOwner,
         uint256 epochLength,
-        uint256 claimStagingPeriod,
-        bytes4 interfaceId
+        uint256 claimStagingPeriod
     ) public {
         vm.recordLogs();
 
@@ -71,12 +70,7 @@ contract AuthorityFactoryTest is
         ) {
             Vm.Log[] memory logs = vm.getRecordedLogs();
             _testNewAuthoritySuccess(
-                authorityOwner,
-                epochLength,
-                claimStagingPeriod,
-                interfaceId,
-                authority,
-                logs
+                authorityOwner, epochLength, claimStagingPeriod, authority, logs
             );
         } catch (bytes memory error) {
             _testNewAuthorityFailure(authorityOwner, epochLength, error);
@@ -88,12 +82,12 @@ contract AuthorityFactoryTest is
         address authorityOwner,
         uint256 epochLength,
         uint256 claimStagingPeriod,
-        bytes4 interfaceId,
         bytes32 salt
     ) public {
-        address precalculatedAddress = _factory.calculateAuthorityAddress(
-            authorityOwner, epochLength, claimStagingPeriod, salt
-        );
+        address precalculatedAddress =
+            _factory.calculateAuthorityAddress(
+                authorityOwner, epochLength, claimStagingPeriod, salt
+            );
 
         vm.recordLogs();
 
@@ -111,12 +105,7 @@ contract AuthorityFactoryTest is
             );
 
             _testNewAuthoritySuccess(
-                authorityOwner,
-                epochLength,
-                claimStagingPeriod,
-                interfaceId,
-                authority,
-                logs
+                authorityOwner, epochLength, claimStagingPeriod, authority, logs
             );
         } catch (bytes memory error) {
             _testNewAuthorityFailure(authorityOwner, epochLength, error);
@@ -995,7 +984,6 @@ contract AuthorityFactoryTest is
         address authorityOwner,
         uint256 epochLength,
         uint256 claimStagingPeriod,
-        bytes4 interfaceId,
         IAuthority authority,
         Vm.Log[] memory logs
     ) internal {
@@ -1098,7 +1086,7 @@ contract AuthorityFactoryTest is
         );
 
         // Test ERC-165 interface
-        _testSupportsInterface(authority, interfaceId);
+        _testSupportsInterface(authority);
     }
 
     function _testNewAuthorityFailure(
