@@ -25,10 +25,24 @@ contract ERC20Portal is IERC20Portal, Portal {
         uint256 value,
         bytes calldata execLayerData
     ) external override {
+        uint256 balanceBefore = token.balanceOf(appContract);
+
         bool success = token.transferFrom(msg.sender, appContract, value);
 
         if (!success) {
             revert ERC20TransferFailed();
+        }
+
+        uint256 balanceAfter = token.balanceOf(appContract);
+
+        if (balanceAfter < balanceBefore) {
+            revert ERC20TransferDecreasedApplicationBalance(balanceBefore, balanceAfter);
+        }
+
+        uint256 balanceDelta = balanceAfter - balanceBefore;
+
+        if (value != balanceDelta) {
+            revert ERC20TransferValueIsNotBalanceDelta(value, balanceDelta);
         }
 
         bytes memory payload =

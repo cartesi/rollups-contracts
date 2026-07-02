@@ -156,6 +156,83 @@ contract ERC20PortalTest is RollupsTest, InputBoxTestUtils, VersionGetterTestUti
         _portal.depositERC20Tokens(_token, appContract, value, execLayerData);
     }
 
+    function testDepositRevertERC20TransferDecreasedApplicationBalance(
+        uint256 value,
+        bytes calldata execLayerData
+    ) external {
+        address sender = _randomAccountWithNoCode();
+        address appContract = _newActiveAppMock();
+
+        _randomSetup(sender, appContract, value);
+
+        uint256 currentBalance = _token.balanceOf(appContract);
+
+        // Pick a random value < current app balance
+        // We therefore need to assume the current balance is non-zero
+        vm.assume(currentBalance > 0);
+        uint256 fakePostTransferBalance = vm.randomUint(0, currentBalance - 1);
+
+        // Mock the two internal calls to balanceOf
+        // The first call is made before the transfer
+        // The second call is made after the transfer
+        // We make the second call return the fake, smaller value
+        bytes[] memory returnData = new bytes[](2);
+        returnData[0] = abi.encode(currentBalance);
+        returnData[1] = abi.encode(fakePostTransferBalance);
+        vm.mockCalls(
+            address(_token), abi.encodeCall(IERC20.balanceOf, (appContract)), returnData
+        );
+
+        vm.prank(sender);
+        vm.expectRevert(
+            abi.encodeWithSelector(
+                IERC20Portal.ERC20TransferDecreasedApplicationBalance.selector,
+                currentBalance,
+                fakePostTransferBalance
+            )
+        );
+        _portal.depositERC20Tokens(_token, appContract, value, execLayerData);
+    }
+
+    function testDepositRevertERC20TransferValueIsNotBalanceDelta(
+        uint256 value,
+        bytes calldata execLayerData
+    ) external {
+        address sender = _randomAccountWithNoCode();
+        address appContract = _newActiveAppMock();
+
+        _randomSetup(sender, appContract, value);
+
+        uint256 currentBalance = _token.balanceOf(appContract);
+
+        // Pick a random value >= current app balance
+        // such that the balance delta is different from the transfer value
+        uint256 fakePostTransferBalance = vm.randomUint(currentBalance, type(uint256).max);
+        uint256 balanceDelta = fakePostTransferBalance - currentBalance;
+        vm.assume(value != balanceDelta);
+
+        // Mock the two internal calls to balanceOf
+        // The first call is made before the transfer
+        // The second call is made after the transfer
+        // We make the second call return the fake, smaller value
+        bytes[] memory returnData = new bytes[](2);
+        returnData[0] = abi.encode(currentBalance);
+        returnData[1] = abi.encode(fakePostTransferBalance);
+        vm.mockCalls(
+            address(_token), abi.encodeCall(IERC20.balanceOf, (appContract)), returnData
+        );
+
+        vm.prank(sender);
+        vm.expectRevert(
+            abi.encodeWithSelector(
+                IERC20Portal.ERC20TransferValueIsNotBalanceDelta.selector,
+                value,
+                balanceDelta
+            )
+        );
+        _portal.depositERC20Tokens(_token, appContract, value, execLayerData);
+    }
+
     function testDeposit(
         uint256 value,
         bytes calldata execLayerData,
