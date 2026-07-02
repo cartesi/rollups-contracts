@@ -20,7 +20,7 @@ forge soldeer install
    For example, let us assume we want to deploy to Ethereum Mainnet.
 
 ```bash
-export ETHEREUM_MAINNET_RPC_URL='https://ethereum-rpc.publicnode.com'
+export ETH_MAINNET_RPC_URL='https://ethereum-rpc.publicnode.com'
 ```
 
 4. Simulate the deployment in the target chain.
@@ -29,7 +29,7 @@ export ETHEREUM_MAINNET_RPC_URL='https://ethereum-rpc.publicnode.com'
    Deployment options are passed down through the `DEPLOY_OPTS` variable.
 
 ```bash
-make deploy-ethereum-mainnet DEPLOY_OPTS="--non-interactive"
+make deploy-eth-mainnet DEPLOY_OPTS="--non-interactive"
 ```
 
 5. If simulation succeeds without warnings, check if a deployment cost estimate (like the one below) is displayed.
