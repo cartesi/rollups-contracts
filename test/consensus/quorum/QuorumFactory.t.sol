@@ -5,6 +5,7 @@ pragma solidity ^0.8.30;
 
 import {IConsensus} from "src/consensus/IConsensus.sol";
 import {IConsensusFactoryErrors} from "src/consensus/IConsensusFactoryErrors.sol";
+import {IOutputsMerkleRootValidator} from "src/consensus/IOutputsMerkleRootValidator.sol";
 import {IQuorum} from "src/consensus/quorum/IQuorum.sol";
 import {IQuorumFactory} from "src/consensus/quorum/IQuorumFactory.sol";
 import {IQuorumFactoryErrors} from "src/consensus/quorum/IQuorumFactoryErrors.sol";
@@ -41,13 +42,12 @@ contract QuorumFactoryTest is
     using LibClaim for Claim;
 
     IQuorumFactory _factory;
-    bytes4[] _supportedInterfaces;
 
     function setUp() public {
         _factory = _contracts.core.quorumFactory;
+        _supportedInterfaces.push(type(IOutputsMerkleRootValidator).interfaceId);
         _supportedInterfaces.push(type(IConsensus).interfaceId);
         _supportedInterfaces.push(type(IQuorum).interfaceId);
-        _registerSupportedInterfaces(_supportedInterfaces);
     }
 
     function testVersion() external view {
@@ -57,8 +57,7 @@ contract QuorumFactoryTest is
     function testNewQuorum(
         address[] memory validators,
         uint256 epochLength,
-        uint256 claimStagingPeriod,
-        bytes4 interfaceId
+        uint256 claimStagingPeriod
     ) public {
         vm.recordLogs();
 
@@ -67,7 +66,7 @@ contract QuorumFactoryTest is
         ) {
             Vm.Log[] memory logs = vm.getRecordedLogs();
             _testNewQuorumSuccess(
-                validators, epochLength, claimStagingPeriod, interfaceId, quorum, logs
+                validators, epochLength, claimStagingPeriod, quorum, logs
             );
         } catch (bytes memory error) {
             _testNewQuorumFailure(validators, epochLength, error);
@@ -79,7 +78,6 @@ contract QuorumFactoryTest is
         address[] memory validators,
         uint256 epochLength,
         uint256 claimStagingPeriod,
-        bytes4 interfaceId,
         bytes32 salt
     ) public {
         address precalculatedAddress = _factory.calculateQuorumAddress(
@@ -102,7 +100,7 @@ contract QuorumFactoryTest is
             );
 
             _testNewQuorumSuccess(
-                validators, epochLength, claimStagingPeriod, interfaceId, quorum, logs
+                validators, epochLength, claimStagingPeriod, quorum, logs
             );
         } catch (bytes memory error) {
             _testNewQuorumFailure(validators, epochLength, error);
@@ -1261,7 +1259,6 @@ contract QuorumFactoryTest is
         address[] memory validators,
         uint256 epochLength,
         uint256 claimStagingPeriod,
-        bytes4 interfaceId,
         IQuorum quorum,
         Vm.Log[] memory logs
     ) internal {
@@ -1430,7 +1427,7 @@ contract QuorumFactoryTest is
         );
 
         // Test ERC-165 interface
-        _testSupportsInterface(quorum, interfaceId);
+        _testSupportsInterface(quorum);
     }
 
     function _testNewQuorumFailure(

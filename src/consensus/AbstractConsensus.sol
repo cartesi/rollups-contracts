@@ -141,6 +141,7 @@ abstract contract AbstractConsensus is
         returns (bool)
     {
         return interfaceId == type(IConsensus).interfaceId
+            || interfaceId == type(IOutputsMerkleRootValidator).interfaceId
             || super.supportsInterface(interfaceId);
     }
 
