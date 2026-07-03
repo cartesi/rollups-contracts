@@ -196,11 +196,11 @@ contract Application is
             revert CannotRefundFinalizedInput(inputIndex);
         }
 
-        bytes memory output = _buildRefundOutput(sender, payload);
-
         if (_refunded.get(inputIndex)) {
             revert RefundAlreadyIssued(inputIndex);
         }
+
+        bytes memory output = _buildRefundOutput(sender, payload);
 
         _executeOutput(output);
 
@@ -258,13 +258,13 @@ contract Application is
     {
         validateAccount(account, proof);
 
-        bytes memory output = _buildWithdrawalOutput(account);
-
         uint64 accountIndex = proof.accountIndex;
 
         if (_withdrawn.get(accountIndex)) {
             revert AccountFundsAlreadyWithdrawn(accountIndex);
         }
+
+        bytes memory output = _buildWithdrawalOutput(account);
 
         _executeOutput(output);
 
