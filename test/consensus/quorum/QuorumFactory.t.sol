@@ -746,7 +746,7 @@ contract QuorumFactoryTest is
                         vm.randomUint(), // inputIndex
                         vm.randomUint(firstUnprocessedBlockNumber, type(uint256).max)
                     ),
-                    "Check all inputs added on the first unproccessed block or after were not finalized"
+                    "Check all inputs added on the first unprocessed block or after were not finalized"
                 );
 
                 assertEq(
