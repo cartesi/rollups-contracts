@@ -81,13 +81,7 @@ contract ApplicationTest is
     AssetReceiver _assetReceiver;
 
     LibEmulator.State _emulator;
-    bytes32 _templateHash;
-    bytes32 _initialAccountsDriveMerkleRoot;
-    LibEmulator.ProofComponents _initialProofComponents;
     LibEmulator.ProofComponents _proofComponents;
-    address _appOwner;
-    address _authorityOwner;
-    address _recipient;
     string[] _outputNames;
     string[] _accountNames;
     uint256[] _tokenIds;
@@ -95,22 +89,38 @@ contract ApplicationTest is
     uint256[] _transferAmounts;
     mapping(string => LibEmulator.OutputIndex) _outputIndexByName;
     mapping(string => LibEmulator.AccountIndex) _accountIndexByName;
-    WithdrawalConfig _withdrawalConfig;
 
-    uint256 constant EPOCH_LENGTH = 1;
-    uint256 constant CLAIM_STAGING_PERIOD = 0;
     uint256 constant INITIAL_SUPPLY = type(uint64).max;
     uint256 constant TOKEN_ID = 88888888;
     uint256 constant TRANSFER_AMOUNT = 42;
-    bytes32 constant SALT = bytes32(0);
 
     function setUp() public {
         _initVariables();
-        _computeTemplateHash();
-        _deployContracts();
-        _addOutputs();
+
         _addAccounts();
-        _submitClaim();
+        _proofComponents = _buildProofComponents();
+
+        (_appContract, _authority) =
+            _contracts.core.selfHostedApplicationFactory
+                .deployContracts(
+                    _nextAddress(), // authorityOwner
+                    1, // epochLength
+                    0, // claimStagingPeriod
+                    _nextAddress(), // appOwner
+                    _proofComponents.getMachineMerkleRoot(), // templateHash
+                    _contracts.core.inputBox,
+                    WithdrawalConfig({
+                        guardian: _nextAddress(),
+                        log2LeavesPerAccount: LibEmulator.LOG2_LEAVES_PER_ACCOUNT,
+                        log2MaxNumOfAccounts: LibEmulator.LOG2_MAX_NUM_OF_ACCOUNTS,
+                        accountsDriveStartIndex: LibEmulator.ACCOUNTS_DRIVE_START_INDEX,
+                        withdrawalOutputBuilder: _contracts.dev
+                        .testUsdWithdrawalOutputBuilder
+                    }),
+                    bytes32(0) // salt
+                );
+
+        _addOutputs();
     }
 
     // ------------
@@ -141,7 +151,7 @@ contract ApplicationTest is
         address caller,
         IOutputsMerkleRootValidator newOutputsMerkleRootValidator
     ) external {
-        vm.assume(caller != _appOwner);
+        vm.assume(caller != _appContract.owner());
         vm.startPrank(caller);
         vm.expectRevert(_encodeOwnableUnauthorizedAccount(caller));
         _appContract.migrateToOutputsMerkleRootValidator(newOutputsMerkleRootValidator);
@@ -152,7 +162,7 @@ contract ApplicationTest is
     {
         vm.prank(_appContract.getGuardian());
         _appContract.foreclose();
-        vm.prank(_appOwner);
+        vm.prank(_appContract.owner());
         vm.expectRevert(IApplication.Foreclosed.selector);
         _appContract.migrateToOutputsMerkleRootValidator(newOutputsMerkleRootValidator);
     }
@@ -160,7 +170,7 @@ contract ApplicationTest is
     function testMigrateToOutputsMerkleRootValidator(IOutputsMerkleRootValidator newOutputsMerkleRootValidator)
         external
     {
-        vm.prank(_appOwner);
+        vm.prank(_appContract.owner());
         vm.expectEmit(false, false, false, true, address(_appContract));
         emit IApplication.OutputsMerkleRootValidatorChanged(newOutputsMerkleRootValidator);
         _appContract.migrateToOutputsMerkleRootValidator(newOutputsMerkleRootValidator);
@@ -207,11 +217,24 @@ contract ApplicationTest is
     // output validation
     // -----------------
 
-    function testValidateOutputs() external view {
-        _validateOutputs();
-    }
+    function testValidateOutputs() external {
+        bytes32 outputsMerkleRoot = _emulator.getOutputsMerkleRoot();
+        bytes memory errorData = _encodeInvalidOutputsMerkleRoot(outputsMerkleRoot);
+        for (uint256 i; i < _outputNames.length; ++i) {
+            string memory name = _outputNames[i];
+            bytes memory output = _getOutput(name);
+            OutputValidityProof memory proof = _getOutputValidityProof(name);
+            vm.expectRevert(errorData);
+            _appContract.validateOutputHash(keccak256(output), proof);
+            vm.expectRevert(errorData);
+            _appContract.validateOutput(output, proof);
+            vm.expectRevert(errorData);
+            _appContract.executeOutput(output, proof);
+        }
 
-    function testValidateOutputsAfterForeclosure() external {
+        _submitAndAcceptClaim();
+        _validateOutputs();
+
         vm.prank(_appContract.getGuardian());
         _appContract.foreclose();
         _validateOutputs();
@@ -223,6 +246,8 @@ contract ApplicationTest is
     function testRevertsInvalidOutputHashesSiblingsArrayLength(bytes32[] calldata invalidOutputHashesSiblings)
         external
     {
+        _submitAndAcceptClaim();
+
         string memory name = _getRandomOutputName();
         bytes memory output = _getOutput(name);
         OutputValidityProof memory proof = _getOutputValidityProof(name);
@@ -241,6 +266,8 @@ contract ApplicationTest is
     }
 
     function testRevertsInvalidOutputsMerkleRoot(bytes calldata invalidOutput) external {
+        _submitAndAcceptClaim();
+
         string memory name = _getRandomOutputName();
         bytes memory output = _getOutput(name);
         OutputValidityProof memory proof = _getOutputValidityProof(name);
@@ -263,6 +290,8 @@ contract ApplicationTest is
     }
 
     function testRevertsInvalidOutputsMerkleRoot(uint256) external {
+        _submitAndAcceptClaim();
+
         string memory name = _getRandomOutputName();
         bytes memory output = _getOutput(name);
         bytes32 outputHash = keccak256(output);
@@ -289,6 +318,8 @@ contract ApplicationTest is
     }
 
     function testValidateOutputRevertsInvalidNodeIndex(uint256) external {
+        _submitAndAcceptClaim();
+
         string memory name = _getRandomOutputName();
         bytes memory output = _getOutput(name);
         OutputValidityProof memory proof = _getOutputValidityProof(name);
@@ -312,15 +343,12 @@ contract ApplicationTest is
     // output execution
     // ----------------
 
-    function testWasOutputExecuted(uint256 outputIndex) external view {
-        assertFalse(_appContract.wasOutputExecuted(outputIndex));
-    }
-
     function testExecuteEtherTransferVoucher() external {
         string memory name = "EtherTransferVoucher";
         bytes memory output = _getOutput(name);
         OutputValidityProof memory proof = _getOutputValidityProof(name);
 
+        _submitAndAcceptClaim();
         _testEtherTransfer(output, proof);
     }
 
@@ -329,6 +357,7 @@ contract ApplicationTest is
         bytes memory output = _getOutput(name);
         OutputValidityProof memory proof = _getOutputValidityProof(name);
 
+        _submitAndAcceptClaim();
         _testEtherMint(output, proof);
     }
 
@@ -336,6 +365,8 @@ contract ApplicationTest is
         string memory name = "ERC20TransferVoucher";
         bytes memory output = _getOutput(name);
         OutputValidityProof memory proof = _getOutputValidityProof(name);
+
+        _submitAndAcceptClaim();
 
         assertLt(
             _erc20Token.balanceOf(address(_appContract)),
@@ -361,6 +392,7 @@ contract ApplicationTest is
         bytes memory output = _getOutput(name);
         OutputValidityProof memory proof = _getOutputValidityProof(name);
 
+        _submitAndAcceptClaim();
         _testErc721Transfer(output, proof);
     }
 
@@ -369,6 +401,7 @@ contract ApplicationTest is
         bytes memory output = _getOutput(name);
         OutputValidityProof memory proof = _getOutputValidityProof(name);
 
+        _submitAndAcceptClaim();
         _testErc1155SingleTransfer(output, proof);
     }
 
@@ -377,6 +410,7 @@ contract ApplicationTest is
         bytes memory output = _getOutput(name);
         OutputValidityProof memory proof = _getOutputValidityProof(name);
 
+        _submitAndAcceptClaim();
         _testErc1155BatchTransfer(output, proof);
     }
 
@@ -384,6 +418,8 @@ contract ApplicationTest is
         string memory name = "EmptyOutput";
         bytes memory output = _getOutput(name);
         OutputValidityProof memory proof = _getOutputValidityProof(name);
+
+        _submitAndAcceptClaim();
 
         vm.expectRevert(_encodeOutputNotExecutable(output));
         _appContract.executeOutput(output, proof);
@@ -394,6 +430,8 @@ contract ApplicationTest is
         bytes memory output = _getOutput(name);
         OutputValidityProof memory proof = _getOutputValidityProof(name);
 
+        _submitAndAcceptClaim();
+
         vm.expectRevert(_encodeOutputNotExecutable(output));
         _appContract.executeOutput(output, proof);
     }
@@ -402,6 +440,8 @@ contract ApplicationTest is
         string memory name = "HelloWorldNotice";
         bytes memory output = _getOutput(name);
         OutputValidityProof memory proof = _getOutputValidityProof(name);
+
+        _submitAndAcceptClaim();
 
         vm.expectRevert(_encodeOutputNotExecutable(output));
         _appContract.executeOutput(output, proof);
@@ -412,6 +452,7 @@ contract ApplicationTest is
         bytes memory output = _getOutput(name);
         OutputValidityProof memory proof = _getOutputValidityProof(name);
 
+        _submitAndAcceptClaim();
         _testErc20Fail(output, proof);
     }
 
@@ -420,6 +461,7 @@ contract ApplicationTest is
         bytes memory output = _getOutput(name);
         OutputValidityProof memory proof = _getOutputValidityProof(name);
 
+        _submitAndAcceptClaim();
         _testErc20Success(output, proof);
     }
 
@@ -430,6 +472,8 @@ contract ApplicationTest is
     function testRevertsInvalidAccountsDriveMerkleRootProofSize(bytes32[] calldata invalidProof)
         external
     {
+        if (vm.randomBool()) _submitAndAcceptClaim();
+
         // We assume the proof provided by the emulator library has the correct length,
         // and that the proof provided by the fuzzer has a different, incorrect length.
         vm.assume(invalidProof.length != _getAccountsDriveMerkleRootProof().length);
@@ -447,6 +491,8 @@ contract ApplicationTest is
     function testRevertsInvalidMachineMerkleRoot(bytes32 invalidAccountsDriveMerkleRoot)
         external
     {
+        if (vm.randomBool()) _submitAndAcceptClaim();
+
         vm.assume(invalidAccountsDriveMerkleRoot != _getAccountsDriveMerkleRoot());
 
         vm.prank(_appContract.getGuardian());
@@ -464,6 +510,8 @@ contract ApplicationTest is
     }
 
     function testProveAccountsDriveMerkleRoot() external {
+        if (vm.randomBool()) _submitAndAcceptClaim();
+
         bytes32 accountsDriveMerkleRoot = _getAccountsDriveMerkleRoot();
         bytes32[] memory proof = _getAccountsDriveMerkleRootProof();
 
@@ -531,11 +579,31 @@ contract ApplicationTest is
     // account validation
     // ------------------
 
-    function testValidateAccounts() external {
-        _validateAccounts(_encodeAccountsDriveMerkleRootNotProved());
+    struct UsdAccount {
+        address user;
+        uint64 balance;
     }
 
-    function testValidateAccountsAfterForeclosure() external {
+    function testValidateAccounts(bool addAccounts, UsdAccount[10] calldata newAccounts)
+        external
+    {
+        // Even if we do not add new accounts, we can still validate the accounts present
+        // in the template machine, in which case, the application contract uses the
+        // template hash when validating the accounts drive Merkle root proof.
+        // We limit the array of accounts to 10 to avoid OOG errors in Forge.
+        if (addAccounts) {
+            for (uint256 i; i < newAccounts.length; ++i) {
+                UsdAccount calldata account = newAccounts[i];
+                _nameAccount(
+                    string.concat("NewAccount", vm.toString(i + 1)),
+                    _addAccount(_encodeUsdAccount(account.user, account.balance))
+                );
+            }
+            _submitAndAcceptClaim();
+        }
+
+        _validateAccounts(_encodeAccountsDriveMerkleRootNotProved());
+
         vm.prank(_appContract.getGuardian());
         _appContract.foreclose();
         _validateAccounts(_encodeAccountsDriveMerkleRootNotProved());
@@ -786,7 +854,7 @@ contract ApplicationTest is
         _proveAccountsDriveMerkleRoot();
 
         vm.expectCall(
-            address(_withdrawalConfig.withdrawalOutputBuilder),
+            address(_appContract.getWithdrawalOutputBuilder()),
             abi.encodeCall(
                 IWithdrawalOutputBuilder.buildWithdrawalOutput,
                 (address(_appContract), account)
@@ -1019,6 +1087,9 @@ contract ApplicationTest is
         // 1. Add some prior inputs
         _addInputs(_contracts.core.inputBox, appContract, payloads);
         uint256 inputIndex = _contracts.core.inputBox.getNumberOfInputs(appContract);
+
+        // 1.1. Randomly submit and accept claim
+        if (vm.randomBool()) _submitAndAcceptClaim();
 
         // 2. Randomize deposit environment
         vm.roll(blockNumber);
@@ -1317,15 +1388,25 @@ contract ApplicationTest is
                 );
             } else if (depositType == DepositType.ERC1155_BATCH) {
                 isRevertExpected = true;
-                errorData = abi.encodeWithSelector(
-                    AssetReceiver.Erc1155BatchRejected.selector,
-                    _erc1155Token,
-                    _appContract,
-                    _appContract,
-                    tokenIds,
-                    values,
-                    new bytes(0)
-                );
+                errorData = (tokenIds.length == 1)
+                    ? abi.encodeWithSelector(
+                        AssetReceiver.Erc1155Rejected.selector,
+                        _erc1155Token,
+                        _appContract,
+                        _appContract,
+                        tokenIds[0],
+                        values[0],
+                        new bytes(0)
+                    )
+                    : abi.encodeWithSelector(
+                        AssetReceiver.Erc1155BatchRejected.selector,
+                        _erc1155Token,
+                        _appContract,
+                        _appContract,
+                        tokenIds,
+                        values,
+                        new bytes(0)
+                    );
             }
 
             if (isRevertExpected) {
@@ -1632,16 +1713,6 @@ contract ApplicationTest is
     // ------------------
 
     function _initVariables() internal {
-        _authorityOwner = _nextAddress();
-        _appOwner = _nextAddress();
-        _recipient = _nextAddress();
-        _withdrawalConfig = WithdrawalConfig({
-            guardian: _nextAddress(),
-            log2LeavesPerAccount: LibEmulator.LOG2_LEAVES_PER_ACCOUNT,
-            log2MaxNumOfAccounts: LibEmulator.LOG2_MAX_NUM_OF_ACCOUNTS,
-            accountsDriveStartIndex: LibEmulator.ACCOUNTS_DRIVE_START_INDEX,
-            withdrawalOutputBuilder: _contracts.dev.testUsdWithdrawalOutputBuilder
-        });
         for (uint256 i; i < 7; ++i) {
             _tokenIds.push(i);
             _initialSupplies.push(INITIAL_SUPPLY);
@@ -1651,29 +1722,8 @@ contract ApplicationTest is
         _erc721Token = _contracts.dev.testNonFungibleToken;
         _erc1155Token = _contracts.dev.testMultiToken;
         _safeErc20Transfer = _contracts.core.safeErc20Transfer;
-    }
-
-    function _computeTemplateHash() internal {
-        _initialProofComponents = _emulator.buildProofComponents();
-        _initialAccountsDriveMerkleRoot = _getAccountsDriveMerkleRoot();
-        _templateHash = _initialProofComponents.getMachineMerkleRoot();
-    }
-
-    function _deployContracts() internal {
         _etherReceiver = new EtherReceiver();
         _assetReceiver = new AssetReceiver();
-        (_appContract, _authority) =
-            _contracts.core.selfHostedApplicationFactory
-                .deployContracts(
-                    _authorityOwner,
-                    EPOCH_LENGTH,
-                    CLAIM_STAGING_PERIOD,
-                    _appOwner,
-                    _templateHash,
-                    _contracts.core.inputBox,
-                    _withdrawalConfig,
-                    SALT
-                );
     }
 
     function _addOutputs() internal {
@@ -1702,7 +1752,9 @@ contract ApplicationTest is
                 _encodeVoucher(
                     address(_erc20Token),
                     0,
-                    abi.encodeCall(IERC20.transfer, (_recipient, TRANSFER_AMOUNT))
+                    abi.encodeCall(
+                        IERC20.transfer, (address(_assetReceiver), TRANSFER_AMOUNT)
+                    )
                 )
             )
         );
@@ -1766,7 +1818,7 @@ contract ApplicationTest is
                     address(_safeErc20Transfer),
                     abi.encodeCall(
                         ISafeERC20Transfer.safeTransfer,
-                        (_erc20Token, _recipient, TRANSFER_AMOUNT)
+                        (_erc20Token, address(_assetReceiver), TRANSFER_AMOUNT)
                     )
                 )
             )
@@ -1885,6 +1937,14 @@ contract ApplicationTest is
         return _emulator.getAccountsDriveMerkleRoot();
     }
 
+    function _buildProofComponents()
+        internal
+        view
+        returns (LibEmulator.ProofComponents memory)
+    {
+        return _emulator.buildProofComponents();
+    }
+
     function _getAccountsDriveMerkleRootProof()
         internal
         view
@@ -1916,25 +1976,6 @@ contract ApplicationTest is
         revert("Successful withdrawal");
     }
 
-    /// @notice This function is used to simulate a foreclosure and an initial accounts
-    /// drive Merkle root proof. If the proof succeeds, then the function reverts with
-    /// error message "Successful proof". If the proof fails, then the function propagates
-    /// the error from the app contract.
-    function simulateForeclosureAndInitialAccountsDriveProof() external {
-        assertEq(msg.sender, address(this), "called by external account");
-        vm.prank(_appContract.getGuardian());
-        _appContract.foreclose();
-        bytes32[] memory proof = _initialProofComponents.getAccountsDriveMerkleRootProof();
-        vm.prank(vm.randomAddress());
-        _appContract.proveAccountsDriveMerkleRoot(_initialAccountsDriveMerkleRoot, proof);
-        bool wasValueProved;
-        bytes32 value;
-        (wasValueProved, value) = _appContract.getAccountsDriveMerkleRoot();
-        assertTrue(wasValueProved, "Expected value to be proved");
-        assertEq(value, _initialAccountsDriveMerkleRoot);
-        revert("Successful proof");
-    }
-
     /// @notice This function is used to simulate a claim acceptance, a foreclosure and
     /// a refund issuance. If the proof succeeds, then the function reverts with
     /// error message "Successful refund". If the proof fails, then the function propagates
@@ -1946,7 +1987,7 @@ contract ApplicationTest is
         assertEq(msg.sender, address(this), "called by external account");
         uint256 lastProcessedBlockNumber = vm.getBlockNumber();
         vm.roll(vm.randomUint(lastProcessedBlockNumber + 1, type(uint256).max));
-        vm.prank(_authorityOwner);
+        vm.prank(_authority.owner());
         _authority.submitClaim(
             address(_appContract),
             lastProcessedBlockNumber,
@@ -1966,56 +2007,15 @@ contract ApplicationTest is
         revert("Successful proof");
     }
 
-    function _submitClaim() internal {
-        _proofComponents = _emulator.buildProofComponents();
-        bytes32 outputsMerkleRoot = _proofComponents.outputsMerkleRoot;
+    function _submitAndAcceptClaim() internal {
+        _proofComponents = _buildProofComponents();
         bytes32 machineMerkleRoot = _proofComponents.getMachineMerkleRoot();
 
-        // attempt to validate and execute outputs
-        {
-            bytes memory error = _encodeInvalidOutputsMerkleRoot(outputsMerkleRoot);
-            for (uint256 i; i < _outputNames.length; ++i) {
-                string memory name = _outputNames[i];
-                bytes memory output = _getOutput(name);
-                OutputValidityProof memory proof = _getOutputValidityProof(name);
-                vm.expectRevert(error);
-                _appContract.validateOutputHash(keccak256(output), proof);
-                vm.expectRevert(error);
-                _appContract.validateOutput(output, proof);
-                vm.expectRevert(error);
-                _appContract.executeOutput(output, proof);
-            }
-        }
-
-        // attempt to validate/withdraw accounts
-        {
-            bytes memory error = _encodeAccountsDriveMerkleRootNotProved();
-            for (uint256 i; i < _accountNames.length; ++i) {
-                string memory name = _accountNames[i];
-                bytes memory account = _getAccount(name);
-                bytes32 accountMerkleRoot = LibEmulator.getAccountMerkleRoot(account);
-                AccountValidityProof memory proof = _getAccountValidityProof(name);
-                vm.expectRevert(error);
-                _appContract.validateAccountMerkleRoot(accountMerkleRoot, proof);
-                vm.expectRevert(error);
-                _appContract.validateAccount(account, proof);
-                vm.expectRevert(IApplication.NotForeclosed.selector);
-                vm.prank(vm.randomAddress());
-                _appContract.withdraw(account, proof);
-                vm.expectRevert(error);
-                this.simulateForeclosureAndWithdrawal(account, proof);
-            }
-        }
-
-        // attempt to prove accounts drive Merkle root from template hash
-        vm.expectRevert("Successful proof");
-        this.simulateForeclosureAndInitialAccountsDriveProof();
-
-        vm.prank(_authorityOwner);
+        vm.prank(_authority.owner());
         _authority.submitClaim(
             address(_appContract),
             0,
-            outputsMerkleRoot,
+            _proofComponents.outputsMerkleRoot,
             _proofComponents.getOutputsMerkleRootProof()
         );
 
@@ -2417,7 +2417,7 @@ contract ApplicationTest is
 
         vm.mockCall(
             address(_erc20Token),
-            abi.encodeCall(IERC20.transfer, (_recipient, TRANSFER_AMOUNT)),
+            abi.encodeCall(IERC20.transfer, (address(_assetReceiver), TRANSFER_AMOUNT)),
             abi.encode(false)
         );
         vm.expectRevert(
@@ -2435,14 +2435,14 @@ contract ApplicationTest is
         uint256 numberOfExecutedOutputsBefore = _appContract.getNumberOfExecutedOutputs();
         _contracts.dev.testFungibleToken.mint(address(_appContract), TRANSFER_AMOUNT);
 
-        uint256 recipientBalance = _erc20Token.balanceOf(address(_recipient));
+        uint256 recipientBalance = _erc20Token.balanceOf(address(_assetReceiver));
         uint256 appBalance = _erc20Token.balanceOf(address(_appContract));
 
         _expectEmitOutputExecuted(output, proof);
         _appContract.executeOutput(output, proof);
 
         assertEq(
-            _erc20Token.balanceOf(address(_recipient)),
+            _erc20Token.balanceOf(address(_assetReceiver)),
             recipientBalance + TRANSFER_AMOUNT,
             "Recipient should have received the transfer amount"
         );
