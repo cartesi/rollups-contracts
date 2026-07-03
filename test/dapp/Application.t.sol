@@ -907,7 +907,7 @@ contract ApplicationTest is
         address[] memory inputSenders = new address[](payloads.length);
 
         // 1. Send all inputs to the application's input box from random EOA senders,
-        // at random (but cronologically consistent) block numbers and timestamps,
+        // at random (but chronologically consistent) block numbers and timestamps,
         // and with random block prevrandao values.
         for (uint256 i; i < payloads.length; ++i) {
             bytes memory payload = payloads[i];
