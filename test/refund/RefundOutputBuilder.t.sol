@@ -237,12 +237,14 @@ contract RefundOutputBuilderTest is Test, InputBoxTestUtils, VersionGetterTestUt
         address to;
         uint256 tokenId;
         uint256 depositValue;
-        (from, to, tokenId, depositValue) =
-            abi.decode(args2, (address, address, uint256, uint256));
+        bytes memory data;
+        (from, to, tokenId, depositValue, data) =
+            abi.decode(args2, (address, address, uint256, uint256, bytes));
         assertEq(from, appContract, "transfer origin");
         assertEq(to, deposit.sender, "transfer destination");
         assertEq(tokenId, deposit.tokenId, "transfer token ID");
         assertEq(depositValue, deposit.value, "transfer value");
+        assertEq(data, new bytes(0), "transfer extra data");
     }
 
     function testBuildRefundOutputForErc1155BatchDeposit(
@@ -277,11 +279,13 @@ contract RefundOutputBuilderTest is Test, InputBoxTestUtils, VersionGetterTestUt
         address to;
         uint256[] memory tokenIds;
         uint256[] memory depositValues;
-        (from, to, tokenIds, depositValues) =
-            abi.decode(args2, (address, address, uint256[], uint256[]));
+        bytes memory data;
+        (from, to, tokenIds, depositValues, data) =
+            abi.decode(args2, (address, address, uint256[], uint256[], bytes));
         assertEq(from, appContract, "transfer origin");
         assertEq(to, deposit.sender, "transfer destination");
         assertEq(tokenIds, deposit.tokenIds, "transfer token IDs");
         assertEq(depositValues, deposit.values, "transfer values");
+        assertEq(data, new bytes(0), "transfer extra data");
     }
 }

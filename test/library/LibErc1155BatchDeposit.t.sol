@@ -33,11 +33,13 @@ contract LibErc1155BatchDepositTest is Test {
         address arg2;
         uint256[] memory arg3;
         uint256[] memory arg4;
-        (arg1, arg2, arg3, arg4) =
-            abi.decode(args, (address, address, uint256[], uint256[]));
+        bytes memory arg5;
+        (arg1, arg2, arg3, arg4, arg5) =
+            abi.decode(args, (address, address, uint256[], uint256[], bytes));
         assertEq(arg1, appContract, "from");
         assertEq(arg2, deposit.sender, "to");
         assertEq(arg3, deposit.tokenIds, "tokenId");
         assertEq(arg4, deposit.values, "transfer value");
+        assertEq(arg5, new bytes(0), "transfer extra data");
     }
 }
