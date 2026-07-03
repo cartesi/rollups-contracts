@@ -32,6 +32,7 @@ import {Vm} from "forge-std-1.9.6/src/Vm.sol";
 import {ExternalLibBinaryMerkleTree} from "../library/LibBinaryMerkleTree.t.sol";
 import {ExternalLibUsdAccount} from "../library/LibUsdAccount.t.sol";
 import {AddressGenerator} from "../util/AddressGenerator.sol";
+import {AssetReceiver} from "../util/AssetReceiver.sol";
 import {ConsensusTestUtils} from "../util/ConsensusTestUtils.sol";
 import {EtherReceiver, IEtherReceiver} from "../util/EtherReceiver.sol";
 import {InputBoxTestUtils} from "../util/InputBoxTestUtils.sol";
@@ -77,6 +78,7 @@ contract ApplicationTest is
     IERC721 _erc721Token;
     IERC1155 _erc1155Token;
     ISafeERC20Transfer _safeErc20Transfer;
+    AssetReceiver _assetReceiver;
 
     LibEmulator.State _emulator;
     bytes32 _templateHash;
@@ -1004,13 +1006,10 @@ contract ApplicationTest is
         bytes calldata baseLayerData,
         bytes calldata execLayerData
     ) external {
-        // Assume the depositor is an EOA (to avoid transfer failures)
-        address depositor = vm.addr(boundPrivateKey(vm.randomUint()));
-        vm.assume(depositor.code.length == 0);
-
         bytes memory input;
         bytes memory payload;
         address appContract = address(_appContract);
+        address depositor = address(_assetReceiver);
         uint256 balance = vm.randomUint(value, type(uint256).max);
         uint256 blockNumber = vm.randomUint(vm.getBlockNumber(), type(uint256).max);
 
@@ -1284,6 +1283,59 @@ contract ApplicationTest is
         // 9. Make guardian foreclose the application
         vm.prank(_appContract.getGuardian());
         _appContract.foreclose();
+
+        // 9.1. Try issuing refund for rejecting receiver contract for some assets
+        {
+            bool isRevertExpected;
+            bytes memory errorData;
+
+            if (depositType == DepositType.ETHER) {
+                isRevertExpected = true;
+                errorData = abi.encodeWithSelector(
+                    AssetReceiver.EtherRejected.selector, _appContract, value
+                );
+            } else if (depositType == DepositType.ERC721) {
+                isRevertExpected = true;
+                errorData = abi.encodeWithSelector(
+                    AssetReceiver.Erc721Rejected.selector,
+                    _erc721Token,
+                    _appContract,
+                    _appContract,
+                    tokenId,
+                    new bytes(0)
+                );
+            } else if (depositType == DepositType.ERC1155_SINGLE) {
+                isRevertExpected = true;
+                errorData = abi.encodeWithSelector(
+                    AssetReceiver.Erc1155Rejected.selector,
+                    _erc1155Token,
+                    _appContract,
+                    _appContract,
+                    tokenId,
+                    value,
+                    new bytes(0)
+                );
+            } else if (depositType == DepositType.ERC1155_BATCH) {
+                isRevertExpected = true;
+                errorData = abi.encodeWithSelector(
+                    AssetReceiver.Erc1155BatchRejected.selector,
+                    _erc1155Token,
+                    _appContract,
+                    _appContract,
+                    tokenIds,
+                    values,
+                    new bytes(0)
+                );
+            }
+
+            if (isRevertExpected) {
+                _assetReceiver.setRejecting(true);
+                vm.prank(vm.randomAddress());
+                vm.expectRevert(errorData);
+                _appContract.issueRefund(inputIndex, input);
+                _assetReceiver.setRejecting(false);
+            }
+        }
 
         // 10. Issue refund for deposit
         vm.prank(vm.randomAddress());
@@ -1609,6 +1661,7 @@ contract ApplicationTest is
 
     function _deployContracts() internal {
         _etherReceiver = new EtherReceiver();
+        _assetReceiver = new AssetReceiver();
         (_appContract, _authority) =
             _contracts.core.selfHostedApplicationFactory
                 .deployContracts(
@@ -1629,7 +1682,9 @@ contract ApplicationTest is
         _nameOutput("MyOutput", _addOutput(abi.encodeWithSignature("MyOutput()")));
         _nameOutput(
             "EtherTransferVoucher",
-            _addOutput(_encodeVoucher(_recipient, TRANSFER_AMOUNT, abi.encode()))
+            _addOutput(
+                _encodeVoucher(address(_assetReceiver), TRANSFER_AMOUNT, abi.encode())
+            )
         );
         _nameOutput(
             "EtherMintVoucher",
@@ -1660,7 +1715,7 @@ contract ApplicationTest is
                     abi.encodeWithSignature(
                         "safeTransferFrom(address,address,uint256)",
                         address(_appContract),
-                        _recipient,
+                        address(_assetReceiver),
                         TOKEN_ID
                     )
                 )
@@ -1674,7 +1729,13 @@ contract ApplicationTest is
                     0,
                     abi.encodeCall(
                         IERC1155.safeTransferFrom,
-                        (address(_appContract), _recipient, TOKEN_ID, TRANSFER_AMOUNT, "")
+                        (
+                            address(_appContract),
+                            address(_assetReceiver),
+                            TOKEN_ID,
+                            TRANSFER_AMOUNT,
+                            ""
+                        )
                     )
                 )
             )
@@ -1689,7 +1750,7 @@ contract ApplicationTest is
                         IERC1155.safeBatchTransferFrom,
                         (
                             address(_appContract),
-                            _recipient,
+                            address(_assetReceiver),
                             _tokenIds,
                             _transferAmounts,
                             ""
@@ -2046,14 +2107,6 @@ contract ApplicationTest is
         );
     }
 
-    function _expectNoChangeInNumberOfExecutedOutputs(uint256 before) internal view {
-        assertEq(
-            _appContract.getNumberOfExecutedOutputs(),
-            before,
-            "Should not increment number of executed outputs on revert"
-        );
-    }
-
     function _encodeInvalidOutputsMerkleRoot(bytes32 outputsMerkleRoot)
         internal
         pure
@@ -2217,10 +2270,20 @@ contract ApplicationTest is
             )
         );
         _appContract.executeOutput(output, proof);
-        _expectNoChangeInNumberOfExecutedOutputs(numberOfExecutedOutputsBefore);
         vm.deal(address(_appContract), TRANSFER_AMOUNT);
 
-        uint256 recipientBalance = _recipient.balance;
+        _assetReceiver.setRejecting(true);
+
+        vm.expectRevert(
+            abi.encodeWithSelector(
+                AssetReceiver.EtherRejected.selector, _appContract, TRANSFER_AMOUNT
+            )
+        );
+        _appContract.executeOutput(output, proof);
+
+        _assetReceiver.setRejecting(false);
+
+        uint256 recipientBalance = address(_assetReceiver).balance;
         uint256 appBalance = address(_appContract).balance;
 
         _expectEmitOutputExecuted(output, proof);
@@ -2228,7 +2291,7 @@ contract ApplicationTest is
         _appContract.executeOutput(output, proof);
 
         assertEq(
-            _recipient.balance,
+            address(_assetReceiver).balance,
             recipientBalance + TRANSFER_AMOUNT,
             "Recipient should have received the transfer amount"
         );
@@ -2258,7 +2321,6 @@ contract ApplicationTest is
         vm.expectRevert();
         _appContract.executeOutput(output, proof);
 
-        _expectNoChangeInNumberOfExecutedOutputs(numberOfExecutedOutputsBefore);
         vm.deal(address(_appContract), TRANSFER_AMOUNT);
 
         uint256 recipientBalance = address(_etherReceiver).balance;
@@ -2304,16 +2366,29 @@ contract ApplicationTest is
             )
         );
         _appContract.executeOutput(output, proof);
-        _expectNoChangeInNumberOfExecutedOutputs(numberOfExecutedOutputsBefore);
 
         _contracts.dev.testNonFungibleToken.mint(address(_appContract), TOKEN_ID);
+
+        _assetReceiver.setRejecting(true);
+        vm.expectRevert(
+            abi.encodeWithSelector(
+                AssetReceiver.Erc721Rejected.selector,
+                _erc721Token,
+                _appContract,
+                _appContract,
+                TOKEN_ID,
+                new bytes(0)
+            )
+        );
+        _appContract.executeOutput(output, proof);
+        _assetReceiver.setRejecting(false);
 
         _expectEmitOutputExecuted(output, proof);
         _appContract.executeOutput(output, proof);
 
         assertEq(
             _erc721Token.ownerOf(TOKEN_ID),
-            _recipient,
+            address(_assetReceiver),
             "The NFT is then transferred to the recipient"
         );
 
@@ -2327,7 +2402,6 @@ contract ApplicationTest is
     function _testErc20Fail(bytes memory output, OutputValidityProof memory proof)
         internal
     {
-        uint256 numberOfExecutedOutputsBefore = _appContract.getNumberOfExecutedOutputs();
         // test revert
 
         assertLt(
@@ -2338,7 +2412,6 @@ contract ApplicationTest is
 
         vm.expectRevert(_encodeErc20InsufficientBalance(_erc20Token, TRANSFER_AMOUNT));
         _appContract.executeOutput(output, proof);
-        _expectNoChangeInNumberOfExecutedOutputs(numberOfExecutedOutputsBefore);
 
         // test return false
 
@@ -2353,7 +2426,6 @@ contract ApplicationTest is
             )
         );
         _appContract.executeOutput(output, proof);
-        _expectNoChangeInNumberOfExecutedOutputs(numberOfExecutedOutputsBefore);
         vm.clearMockedCalls();
     }
 
@@ -2403,12 +2475,27 @@ contract ApplicationTest is
             )
         );
         _appContract.executeOutput(output, proof);
-        _expectNoChangeInNumberOfExecutedOutputs(numberOfExecutedOutputsBefore);
 
         _contracts.dev.testMultiToken
             .mint(address(_appContract), TOKEN_ID, INITIAL_SUPPLY);
 
-        uint256 recipientBalance = _erc1155Token.balanceOf(_recipient, TOKEN_ID);
+        _assetReceiver.setRejecting(true);
+        vm.expectRevert(
+            abi.encodeWithSelector(
+                AssetReceiver.Erc1155Rejected.selector,
+                _erc1155Token,
+                _appContract,
+                _appContract,
+                TOKEN_ID,
+                TRANSFER_AMOUNT,
+                new bytes(0)
+            )
+        );
+        _appContract.executeOutput(output, proof);
+        _assetReceiver.setRejecting(false);
+
+        uint256 recipientBalance =
+            _erc1155Token.balanceOf(address(_assetReceiver), TOKEN_ID);
         uint256 appBalance = _erc1155Token.balanceOf(address(_appContract), TOKEN_ID);
 
         _expectEmitOutputExecuted(output, proof);
@@ -2420,7 +2507,7 @@ contract ApplicationTest is
             "Application contract should have the transfer amount deducted"
         );
         assertEq(
-            _erc1155Token.balanceOf(_recipient, TOKEN_ID),
+            _erc1155Token.balanceOf(address(_assetReceiver), TOKEN_ID),
             recipientBalance + TRANSFER_AMOUNT,
             "Recipient should have received the transfer amount"
         );
@@ -2447,17 +2534,32 @@ contract ApplicationTest is
             )
         );
         _appContract.executeOutput(output, proof);
-        _expectNoChangeInNumberOfExecutedOutputs(numberOfExecutedOutputsBefore);
 
         _contracts.dev.testMultiToken
             .mintBatch(address(_appContract), _tokenIds, _initialSupplies);
+
+        _assetReceiver.setRejecting(true);
+        vm.expectRevert(
+            abi.encodeWithSelector(
+                AssetReceiver.Erc1155BatchRejected.selector,
+                _erc1155Token,
+                _appContract,
+                _appContract,
+                _tokenIds,
+                _transferAmounts,
+                new bytes(0)
+            )
+        );
+        _appContract.executeOutput(output, proof);
+        _assetReceiver.setRejecting(false);
 
         uint256 batchLength = _initialSupplies.length;
         uint256[] memory appBalances = new uint256[](batchLength);
         uint256[] memory recipientBalances = new uint256[](batchLength);
         for (uint256 i; i < batchLength; ++i) {
             appBalances[i] = _erc1155Token.balanceOf(address(_appContract), _tokenIds[i]);
-            recipientBalances[i] = _erc1155Token.balanceOf(_recipient, _tokenIds[i]);
+            recipientBalances[i] =
+                _erc1155Token.balanceOf(address(_assetReceiver), _tokenIds[i]);
         }
 
         _expectEmitOutputExecuted(output, proof);
@@ -2470,7 +2572,7 @@ contract ApplicationTest is
                 "Application contract should have the transfer amount deducted"
             );
             assertEq(
-                _erc1155Token.balanceOf(_recipient, _tokenIds[i]),
+                _erc1155Token.balanceOf(address(_assetReceiver), _tokenIds[i]),
                 recipientBalances[i] + _transferAmounts[i],
                 "Recipient should have received the transfer amount"
             );

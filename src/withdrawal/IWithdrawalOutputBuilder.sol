@@ -16,6 +16,9 @@ interface IWithdrawalOutputBuilder is IWithdrawalOutputBuilderErrors {
     /// of the withdrawal output. These state-changing constraints
     /// are already checked by the Solidity compiler when implementing
     /// this function as either view or pure.
+    /// If the input sender is a contract, the withdrawal output may revert depending on
+    /// the asset type (such as Ether, ERC-721, ERC-1155) and whether the depositor
+    /// contract implements the necessary receiver entrypoint appropriately.
     /// @param appContract The application contract address
     /// @param account The input account
     /// @return output The withdrawal output

@@ -14,6 +14,9 @@ interface IRefundOutputBuilder is IRefundOutputBuilderErrors, IVersionGetter {
     /// and self-destructions will revert the call and abort the execution of the refund
     /// output. These state-changing constraints are already checked by the Solidity
     /// compiler when implementing this function as either view or pure.
+    /// If the input sender is a contract, the refund output may revert depending on the
+    /// asset type (such as Ether, ERC-721, ERC-1155) and whether the depositor contract
+    /// implements the necessary receiver entrypoint appropriately.
     /// @param appContract The application contract address
     /// @param inputSender The input sender
     /// @param inputPayload The input payload
