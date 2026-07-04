@@ -34,10 +34,6 @@ contract ERC20PortalTest is RollupsTest, InputBoxTestUtils, VersionGetterTestUti
         _testVersion(_portal);
     }
 
-    function testGetInputBox() public view {
-        assertEq(address(_portal.getInputBox()), address(_inputBox));
-    }
-
     function testDepositRevertApplicationNotDeployed(
         uint256 value,
         bytes calldata execLayerData
@@ -55,15 +51,17 @@ contract ERC20PortalTest is RollupsTest, InputBoxTestUtils, VersionGetterTestUti
     function testDepositRevertApplicationReverted(
         uint256 value,
         bytes calldata execLayerData,
-        bytes calldata error
+        bytes calldata errorData
     ) external {
         address sender = _randomAccountWithNoCode();
-        address appContract = _newAppMockReverts(error);
+        address appContract = vm.randomBool()
+            ? _newAppMockGetInputBoxReverts(errorData)
+            : _newAppMockIsForeclosedReverts(errorData);
 
         _randomSetup(sender, appContract, value);
 
         vm.prank(sender);
-        vm.expectRevert(_encodeApplicationReverted(appContract, error));
+        vm.expectRevert(_encodeApplicationReverted(appContract, errorData));
         _portal.depositERC20Tokens(_token, appContract, value, execLayerData);
     }
 
@@ -75,7 +73,9 @@ contract ERC20PortalTest is RollupsTest, InputBoxTestUtils, VersionGetterTestUti
         vm.assume(returnData.length != 32);
 
         address sender = _randomAccountWithNoCode();
-        address appContract = _newAppMockReturns(returnData);
+        address appContract = vm.randomBool()
+            ? _newAppMockGetInputBoxReturns(returnData)
+            : _newAppMockIsForeclosedReturns(returnData);
 
         _randomSetup(sender, appContract, value);
 
@@ -84,20 +84,34 @@ contract ERC20PortalTest is RollupsTest, InputBoxTestUtils, VersionGetterTestUti
         _portal.depositERC20Tokens(_token, appContract, value, execLayerData);
     }
 
-    function testDepositRevertIllformedApplicationReturnDataInvalidBool(
+    function testDepositRevertIllformedApplicationReturnData(
         uint256 value,
         bytes calldata execLayerData
     ) external {
-        uint256 returnValue = vm.randomUint(2, type(uint256).max);
-        bytes memory returnData = abi.encode(returnValue);
-
         address sender = _randomAccountWithNoCode();
-        address appContract = _newAppMockReturns(returnData);
+        (address appContract, bytes memory returnData) = vm.randomBool()
+            ? _newAppMockGetInputBoxReturnsRandomIllformedData()
+            : _newAppMockIsForeclosedReturnsRandomIllformedData();
 
         _randomSetup(sender, appContract, value);
 
         vm.prank(sender);
         vm.expectRevert(_encodeIllformedApplicationReturnData(appContract, returnData));
+        _portal.depositERC20Tokens(_token, appContract, value, execLayerData);
+    }
+
+    function testDepositRevertInputBoxNotDeployed(
+        uint256 value,
+        bytes calldata execLayerData
+    ) external {
+        address sender = _randomAccountWithNoCode();
+        address inputBox = _randomAccountWithNoCode();
+        address appContract = _newAppMockGetInputBoxReturns(inputBox);
+
+        _randomSetup(sender, appContract, value);
+
+        vm.prank(sender);
+        vm.expectRevert(_encodeInputBoxNotDeployed(inputBox));
         _portal.depositERC20Tokens(_token, appContract, value, execLayerData);
     }
 

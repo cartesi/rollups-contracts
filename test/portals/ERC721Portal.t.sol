@@ -33,10 +33,6 @@ contract ERC721PortalTest is RollupsTest, InputBoxTestUtils, VersionGetterTestUt
         _testVersion(_portal);
     }
 
-    function testGetInputBox() public view {
-        assertEq(address(_portal.getInputBox()), address(_inputBox));
-    }
-
     function testDepositRevertApplicationNotDeployed(
         uint256 tokenId,
         bytes calldata baseLayerData,
@@ -58,17 +54,19 @@ contract ERC721PortalTest is RollupsTest, InputBoxTestUtils, VersionGetterTestUt
         uint256 tokenId,
         bytes calldata baseLayerData,
         bytes calldata execLayerData,
-        bytes calldata error
+        bytes calldata errorData
     ) external {
         address sender = _randomAccountWithNoCode();
-        address appContract = _newAppMockReverts(error);
+        address appContract = vm.randomBool()
+            ? _newAppMockGetInputBoxReverts(errorData)
+            : _newAppMockIsForeclosedReverts(errorData);
 
         IERC721 token = _randomSetup(sender, tokenId);
 
         _mockOnErc721Received(appContract, sender, tokenId, baseLayerData);
 
         vm.prank(sender);
-        vm.expectRevert(_encodeApplicationReverted(appContract, error));
+        vm.expectRevert(_encodeApplicationReverted(appContract, errorData));
         _portal.depositERC721Token(
             token, appContract, tokenId, baseLayerData, execLayerData
         );
@@ -83,7 +81,9 @@ contract ERC721PortalTest is RollupsTest, InputBoxTestUtils, VersionGetterTestUt
         vm.assume(returnData.length != 32);
 
         address sender = _randomAccountWithNoCode();
-        address appContract = _newAppMockReturns(returnData);
+        address appContract = vm.randomBool()
+            ? _newAppMockGetInputBoxReturns(returnData)
+            : _newAppMockIsForeclosedReturns(returnData);
 
         IERC721 token = _randomSetup(sender, tokenId);
 
@@ -96,16 +96,15 @@ contract ERC721PortalTest is RollupsTest, InputBoxTestUtils, VersionGetterTestUt
         );
     }
 
-    function testDepositRevertIllformedApplicationReturnDataInvalidBool(
+    function testDepositRevertIllformedApplicationReturnData(
         uint256 tokenId,
         bytes calldata baseLayerData,
         bytes calldata execLayerData
     ) external {
-        uint256 returnValue = vm.randomUint(2, type(uint256).max);
-        bytes memory returnData = abi.encode(returnValue);
-
         address sender = _randomAccountWithNoCode();
-        address appContract = _newAppMockReturns(returnData);
+        (address appContract, bytes memory returnData) = vm.randomBool()
+            ? _newAppMockGetInputBoxReturnsRandomIllformedData()
+            : _newAppMockIsForeclosedReturnsRandomIllformedData();
 
         IERC721 token = _randomSetup(sender, tokenId);
 
@@ -113,6 +112,26 @@ contract ERC721PortalTest is RollupsTest, InputBoxTestUtils, VersionGetterTestUt
 
         vm.prank(sender);
         vm.expectRevert(_encodeIllformedApplicationReturnData(appContract, returnData));
+        _portal.depositERC721Token(
+            token, appContract, tokenId, baseLayerData, execLayerData
+        );
+    }
+
+    function testDepositRevertInputBoxNotDeployed(
+        uint256 tokenId,
+        bytes calldata baseLayerData,
+        bytes calldata execLayerData
+    ) external {
+        address sender = _randomAccountWithNoCode();
+        address inputBox = _randomAccountWithNoCode();
+        address appContract = _newAppMockGetInputBoxReturns(inputBox);
+
+        IERC721 token = _randomSetup(sender, tokenId);
+
+        _mockOnErc721Received(appContract, sender, tokenId, baseLayerData);
+
+        vm.prank(sender);
+        vm.expectRevert(_encodeInputBoxNotDeployed(inputBox));
         _portal.depositERC721Token(
             token, appContract, tokenId, baseLayerData, execLayerData
         );

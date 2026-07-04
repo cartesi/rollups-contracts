@@ -6,7 +6,6 @@ pragma solidity ^0.8.30;
 import {IERC721} from "@openzeppelin-contracts-5.2.0/token/ERC721/IERC721.sol";
 
 import {InputEncoding} from "../common/InputEncoding.sol";
-import {IInputBox} from "../inputs/IInputBox.sol";
 import {IERC721Portal} from "./IERC721Portal.sol";
 import {Portal} from "./Portal.sol";
 
@@ -15,10 +14,6 @@ import {Portal} from "./Portal.sol";
 /// @notice This contract allows anyone to perform transfers of
 /// ERC-721 tokens to an application contract while informing the off-chain machine.
 contract ERC721Portal is IERC721Portal, Portal {
-    /// @notice Constructs the portal.
-    /// @param inputBox The input box used by the portal
-    constructor(IInputBox inputBox) Portal(inputBox) {}
-
     function depositERC721Token(
         IERC721 token,
         address appContract,
@@ -32,6 +27,6 @@ contract ERC721Portal is IERC721Portal, Portal {
             token, msg.sender, tokenId, baseLayerData, execLayerData
         );
 
-        getInputBox().addInput(appContract, payload);
+        _addInput(appContract, payload);
     }
 }

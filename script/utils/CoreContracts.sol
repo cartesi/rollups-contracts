@@ -40,11 +40,11 @@ struct Suite {
 
 function deploy() returns (Suite memory) {
     InputBox inputBox = G.deployInputBox();
-    EtherPortal etherPortal = G.deployEtherPortal(inputBox);
-    ERC20Portal erc20Portal = G.deployERC20Portal(inputBox);
-    ERC721Portal erc721Portal = G.deployERC721Portal(inputBox);
-    ERC1155SinglePortal erc1155SinglePortal = G.deployERC1155SinglePortal(inputBox);
-    ERC1155BatchPortal erc1155BatchPortal = G.deployERC1155BatchPortal(inputBox);
+    EtherPortal etherPortal = G.deployEtherPortal();
+    ERC20Portal erc20Portal = G.deployERC20Portal();
+    ERC721Portal erc721Portal = G.deployERC721Portal();
+    ERC1155SinglePortal erc1155SinglePortal = G.deployERC1155SinglePortal();
+    ERC1155BatchPortal erc1155BatchPortal = G.deployERC1155BatchPortal();
     SafeERC20Transfer safeErc20Transfer = G.deploySafeERC20Transfer();
     AuthorityFactory authorityFactory = G.deployAuthorityFactory();
     RefundOutputBuilder refundOutputBuilder = G.deployRefundOutputBuilder(

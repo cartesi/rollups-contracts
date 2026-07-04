@@ -48,11 +48,11 @@ contract InputBoxTest is RollupsTest, InputBoxTestUtils, VersionGetterTestUtils 
     }
 
     function testAddInputRevertsApplicationReverted(
-        bytes calldata error,
+        bytes calldata errorData,
         bytes calldata payload
     ) external {
-        address appContract = _newAppMockReverts(error);
-        vm.expectRevert(_encodeApplicationReverted(appContract, error));
+        address appContract = _newAppMockIsForeclosedReverts(errorData);
+        vm.expectRevert(_encodeApplicationReverted(appContract, errorData));
         _inputBox.addInput(appContract, payload);
     }
 
@@ -60,7 +60,7 @@ contract InputBoxTest is RollupsTest, InputBoxTestUtils, VersionGetterTestUtils 
         external
     {
         vm.assume(data.length != 32);
-        address appContract = _newAppMockReturns(data);
+        address appContract = _newAppMockIsForeclosedReturns(data);
         vm.expectRevert(_encodeIllformedApplicationReturnData(appContract, data));
         _inputBox.addInput(appContract, payload);
     }
@@ -68,7 +68,7 @@ contract InputBoxTest is RollupsTest, InputBoxTestUtils, VersionGetterTestUtils 
     function testAddInputRevertsIllForm(bytes calldata payload) external {
         uint256 returnValue = vm.randomUint(2, type(uint256).max);
         bytes memory data = abi.encode(returnValue);
-        address appContract = _newAppMockReturns(data);
+        address appContract = _newAppMockIsForeclosedReturns(data);
         vm.expectRevert(_encodeIllformedApplicationReturnData(appContract, data));
         _inputBox.addInput(appContract, payload);
     }

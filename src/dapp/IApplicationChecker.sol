@@ -18,6 +18,10 @@ interface IApplicationChecker {
     /// @param data The data returned by the application contract
     error IllformedApplicationReturnData(address appContract, bytes data);
 
+    /// @notice The input box address contains no code.
+    /// @param inputBox The input box contract address
+    error InputBoxNotDeployed(address inputBox);
+
     /// @notice Application was foreclosed.
     /// @param appContract The application contract address
     error ApplicationForeclosed(address appContract);

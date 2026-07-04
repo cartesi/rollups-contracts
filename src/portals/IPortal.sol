@@ -4,13 +4,7 @@
 pragma solidity ^0.8.30;
 
 import {IVersionGetter} from "../common/IVersionGetter.sol";
-import {IInputBox} from "../inputs/IInputBox.sol";
+import {IApplicationChecker} from "../dapp/IApplicationChecker.sol";
 
 /// @title Portal interface
-interface IPortal is IVersionGetter {
-    // Permissionless functions
-
-    /// @notice Get the input box used by this portal.
-    /// @return The input box
-    function getInputBox() external view returns (IInputBox);
-}
+interface IPortal is IVersionGetter, IApplicationChecker {}

@@ -42,10 +42,6 @@ contract ERC1155BatchPortalTest is
         _testVersion(_portal);
     }
 
-    function testGetInputBox() public view {
-        assertEq(address(_portal.getInputBox()), address(_inputBox));
-    }
-
     function testDepositRevertApplicationNotDeployed(
         uint256[] calldata values,
         bytes calldata baseLayerData,
@@ -67,17 +63,19 @@ contract ERC1155BatchPortalTest is
         uint256[] calldata values,
         bytes calldata baseLayerData,
         bytes calldata execLayerData,
-        bytes calldata error
+        bytes calldata errorData
     ) external {
         address sender = _randomAccountWithNoCode();
-        address appContract = _newAppMockReverts(error);
+        address appContract = vm.randomBool()
+            ? _newAppMockGetInputBoxReverts(errorData)
+            : _newAppMockIsForeclosedReverts(errorData);
 
         (IERC1155 token, uint256[] memory tokenIds) = _randomSetup(sender, values);
 
         _mockOnErc1155BatchReceived(appContract, sender, tokenIds, values, baseLayerData);
 
         vm.prank(sender);
-        vm.expectRevert(_encodeApplicationReverted(appContract, error));
+        vm.expectRevert(_encodeApplicationReverted(appContract, errorData));
         _portal.depositBatchERC1155Token(
             token, appContract, tokenIds, values, baseLayerData, execLayerData
         );
@@ -92,7 +90,9 @@ contract ERC1155BatchPortalTest is
         vm.assume(returnData.length != 32);
 
         address sender = _randomAccountWithNoCode();
-        address appContract = _newAppMockReturns(returnData);
+        address appContract = vm.randomBool()
+            ? _newAppMockGetInputBoxReturns(returnData)
+            : _newAppMockIsForeclosedReturns(returnData);
 
         (IERC1155 token, uint256[] memory tokenIds) = _randomSetup(sender, values);
 
@@ -105,16 +105,15 @@ contract ERC1155BatchPortalTest is
         );
     }
 
-    function testDepositRevertIllformedApplicationReturnDataInvalidBool(
+    function testDepositRevertIllformedApplicationReturnData(
         uint256[] calldata values,
         bytes calldata baseLayerData,
         bytes calldata execLayerData
     ) external {
-        uint256 returnValue = vm.randomUint(2, type(uint256).max);
-        bytes memory returnData = abi.encode(returnValue);
-
         address sender = _randomAccountWithNoCode();
-        address appContract = _newAppMockReturns(returnData);
+        (address appContract, bytes memory returnData) = vm.randomBool()
+            ? _newAppMockGetInputBoxReturnsRandomIllformedData()
+            : _newAppMockIsForeclosedReturnsRandomIllformedData();
 
         (IERC1155 token, uint256[] memory tokenIds) = _randomSetup(sender, values);
 
@@ -122,6 +121,26 @@ contract ERC1155BatchPortalTest is
 
         vm.prank(sender);
         vm.expectRevert(_encodeIllformedApplicationReturnData(appContract, returnData));
+        _portal.depositBatchERC1155Token(
+            token, appContract, tokenIds, values, baseLayerData, execLayerData
+        );
+    }
+
+    function testDepositRevertInputBoxNotDeployed(
+        uint256[] calldata values,
+        bytes calldata baseLayerData,
+        bytes calldata execLayerData
+    ) external {
+        address sender = _randomAccountWithNoCode();
+        address inputBox = _randomAccountWithNoCode();
+        address appContract = _newAppMockGetInputBoxReturns(inputBox);
+
+        (IERC1155 token, uint256[] memory tokenIds) = _randomSetup(sender, values);
+
+        _mockOnErc1155BatchReceived(appContract, sender, tokenIds, values, baseLayerData);
+
+        vm.prank(sender);
+        vm.expectRevert(_encodeInputBoxNotDeployed(inputBox));
         _portal.depositBatchERC1155Token(
             token, appContract, tokenIds, values, baseLayerData, execLayerData
         );

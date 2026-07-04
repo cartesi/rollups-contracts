@@ -4,7 +4,6 @@
 pragma solidity ^0.8.30;
 
 import {InputEncoding} from "../common/InputEncoding.sol";
-import {IInputBox} from "../inputs/IInputBox.sol";
 import {IEtherPortal} from "./IEtherPortal.sol";
 import {Portal} from "./Portal.sol";
 
@@ -13,10 +12,6 @@ import {Portal} from "./Portal.sol";
 /// @notice This contract allows anyone to perform transfers of
 /// Ether to an application contract while informing the off-chain machine.
 contract EtherPortal is IEtherPortal, Portal {
-    /// @notice Constructs the portal.
-    /// @param inputBox The input box used by the portal
-    constructor(IInputBox inputBox) Portal(inputBox) {}
-
     function depositEther(address appContract, bytes calldata execLayerData)
         external
         payable
@@ -31,6 +26,6 @@ contract EtherPortal is IEtherPortal, Portal {
         bytes memory payload =
             InputEncoding.encodeEtherDeposit(msg.sender, msg.value, execLayerData);
 
-        getInputBox().addInput(appContract, payload);
+        _addInput(appContract, payload);
     }
 }
