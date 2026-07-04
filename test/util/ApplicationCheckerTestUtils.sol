@@ -6,9 +6,9 @@ pragma solidity ^0.8.30;
 import {IApplication} from "src/dapp/IApplication.sol";
 import {IApplicationChecker} from "src/dapp/IApplicationChecker.sol";
 
-import {Test} from "forge-std-1.9.6/src/Test.sol";
+import {RollupsTest} from "./RollupsTest.sol";
 
-contract ApplicationCheckerTestUtils is Test {
+contract ApplicationCheckerTestUtils is RollupsTest {
     function _encodeApplicationNotDeployed(address appContract)
         internal
         pure
@@ -19,23 +19,34 @@ contract ApplicationCheckerTestUtils is Test {
         );
     }
 
-    function _encodeApplicationReverted(address appContract, bytes memory error)
+    function _encodeApplicationReverted(address appContract, bytes memory errorData)
         internal
         pure
         returns (bytes memory)
     {
         return abi.encodeWithSelector(
-            IApplicationChecker.ApplicationReverted.selector, appContract, error
+            IApplicationChecker.ApplicationReverted.selector, appContract, errorData
         );
     }
 
-    function _encodeIllformedApplicationReturnData(address appContract, bytes memory data)
+    function _encodeIllformedApplicationReturnData(
+        address appContract,
+        bytes memory returnData
+    ) internal pure returns (bytes memory) {
+        return abi.encodeWithSelector(
+            IApplicationChecker.IllformedApplicationReturnData.selector,
+            appContract,
+            returnData
+        );
+    }
+
+    function _encodeInputBoxNotDeployed(address inputBox)
         internal
         pure
         returns (bytes memory)
     {
         return abi.encodeWithSelector(
-            IApplicationChecker.IllformedApplicationReturnData.selector, appContract, data
+            IApplicationChecker.InputBoxNotDeployed.selector, inputBox
         );
     }
 
@@ -53,35 +64,78 @@ contract ApplicationCheckerTestUtils is Test {
         return abi.encodeCall(IApplication.isForeclosed, ());
     }
 
+    function _encodeGetInputBox() internal pure returns (bytes memory) {
+        return abi.encodeCall(IApplication.getInputBox, ());
+    }
+
     function _randomAccountWithNoCode() internal returns (address) {
         address account = vm.addr(boundPrivateKey(vm.randomUint()));
         vm.assume(account.code.length == 0);
         return account;
     }
 
-    function _newAppMockReturns(bytes memory data)
+    function _newAppMockGetInputBoxReverts(bytes memory errorData)
         internal
         returns (address appContract)
     {
         appContract = _randomAccountWithNoCode();
-        vm.mockCall(appContract, _encodeIsForeclosed(), data);
-        assertGt(appContract.code.length, 0);
+        vm.mockCallRevert(appContract, _encodeGetInputBox(), errorData);
     }
 
-    function _newAppMockReverts(bytes memory error)
+    function _newAppMockGetInputBoxReturns(bytes memory returnData)
         internal
         returns (address appContract)
     {
         appContract = _randomAccountWithNoCode();
-        vm.mockCallRevert(appContract, _encodeIsForeclosed(), error);
-        assertGt(appContract.code.length, 0);
+        vm.mockCall(appContract, _encodeGetInputBox(), returnData);
+    }
+
+    function _newAppMockGetInputBoxReturnsRandomIllformedData()
+        internal
+        returns (address appContract, bytes memory returnData)
+    {
+        uint256 maxUint160 = type(uint160).max;
+        returnData = abi.encode(vm.randomUint(maxUint160 + 1, type(uint256).max));
+        appContract = _newAppMockGetInputBoxReturns(returnData);
+    }
+
+    function _newAppMockGetInputBoxReturns(address inputBox) internal returns (address) {
+        return _newAppMockGetInputBoxReturns(abi.encode(inputBox));
+    }
+
+    function _newAppMockGetInputBoxReturnsCore() internal returns (address) {
+        return _newAppMockGetInputBoxReturns(address(_contracts.core.inputBox));
+    }
+
+    function _newAppMockIsForeclosedReverts(bytes memory errorData)
+        internal
+        returns (address appContract)
+    {
+        appContract = _newAppMockGetInputBoxReturnsCore();
+        vm.mockCallRevert(appContract, _encodeIsForeclosed(), errorData);
+    }
+
+    function _newAppMockIsForeclosedReturns(bytes memory returnData)
+        internal
+        returns (address appContract)
+    {
+        appContract = _newAppMockGetInputBoxReturnsCore();
+        vm.mockCall(appContract, _encodeIsForeclosed(), returnData);
+    }
+
+    function _newAppMockIsForeclosedReturnsRandomIllformedData()
+        internal
+        returns (address appContract, bytes memory returnData)
+    {
+        returnData = abi.encode(vm.randomUint(2, type(uint256).max));
+        appContract = _newAppMockIsForeclosedReturns(returnData);
     }
 
     function _newForeclosedAppMock() internal returns (address) {
-        return _newAppMockReturns(abi.encode(true));
+        return _newAppMockIsForeclosedReturns(abi.encode(true));
     }
 
     function _newActiveAppMock() internal returns (address) {
-        return _newAppMockReturns(abi.encode(false));
+        return _newAppMockIsForeclosedReturns(abi.encode(false));
     }
 }

@@ -68,8 +68,8 @@ contract QuorumFactoryTest is
             _testNewQuorumSuccess(
                 validators, epochLength, claimStagingPeriod, quorum, logs
             );
-        } catch (bytes memory error) {
-            _testNewQuorumFailure(validators, epochLength, error);
+        } catch (bytes memory errorData) {
+            _testNewQuorumFailure(validators, epochLength, errorData);
             return;
         }
     }
@@ -102,8 +102,8 @@ contract QuorumFactoryTest is
             _testNewQuorumSuccess(
                 validators, epochLength, claimStagingPeriod, quorum, logs
             );
-        } catch (bytes memory error) {
-            _testNewQuorumFailure(validators, epochLength, error);
+        } catch (bytes memory errorData) {
+            _testNewQuorumFailure(validators, epochLength, errorData);
             return;
         }
 
@@ -118,9 +118,9 @@ contract QuorumFactoryTest is
         // Cannot deploy an application with the same salt twice
         try _factory.newQuorum(validators, epochLength, claimStagingPeriod, salt) {
             revert("second deterministic deployment did not revert");
-        } catch (bytes memory error) {
+        } catch (bytes memory errorData) {
             assertEq(
-                error,
+                errorData,
                 new bytes(0),
                 "second deterministic deployment did not revert with empty error data"
             );
@@ -230,21 +230,21 @@ contract QuorumFactoryTest is
         uint256 claimStagingPeriod,
         bool nonDeterministicDeployment,
         Claim memory claim,
-        bytes memory error
+        bytes memory errorData
     ) external {
         IQuorum quorum = _newQuorum(
             validators, epochLength, claimStagingPeriod, nonDeterministicDeployment
         );
 
         // We make isForeclosed() revert with an error
-        claim.appContract = _newAppMockReverts(error);
+        claim.appContract = _newAppMockIsForeclosedReverts(errorData);
 
         claim.lastProcessedBlockNumber = _randomEpochFinalBlockNumber(epochLength);
         vm.roll(_randomUintGt(claim.lastProcessedBlockNumber));
 
         claim.proof = _randomLeafProof();
 
-        vm.expectRevert(_encodeApplicationReverted(claim.appContract, error));
+        vm.expectRevert(_encodeApplicationReverted(claim.appContract, errorData));
         vm.prank(vm.randomAddressIn(validators));
         quorum.submitClaim(claim);
     }
@@ -264,7 +264,7 @@ contract QuorumFactoryTest is
             validators, epochLength, claimStagingPeriod, nonDeterministicDeployment
         );
 
-        claim.appContract = _newAppMockReturns(data);
+        claim.appContract = _newAppMockIsForeclosedReturns(data);
 
         claim.lastProcessedBlockNumber = _randomEpochFinalBlockNumber(epochLength);
         vm.roll(_randomUintGt(claim.lastProcessedBlockNumber));
@@ -291,7 +291,7 @@ contract QuorumFactoryTest is
         );
 
         bytes memory data = abi.encode(returnValue);
-        claim.appContract = _newAppMockReturns(data);
+        claim.appContract = _newAppMockIsForeclosedReturns(data);
 
         claim.lastProcessedBlockNumber = _randomEpochFinalBlockNumber(epochLength);
         vm.roll(_randomUintGt(claim.lastProcessedBlockNumber));
@@ -531,8 +531,9 @@ contract QuorumFactoryTest is
 
                 try this.simulateForeclosureAndClaimSubmission(quorum, validator, claim) {
                     revert("expected simulation to revert");
-                } catch (bytes memory error) {
-                    (bytes4 errorSelector, bytes memory errorArgs) = error.consumeBytes4();
+                } catch (bytes memory errorData) {
+                    (bytes4 errorSelector, bytes memory errorArgs) =
+                        errorData.consumeBytes4();
                     if (errorSelector == IConsensus.NotFirstClaim.selector) {
                         (address arg1, uint256 arg2) =
                             abi.decode(errorArgs, (address, uint256));
@@ -587,8 +588,9 @@ contract QuorumFactoryTest is
                     claim.outputsMerkleRoot,
                     claim.proof
                 ) {}
-                catch (bytes memory error) {
-                    (bytes4 errorSelector, bytes memory errorArgs) = error.consumeBytes4();
+                catch (bytes memory errorData) {
+                    (bytes4 errorSelector, bytes memory errorArgs) =
+                        errorData.consumeBytes4();
                     if (errorSelector == IConsensus.NotFirstClaim.selector) {
                         (address arg1, uint256 arg2) =
                             abi.decode(errorArgs, (address, uint256));
@@ -1097,19 +1099,19 @@ contract QuorumFactoryTest is
         uint256 claimStagingPeriod,
         bool nonDeterministicDeployment,
         bytes32 machineMerkleRoot,
-        bytes memory error
+        bytes memory errorData
     ) external {
         IQuorum quorum = _newQuorum(
             validators, epochLength, claimStagingPeriod, nonDeterministicDeployment
         );
 
         // We make isForeclosed() revert with an error
-        address appContract = _newAppMockReverts(error);
+        address appContract = _newAppMockIsForeclosedReverts(errorData);
 
         uint256 lastProcessedBlockNumber = _randomEpochFinalBlockNumber(epochLength);
         vm.roll(_randomUintGt(lastProcessedBlockNumber));
 
-        vm.expectRevert(_encodeApplicationReverted(appContract, error));
+        vm.expectRevert(_encodeApplicationReverted(appContract, errorData));
         vm.prank(vm.randomAddress());
         quorum.acceptClaim(appContract, lastProcessedBlockNumber, machineMerkleRoot);
     }
@@ -1129,7 +1131,7 @@ contract QuorumFactoryTest is
             validators, epochLength, claimStagingPeriod, nonDeterministicDeployment
         );
 
-        address appContract = _newAppMockReturns(data);
+        address appContract = _newAppMockIsForeclosedReturns(data);
 
         uint256 lastProcessedBlockNumber = _randomEpochFinalBlockNumber(epochLength);
         vm.roll(_randomUintGt(lastProcessedBlockNumber));
@@ -1154,7 +1156,7 @@ contract QuorumFactoryTest is
         );
 
         bytes memory data = abi.encode(returnValue);
-        address appContract = _newAppMockReturns(data);
+        address appContract = _newAppMockIsForeclosedReturns(data);
 
         uint256 lastProcessedBlockNumber = _randomEpochFinalBlockNumber(epochLength);
         vm.roll(_randomUintGt(lastProcessedBlockNumber));
@@ -1433,9 +1435,9 @@ contract QuorumFactoryTest is
     function _testNewQuorumFailure(
         address[] memory validators,
         uint256 epochLength,
-        bytes memory error
+        bytes memory errorData
     ) internal pure {
-        (bytes4 errorSelector, bytes memory errorArgs) = error.consumeBytes4();
+        (bytes4 errorSelector, bytes memory errorArgs) = errorData.consumeBytes4();
         if (errorSelector == IQuorumFactoryErrors.ZeroAddressValidator.selector) {
             assertEq(errorArgs.length, 0, "Expected ZeroAddressValidator to have no args");
             assertTrue(

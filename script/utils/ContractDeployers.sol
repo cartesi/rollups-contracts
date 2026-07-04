@@ -16,7 +16,6 @@ import {SafeERC20Transfer} from "src/delegatecall/SafeERC20Transfer.sol";
 import {TestFungibleToken} from "src/devnet/TestFungibleToken.sol";
 import {TestMultiToken} from "src/devnet/TestMultiToken.sol";
 import {TestNonFungibleToken} from "src/devnet/TestNonFungibleToken.sol";
-import {IInputBox} from "src/inputs/IInputBox.sol";
 import {InputBox} from "src/inputs/InputBox.sol";
 import {ERC1155BatchPortal} from "src/portals/ERC1155BatchPortal.sol";
 import {ERC1155SinglePortal} from "src/portals/ERC1155SinglePortal.sol";
@@ -163,17 +162,15 @@ function deployTestNonFungibleToken() returns (TestNonFungibleToken deployment) 
     }
 }
 
-function deployERC1155BatchPortal(IInputBox param1)
-    returns (ERC1155BatchPortal deployment)
-{
+function deployERC1155BatchPortal() returns (ERC1155BatchPortal deployment) {
     bytes32 salt;
     bytes memory creationCode = type(ERC1155BatchPortal).creationCode;
-    bytes memory encodedArgs = abi.encode(param1);
+    bytes memory encodedArgs = abi.encode();
     bytes memory initCode = abi.encodePacked(creationCode, encodedArgs);
     bytes32 initCodeHash = keccak256(initCode);
     address precomputedAddress = computeAddress(salt, initCodeHash);
     if (precomputedAddress.code.length == 0) {
-        deployment = new ERC1155BatchPortal{salt: salt}(param1);
+        deployment = new ERC1155BatchPortal{salt: salt}();
         assert(address(deployment) == precomputedAddress);
         assert(address(deployment).code.length > 0);
     } else {
@@ -181,17 +178,15 @@ function deployERC1155BatchPortal(IInputBox param1)
     }
 }
 
-function deployERC1155SinglePortal(IInputBox param1)
-    returns (ERC1155SinglePortal deployment)
-{
+function deployERC1155SinglePortal() returns (ERC1155SinglePortal deployment) {
     bytes32 salt;
     bytes memory creationCode = type(ERC1155SinglePortal).creationCode;
-    bytes memory encodedArgs = abi.encode(param1);
+    bytes memory encodedArgs = abi.encode();
     bytes memory initCode = abi.encodePacked(creationCode, encodedArgs);
     bytes32 initCodeHash = keccak256(initCode);
     address precomputedAddress = computeAddress(salt, initCodeHash);
     if (precomputedAddress.code.length == 0) {
-        deployment = new ERC1155SinglePortal{salt: salt}(param1);
+        deployment = new ERC1155SinglePortal{salt: salt}();
         assert(address(deployment) == precomputedAddress);
         assert(address(deployment).code.length > 0);
     } else {
@@ -199,15 +194,15 @@ function deployERC1155SinglePortal(IInputBox param1)
     }
 }
 
-function deployERC20Portal(IInputBox param1) returns (ERC20Portal deployment) {
+function deployERC20Portal() returns (ERC20Portal deployment) {
     bytes32 salt;
     bytes memory creationCode = type(ERC20Portal).creationCode;
-    bytes memory encodedArgs = abi.encode(param1);
+    bytes memory encodedArgs = abi.encode();
     bytes memory initCode = abi.encodePacked(creationCode, encodedArgs);
     bytes32 initCodeHash = keccak256(initCode);
     address precomputedAddress = computeAddress(salt, initCodeHash);
     if (precomputedAddress.code.length == 0) {
-        deployment = new ERC20Portal{salt: salt}(param1);
+        deployment = new ERC20Portal{salt: salt}();
         assert(address(deployment) == precomputedAddress);
         assert(address(deployment).code.length > 0);
     } else {
@@ -215,15 +210,15 @@ function deployERC20Portal(IInputBox param1) returns (ERC20Portal deployment) {
     }
 }
 
-function deployERC721Portal(IInputBox param1) returns (ERC721Portal deployment) {
+function deployERC721Portal() returns (ERC721Portal deployment) {
     bytes32 salt;
     bytes memory creationCode = type(ERC721Portal).creationCode;
-    bytes memory encodedArgs = abi.encode(param1);
+    bytes memory encodedArgs = abi.encode();
     bytes memory initCode = abi.encodePacked(creationCode, encodedArgs);
     bytes32 initCodeHash = keccak256(initCode);
     address precomputedAddress = computeAddress(salt, initCodeHash);
     if (precomputedAddress.code.length == 0) {
-        deployment = new ERC721Portal{salt: salt}(param1);
+        deployment = new ERC721Portal{salt: salt}();
         assert(address(deployment) == precomputedAddress);
         assert(address(deployment).code.length > 0);
     } else {
@@ -231,15 +226,15 @@ function deployERC721Portal(IInputBox param1) returns (ERC721Portal deployment) 
     }
 }
 
-function deployEtherPortal(IInputBox param1) returns (EtherPortal deployment) {
+function deployEtherPortal() returns (EtherPortal deployment) {
     bytes32 salt;
     bytes memory creationCode = type(EtherPortal).creationCode;
-    bytes memory encodedArgs = abi.encode(param1);
+    bytes memory encodedArgs = abi.encode();
     bytes memory initCode = abi.encodePacked(creationCode, encodedArgs);
     bytes32 initCodeHash = keccak256(initCode);
     address precomputedAddress = computeAddress(salt, initCodeHash);
     if (precomputedAddress.code.length == 0) {
-        deployment = new EtherPortal{salt: salt}(param1);
+        deployment = new EtherPortal{salt: salt}();
         assert(address(deployment) == precomputedAddress);
         assert(address(deployment).code.length > 0);
     } else {

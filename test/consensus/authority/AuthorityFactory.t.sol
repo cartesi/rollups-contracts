@@ -72,8 +72,8 @@ contract AuthorityFactoryTest is
             _testNewAuthoritySuccess(
                 authorityOwner, epochLength, claimStagingPeriod, authority, logs
             );
-        } catch (bytes memory error) {
-            _testNewAuthorityFailure(authorityOwner, epochLength, error);
+        } catch (bytes memory errorData) {
+            _testNewAuthorityFailure(authorityOwner, epochLength, errorData);
             return;
         }
     }
@@ -107,8 +107,8 @@ contract AuthorityFactoryTest is
             _testNewAuthoritySuccess(
                 authorityOwner, epochLength, claimStagingPeriod, authority, logs
             );
-        } catch (bytes memory error) {
-            _testNewAuthorityFailure(authorityOwner, epochLength, error);
+        } catch (bytes memory errorData) {
+            _testNewAuthorityFailure(authorityOwner, epochLength, errorData);
             return;
         }
 
@@ -123,9 +123,9 @@ contract AuthorityFactoryTest is
         // Cannot deploy an application with the same salt twice
         try _factory.newAuthority(authorityOwner, epochLength, claimStagingPeriod, salt) {
             revert("second deterministic deployment did not revert");
-        } catch (bytes memory error) {
+        } catch (bytes memory errorData) {
             assertEq(
-                error,
+                errorData,
                 new bytes(0),
                 "second deterministic deployment did not revert with empty error data"
             );
@@ -283,21 +283,21 @@ contract AuthorityFactoryTest is
         uint256 claimStagingPeriod,
         bool nonDeterministicDeployment,
         Claim memory claim,
-        bytes memory error
+        bytes memory errorData
     ) external {
         IAuthority authority = _newAuthority(
             authorityOwner, epochLength, claimStagingPeriod, nonDeterministicDeployment
         );
 
         // We make isForeclosed() revert with an error
-        claim.appContract = _newAppMockReverts(error);
+        claim.appContract = _newAppMockIsForeclosedReverts(errorData);
 
         claim.lastProcessedBlockNumber = _randomEpochFinalBlockNumber(epochLength);
         vm.roll(_randomUintGt(claim.lastProcessedBlockNumber));
 
         claim.proof = _randomLeafProof();
 
-        vm.expectRevert(_encodeApplicationReverted(claim.appContract, error));
+        vm.expectRevert(_encodeApplicationReverted(claim.appContract, errorData));
         vm.prank(authorityOwner);
         authority.submitClaim(claim);
     }
@@ -317,7 +317,7 @@ contract AuthorityFactoryTest is
             authorityOwner, epochLength, claimStagingPeriod, nonDeterministicDeployment
         );
 
-        claim.appContract = _newAppMockReturns(data);
+        claim.appContract = _newAppMockIsForeclosedReturns(data);
 
         claim.lastProcessedBlockNumber = _randomEpochFinalBlockNumber(epochLength);
         vm.roll(_randomUintGt(claim.lastProcessedBlockNumber));
@@ -344,7 +344,7 @@ contract AuthorityFactoryTest is
         );
 
         bytes memory data = abi.encode(returnValue);
-        claim.appContract = _newAppMockReturns(data);
+        claim.appContract = _newAppMockIsForeclosedReturns(data);
 
         claim.lastProcessedBlockNumber = _randomEpochFinalBlockNumber(epochLength);
         vm.roll(_randomUintGt(claim.lastProcessedBlockNumber));
@@ -447,8 +447,8 @@ contract AuthorityFactoryTest is
             try this.simulateForeclosureAndClaimSubmission(
                 authority, authorityOwner, claim
             ) {}
-            catch (bytes memory error) {
-                (bytes4 errorSelector, bytes memory errorArgs) = error.consumeBytes4();
+            catch (bytes memory errorData) {
+                (bytes4 errorSelector, bytes memory errorArgs) = errorData.consumeBytes4();
                 if (errorSelector == IConsensus.NotFirstClaim.selector) {
                     (address arg1, uint256 arg2) =
                         abi.decode(errorArgs, (address, uint256));
@@ -478,8 +478,8 @@ contract AuthorityFactoryTest is
                 claim.outputsMerkleRoot,
                 claim.proof
             ) {}
-            catch (bytes memory error) {
-                (bytes4 errorSelector, bytes memory errorArgs) = error.consumeBytes4();
+            catch (bytes memory errorData) {
+                (bytes4 errorSelector, bytes memory errorArgs) = errorData.consumeBytes4();
                 if (errorSelector == IConsensus.NotFirstClaim.selector) {
                     (address arg1, uint256 arg2) =
                         abi.decode(errorArgs, (address, uint256));
@@ -822,19 +822,19 @@ contract AuthorityFactoryTest is
         uint256 claimStagingPeriod,
         bool nonDeterministicDeployment,
         bytes32 machineMerkleRoot,
-        bytes memory error
+        bytes memory errorData
     ) external {
         IAuthority authority = _newAuthority(
             authorityOwner, epochLength, claimStagingPeriod, nonDeterministicDeployment
         );
 
         // We make isForeclosed() revert with an error
-        address appContract = _newAppMockReverts(error);
+        address appContract = _newAppMockIsForeclosedReverts(errorData);
 
         uint256 lastProcessedBlockNumber = _randomEpochFinalBlockNumber(epochLength);
         vm.roll(_randomUintGt(lastProcessedBlockNumber));
 
-        vm.expectRevert(_encodeApplicationReverted(appContract, error));
+        vm.expectRevert(_encodeApplicationReverted(appContract, errorData));
         vm.prank(vm.randomAddress());
         authority.acceptClaim(appContract, lastProcessedBlockNumber, machineMerkleRoot);
     }
@@ -854,7 +854,7 @@ contract AuthorityFactoryTest is
             authorityOwner, epochLength, claimStagingPeriod, nonDeterministicDeployment
         );
 
-        address appContract = _newAppMockReturns(data);
+        address appContract = _newAppMockIsForeclosedReturns(data);
 
         uint256 lastProcessedBlockNumber = _randomEpochFinalBlockNumber(epochLength);
         vm.roll(_randomUintGt(lastProcessedBlockNumber));
@@ -879,7 +879,7 @@ contract AuthorityFactoryTest is
         );
 
         bytes memory data = abi.encode(returnValue);
-        address appContract = _newAppMockReturns(data);
+        address appContract = _newAppMockIsForeclosedReturns(data);
 
         uint256 lastProcessedBlockNumber = _randomEpochFinalBlockNumber(epochLength);
         vm.roll(_randomUintGt(lastProcessedBlockNumber));
@@ -1092,9 +1092,9 @@ contract AuthorityFactoryTest is
     function _testNewAuthorityFailure(
         address authorityOwner,
         uint256 epochLength,
-        bytes memory error
+        bytes memory errorData
     ) internal pure {
-        (bytes4 errorSelector, bytes memory errorArgs) = error.consumeBytes4();
+        (bytes4 errorSelector, bytes memory errorArgs) = errorData.consumeBytes4();
         if (errorSelector == Ownable.OwnableInvalidOwner.selector) {
             address owner = abi.decode(errorArgs, (address));
             assertEq(owner, authorityOwner, "OwnableInvalidOwner.owner != owner");

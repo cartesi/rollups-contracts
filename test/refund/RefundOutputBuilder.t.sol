@@ -3,7 +3,6 @@
 
 pragma solidity ^0.8.30;
 
-import {Test} from "forge-std-1.9.6/src/Test.sol";
 import {Vm} from "forge-std-1.9.6/src/Vm.sol";
 
 import {IERC1155} from "@openzeppelin-contracts-5.2.0/token/ERC1155/IERC1155.sol";
@@ -16,15 +15,7 @@ import {Erc721Deposit} from "src/common/Erc721Deposit.sol";
 import {EtherDeposit} from "src/common/EtherDeposit.sol";
 import {Outputs} from "src/common/Outputs.sol";
 import {ISafeERC20Transfer} from "src/delegatecall/ISafeERC20Transfer.sol";
-import {SafeERC20Transfer} from "src/delegatecall/SafeERC20Transfer.sol";
-import {IInputBox} from "src/inputs/IInputBox.sol";
-import {InputBox} from "src/inputs/InputBox.sol";
 import {LibBytes} from "src/library/LibBytes.sol";
-import {ERC1155BatchPortal} from "src/portals/ERC1155BatchPortal.sol";
-import {ERC1155SinglePortal} from "src/portals/ERC1155SinglePortal.sol";
-import {ERC20Portal} from "src/portals/ERC20Portal.sol";
-import {ERC721Portal} from "src/portals/ERC721Portal.sol";
-import {EtherPortal} from "src/portals/EtherPortal.sol";
 import {IERC1155BatchPortal} from "src/portals/IERC1155BatchPortal.sol";
 import {IERC1155SinglePortal} from "src/portals/IERC1155SinglePortal.sol";
 import {IERC20Portal} from "src/portals/IERC20Portal.sol";
@@ -32,14 +23,18 @@ import {IERC721Portal} from "src/portals/IERC721Portal.sol";
 import {IEtherPortal} from "src/portals/IEtherPortal.sol";
 import {IRefundOutputBuilder} from "src/refund/IRefundOutputBuilder.sol";
 import {IRefundOutputBuilderErrors} from "src/refund/IRefundOutputBuilderErrors.sol";
-import {RefundOutputBuilder} from "src/refund/RefundOutputBuilder.sol";
 
 import {InputBoxTestUtils} from "../util/InputBoxTestUtils.sol";
 import {LibAddressArray} from "../util/LibAddressArray.sol";
 import {LibDepositEncoder} from "../util/LibDepositEncoder.sol";
+import {RollupsTest} from "../util/RollupsTest.sol";
 import {VersionGetterTestUtils} from "../util/VersionGetterTestUtils.sol";
 
-contract RefundOutputBuilderTest is Test, InputBoxTestUtils, VersionGetterTestUtils {
+contract RefundOutputBuilderTest is
+    RollupsTest,
+    InputBoxTestUtils,
+    VersionGetterTestUtils
+{
     using LibBytes for bytes;
     using LibAddressArray for Vm;
     using LibDepositEncoder for EtherDeposit;
@@ -48,7 +43,6 @@ contract RefundOutputBuilderTest is Test, InputBoxTestUtils, VersionGetterTestUt
     using LibDepositEncoder for Erc1155SingleDeposit;
     using LibDepositEncoder for Erc1155BatchDeposit;
 
-    IInputBox _inputBox;
     IEtherPortal _etherPortal;
     IERC20Portal _erc20Portal;
     IERC721Portal _erc721Portal;
@@ -58,21 +52,13 @@ contract RefundOutputBuilderTest is Test, InputBoxTestUtils, VersionGetterTestUt
     IRefundOutputBuilder _refundOutputBuilder;
 
     function setUp() external {
-        _inputBox = new InputBox();
-        _etherPortal = new EtherPortal(_inputBox);
-        _erc20Portal = new ERC20Portal(_inputBox);
-        _erc721Portal = new ERC721Portal(_inputBox);
-        _erc1155SinglePortal = new ERC1155SinglePortal(_inputBox);
-        _erc1155BatchPortal = new ERC1155BatchPortal(_inputBox);
-        _safeErc20Transfer = new SafeERC20Transfer();
-        _refundOutputBuilder = new RefundOutputBuilder(
-            _etherPortal,
-            _erc20Portal,
-            _erc721Portal,
-            _erc1155SinglePortal,
-            _erc1155BatchPortal,
-            _safeErc20Transfer
-        );
+        _etherPortal = _contracts.core.etherPortal;
+        _erc20Portal = _contracts.core.erc20Portal;
+        _erc721Portal = _contracts.core.erc721Portal;
+        _erc1155SinglePortal = _contracts.core.erc1155SinglePortal;
+        _erc1155BatchPortal = _contracts.core.erc1155BatchPortal;
+        _safeErc20Transfer = _contracts.core.safeErc20Transfer;
+        _refundOutputBuilder = _contracts.core.refundOutputBuilder;
     }
 
     function testVersion() external view {
