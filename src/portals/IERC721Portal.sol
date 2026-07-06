@@ -22,6 +22,11 @@ interface IERC721Portal is IPortal {
     /// @param tokenId The identifier of the token being transferred
     /// @param baseLayerData Additional data to be interpreted by the base layer
     /// @param execLayerData Additional data to be interpreted by the execution layer
+    ///
+    /// @dev If the application is foreclosed, and the deposit input is not processed,
+    /// the user can issue a refund. If the user deposits an NFT through a smart contract,
+    /// a refund will only succeed if the smart contract accepts it through the `onERC721Received` callback.
+    /// If the smart contract wallet does not accept the NFT through the callback, it may not be recoverable.
     function depositERC721Token(
         IERC721 token,
         address appContract,

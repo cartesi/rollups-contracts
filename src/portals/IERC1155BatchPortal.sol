@@ -24,6 +24,10 @@ interface IERC1155BatchPortal is IPortal {
     /// @param execLayerData Additional data to be interpreted by the execution layer
     ///
     /// @dev Please make sure the arrays `tokenIds` and `values` have the same length.
+    /// If the application is foreclosed, and the deposit input is not processed,
+    /// the user can issue a refund. If the user deposits ERC-1155 tokens through a smart contract,
+    /// a refund will only succeed if the smart contract accepts it through the `onERC1155Received`/`onERC1155BatchReceived` callback.
+    /// If the smart contract wallet does not accept the tokens through the callback, they may not be recoverable.
     function depositBatchERC1155Token(
         IERC1155 token,
         address appContract,
