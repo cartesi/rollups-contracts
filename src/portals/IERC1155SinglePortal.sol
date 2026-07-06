@@ -22,6 +22,11 @@ interface IERC1155SinglePortal is IPortal {
     /// @param value Transfer amount
     /// @param baseLayerData Additional data to be interpreted by the base layer
     /// @param execLayerData Additional data to be interpreted by the execution layer
+    ///
+    /// @dev If the application is foreclosed, and the deposit input is not processed,
+    /// the user can issue a refund. If the user deposits ERC-1155 tokens through a smart contract,
+    /// a refund will only succeed if the smart contract accepts it through the `onERC1155Received`/`onERC1155BatchReceived` callback.
+    /// If the smart contract wallet does not accept the tokens through the callback, they may not be recoverable.
     function depositSingleERC1155Token(
         IERC1155 token,
         address appContract,
