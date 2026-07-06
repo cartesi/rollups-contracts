@@ -14,9 +14,10 @@ the Cartesi Rollups contracts to EVM-compatible blockchains.
 forge soldeer install
 ```
 
-3. Set the `RPC_URL` environment variable to the JSON-RPC API entrypoint of the target chain.
+3. Set the `*_RPC_URL` environment variable to the JSON-RPC API entrypoint of the target chain.
    You can use a public JSON-RPC provider (e.g. from [ChainList](https://chainlist.org/))
    or a service like [Alchemy](https://www.alchemy.com/) or [Infura](https://www.infura.io/).
+   Consult the `foundry.toml` file for environment variables names for each supported chain.
    For example, let us assume we want to deploy to Ethereum Mainnet.
 
 ```bash
