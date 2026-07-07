@@ -167,6 +167,17 @@ contract ApplicationTest is
         _appContract.migrateToOutputsMerkleRootValidator(newOutputsMerkleRootValidator);
     }
 
+    function testMigrateToOutputsMerkleRootValidatorRevertsNotDeploymentBlock(IOutputsMerkleRootValidator newOutputsMerkleRootValidator)
+        external
+    {
+        uint256 blockNumber = vm.getBlockNumber();
+        vm.assume(blockNumber <= type(uint256).max - 1);
+        vm.roll(vm.randomUint(blockNumber + 1, type(uint256).max));
+        vm.prank(_appContract.owner());
+        vm.expectRevert(IApplication.NotDeploymentBlock.selector);
+        _appContract.migrateToOutputsMerkleRootValidator(newOutputsMerkleRootValidator);
+    }
+
     function testMigrateToOutputsMerkleRootValidator(IOutputsMerkleRootValidator newOutputsMerkleRootValidator)
         external
     {
