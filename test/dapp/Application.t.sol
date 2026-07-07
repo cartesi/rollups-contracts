@@ -9,7 +9,6 @@ import {CanonicalMachine} from "src/common/CanonicalMachine.sol";
 import {OutputValidityProof} from "src/common/OutputValidityProof.sol";
 import {Outputs} from "src/common/Outputs.sol";
 import {WithdrawalConfig} from "src/common/WithdrawalConfig.sol";
-import {IOutputsMerkleRootValidator} from "src/consensus/IOutputsMerkleRootValidator.sol";
 import {IAuthority} from "src/consensus/authority/IAuthority.sol";
 import {IApplication} from "src/dapp/IApplication.sol";
 import {ISafeERC20Transfer} from "src/delegatecall/ISafeERC20Transfer.sol";
@@ -106,7 +105,6 @@ contract ApplicationTest is
                     _nextAddress(), // authorityOwner
                     1, // epochLength
                     0, // claimStagingPeriod
-                    _nextAddress(), // appOwner
                     _proofComponents.getMachineMerkleRoot(), // templateHash
                     _contracts.core.inputBox,
                     WithdrawalConfig({
@@ -141,54 +139,6 @@ contract ApplicationTest is
 
     function testTransferOwnership(uint256) external {
         _testTransferOwnership(_appContract);
-    }
-
-    // ---------------------------------------
-    // outputs Merkle root validator migration
-    // ---------------------------------------
-
-    function testMigrateToOutputsMerkleRootValidatorRevertsUnauthorized(
-        address caller,
-        IOutputsMerkleRootValidator newOutputsMerkleRootValidator
-    ) external {
-        vm.assume(caller != _appContract.owner());
-        vm.startPrank(caller);
-        vm.expectRevert(_encodeOwnableUnauthorizedAccount(caller));
-        _appContract.migrateToOutputsMerkleRootValidator(newOutputsMerkleRootValidator);
-    }
-
-    function testMigrateToOutputsMerkleRootValidatorRevertsForeclosed(IOutputsMerkleRootValidator newOutputsMerkleRootValidator)
-        external
-    {
-        vm.prank(_appContract.getGuardian());
-        _appContract.foreclose();
-        vm.prank(_appContract.owner());
-        vm.expectRevert(IApplication.Foreclosed.selector);
-        _appContract.migrateToOutputsMerkleRootValidator(newOutputsMerkleRootValidator);
-    }
-
-    function testMigrateToOutputsMerkleRootValidatorRevertsNotDeploymentBlock(IOutputsMerkleRootValidator newOutputsMerkleRootValidator)
-        external
-    {
-        uint256 blockNumber = vm.getBlockNumber();
-        vm.assume(blockNumber <= type(uint256).max - 1);
-        vm.roll(vm.randomUint(blockNumber + 1, type(uint256).max));
-        vm.prank(_appContract.owner());
-        vm.expectRevert(IApplication.NotDeploymentBlock.selector);
-        _appContract.migrateToOutputsMerkleRootValidator(newOutputsMerkleRootValidator);
-    }
-
-    function testMigrateToOutputsMerkleRootValidator(IOutputsMerkleRootValidator newOutputsMerkleRootValidator)
-        external
-    {
-        vm.prank(_appContract.owner());
-        vm.expectEmit(false, false, false, true, address(_appContract));
-        emit IApplication.OutputsMerkleRootValidatorChanged(newOutputsMerkleRootValidator);
-        _appContract.migrateToOutputsMerkleRootValidator(newOutputsMerkleRootValidator);
-        assertEq(
-            address(_appContract.getOutputsMerkleRootValidator()),
-            address(newOutputsMerkleRootValidator)
-        );
     }
 
     // -----------

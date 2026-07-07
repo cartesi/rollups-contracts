@@ -52,7 +52,6 @@ contract SelfHostedApplicationFactoryTest is RollupsTest, VersionGetterTestUtils
         address authorityOwner,
         uint256 epochLength,
         uint256 claimStagingPeriod,
-        address appOwner,
         bytes32 templateHash,
         IInputBox inputBox,
         WithdrawalConfig calldata withdrawalConfig,
@@ -67,7 +66,6 @@ contract SelfHostedApplicationFactoryTest is RollupsTest, VersionGetterTestUtils
             authorityOwner,
             epochLength,
             claimStagingPeriod,
-            appOwner,
             templateHash,
             inputBox,
             withdrawalConfig,
@@ -78,7 +76,6 @@ contract SelfHostedApplicationFactoryTest is RollupsTest, VersionGetterTestUtils
             authorityOwner,
             epochLength,
             claimStagingPeriod,
-            appOwner,
             templateHash,
             inputBox,
             withdrawalConfig,
@@ -120,7 +117,7 @@ contract SelfHostedApplicationFactoryTest is RollupsTest, VersionGetterTestUtils
                 authorityAddr,
                 "app.getOutputsMerkleRootValidator() != authority"
             );
-            assertEq(application.owner(), appOwner, "app.owner() != appOwner");
+            assertEq(application.owner(), address(0), "app.owner() == address(0)");
             assertEq(
                 application.getTemplateHash(),
                 templateHash,
@@ -175,7 +172,6 @@ contract SelfHostedApplicationFactoryTest is RollupsTest, VersionGetterTestUtils
                 authorityOwner,
                 epochLength,
                 claimStagingPeriod,
-                appOwner,
                 templateHash,
                 inputBox,
                 withdrawalConfig,
@@ -198,7 +194,7 @@ contract SelfHostedApplicationFactoryTest is RollupsTest, VersionGetterTestUtils
                 address owner = abi.decode(errorArgs, (address));
                 assertEq(owner, address(0), "OwnableInvalidOwner.owner != address(0)");
                 assertTrue(
-                    appOwner == address(0) || authorityOwner == address(0),
+                    authorityOwner == address(0),
                     "Expected either app or authority owner to be zero"
                 );
             } else if (errorSelector == IConsensusFactoryErrors.ZeroEpochLength.selector)
