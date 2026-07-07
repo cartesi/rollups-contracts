@@ -218,10 +218,10 @@ contract ERC1155SinglePortalTest is
                     assertEq(arg2, value);
                     ++numOfTransferSingle;
                 } else {
-                    revert("unexpected token contract topic #0");
+                    revert UnexpectedLog(log);
                 }
             } else {
-                revert("unexpected log emitter");
+                revert UnexpectedLog(log);
             }
         }
 

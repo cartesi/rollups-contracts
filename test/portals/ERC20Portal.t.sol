@@ -289,10 +289,10 @@ contract ERC20PortalTest is RollupsTest, InputBoxTestUtils, VersionGetterTestUti
                     assertEq(arg1, value);
                     ++numOfTransfer;
                 } else {
-                    revert("unexpected token contract topic #0");
+                    revert UnexpectedLog(log);
                 }
             } else {
-                revert("unexpected log emitter");
+                revert UnexpectedLog(log);
             }
         }
 

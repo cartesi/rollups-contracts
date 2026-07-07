@@ -41,12 +41,10 @@ import {LibBytes32Array} from "../util/LibBytes32Array.sol";
 import {LibEmulator} from "../util/LibEmulator.sol";
 import {LibTopic} from "../util/LibTopic.sol";
 import {LibUint256Array} from "../util/LibUint256Array.sol";
-import {OwnableTest} from "../util/OwnableTest.sol";
 import {RollupsTest} from "../util/RollupsTest.sol";
 
 contract ApplicationTest is
     RollupsTest,
-    OwnableTest,
     AddressGenerator,
     InputBoxTestUtils,
     ConsensusTestUtils
@@ -119,59 +117,6 @@ contract ApplicationTest is
                 );
 
         _addOutputs();
-    }
-
-    // ------------
-    // ownable test
-    // ------------
-
-    function testRenounceOwnership(uint256) external {
-        _testRenounceOwnership(_appContract);
-    }
-
-    function testUnauthorizedAccount(uint256) external {
-        _testUnauthorizedAccount(_appContract);
-    }
-
-    function testInvalidOwner(uint256) external {
-        _testInvalidOwner(_appContract);
-    }
-
-    function testTransferOwnership(uint256) external {
-        _testTransferOwnership(_appContract);
-    }
-
-    // -----------
-    // foreclosure
-    // -----------
-
-    function testForecloseRevertsNotGuardian(address caller) external {
-        vm.assume(caller != _appContract.getGuardian());
-        assertFalse(_appContract.isForeclosed());
-        vm.expectRevert(IApplication.NotGuardian.selector);
-        vm.prank(caller);
-        _appContract.foreclose();
-    }
-
-    function testForeclose(address caller) external {
-        address guardian = _appContract.getGuardian();
-        vm.assume(caller != guardian);
-
-        assertFalse(_appContract.isForeclosed());
-
-        vm.expectEmit(true, true, true, true, address(_appContract));
-        emit IApplication.Foreclosure();
-        vm.prank(guardian);
-        _appContract.foreclose();
-        assertTrue(_appContract.isForeclosed());
-
-        vm.expectRevert(IApplication.Foreclosed.selector);
-        vm.prank(guardian);
-        _appContract.foreclose();
-
-        vm.expectRevert(IApplication.NotGuardian.selector);
-        vm.prank(caller);
-        _appContract.foreclose();
     }
 
     // -----------------
@@ -424,116 +369,6 @@ contract ApplicationTest is
 
         _submitAndAcceptClaim();
         _testErc20Success(output, proof);
-    }
-
-    // ----------------------------------
-    // accounts drive Merkle root proving
-    // ----------------------------------
-
-    function testRevertsInvalidAccountsDriveMerkleRootProofSize(bytes32[] calldata invalidProof)
-        external
-    {
-        if (vm.randomBool()) _submitAndAcceptClaim();
-
-        // We assume the proof provided by the emulator library has the correct length,
-        // and that the proof provided by the fuzzer has a different, incorrect length.
-        vm.assume(invalidProof.length != _getAccountsDriveMerkleRootProof().length);
-
-        vm.prank(_appContract.getGuardian());
-        _appContract.foreclose();
-
-        bytes32 accountsDriveMerkleRoot = _getAccountsDriveMerkleRoot();
-
-        vm.expectRevert(_encodeInvalidAccountsDriveMerkleRootProofSize());
-        vm.prank(vm.randomAddress());
-        _appContract.proveAccountsDriveMerkleRoot(accountsDriveMerkleRoot, invalidProof);
-    }
-
-    function testRevertsInvalidMachineMerkleRoot(bytes32 invalidAccountsDriveMerkleRoot)
-        external
-    {
-        if (vm.randomBool()) _submitAndAcceptClaim();
-
-        vm.assume(invalidAccountsDriveMerkleRoot != _getAccountsDriveMerkleRoot());
-
-        vm.prank(_appContract.getGuardian());
-        _appContract.foreclose();
-
-        bytes32[] memory proof = _getAccountsDriveMerkleRootProof();
-
-        bytes32 invalidMachineMerkleRoot = proof.merkleRootAfterReplacement(
-            LibEmulator.ACCOUNTS_DRIVE_START_INDEX, invalidAccountsDriveMerkleRoot
-        );
-
-        vm.expectRevert(_encodeInvalidMachineMerkleRoot(invalidMachineMerkleRoot));
-        vm.prank(vm.randomAddress());
-        _appContract.proveAccountsDriveMerkleRoot(invalidAccountsDriveMerkleRoot, proof);
-    }
-
-    function testProveAccountsDriveMerkleRoot() external {
-        if (vm.randomBool()) _submitAndAcceptClaim();
-
-        bytes32 accountsDriveMerkleRoot = _getAccountsDriveMerkleRoot();
-        bytes32[] memory proof = _getAccountsDriveMerkleRootProof();
-
-        vm.expectRevert(IApplication.NotForeclosed.selector);
-        vm.prank(vm.randomAddress());
-        _appContract.proveAccountsDriveMerkleRoot(accountsDriveMerkleRoot, proof);
-
-        {
-            bool wasValueProved;
-            (wasValueProved,) = _appContract.getAccountsDriveMerkleRoot();
-            assertFalse(wasValueProved);
-        }
-
-        vm.prank(_appContract.getGuardian());
-        _appContract.foreclose();
-
-        {
-            bool wasValueProved;
-            (wasValueProved,) = _appContract.getAccountsDriveMerkleRoot();
-            assertFalse(wasValueProved);
-        }
-
-        vm.recordLogs();
-
-        vm.prank(vm.randomAddress());
-        _appContract.proveAccountsDriveMerkleRoot(accountsDriveMerkleRoot, proof);
-
-        Vm.Log[] memory logs = vm.getRecordedLogs();
-
-        uint256 numOfAccountsDriveMerkleRootProvedEvents;
-
-        for (uint256 i; i < logs.length; ++i) {
-            Vm.Log memory log = logs[i];
-            if (log.emitter == address(_appContract)) {
-                assertGe(log.topics.length, 1);
-                if (log.topics[0] == IApplication.AccountsDriveMerkleRootProved.selector)
-                {
-                    bytes32 arg1 = abi.decode(log.data, (bytes32));
-                    assertEq(arg1, accountsDriveMerkleRoot);
-                    ++numOfAccountsDriveMerkleRootProvedEvents;
-                } else {
-                    revert("unexpected event from app contract");
-                }
-            } else {
-                revert("unexpected log emitter");
-            }
-        }
-
-        assertEq(numOfAccountsDriveMerkleRootProvedEvents, 1);
-
-        {
-            bool wasValueProved;
-            bytes32 value;
-            (wasValueProved, value) = _appContract.getAccountsDriveMerkleRoot();
-            assertTrue(wasValueProved);
-            assertEq(value, accountsDriveMerkleRoot);
-        }
-
-        vm.expectRevert(_encodeAccountsDriveMerkleRootAlreadyProved());
-        vm.prank(vm.randomAddress());
-        _appContract.proveAccountsDriveMerkleRoot(accountsDriveMerkleRoot, proof);
     }
 
     // ------------------
@@ -849,7 +684,7 @@ contract ApplicationTest is
 
                     withdrawalOutput = arg3;
                 } else {
-                    revert("unexpected event from app contract");
+                    revert UnexpectedLog(log);
                 }
             } else if (log.emitter == address(_erc20Token)) {
                 assertGe(log.topics.length, 1);
@@ -861,10 +696,10 @@ contract ApplicationTest is
                     assertEq(log.topics[2], user.asTopic());
                     assertEq(abi.decode(log.data, (uint256)), amount);
                 } else {
-                    revert("unexpected event from ERC-20 token contract");
+                    revert UnexpectedLog(log);
                 }
             } else {
-                revert("unexpected log emitter");
+                revert UnexpectedLog(log);
             }
         }
 
@@ -964,7 +799,7 @@ contract ApplicationTest is
                     inputs[i] = decodedInput;
                     ++numOfInputAdded;
                 } else {
-                    revert("unexpected log emitter");
+                    revert UnexpectedLog(log);
                 }
             }
             assertEq(numOfInputAdded, 1);
@@ -1161,7 +996,7 @@ contract ApplicationTest is
                         assertEq(abi.decode(log.data, (uint256)), value);
                         ++numOfErc20Transfers;
                     } else {
-                        revert("unexpected event from ERC-20 token contract");
+                        revert UnexpectedLog(log);
                     }
                 } else if (log.emitter == address(_contracts.dev.testNonFungibleToken)) {
                     assertGe(log.topics.length, 1);
@@ -1171,7 +1006,7 @@ contract ApplicationTest is
                         assertEq(log.topics[3], bytes32(tokenId));
                         ++numOfErc721Transfers;
                     } else {
-                        revert("unexpected event from ERC-721 token contract");
+                        revert UnexpectedLog(log);
                     }
                 } else if (log.emitter == address(_contracts.dev.testMultiToken)) {
                     assertGe(log.topics.length, 1);
@@ -1198,7 +1033,7 @@ contract ApplicationTest is
                             assertEq(arg1, tokenIds[0]);
                             assertEq(arg2, values[0]);
                         } else {
-                            revert("unexpected deposit type");
+                            revert UnexpectedLog(log);
                         }
 
                         ++numOfErc1155SingleTransfers;
@@ -1218,10 +1053,10 @@ contract ApplicationTest is
 
                         ++numOfErc1155BatchTransfers;
                     } else {
-                        revert("unexpected event from ERC-1155 token contract");
+                        revert UnexpectedLog(log);
                     }
                 } else {
-                    revert("unexpected log emitter");
+                    revert UnexpectedLog(log);
                 }
             }
 
@@ -1417,7 +1252,7 @@ contract ApplicationTest is
                         assertEq(abi.decode(log.data, (uint256)), value);
                         ++numOfErc20Transfers;
                     } else {
-                        revert("unexpected event from ERC-20 token contract");
+                        revert UnexpectedLog(log);
                     }
                 } else if (log.emitter == address(_contracts.dev.testNonFungibleToken)) {
                     assertGe(log.topics.length, 1);
@@ -1427,7 +1262,7 @@ contract ApplicationTest is
                         assertEq(log.topics[3], bytes32(tokenId));
                         ++numOfErc721Transfers;
                     } else {
-                        revert("unexpected event from ERC-721 token contract");
+                        revert UnexpectedLog(log);
                     }
                 } else if (log.emitter == address(_contracts.dev.testMultiToken)) {
                     assertGe(log.topics.length, 1);
@@ -1447,7 +1282,7 @@ contract ApplicationTest is
                             assertEq(arg1, tokenIds[0]);
                             assertEq(arg2, values[0]);
                         } else {
-                            revert("unexpected deposit type");
+                            revert UnexpectedLog(log);
                         }
 
                         ++numOfErc1155SingleTransfers;
@@ -1464,10 +1299,10 @@ contract ApplicationTest is
 
                         ++numOfErc1155BatchTransfers;
                     } else {
-                        revert("unexpected event from ERC-1155 token contract");
+                        revert UnexpectedLog(log);
                     }
                 } else {
-                    revert("unexpected log emitter");
+                    revert UnexpectedLog(log);
                 }
             }
 
@@ -1922,21 +1757,6 @@ contract ApplicationTest is
         return _emulator.getAccountValidityProof(_accountIndexByName[name]);
     }
 
-    /// @notice This function is used to simulate a foreclosure and a withdrawal.
-    /// If the withdrawal succeeds, then the function reverts with error message "Successful withdrawal".
-    /// If the withdrawal fails, then the function propagates the error from the app contract.
-    function simulateForeclosureAndWithdrawal(
-        bytes calldata account,
-        AccountValidityProof calldata proof
-    ) external {
-        assertEq(msg.sender, address(this), "called by external account");
-        vm.prank(_appContract.getGuardian());
-        _appContract.foreclose();
-        vm.prank(vm.randomAddress());
-        _appContract.withdraw(account, proof);
-        revert("Successful withdrawal");
-    }
-
     /// @notice This function is used to simulate a claim acceptance, a foreclosure and
     /// a refund issuance. If the proof succeeds, then the function reverts with
     /// error message "Successful refund". If the proof fails, then the function propagates
@@ -2096,30 +1916,12 @@ contract ApplicationTest is
         return IApplication.InvalidAccountRootSiblingsArrayLength.selector;
     }
 
-    function _encodeInvalidAccountsDriveMerkleRootProofSize()
-        internal
-        pure
-        returns (bytes4)
-    {
-        return IApplication.InvalidAccountsDriveMerkleRootProofSize.selector;
-    }
-
     function _encodeInvalidOutputHashesSiblingsArrayLength()
         internal
         pure
         returns (bytes4)
     {
         return IApplication.InvalidOutputHashesSiblingsArrayLength.selector;
-    }
-
-    function _encodeAccountsDriveMerkleRootAlreadyProved()
-        internal
-        pure
-        returns (bytes memory)
-    {
-        return abi.encodeWithSelector(
-            IApplication.AccountsDriveMerkleRootAlreadyProved.selector
-        );
     }
 
     function _encodeAccountsDriveMerkleRootNotProved()
@@ -2129,16 +1931,6 @@ contract ApplicationTest is
     {
         return abi.encodeWithSelector(
             IApplication.AccountsDriveMerkleRootNotProved.selector
-        );
-    }
-
-    function _encodeInvalidMachineMerkleRoot(bytes32 machineMerkleRoot)
-        internal
-        pure
-        returns (bytes memory)
-    {
-        return abi.encodeWithSelector(
-            IApplication.InvalidMachineMerkleRoot.selector, machineMerkleRoot
         );
     }
 

@@ -66,10 +66,10 @@ contract UsdWithdrawalOutputBuilderTest is RollupsTest, VersionGetterTestUtils {
                     assertEq(arg1, address(usdWithdrawalOutputBuilder));
                     ++numOfUsdWithdrawalOutputBuilderCreatedEvents;
                 } else {
-                    revert("unexpected event selector");
+                    revert UnexpectedLog(log);
                 }
             } else {
-                revert("unexpected log emitter");
+                revert UnexpectedLog(log);
             }
         }
 

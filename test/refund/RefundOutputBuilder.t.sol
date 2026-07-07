@@ -80,17 +80,8 @@ contract RefundOutputBuilderTest is
         address inputSender = vm.randomAddressNotIn(portalAddresses);
 
         vm.prank(vm.randomAddress());
-        try _refundOutputBuilder.buildRefundOutput(
-            appContract, inputSender, inputPayload
-        ) {
-            revert("Expected UnknownInputSender error");
-        } catch (bytes memory errorData) {
-            (bool isError, bytes4 sel, bytes memory args) = errorData.consumeBytes4();
-            assertTrue(isError, "is error");
-            assertEq(sel, IRefundOutputBuilderErrors.UnknownInputSender.selector);
-            address arg1 = abi.decode(args, (address));
-            assertEq(arg1, inputSender, "UnknownInputSender.inputSender");
-        }
+        vm.expectRevert(_encodeUnknownInputSender(inputSender));
+        _refundOutputBuilder.buildRefundOutput(appContract, inputSender, inputPayload);
     }
 
     function testBuildRefundOutputForEtherDeposit(
@@ -273,5 +264,15 @@ contract RefundOutputBuilderTest is
         assertEq(tokenIds, deposit.tokenIds, "transfer token IDs");
         assertEq(depositValues, deposit.values, "transfer values");
         assertEq(data, new bytes(0), "transfer extra data");
+    }
+
+    function _encodeUnknownInputSender(address inputSender)
+        internal
+        pure
+        returns (bytes memory encodedError)
+    {
+        return abi.encodeWithSelector(
+            IRefundOutputBuilderErrors.UnknownInputSender.selector, inputSender
+        );
     }
 }

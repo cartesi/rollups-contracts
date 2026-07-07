@@ -206,10 +206,10 @@ contract ERC721PortalTest is RollupsTest, InputBoxTestUtils, VersionGetterTestUt
                     assertEq(log.data.length, 0);
                     ++numOfTransfer;
                 } else {
-                    revert("unexpected token contract topic #0");
+                    revert UnexpectedLog(log);
                 }
             } else {
-                revert("unexpected log emitter");
+                revert UnexpectedLog(log);
             }
         }
 
