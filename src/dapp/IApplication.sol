@@ -242,6 +242,7 @@ interface IApplication is
     /// @notice Check whether an output has been executed.
     /// @param outputIndex The index of output
     /// @return Whether the output has been executed before
+    /// or is currently being executed (in the current transaction)
     function wasOutputExecuted(uint256 outputIndex) external view returns (bool);
 
     /// @notice Validate an output.
@@ -304,6 +305,8 @@ interface IApplication is
 
     /// @notice Check whether a refund had been issued for an input.
     /// @param inputIndex The index of the input in the application's input box
+    /// @return Whether a refund for the input has been issued before
+    /// or is currently being issued (in the current transaction)
     function wasRefundForInputIssued(uint256 inputIndex) external view returns (bool);
 
     /// @notice Check whether the accounts drive Merkle root was proved and its value.
@@ -320,6 +323,8 @@ interface IApplication is
 
     /// @notice Check whether an account had its funds withdrawn.
     /// @param accountIndex The index of the account in the accounts drive.
+    /// @return Whether the account funds have been withdrawn before
+    /// or are currently being withdrawn (in the current transaction)
     function wereAccountFundsWithdrawn(uint256 accountIndex) external view returns (bool);
 
     /// @notice Get the log (base 2) of the number of leaves

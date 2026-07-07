@@ -28,7 +28,6 @@ import {IApplicationFactoryErrors} from "./IApplicationFactoryErrors.sol";
 import {Ownable} from "@openzeppelin-contracts-5.2.0/access/Ownable.sol";
 import {ERC1155Holder} from "@openzeppelin-contracts-5.2.0/token/ERC1155/utils/ERC1155Holder.sol";
 import {ERC721Holder} from "@openzeppelin-contracts-5.2.0/token/ERC721/utils/ERC721Holder.sol";
-import {ReentrancyGuard} from "@openzeppelin-contracts-5.2.0/utils/ReentrancyGuard.sol";
 import {BitMaps} from "@openzeppelin-contracts-5.2.0/utils/structs/BitMaps.sol";
 
 contract Application is
@@ -36,7 +35,6 @@ contract Application is
     Ownable,
     ERC721Holder,
     ERC1155Holder,
-    ReentrancyGuard,
     RollupsContract
 {
     using BitMaps for BitMaps.BitMap;
@@ -165,30 +163,33 @@ contract Application is
     function executeOutput(bytes calldata output, OutputValidityProof calldata proof)
         external
         override
-        nonReentrant
     {
+        // Checks
+
         validateOutput(output, proof);
 
-        uint64 outputIndex = proof.outputIndex;
-
-        if (_executed.get(outputIndex)) {
+        if (_executed.get(proof.outputIndex)) {
             revert OutputNotReexecutable(output);
         }
 
-        _executeOutput(output);
+        // Effects
 
-        _executed.set(outputIndex);
-
+        _executed.set(proof.outputIndex);
         ++_numOfExecutedOutputs;
-        emit OutputExecuted(outputIndex, output);
+        emit OutputExecuted(proof.outputIndex, output);
+
+        // Interactions
+
+        _executeOutput(output);
     }
 
     function issueRefund(uint256 inputIndex, bytes calldata input)
         external
         override
-        nonReentrant
         onlyForeclosed
     {
+        // Checks
+
         (uint256 blockNumber, address sender, bytes memory payload) =
             validateInput(inputIndex, input);
 
@@ -202,12 +203,15 @@ contract Application is
 
         bytes memory output = _buildRefundOutput(sender, payload);
 
-        _executeOutput(output);
+        // Effects
 
         _refunded.set(inputIndex);
-
         ++_numOfIssuedRefunds;
         emit RefundIssued(inputIndex, input, output);
+
+        // Interactions
+
+        _executeOutput(output);
     }
 
     function proveAccountsDriveMerkleRoot(
@@ -253,25 +257,27 @@ contract Application is
     function withdraw(bytes calldata account, AccountValidityProof calldata proof)
         external
         override
-        nonReentrant
         onlyForeclosed
     {
+        // Checks
+
         validateAccount(account, proof);
 
-        uint64 accountIndex = proof.accountIndex;
-
-        if (_withdrawn.get(accountIndex)) {
-            revert AccountFundsAlreadyWithdrawn(accountIndex);
+        if (_withdrawn.get(proof.accountIndex)) {
+            revert AccountFundsAlreadyWithdrawn(proof.accountIndex);
         }
 
         bytes memory output = _buildWithdrawalOutput(account);
 
-        _executeOutput(output);
+        // Effects
 
-        _withdrawn.set(accountIndex);
-
+        _withdrawn.set(proof.accountIndex);
         ++_numOfWithdrawals;
-        emit Withdrawal(accountIndex, account, output);
+        emit Withdrawal(proof.accountIndex, account, output);
+
+        // Interactions
+
+        _executeOutput(output);
     }
 
     /// @inheritdoc IApplication
