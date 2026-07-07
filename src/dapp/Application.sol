@@ -280,6 +280,7 @@ contract Application is
         override
         onlyOwner
         notForeclosed
+        onDeploymentBlock
     {
         _outputsMerkleRootValidator = newOutputsMerkleRootValidator;
         emit OutputsMerkleRootValidatorChanged(newOutputsMerkleRootValidator);
@@ -560,6 +561,11 @@ contract Application is
         _;
     }
 
+    modifier onDeploymentBlock() {
+        _ensureOnDeploymentBlock();
+        _;
+    }
+
     /// @notice Get the log (base 2) of the number of bytes in the machine memory that are
     /// reserved for the accounts drive.
     function _getLog2AccountsDriveSize() internal view returns (uint8) {
@@ -699,5 +705,10 @@ contract Application is
     /// @notice Ensures the application is foreclosed.
     function _ensureAppIsForeclosed() internal view {
         require(isForeclosed(), NotForeclosed());
+    }
+
+    /// @notice Ensures the current block is the deployment block.
+    function _ensureOnDeploymentBlock() internal view {
+        require(block.number == DEPLOYMENT_BLOCK_NUMBER, NotDeploymentBlock());
     }
 }

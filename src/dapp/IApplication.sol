@@ -168,6 +168,15 @@ interface IApplication is
     /// @param accountIndex The account index
     error AccountFundsAlreadyWithdrawn(uint64 accountIndex);
 
+    /// @notice Raised when the application owner tries to migrate the application to
+    /// another outputs Merkle root validator in a block that is not the deployment block.
+    /// @dev This restriction protects users from malicious application owners that, by
+    /// swapping the outputs Merkle root validator, can take control of user funds locked
+    /// in the application contract. Rather, the application owner serves merely as an
+    /// implementation detail that enables application-consensus factory contracts to
+    /// deploy application-consensus pairs in the same transaction.
+    error NotDeploymentBlock();
+
     // Permissioned functions
 
     /// @notice Migrate the application to a new outputs Merkle root validator.
