@@ -41,7 +41,10 @@ import {LibBytes32Array} from "../util/LibBytes32Array.sol";
 import {LibEmulator} from "../util/LibEmulator.sol";
 import {LibTopic} from "../util/LibTopic.sol";
 import {LibUint256Array} from "../util/LibUint256Array.sol";
+import {OutputExecutionChecker} from "../util/OutputExecutionChecker.sol";
+import {RefundIssuanceChecker} from "../util/RefundIssuanceChecker.sol";
 import {RollupsTest} from "../util/RollupsTest.sol";
+import {WithdrawalChecker} from "../util/WithdrawalChecker.sol";
 
 contract ApplicationTest is
     RollupsTest,
@@ -62,6 +65,7 @@ contract ApplicationTest is
 
     enum DepositType {
         ETHER,
+        ETHER_REENTRANCY_CHECK,
         ERC20,
         ERC721,
         ERC1155_SINGLE,
@@ -76,6 +80,9 @@ contract ApplicationTest is
     IERC1155 _erc1155Token;
     ISafeERC20Transfer _safeErc20Transfer;
     AssetReceiver _assetReceiver;
+    OutputExecutionChecker _outputExecutionChecker;
+    RefundIssuanceChecker _refundIssuanceChecker;
+    WithdrawalChecker _withdrawalChecker;
 
     LibEmulator.State _emulator;
     LibEmulator.ProofComponents _proofComponents;
@@ -371,6 +378,32 @@ contract ApplicationTest is
         _testErc20Success(output, proof);
     }
 
+    function testExecuteOutputExecutionChecker() external {
+        string memory name = "OutputExecutionChecker";
+        bytes memory output = _getOutput(name);
+        OutputValidityProof memory proof = _getOutputValidityProof(name);
+
+        _submitAndAcceptClaim();
+
+        vm.prank(vm.randomAddress());
+        vm.expectRevert(OutputExecutionChecker.NotInitialized.selector);
+        _appContract.executeOutput(output, proof);
+
+        _outputExecutionChecker.initialize(_appContract, output, proof);
+
+        uint256 numberOfExecutedOutputsBefore = _appContract.getNumberOfExecutedOutputs();
+
+        _expectEmitOutputExecuted(output, proof);
+        vm.prank(vm.randomAddress());
+        _appContract.executeOutput(output, proof);
+
+        assertTrue(_wasOutputExecuted(proof));
+        _expectIncrementInNumberOfExecutedOutputs(numberOfExecutedOutputsBefore);
+
+        vm.expectRevert(_encodeOutputNotReexecutable(output));
+        _appContract.executeOutput(output, proof);
+    }
+
     // ------------------
     // account validation
     // ------------------
@@ -615,6 +648,52 @@ contract ApplicationTest is
         _proveAccountsDriveMerkleRoot();
 
         vm.expectRevert(_encodeAccountTooShort(accountSize));
+        vm.prank(vm.randomAddress());
+        _appContract.withdraw(account, proof);
+    }
+
+    function testWithdrawalReentrancy() external {
+        string memory name = "Alice";
+        bytes memory account = _getAccount(name);
+        AccountValidityProof memory proof = _getAccountValidityProof(name);
+
+        // We construct a voucher that calls the withdrawal checker,
+        // which lets us test reentrant withdrawal calls.
+        bytes memory output = _encodeVoucher(address(_withdrawalChecker), 0, abi.encode());
+
+        // We inject the output that, once executed,
+        // calls the withdrawal checker contract, so that
+        // we check if a reentrancy call breaks withdrawals.
+        vm.mockCall(
+            address(_contracts.dev.testUsdWithdrawalOutputBuilder),
+            abi.encodeCall(
+                IWithdrawalOutputBuilder.buildWithdrawalOutput,
+                (address(_appContract), account)
+            ),
+            abi.encode(output)
+        );
+
+        // In order to execute the withdrawal output, the guardian
+        // must foreclose the application and the accounts drive Merkle
+        // root must be proved (by anyone).
+        vm.prank(_appContract.getGuardian());
+        _appContract.foreclose();
+        _proveAccountsDriveMerkleRoot();
+
+        // When uninitialized, the withdrawal checker reverts,
+        // which gives us an indication that it is being called.
+        vm.expectRevert(WithdrawalChecker.NotInitialized.selector);
+        vm.prank(vm.randomAddress());
+        _appContract.withdraw(account, proof);
+
+        // We initialize the withdrawal checker with the account
+        // and its validity proof so that it can try executing the
+        // withdrawal output in a nested call.
+        _withdrawalChecker.initialize(_appContract, account, proof);
+
+        // Finally, we execute the withdrawal output, expecting it
+        // to succeed, showing that the reentrant call indeed reverted
+        // and was properly handled by the withdrawal checker.
         vm.prank(vm.randomAddress());
         _appContract.withdraw(account, proof);
     }
@@ -873,7 +952,6 @@ contract ApplicationTest is
         bytes memory input;
         bytes memory payload;
         address appContract = address(_appContract);
-        address depositor = address(_assetReceiver);
         uint256 balance = vm.randomUint(value, type(uint256).max);
         uint256 blockNumber = vm.randomUint(vm.getBlockNumber(), type(uint256).max);
 
@@ -896,10 +974,21 @@ contract ApplicationTest is
             DepositType(vm.randomUint(0, uint256(type(DepositType).max)));
 
         // 3. Deposit funds
+        address depositor;
         address portalAddress;
         uint256[] memory tokenIds;
         uint256[] memory balances;
         if (depositType == DepositType.ETHER) {
+            depositor = address(_assetReceiver);
+            portalAddress = address(_contracts.core.etherPortal);
+            vm.deal(depositor, balance);
+            vm.recordLogs();
+            vm.prank(depositor);
+            _contracts.core.etherPortal.depositEther{value: value}(
+                appContract, execLayerData
+            );
+        } else if (depositType == DepositType.ETHER_REENTRANCY_CHECK) {
+            depositor = address(_refundIssuanceChecker);
             portalAddress = address(_contracts.core.etherPortal);
             vm.deal(depositor, balance);
             vm.recordLogs();
@@ -908,6 +997,7 @@ contract ApplicationTest is
                 appContract, execLayerData
             );
         } else if (depositType == DepositType.ERC20) {
+            depositor = address(_assetReceiver);
             portalAddress = address(_contracts.core.erc20Portal);
             vm.startPrank(depositor);
             _contracts.dev.testFungibleToken.mint(balance);
@@ -920,6 +1010,7 @@ contract ApplicationTest is
                 );
             vm.stopPrank();
         } else if (depositType == DepositType.ERC721) {
+            depositor = address(_assetReceiver);
             portalAddress = address(_contracts.core.erc721Portal);
             vm.startPrank(depositor);
             _contracts.dev.testNonFungibleToken.mint(tokenId);
@@ -935,6 +1026,7 @@ contract ApplicationTest is
                 );
             vm.stopPrank();
         } else if (depositType == DepositType.ERC1155_SINGLE) {
+            depositor = address(_assetReceiver);
             portalAddress = address(_contracts.core.erc1155SinglePortal);
             vm.startPrank(depositor);
             _contracts.dev.testMultiToken.mint(tokenId, balance);
@@ -951,6 +1043,7 @@ contract ApplicationTest is
                 );
             vm.stopPrank();
         } else if (depositType == DepositType.ERC1155_BATCH) {
+            depositor = address(_assetReceiver);
             portalAddress = address(_contracts.core.erc1155BatchPortal);
             tokenIds = vm.randomUniqueUint256Array(values.length);
             balances = vm.randomUintGe(values);
@@ -1082,6 +1175,9 @@ contract ApplicationTest is
         // 3.2. Check deposit effects
         if (depositType == DepositType.ETHER) {
             assertEq(depositor.balance, balance - value);
+        } else if (depositType == DepositType.ETHER_REENTRANCY_CHECK) {
+            assertEq(depositor.balance, balance - value);
+            _refundIssuanceChecker.initialize(_appContract, inputIndex, input);
         } else if (depositType == DepositType.ERC20) {
             assertEq(
                 _contracts.dev.testFungibleToken.balanceOf(depositor), balance - value
@@ -1151,7 +1247,7 @@ contract ApplicationTest is
         vm.prank(_appContract.getGuardian());
         _appContract.foreclose();
 
-        // 9.1. Try issuing refund for rejecting receiver contract for some assets
+        // 9.1. Try issuing refund for rejecting receiver contract for some deposit types
         {
             bool isRevertExpected;
             bytes memory errorData;
@@ -1324,7 +1420,10 @@ contract ApplicationTest is
                     : 0
             );
 
-            if (depositType == DepositType.ETHER) {
+            if (
+                depositType == DepositType.ETHER
+                    || depositType == DepositType.ETHER_REENTRANCY_CHECK
+            ) {
                 assertEq(refundOutputSelector, Outputs.Voucher.selector);
 
                 address voucherDestination;
@@ -1520,6 +1619,9 @@ contract ApplicationTest is
         _safeErc20Transfer = _contracts.core.safeErc20Transfer;
         _etherReceiver = new EtherReceiver();
         _assetReceiver = new AssetReceiver();
+        _outputExecutionChecker = new OutputExecutionChecker();
+        _refundIssuanceChecker = new RefundIssuanceChecker();
+        _withdrawalChecker = new WithdrawalChecker();
     }
 
     function _addOutputs() internal {
@@ -1618,6 +1720,10 @@ contract ApplicationTest is
                     )
                 )
             )
+        );
+        _nameOutput(
+            "OutputExecutionChecker",
+            _addOutput(_encodeVoucher(address(_outputExecutionChecker), 0, abi.encode()))
         );
     }
 
