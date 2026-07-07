@@ -47,7 +47,6 @@ contract SelfHostedApplicationFactory is ISelfHostedApplicationFactory, RollupsC
         address authorityOwner,
         uint256 epochLength,
         uint256 claimStagingPeriod,
-        address appOwner,
         bytes32 templateHash,
         IInputBox inputBox,
         WithdrawalConfig calldata withdrawalConfig,
@@ -58,15 +57,16 @@ contract SelfHostedApplicationFactory is ISelfHostedApplicationFactory, RollupsC
             );
 
         application = APPLICATION_FACTORY.newApplication(
-            authority, appOwner, templateHash, inputBox, withdrawalConfig, salt
+            authority, address(this), templateHash, inputBox, withdrawalConfig, salt
         );
+
+        application.renounceOwnership();
     }
 
     function calculateAddresses(
         address authorityOwner,
         uint256 epochLength,
         uint256 claimStagingPeriod,
-        address appOwner,
         bytes32 templateHash,
         IInputBox inputBox,
         WithdrawalConfig calldata withdrawalConfig,
@@ -78,7 +78,7 @@ contract SelfHostedApplicationFactory is ISelfHostedApplicationFactory, RollupsC
 
         application = APPLICATION_FACTORY.calculateApplicationAddress(
             IOutputsMerkleRootValidator(authority),
-            appOwner,
+            address(this),
             templateHash,
             inputBox,
             withdrawalConfig,

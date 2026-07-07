@@ -31,7 +31,6 @@ interface ISelfHostedApplicationFactory is
     /// @param authorityOwner The initial authority owner
     /// @param epochLength The epoch length
     /// @param claimStagingPeriod The claim staging period
-    /// @param appOwner The initial application owner
     /// @param templateHash The initial machine state hash
     /// @param inputBox The input box contract
     /// @param withdrawalConfig The withdrawal configuration
@@ -39,13 +38,11 @@ interface ISelfHostedApplicationFactory is
     /// @return The application contract
     /// @return The authority contract
     /// @dev Reverts if the authority owner address is zero.
-    /// @dev Reverts if the application owner address is zero.
     /// @dev Reverts if the epoch length is zero.
     function deployContracts(
         address authorityOwner,
         uint256 epochLength,
         uint256 claimStagingPeriod,
-        address appOwner,
         bytes32 templateHash,
         IInputBox inputBox,
         WithdrawalConfig calldata withdrawalConfig,
@@ -57,7 +54,6 @@ interface ISelfHostedApplicationFactory is
     /// @param authorityOwner The initial authority owner
     /// @param epochLength The epoch length
     /// @param claimStagingPeriod The claim staging period
-    /// @param appOwner The initial application owner
     /// @param templateHash The initial machine state hash
     /// @param inputBox The input box contract
     /// @param withdrawalConfig The withdrawal configuration
@@ -68,7 +64,6 @@ interface ISelfHostedApplicationFactory is
         address authorityOwner,
         uint256 epochLength,
         uint256 claimStagingPeriod,
-        address appOwner,
         bytes32 templateHash,
         IInputBox inputBox,
         WithdrawalConfig calldata withdrawalConfig,
