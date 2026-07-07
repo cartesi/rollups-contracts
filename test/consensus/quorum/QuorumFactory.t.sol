@@ -575,7 +575,7 @@ contract QuorumFactoryTest is
                             "ApplicationForeclosed.appContract != appContract"
                         );
                     } else {
-                        revert("Unexpected error");
+                        revert UnexpectedError(errorData);
                     }
                 }
 
@@ -624,7 +624,7 @@ contract QuorumFactoryTest is
                             "Expected isValidatorInFavorOf(...) to return false after NotFirstClaim"
                         );
                     } else {
-                        revert("Unexpected error");
+                        revert UnexpectedError(errorData);
                     }
 
                     // Proceed to the next claim.
@@ -639,7 +639,7 @@ contract QuorumFactoryTest is
                 for (uint256 j; j < logs.length; ++j) {
                     Vm.Log memory log = logs[j];
                     if (log.emitter == address(quorum)) {
-                        assertGe(log.topics.length, 1, "unexpected annonymous event");
+                        require(log.topics.length >= 1, UnexpectedLog(log));
                         bytes32 topic0 = log.topics[0];
                         if (topic0 == IConsensus.ClaimSubmitted.selector) {
                             (uint256 arg0, bytes32 arg1, bytes32 arg2) =
@@ -659,10 +659,10 @@ contract QuorumFactoryTest is
                             assertEq(arg2, machineMerkleRoot);
                             ++numOfClaimStagedEvents;
                         } else {
-                            revert("unexpected event selector");
+                            revert UnexpectedLog(log);
                         }
                     } else {
-                        revert("unexpected log emitter");
+                        revert UnexpectedLog(log);
                     }
                 }
 
@@ -959,7 +959,7 @@ contract QuorumFactoryTest is
                 for (uint256 i; i < logs.length; ++i) {
                     Vm.Log memory log = logs[i];
                     if (log.emitter == address(quorum)) {
-                        assertGe(log.topics.length, 1, "unexpected annonymous event");
+                        require(log.topics.length >= 1, UnexpectedLog(log));
                         bytes32 topic0 = log.topics[0];
                         if (topic0 == IConsensus.ClaimAccepted.selector) {
                             (uint256 arg0, bytes32 arg1, bytes32 arg2) =
@@ -970,10 +970,10 @@ contract QuorumFactoryTest is
                             assertEq(arg2, winningMachineMerkleRoot);
                             ++numOfClaimAcceptedEvents;
                         } else {
-                            revert("unexpected event selector");
+                            revert UnexpectedLog(log);
                         }
                     } else {
-                        revert("unexpected log emitter");
+                        revert UnexpectedLog(log);
                     }
                 }
 
@@ -1275,10 +1275,10 @@ contract QuorumFactoryTest is
                     address quorumAddress = abi.decode(log.data, (address));
                     assertEq(quorumAddress, address(quorum));
                 } else {
-                    revert("unexpected log topic #0");
+                    revert UnexpectedLog(log);
                 }
             } else {
-                revert("unexpected log");
+                revert UnexpectedLog(log);
             }
         }
 
@@ -1451,7 +1451,7 @@ contract QuorumFactoryTest is
             assertEq(errorArgs.length, 0, "expected ZeroEpochLength to have no args");
             assertEq(epochLength, 0, "expected epoch length to be zero");
         } else {
-            revert("Unexpected error");
+            revert UnexpectedError(errorData);
         }
     }
 

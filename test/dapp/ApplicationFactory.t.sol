@@ -4,6 +4,7 @@
 /// @title Application Factory Test
 pragma solidity ^0.8.30;
 
+import {CanonicalMachine} from "src/common/CanonicalMachine.sol";
 import {WithdrawalConfig} from "src/common/WithdrawalConfig.sol";
 import {IOutputsMerkleRootValidator} from "src/consensus/IOutputsMerkleRootValidator.sol";
 import {IApplication} from "src/dapp/IApplication.sol";
@@ -16,6 +17,8 @@ import {Ownable} from "@openzeppelin-contracts-5.2.0/access/Ownable.sol";
 
 import {Vm} from "forge-std-1.9.6/src/Vm.sol";
 
+import {ExternalLibBinaryMerkleTree} from "../library/LibBinaryMerkleTree.t.sol";
+import {ConsensusTestUtils} from "../util/ConsensusTestUtils.sol";
 import {LibAddressArray} from "../util/LibAddressArray.sol";
 import {LibBytes} from "../util/LibBytes.sol";
 import {LibTopic} from "../util/LibTopic.sol";
@@ -71,8 +74,14 @@ library LibApplicationFactory {
     }
 }
 
-contract ApplicationFactoryTest is RollupsTest, VersionGetterTestUtils, OwnableTest {
+contract ApplicationFactoryTest is
+    RollupsTest,
+    VersionGetterTestUtils,
+    OwnableTest,
+    ConsensusTestUtils
+{
     using LibApplicationFactory for IApplicationFactory;
+    using ExternalLibBinaryMerkleTree for bytes32[];
     using LibWithdrawalConfig for WithdrawalConfig;
     using LibAddressArray for Vm;
     using LibTopic for address;
@@ -84,9 +93,17 @@ contract ApplicationFactoryTest is RollupsTest, VersionGetterTestUtils, OwnableT
         _factory = _contracts.core.applicationFactory;
     }
 
+    // -------
+    // version
+    // -------
+
     function testVersion() external view {
         _testVersion(_factory);
     }
+
+    // ----------
+    // deployment
+    // ----------
 
     function testNewApplication(DeploymentArgs calldata deploymentArgs) external {
         uint256 blockNumber = _randomizeBlockNumber();
@@ -106,6 +123,7 @@ contract ApplicationFactoryTest is RollupsTest, VersionGetterTestUtils, OwnableT
             }
 
             uint256 numOfApplicationsCreated;
+            uint256 numOfOwnershipTransferred;
 
             for (uint256 i; i < logs.length; ++i) {
                 Vm.Log memory log = logs[i];
@@ -137,11 +155,27 @@ contract ApplicationFactoryTest is RollupsTest, VersionGetterTestUtils, OwnableT
                         assertEq(arg5, address(appContract));
 
                         ++numOfApplicationsCreated;
+                    } else {
+                        revert UnexpectedLog(log);
                     }
+                } else if (log.emitter == address(appContract)) {
+                    assertGe(log.topics.length, 1);
+                    bytes32 topic0 = log.topics[0];
+                    if (topic0 == Ownable.OwnershipTransferred.selector) {
+                        assertEq(log.topics[1], address(0).asTopic());
+                        assertEq(log.topics[2], deploymentArgs.appOwner.asTopic());
+
+                        ++numOfOwnershipTransferred;
+                    }
+                } else {
+                    revert UnexpectedLog(log);
                 }
             }
 
             assertEq(numOfApplicationsCreated, 1, "number of ApplicationCreated events");
+            assertEq(
+                numOfOwnershipTransferred, 1, "number of OwnershipTransferred events"
+            );
 
             _testVersion(appContract);
 
@@ -287,6 +321,10 @@ contract ApplicationFactoryTest is RollupsTest, VersionGetterTestUtils, OwnableT
         }
     }
 
+    // ---------------------------------------
+    // outputs Merkle root validator migration
+    // ---------------------------------------
+
     function testMigrateToOutputsMerkleRootValidator(
         DeploymentArgs calldata deploymentArgs,
         IOutputsMerkleRootValidator[] calldata omrvs
@@ -313,10 +351,10 @@ contract ApplicationFactoryTest is RollupsTest, VersionGetterTestUtils, OwnableT
                         assertEq(log.topics.length, 1);
                         assertEq(log.data, abi.encode(omrv));
                     } else {
-                        revert("unexpected log topic #0");
+                        revert UnexpectedLog(log);
                     }
                 } else {
-                    revert("unexpected log emitter");
+                    revert UnexpectedLog(log);
                 }
             }
 
@@ -345,6 +383,334 @@ contract ApplicationFactoryTest is RollupsTest, VersionGetterTestUtils, OwnableT
             }
         }
     }
+
+    // ------------
+    // ownable test
+    // ------------
+
+    function testRenounceOwnership(DeploymentArgs calldata deploymentArgs) external {
+        _testRenounceOwnership(_newApplication(deploymentArgs));
+    }
+
+    function testUnauthorizedAccount(DeploymentArgs calldata deploymentArgs) external {
+        _testUnauthorizedAccount(_newApplication(deploymentArgs));
+    }
+
+    function testInvalidOwner(DeploymentArgs calldata deploymentArgs) external {
+        _testInvalidOwner(_newApplication(deploymentArgs));
+    }
+
+    function testTransferOwnership(DeploymentArgs calldata deploymentArgs) external {
+        _testTransferOwnership(_newApplication(deploymentArgs));
+    }
+
+    // -----------
+    // foreclosure
+    // -----------
+
+    function testForecloseRevertsNotGuardian(
+        DeploymentArgs calldata deploymentArgs,
+        address caller
+    ) external {
+        IApplication appContract = _newApplication(deploymentArgs);
+        vm.assume(caller != appContract.getGuardian());
+        vm.expectRevert(IApplication.NotGuardian.selector);
+        vm.prank(caller);
+        appContract.foreclose();
+    }
+
+    function testForeclose(DeploymentArgs calldata deploymentArgs, address caller)
+        external
+    {
+        IApplication appContract = _newApplication(deploymentArgs);
+        address guardian = appContract.getGuardian();
+        vm.assume(caller != guardian);
+
+        vm.recordLogs();
+
+        vm.prank(guardian);
+        appContract.foreclose();
+
+        Vm.Log[] memory logs = vm.getRecordedLogs();
+
+        uint256 numOfForeclosureEvents;
+
+        for (uint256 i; i < logs.length; ++i) {
+            Vm.Log memory log = logs[i];
+            if (log.emitter == address(appContract)) {
+                require(log.topics.length >= 1, UnexpectedLog(log));
+                bytes32 topic0 = log.topics[0];
+                if (topic0 == IApplication.Foreclosure.selector) {
+                    assertEq(log.topics.length, 1);
+                    assertEq(log.data, abi.encode());
+                    ++numOfForeclosureEvents;
+                } else {
+                    revert UnexpectedLog(log);
+                }
+            } else {
+                revert UnexpectedLog(log);
+            }
+        }
+
+        assertEq(numOfForeclosureEvents, 1);
+        assertTrue(appContract.isForeclosed());
+
+        vm.expectRevert(IApplication.Foreclosed.selector);
+        vm.prank(guardian);
+        appContract.foreclose();
+
+        vm.expectRevert(IApplication.NotGuardian.selector);
+        vm.prank(caller);
+        appContract.foreclose();
+    }
+
+    // ----------------------------------
+    // accounts drive Merkle root proving
+    // ----------------------------------
+
+    function testRevertsInvalidAccountsDriveMerkleRootProofSize(
+        DeploymentArgs calldata deploymentArgs,
+        bytes32 lastFinalizedMachineMerkleRoot,
+        bytes32 accountsDriveMerkleRoot,
+        bytes32[] calldata invalidProof
+    ) external {
+        IApplication appContract = _newApplication(deploymentArgs);
+
+        // We assume the proof provided by the fuzzer has an invalid size,
+        // according to the application withdrawal config, which are assumed
+        // to be valid given that we were able to deploy the application.
+        vm.assume(
+            invalidProof.length != _getAccountsDriveMerkleRootProofSize(deploymentArgs)
+        );
+
+        // We make the outputs Merkle root validator return the fuzzed
+        // last-finalized machine Merkle root. If zero, the application
+        // contract uses the template hash instead.
+        _mockGetLastFinalizedMachineMerkleRoot(
+            deploymentArgs.outputsMerkleRootValidator,
+            appContract,
+            lastFinalizedMachineMerkleRoot
+        );
+
+        // Randomize the foreclosure block number.
+        _randomizeBlockNumber();
+
+        // We foreclose the application so that we can prove
+        // the accounts drive Merkle root.
+        vm.prank(appContract.getGuardian());
+        appContract.foreclose();
+
+        // Randomize the proof block number.
+        _randomizeBlockNumber();
+
+        // We attempt to prove the accounts drive Merkle root
+        // with a Merkle proof of invalid size.
+        vm.expectRevert(IApplication.InvalidAccountsDriveMerkleRootProofSize.selector);
+        vm.prank(vm.randomAddress());
+        appContract.proveAccountsDriveMerkleRoot(accountsDriveMerkleRoot, invalidProof);
+    }
+
+    function testRevertsInvalidMachineMerkleRoot(
+        DeploymentArgs calldata deploymentArgs,
+        bytes32 invalidAccountsDriveMerkleRoot,
+        bytes32 lastFinalizedMachineMerkleRoot
+    ) external {
+        IApplication appContract = _newApplication(deploymentArgs);
+
+        // Generate a random Merkle proof with the correct size for
+        // the accounts drive Merkle root, given the withdrawal config
+        // of the application.
+        bytes32[] memory proof =
+            _randomProof(_getAccountsDriveMerkleRootProofSize(deploymentArgs));
+
+        // Compute the machine Merkle root from the random Merkle proof and
+        // accounts drive Merkle root, so that we can be sure that it differs
+        // from the actual last-finalized machine Merkle root.
+        bytes32 invalidMachineMerkleRoot = proof.merkleRootAfterReplacement(
+            deploymentArgs.withdrawalConfig.accountsDriveStartIndex,
+            invalidAccountsDriveMerkleRoot
+        );
+
+        // Ensure that the machine Merkle root proved from the random proof
+        // differs from the last-finalized machine Merkle root or (if zero)
+        // from the application template hash.
+        vm.assume(
+            invalidMachineMerkleRoot
+                != ((lastFinalizedMachineMerkleRoot == bytes32(0))
+                        ? deploymentArgs.templateHash
+                        : lastFinalizedMachineMerkleRoot)
+        );
+
+        // We make the outputs Merkle root validator return the fuzzed
+        // last-finalized machine Merkle root. If zero, the application
+        // contract uses the template hash instead.
+        _mockGetLastFinalizedMachineMerkleRoot(
+            deploymentArgs.outputsMerkleRootValidator,
+            appContract,
+            lastFinalizedMachineMerkleRoot
+        );
+
+        // Randomize the foreclosure block number.
+        _randomizeBlockNumber();
+
+        // We foreclose the application so that we can prove
+        // the accounts drive Merkle root.
+        vm.prank(appContract.getGuardian());
+        appContract.foreclose();
+
+        // Randomize the proof block number.
+        _randomizeBlockNumber();
+
+        // We attempt to prove a different accounts drive Merkle root.
+        vm.expectRevert(_encodeInvalidMachineMerkleRoot(invalidMachineMerkleRoot));
+        vm.prank(vm.randomAddress());
+        appContract.proveAccountsDriveMerkleRoot(invalidAccountsDriveMerkleRoot, proof);
+    }
+
+    function testProveAccountsDriveMerkleRoot(
+        DeploymentArgs memory deploymentArgs,
+        bytes32 accountsDriveMerkleRoot
+    ) external {
+        // We first need to assume that the withdrawal config is valid,
+        // in order to compute the accounts drive Merkle root.
+        // If the withdrawal config is not valid, the application contract
+        // wouldn't be deployed anyway, so this adds no extra restriction.
+        vm.assume(deploymentArgs.withdrawalConfig.isValid());
+
+        // Generate a random Merkle proof with the correct size for
+        // the accounts drive Merkle root, given the withdrawal config
+        // of the application.
+        bytes32[] memory proof =
+            _randomProof(_getAccountsDriveMerkleRootProofSize(deploymentArgs));
+
+        // Compute the machine Merkle root from the random Merkle proof and
+        // accounts drive Merkle root, so that we later prove it bottom-up.
+        bytes32 machineMerkleRoot = proof.merkleRootAfterReplacement(
+            deploymentArgs.withdrawalConfig.accountsDriveStartIndex,
+            accountsDriveMerkleRoot
+        );
+
+        // At random, we choose to prove the accounts drive Merkle root
+        // from the template hash or from the last-finalized machine Merkle
+        // root provided by the outputs Merkle root validator.
+        bool proveFromTemplate = vm.randomBool();
+
+        // If proving from the template hash, we use the computed machine
+        // Merkle root as the template hash of the application.
+        if (proveFromTemplate) {
+            deploymentArgs.templateHash = machineMerkleRoot;
+        }
+
+        // We deploy the application which may have the computed machine Merkle root
+        // as template hash depending on the previous step.
+        IApplication appContract = _newApplication(deploymentArgs);
+
+        // We mock the getLastFinalizedMachineMerkleRoot to return zero if proving
+        // from the template hash, or the computed machine Merkle root otherwise.
+        _mockGetLastFinalizedMachineMerkleRoot(
+            deploymentArgs.outputsMerkleRootValidator,
+            appContract,
+            proveFromTemplate ? bytes32(0) : machineMerkleRoot
+        );
+
+        // Randomize the proof attempt and foreclosure block number.
+        _randomizeBlockNumber();
+
+        // Attempt to prove the accounts drive Merkle root before
+        // the guardian has foreclosed the application.
+        vm.expectRevert(IApplication.NotForeclosed.selector);
+        vm.prank(vm.randomAddress());
+        appContract.proveAccountsDriveMerkleRoot(accountsDriveMerkleRoot, proof);
+
+        // Make the guardian foreclose the application.
+        vm.prank(appContract.getGuardian());
+        appContract.foreclose();
+
+        // The accounts drive Merkle root should still be unproved.
+        // That is, getAccountsDriveMerkleRoot() should return (false, _).
+        {
+            bool wasValueProved;
+            (wasValueProved,) = appContract.getAccountsDriveMerkleRoot();
+            assertFalse(wasValueProved);
+        }
+
+        // Randomize the proof block number.
+        _randomizeBlockNumber();
+
+        // Prove the accounts drive Merkle root.
+        vm.recordLogs();
+        vm.prank(vm.randomAddress());
+        appContract.proveAccountsDriveMerkleRoot(accountsDriveMerkleRoot, proof);
+
+        // Ensure the AccountsDriveMerkleRootProved event was emitted.
+        {
+            Vm.Log[] memory logs = vm.getRecordedLogs();
+            uint256 numOfAccountsDriveMerkleRootProvedEvents;
+            for (uint256 i; i < logs.length; ++i) {
+                Vm.Log memory log = logs[i];
+                if (log.emitter == address(appContract)) {
+                    assertGe(log.topics.length, 1);
+                    bytes32 topic0 = log.topics[0];
+                    if (topic0 == IApplication.AccountsDriveMerkleRootProved.selector) {
+                        bytes32 arg1 = abi.decode(log.data, (bytes32));
+                        assertEq(arg1, accountsDriveMerkleRoot);
+                        ++numOfAccountsDriveMerkleRootProvedEvents;
+                    } else {
+                        revert UnexpectedLog(log);
+                    }
+                } else {
+                    revert UnexpectedLog(log);
+                }
+            }
+            assertEq(numOfAccountsDriveMerkleRootProvedEvents, 1);
+        }
+
+        // The accounts drive Merkle root should now be marked as proved.
+        // That is, getAccountsDriveMerkleRoot() should return (true, x)
+        // where x is the accounts drive Merkle root that was proved.
+        {
+            bool wasValueProved;
+            bytes32 value;
+            (wasValueProved, value) = appContract.getAccountsDriveMerkleRoot();
+            assertTrue(wasValueProved);
+            assertEq(value, accountsDriveMerkleRoot);
+        }
+
+        // Randomize the second proof attempt block number.
+        _randomizeBlockNumber();
+
+        // Attempting to prove the same accounts drive Merkle root fails.
+        vm.expectRevert(IApplication.AccountsDriveMerkleRootAlreadyProved.selector);
+        vm.prank(vm.randomAddress());
+        appContract.proveAccountsDriveMerkleRoot(accountsDriveMerkleRoot, proof);
+
+        // If the outputs Merkle root validator (for some reason) returns a
+        // different last-finalized machine Merkle root even after foreclosure,
+        // it will still be impossible to prove a different accounts drive Merkle root.
+        // Since we cannot change the template hash, we generate another random
+        // machine Merkle root, and make the outputs Merkle root validator return it.
+        // To do so, we need to first clear the mocked calls.
+        {
+            accountsDriveMerkleRoot = bytes32(vm.randomUint());
+            proof = _randomProof(proof.length);
+            vm.clearMockedCalls();
+            _mockGetLastFinalizedMachineMerkleRoot(
+                deploymentArgs.outputsMerkleRootValidator,
+                appContract,
+                proof.merkleRootAfterReplacement(
+                    deploymentArgs.withdrawalConfig.accountsDriveStartIndex,
+                    accountsDriveMerkleRoot
+                )
+            );
+            vm.expectRevert(IApplication.AccountsDriveMerkleRootAlreadyProved.selector);
+            vm.prank(vm.randomAddress());
+            appContract.proveAccountsDriveMerkleRoot(accountsDriveMerkleRoot, proof);
+        }
+    }
+
+    // -----------
+    // simulations
+    // -----------
 
     /// @notice This function is used to simulate rolling past a certain block and making a migration.
     /// If the migration succeeds, then the function reverts with error message "Successful migration".
@@ -375,6 +741,20 @@ contract ApplicationFactoryTest is RollupsTest, VersionGetterTestUtils, OwnableT
         revert("Successful migration");
     }
 
+    // ------------------
+    // internal functions
+    // ------------------
+
+    function _encodeInvalidMachineMerkleRoot(bytes32 machineMerkleRoot)
+        internal
+        pure
+        returns (bytes memory)
+    {
+        return abi.encodeWithSelector(
+            IApplication.InvalidMachineMerkleRoot.selector, machineMerkleRoot
+        );
+    }
+
     function assertEq(WithdrawalConfig memory wc1, WithdrawalConfig memory wc2)
         internal
         pure
@@ -387,11 +767,36 @@ contract ApplicationFactoryTest is RollupsTest, VersionGetterTestUtils, OwnableT
         vm.roll(blockNumber);
     }
 
-    function _newApplication(DeploymentArgs calldata deploymentArgs)
+    function _newApplication(DeploymentArgs memory deploymentArgs)
         internal
         returns (IApplication)
     {
         vm.assumeNoRevert();
         return _factory.newApplication(deploymentArgs);
+    }
+
+    function _getAccountsDriveMerkleRootProofSize(DeploymentArgs memory deploymentArgs)
+        internal
+        pure
+        returns (uint256)
+    {
+        return CanonicalMachine.LOG2_MEMORY_SIZE - CanonicalMachine.LOG2_DATA_BLOCK_SIZE
+            - deploymentArgs.withdrawalConfig.log2MaxNumOfAccounts
+            - deploymentArgs.withdrawalConfig.log2LeavesPerAccount;
+    }
+
+    function _mockGetLastFinalizedMachineMerkleRoot(
+        IOutputsMerkleRootValidator outputsMerkleRootValidator,
+        IApplication appContract,
+        bytes32 lastFinalizedMachineMerkleRoot
+    ) internal {
+        vm.mockCall(
+            address(outputsMerkleRootValidator),
+            abi.encodeCall(
+                IOutputsMerkleRootValidator.getLastFinalizedMachineMerkleRoot,
+                (address(appContract))
+            ),
+            abi.encode(lastFinalizedMachineMerkleRoot)
+        );
     }
 }

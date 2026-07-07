@@ -188,8 +188,8 @@ contract SelfHostedApplicationFactoryTest is RollupsTest, VersionGetterTestUtils
                 address(authority),
                 "calculateAddresses(...) is not a pure function"
             );
-        } catch (bytes memory error) {
-            (bytes4 errorSelector, bytes memory errorArgs) = error.consumeBytes4();
+        } catch (bytes memory errorData) {
+            (bytes4 errorSelector, bytes memory errorArgs) = errorData.consumeBytes4();
             if (errorSelector == Ownable.OwnableInvalidOwner.selector) {
                 address owner = abi.decode(errorArgs, (address));
                 assertEq(owner, address(0), "OwnableInvalidOwner.owner != address(0)");
@@ -214,7 +214,7 @@ contract SelfHostedApplicationFactoryTest is RollupsTest, VersionGetterTestUtils
                     withdrawalConfig.isValid(), "expected withdrawal config to be invalid"
                 );
             } else {
-                revert("Unexpected error");
+                revert UnexpectedError(errorData);
             }
         }
     }

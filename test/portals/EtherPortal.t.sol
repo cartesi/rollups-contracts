@@ -173,7 +173,7 @@ contract EtherPortalTest is RollupsTest, InputBoxTestUtils, VersionGetterTestUti
                     _decodeInputAdded(log, appContract, address(_portal), numOfInputs);
                 ++numOfInputAdded;
             } else {
-                revert("unexpected log emitter");
+                revert UnexpectedLog(log);
             }
         }
 

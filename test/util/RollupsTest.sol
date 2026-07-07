@@ -4,6 +4,7 @@
 pragma solidity ^0.8.30;
 
 import {Test} from "forge-std-1.9.6/src/Test.sol";
+import {Vm} from "forge-std-1.9.6/src/Vm.sol";
 
 import "script/utils/CoreContracts.sol" as CoreContracts;
 import "script/utils/DevContracts.sol" as DevContracts;
@@ -16,6 +17,19 @@ struct ContractSuites {
 abstract contract RollupsTest is Test {
     /// @notice Core and dev contracts deployed deterministically.
     ContractSuites _contracts;
+
+    /// @notice This error can be raised by tests that check logs emitted by non-view
+    /// function calls, either because the log emitter or topic #0 were unexpected. Logs
+    /// can be obtained via the recordLogs/getRecordedLogs cheatcode pair.
+    /// @param log The unexpected EVM log
+    error UnexpectedLog(Vm.Log log);
+
+    /// @notice This error can be raised by tests that check errors raised by functions
+    /// calls because the event selector was unexpected. Errors can be caught through
+    /// try-catch blocks in Solidity and handled through byte manipulation libraries
+    /// and Solidity's native ABI decoding capabilities.
+    /// @param errorData The unexpected error encoded according to Solidity ABI
+    error UnexpectedError(bytes errorData);
 
     constructor() {
         // We ensure the CREATE2 factory is deployed so that we can deploy the core and

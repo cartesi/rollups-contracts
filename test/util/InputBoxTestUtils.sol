@@ -73,11 +73,8 @@ contract InputBoxTestUtils is ApplicationCheckerTestUtils {
         address sender,
         uint256 index
     ) internal view returns (bytes memory input, bytes memory payload) {
-        require(log.topics.length >= 1, "unexpected InputBox annonymous event");
-        require(
-            log.topics[0] == IInputBox.InputAdded.selector,
-            "unexpected selector of InputBox event"
-        );
+        require(log.topics.length >= 1, UnexpectedLog(log));
+        require(log.topics[0] == IInputBox.InputAdded.selector, UnexpectedLog(log));
         assertEq(log.topics[1], appContract.asTopic());
         assertEq(log.topics[2], bytes32(index));
         (input) = abi.decode(log.data, (bytes));

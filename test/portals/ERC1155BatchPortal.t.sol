@@ -230,10 +230,10 @@ contract ERC1155BatchPortalTest is
                     assertEq(arg2, values);
                     ++numOfTransferBatch;
                 } else {
-                    revert("unexpected token contract topic #0");
+                    revert UnexpectedLog(log);
                 }
             } else {
-                revert("unexpected log emitter");
+                revert UnexpectedLog(log);
             }
         }
 

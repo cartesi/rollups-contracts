@@ -465,7 +465,7 @@ contract AuthorityFactoryTest is
                         "ApplicationForeclosed.appContract != appContract"
                     );
                 } else {
-                    revert("Unexpected error");
+                    revert UnexpectedError(errorData);
                 }
             }
 
@@ -487,7 +487,7 @@ contract AuthorityFactoryTest is
                     assertEq(arg2, claim.lastProcessedBlockNumber);
                     assertTrue(blockNumbers.containsBefore(arg2, claimIndex));
                 } else {
-                    revert("Unexpected error");
+                    revert UnexpectedError(errorData);
                 }
 
                 // Proceed to the next claim.
@@ -503,13 +503,14 @@ contract AuthorityFactoryTest is
                 for (uint256 i; i < logs.length; ++i) {
                     Vm.Log memory log = logs[i];
                     if (log.emitter == address(authority)) {
-                        assertGe(log.topics.length, 1, "unexpected annonymous event");
+                        require(log.topics.length >= 1, UnexpectedLog(log));
                         bytes32 topic0 = log.topics[0];
                         if (topic0 == IConsensus.ClaimSubmitted.selector) {
                             (uint256 arg0, bytes32 arg1, bytes32 arg2) =
                                 abi.decode(log.data, (uint256, bytes32, bytes32));
                             assertEq(log.topics[1], authority.owner().asTopic());
                             assertEq(log.topics[2], claim.appContract.asTopic());
+                            assertEq(log.topics.length, 3);
                             assertEq(arg0, claim.lastProcessedBlockNumber);
                             assertEq(arg1, claim.outputsMerkleRoot);
                             assertEq(arg2, machineMerkleRoot);
@@ -523,10 +524,10 @@ contract AuthorityFactoryTest is
                             assertEq(arg2, machineMerkleRoot);
                             ++numOfClaimStagedEvents;
                         } else {
-                            revert("unexpected event selector");
+                            revert UnexpectedLog(log);
                         }
                     } else {
-                        revert("unexpected log emitter");
+                        revert UnexpectedLog(log);
                     }
                 }
 
@@ -665,7 +666,7 @@ contract AuthorityFactoryTest is
                 for (uint256 i; i < logs.length; ++i) {
                     Vm.Log memory log = logs[i];
                     if (log.emitter == address(authority)) {
-                        assertGe(log.topics.length, 1, "unexpected annonymous event");
+                        require(log.topics.length >= 1, UnexpectedLog(log));
                         bytes32 topic0 = log.topics[0];
                         if (topic0 == IConsensus.ClaimAccepted.selector) {
                             (uint256 arg0, bytes32 arg1, bytes32 arg2) =
@@ -676,10 +677,10 @@ contract AuthorityFactoryTest is
                             assertEq(arg2, machineMerkleRoot);
                             ++numOfClaimAcceptedEvents;
                         } else {
-                            revert("unexpected event selector");
+                            revert UnexpectedLog(log);
                         }
                     } else {
-                        revert("unexpected log emitter");
+                        revert UnexpectedLog(log);
                     }
                 }
 
@@ -999,7 +1000,7 @@ contract AuthorityFactoryTest is
                     address authorityAddress = abi.decode(log.data, (address));
                     assertEq(address(authority), authorityAddress);
                 } else {
-                    revert("unexpected log topic #0");
+                    revert UnexpectedLog(log);
                 }
             } else if (log.emitter == address(authority)) {
                 bytes32 topic0 = log.topics[0];
@@ -1008,10 +1009,10 @@ contract AuthorityFactoryTest is
                     assertEq(log.topics[1], address(0).asTopic());
                     assertEq(log.topics[2], authorityOwner.asTopic());
                 } else {
-                    revert("unexpected log topic #0");
+                    revert UnexpectedLog(log);
                 }
             } else {
-                revert("unexpected log");
+                revert UnexpectedLog(log);
             }
         }
 
@@ -1103,7 +1104,7 @@ contract AuthorityFactoryTest is
             assertEq(errorArgs.length, 0, "expected ZeroEpochLength to have no args");
             assertEq(epochLength, 0, "expected epoch length to be zero");
         } else {
-            revert("Unexpected error");
+            revert UnexpectedError(errorData);
         }
     }
 

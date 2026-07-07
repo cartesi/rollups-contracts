@@ -137,7 +137,7 @@ contract InputBoxTest is RollupsTest, InputBoxTestUtils, VersionGetterTestUtils 
                     assertEq(keccak256(decodedInput), inputHash);
                     ++numOfInputAdded;
                 } else {
-                    revert("unexpected log emitter");
+                    revert UnexpectedLog(log);
                 }
             }
             assertEq(numOfInputAdded, 1);

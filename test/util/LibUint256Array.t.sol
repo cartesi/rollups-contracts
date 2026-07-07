@@ -3,15 +3,15 @@
 
 pragma solidity ^0.8.30;
 
-import {Test} from "forge-std-1.9.6/src/Test.sol";
 import {Vm} from "forge-std-1.9.6/src/Vm.sol";
 
 import {LibMath} from "src/library/LibMath.sol";
 
 import {LibBytes} from "./LibBytes.sol";
 import {LibUint256Array} from "./LibUint256Array.sol";
+import {RollupsTest} from "./RollupsTest.sol";
 
-contract LibUint256ArrayTest is Test {
+contract LibUint256ArrayTest is RollupsTest {
     using LibUint256Array for uint256[];
     using LibUint256Array for Vm;
     using LibBytes for bytes;
@@ -201,8 +201,8 @@ contract LibUint256ArrayTest is Test {
                 }
                 assertTrue(foundMaxInSubArray, "Expected to find maximum value in array");
             }
-        } catch (bytes memory error) {
-            (bytes4 errorSelector, bytes memory errorArgs) = error.consumeBytes4();
+        } catch (bytes memory errorData) {
+            (bytes4 errorSelector, bytes memory errorArgs) = errorData.consumeBytes4();
             if (errorSelector == LibUint256Array.InvalidSubArrayLength.selector) {
                 (uint256 arg1, uint256 arg2) = abi.decode(errorArgs, (uint256, uint256));
                 assertEq(
@@ -221,7 +221,7 @@ contract LibUint256ArrayTest is Test {
                     "Expected sub-array length to be > array length"
                 );
             } else {
-                revert("Unexpected error");
+                revert UnexpectedError(errorData);
             }
         }
     }
