@@ -6,12 +6,14 @@ pragma solidity ^0.8.30;
 import {AccountValidityProof} from "src/common/AccountValidityProof.sol";
 import {BinaryMerkleTreeErrors} from "src/common/BinaryMerkleTreeErrors.sol";
 import {CanonicalMachine} from "src/common/CanonicalMachine.sol";
+import {Inputs} from "src/common/Inputs.sol";
 import {OutputValidityProof} from "src/common/OutputValidityProof.sol";
 import {Outputs} from "src/common/Outputs.sol";
 import {WithdrawalConfig} from "src/common/WithdrawalConfig.sol";
 import {IAuthority} from "src/consensus/authority/IAuthority.sol";
 import {IApplication} from "src/dapp/IApplication.sol";
 import {ISafeERC20Transfer} from "src/delegatecall/ISafeERC20Transfer.sol";
+import {IInputBox} from "src/inputs/IInputBox.sol";
 import {LibUsdAccount} from "src/library/LibUsdAccount.sol";
 import {IRefundOutputBuilderErrors} from "src/refund/IRefundOutputBuilderErrors.sol";
 import {IWithdrawalOutputBuilder} from "src/withdrawal/IWithdrawalOutputBuilder.sol";
@@ -70,6 +72,17 @@ contract ApplicationTest is
         ERC721,
         ERC1155_SINGLE,
         ERC1155_BATCH
+    }
+
+    struct InputArgs {
+        uint256 chainId;
+        address appContract;
+        address msgSender;
+        uint256 blockNumber;
+        uint256 blockTimestamp;
+        uint256 prevRandao;
+        uint256 index;
+        bytes payload;
     }
 
     IApplication _appContract;
@@ -951,6 +964,102 @@ contract ApplicationTest is
             );
             vm.prank(vm.randomAddress());
             _appContract.issueRefund(i, inputs[i]);
+        }
+    }
+
+    function testValidateIllformedInputs(bytes calldata randomBytes) external {
+        // Randomize blockchain environment
+        vm.chainId(vm.randomUint(64));
+        vm.roll(vm.randomUint(vm.getBlockNumber(), type(uint256).max - 1));
+        vm.warp(vm.randomUint(vm.getBlockTimestamp(), type(uint256).max - 1));
+
+        // Inputs are encoded as Solidity function calls, which always start
+        // with a 4-byte selector. If the input has fewer than 4 bytes, then
+        // it is ill-formed.
+        _testValidateIllFormedInput(vm.randomBytes(vm.randomUint(0, 3)));
+
+        // Inputs are expected to be encoded EvmAdvance function calls.
+        // If the selector is different, it is deemed ill-formed.
+        {
+            bytes4 selector;
+            while (true) {
+                selector = vm.randomBytes4();
+                if (selector != Inputs.EvmAdvance.selector) {
+                    break; // Found a selector different from EvmAdvance
+                }
+            }
+
+            _testValidateIllFormedInput(bytes.concat(selector, randomBytes));
+        }
+
+        // Test input with different chain ID
+        {
+            InputArgs memory inputArgs = _getDefaultInputArgs();
+
+            uint256 chainId;
+            while (true) {
+                chainId = vm.randomUint(64);
+                if (chainId != inputArgs.chainId) {
+                    break; // Found different chain ID
+                }
+            }
+
+            inputArgs.chainId = chainId;
+            _testValidateIllFormedInput(_encodeInput(inputArgs));
+        }
+
+        // Test input with different application contract address
+        {
+            InputArgs memory inputArgs = _getDefaultInputArgs();
+
+            address appContract;
+            while (true) {
+                appContract = vm.randomAddress();
+                if (appContract != inputArgs.appContract) {
+                    break; // Found different chain ID
+                }
+            }
+
+            inputArgs.appContract = appContract;
+            _testValidateIllFormedInput(_encodeInput(inputArgs));
+        }
+
+        // Test input with future block number
+        {
+            InputArgs memory inputArgs = _getDefaultInputArgs();
+
+            uint256 blockNumber =
+                vm.randomUint(vm.getBlockNumber() + 1, type(uint256).max);
+
+            inputArgs.blockNumber = blockNumber;
+            _testValidateIllFormedInput(_encodeInput(inputArgs));
+        }
+
+        // Test input with future block timestamp
+        {
+            InputArgs memory inputArgs = _getDefaultInputArgs();
+
+            uint256 blockTimestamp =
+                vm.randomUint(vm.getBlockTimestamp() + 1, type(uint256).max);
+
+            inputArgs.blockTimestamp = blockTimestamp;
+            _testValidateIllFormedInput(_encodeInput(inputArgs));
+        }
+
+        // Test input with invalid index
+        {
+            InputArgs memory inputArgs = _getDefaultInputArgs();
+
+            uint256 index;
+            while (true) {
+                index = vm.randomUint();
+                if (index != inputArgs.index) {
+                    break; // Found different index
+                }
+            }
+
+            inputArgs.index = index;
+            _testValidateIllFormedInput(_encodeInput(inputArgs));
         }
     }
 
@@ -2491,5 +2600,70 @@ contract ApplicationTest is
     function _validateAccounts() internal {
         bytes memory expectedError;
         _validateAccounts(false, expectedError);
+    }
+
+    function _testValidateIllFormedInput(bytes memory input) internal {
+        // First, we compute the hash of the input (for later mocking and testing)
+        bytes32 inputHash = keccak256(input);
+
+        // Then we add any input so that we can later mock its hash
+        address appContract = address(_appContract);
+        uint256 inputIndex = _contracts.core.inputBox.getNumberOfInputs(appContract);
+        _contracts.core.inputBox.addInput(address(_appContract), new bytes(0));
+
+        // We alter the input hash reported by the input box by mocking the
+        // getInputHash function call, making it return the new input hash.
+        // This leads to a mismatch between the InputAdded event and the hash
+        // reported by the input box via the getInputHash function, but it's a
+        // non-observable mismatch for the contracts.
+        vm.mockCall(
+            address(_contracts.core.inputBox),
+            abi.encodeCall(IInputBox.getInputHash, (address(_appContract), inputIndex)),
+            abi.encode(inputHash)
+        );
+
+        // We are able to validate the input hash, because it matches the
+        // value mocked in the input box contract, and because the structure
+        // of the input (which may be ill-formed) is not visible because information
+        // is lost after the input is hashed.
+        _appContract.validateInputHash(inputIndex, inputHash);
+
+        // We should not be able to validate the input because it is (presumably)
+        // ill-formed. It is expected that an IllFormedInput error is raised.
+        vm.expectRevert(IApplication.IllFormedInput.selector);
+        _appContract.validateInput(inputIndex, input);
+    }
+
+    function _getDefaultInputArgs() internal view returns (InputArgs memory) {
+        return InputArgs({
+            chainId: block.chainid,
+            appContract: address(_appContract),
+            msgSender: address(this),
+            blockNumber: vm.getBlockNumber(),
+            blockTimestamp: vm.getBlockTimestamp(),
+            prevRandao: block.prevrandao,
+            index: _contracts.core.inputBox.getNumberOfInputs(address(_appContract)),
+            payload: new bytes(0)
+        });
+    }
+
+    function _encodeInput(InputArgs memory args)
+        internal
+        pure
+        returns (bytes memory input)
+    {
+        return abi.encodeCall(
+            Inputs.EvmAdvance,
+            (
+                args.chainId,
+                args.appContract,
+                args.msgSender,
+                args.blockNumber,
+                args.blockTimestamp,
+                args.prevRandao,
+                args.index,
+                args.payload
+            )
+        );
     }
 }
