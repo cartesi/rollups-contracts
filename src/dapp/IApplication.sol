@@ -85,6 +85,10 @@ interface IApplication is
     /// @param balance The current application contract balance
     error InsufficientFunds(uint256 value, uint256 balance);
 
+    /// @notice Could not execute an output, because the target account doesn't have any code.
+    /// @param target The target account address
+    error TargetHasNoCode(address target);
+
     /// @notice Raised when the output hashes siblings array has an invalid size.
     /// @dev Please consult `CanonicalMachine` for the maximum number of outputs.
     error InvalidOutputHashesSiblingsArrayLength();

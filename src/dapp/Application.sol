@@ -695,7 +695,11 @@ contract Application is
 
         (destination, payload) = abi.decode(arguments, (address, bytes));
 
-        destination.safeDelegateCall(payload);
+        bool hasCode = destination.safeDelegateCall(payload);
+
+        if (!hasCode) {
+            revert TargetHasNoCode(destination);
+        }
     }
 
     /// @notice Ensures the message sender is the guardian.

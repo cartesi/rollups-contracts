@@ -15,6 +15,9 @@ library LibAddress {
     /// contracts—encodes a function call
     /// @return Whether the caller had enough Ether to make the call,
     /// and the balance before the call
+    /// @dev Can be used to transfer Ether to EOAs by passing a non-zero
+    /// value and an empty payload. Solidity contracts will accept such
+    /// message calls through the receive() payable entrypoint.
     function safeCall(address destination, uint256 value, bytes memory payload)
         internal
         returns (bool, uint256)
@@ -42,7 +45,15 @@ library LibAddress {
     /// @param destination The address that will be called
     /// @param payload The payload, which—in the case of Solidity
     /// libraries—encodes a function call
-    function safeDelegateCall(address destination, bytes memory payload) internal {
+    /// @return Whether the destination had any code
+    function safeDelegateCall(address destination, bytes memory payload)
+        internal
+        returns (bool)
+    {
+        if (destination.code.length == 0) {
+            return false;
+        }
+
         bool success;
         bytes memory returndata;
 
@@ -51,5 +62,7 @@ library LibAddress {
         if (!success) {
             returndata.raise();
         }
+
+        return true;
     }
 }

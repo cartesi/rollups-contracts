@@ -369,6 +369,19 @@ contract ApplicationTest is
         _testErc20Fail(output, proof);
     }
 
+    function testExecuteERC20TransferDelegateCallVoucherNoCode() external {
+        string memory name = "ERC20DelegateCallVoucher";
+        bytes memory output = _getOutput(name);
+        OutputValidityProof memory proof = _getOutputValidityProof(name);
+
+        vm.etch(address(_safeErc20Transfer), abi.encode());
+
+        _submitAndAcceptClaim();
+
+        vm.expectRevert(_encodeTargetHasNoCode(address(_safeErc20Transfer)));
+        _appContract.executeOutput(output, proof);
+    }
+
     function testExecuteERC20TransferDelegateCallVoucherSuccess() external {
         string memory name = "ERC20DelegateCallVoucher";
         bytes memory output = _getOutput(name);
@@ -2104,6 +2117,10 @@ contract ApplicationTest is
             attemptedAccountSize,
             28
         );
+    }
+
+    function _encodeTargetHasNoCode(address target) internal pure returns (bytes memory) {
+        return abi.encodeWithSelector(IApplication.TargetHasNoCode.selector, target);
     }
 
     function _wasOutputExecuted(OutputValidityProof memory proof)
