@@ -677,14 +677,7 @@ contract Application is
 
         (destination, value, payload) = abi.decode(arguments, (address, uint256, bytes));
 
-        bool enoughFunds;
-        uint256 balance;
-
-        (enoughFunds, balance) = destination.safeCall(value, payload);
-
-        if (!enoughFunds) {
-            revert InsufficientFunds(value, balance);
-        }
+        destination.safeCall(value, payload);
     }
 
     /// @notice Executes a delegatecall voucher
@@ -695,11 +688,7 @@ contract Application is
 
         (destination, payload) = abi.decode(arguments, (address, bytes));
 
-        bool hasCode = destination.safeDelegateCall(payload);
-
-        if (!hasCode) {
-            revert TargetHasNoCode(destination);
-        }
+        destination.safeDelegateCall(payload);
     }
 
     /// @notice Ensures the message sender is the guardian.

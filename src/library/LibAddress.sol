@@ -3,6 +3,7 @@
 
 pragma solidity ^0.8.30;
 
+import {AddressErrors} from "../common/AddressErrors.sol";
 import {LibError} from "../library/LibError.sol";
 
 library LibAddress {
@@ -13,20 +14,19 @@ library LibAddress {
     /// @param value The amount of Wei to be transferred through the call
     /// @param payload The payload, which—in the case of Solidity
     /// contracts—encodes a function call
-    /// @return Whether the caller had enough Ether to make the call,
-    /// and the balance before the call
     /// @dev Can be used to transfer Ether to EOAs by passing a non-zero
     /// value and an empty payload. Solidity contracts will accept such
     /// message calls through the receive() payable entrypoint.
-    function safeCall(address destination, uint256 value, bytes memory payload)
-        internal
-        returns (bool, uint256)
-    {
+    function safeCall(address destination, uint256 value, bytes memory payload) internal {
         address caller = address(this);
         uint256 balance = caller.balance;
 
         if (value > balance) {
-            return (false, balance);
+            revert AddressErrors.InsufficientFunds(value, balance);
+        }
+
+        if (payload.length > 0 && destination.code.length == 0) {
+            revert AddressErrors.TargetHasNoCode(destination);
         }
 
         bool success;
@@ -37,21 +37,15 @@ library LibAddress {
         if (!success) {
             returndata.raise();
         }
-
-        return (true, balance);
     }
 
     /// @notice Perform a delegate call and raise error if failed
     /// @param destination The address that will be called
     /// @param payload The payload, which—in the case of Solidity
     /// libraries—encodes a function call
-    /// @return Whether the destination had any code
-    function safeDelegateCall(address destination, bytes memory payload)
-        internal
-        returns (bool)
-    {
+    function safeDelegateCall(address destination, bytes memory payload) internal {
         if (destination.code.length == 0) {
-            return false;
+            revert AddressErrors.TargetHasNoCode(destination);
         }
 
         bool success;
@@ -62,7 +56,5 @@ library LibAddress {
         if (!success) {
             returndata.raise();
         }
-
-        return true;
     }
 }

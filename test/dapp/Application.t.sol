@@ -4,6 +4,7 @@
 pragma solidity ^0.8.30;
 
 import {AccountValidityProof} from "src/common/AccountValidityProof.sol";
+import {AddressErrors} from "src/common/AddressErrors.sol";
 import {BinaryMerkleTreeErrors} from "src/common/BinaryMerkleTreeErrors.sol";
 import {CanonicalMachine} from "src/common/CanonicalMachine.sol";
 import {Inputs} from "src/common/Inputs.sol";
@@ -289,6 +290,21 @@ contract ApplicationTest is
         _testEtherMint(output, proof);
     }
 
+    function testExecutePaidVoucherToAddressWithNoCode() external {
+        string memory name = "EtherMintVoucher";
+        bytes memory output = _getOutput(name);
+        OutputValidityProof memory proof = _getOutputValidityProof(name);
+
+        vm.deal(address(_appContract), vm.randomUint(TRANSFER_AMOUNT, type(uint256).max));
+        vm.etch(address(_etherReceiver), abi.encode());
+
+        _submitAndAcceptClaim();
+
+        vm.prank(vm.randomAddress());
+        vm.expectRevert(_encodeTargetHasNoCode(address(_etherReceiver)));
+        _appContract.executeOutput(output, proof);
+    }
+
     function testExecuteERC20TransferVoucher() external {
         string memory name = "ERC20TransferVoucher";
         bytes memory output = _getOutput(name);
@@ -313,6 +329,20 @@ contract ApplicationTest is
         _appContract.executeOutput(output, proof);
 
         _testErc20Success(output, proof);
+    }
+
+    function testExecuteVoucherToAddressWithNoCode() external {
+        string memory name = "ERC20TransferVoucher";
+        bytes memory output = _getOutput(name);
+        OutputValidityProof memory proof = _getOutputValidityProof(name);
+
+        vm.etch(address(_erc20Token), abi.encode());
+
+        _submitAndAcceptClaim();
+
+        vm.prank(vm.randomAddress());
+        vm.expectRevert(_encodeTargetHasNoCode(address(_erc20Token)));
+        _appContract.executeOutput(output, proof);
     }
 
     function testExecuteERC721TransferVoucher() external {
@@ -2294,7 +2324,7 @@ contract ApplicationTest is
     }
 
     function _encodeTargetHasNoCode(address target) internal pure returns (bytes memory) {
-        return abi.encodeWithSelector(IApplication.TargetHasNoCode.selector, target);
+        return abi.encodeWithSelector(AddressErrors.TargetHasNoCode.selector, target);
     }
 
     function _wasOutputExecuted(OutputValidityProof memory proof)
@@ -2316,7 +2346,7 @@ contract ApplicationTest is
         );
         vm.expectRevert(
             abi.encodeWithSelector(
-                IApplication.InsufficientFunds.selector, TRANSFER_AMOUNT, 0
+                AddressErrors.InsufficientFunds.selector, TRANSFER_AMOUNT, 0
             )
         );
         _appContract.executeOutput(output, proof);
