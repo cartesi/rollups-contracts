@@ -1379,6 +1379,15 @@ contract ApplicationTest is
                 errorData = abi.encodeWithSelector(
                     AssetReceiver.EtherRejected.selector, _appContract, value
                 );
+            } else if (depositType == DepositType.ERC20) {
+                isRevertExpected = (value > 0);
+                if (isRevertExpected) {
+                    vm.prank(address(_appContract));
+                    _contracts.dev.testFungibleToken.burn(value);
+                    errorData = _encodeErc20InsufficientBalance(
+                        _contracts.dev.testFungibleToken, value
+                    );
+                }
             } else if (depositType == DepositType.ERC721) {
                 isRevertExpected = true;
                 errorData = abi.encodeWithSelector(
@@ -1429,6 +1438,11 @@ contract ApplicationTest is
                 vm.expectRevert(errorData);
                 _appContract.issueRefund(inputIndex, input);
                 _assetReceiver.setRejecting(false);
+            }
+
+            if (depositType == DepositType.ERC20) {
+                vm.prank(address(_appContract));
+                _contracts.dev.testFungibleToken.mint(value);
             }
         }
 
@@ -2013,7 +2027,7 @@ contract ApplicationTest is
         _appContract.foreclose();
         vm.prank(vm.randomAddress());
         _appContract.issueRefund(inputIndex, input);
-        revert("Successful proof");
+        revert("Successful refund");
     }
 
     function _submitAndAcceptClaim() internal {
