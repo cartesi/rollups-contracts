@@ -71,7 +71,9 @@ contract ApplicationTest is
         ERC20,
         ERC721,
         ERC1155_SINGLE,
-        ERC1155_BATCH
+        ERC1155_BATCH_ZERO,
+        ERC1155_BATCH_ONE,
+        ERC1155_BATCH_MANY
     }
 
     struct InputArgs {
@@ -1067,7 +1069,6 @@ contract ApplicationTest is
         bytes[] calldata payloads,
         uint256 tokenId,
         uint256 value,
-        uint256[] calldata values,
         bytes calldata baseLayerData,
         bytes calldata execLayerData
     ) external {
@@ -1098,6 +1099,7 @@ contract ApplicationTest is
         // 3. Deposit funds
         address depositor;
         address portalAddress;
+        uint256[] memory values;
         uint256[] memory tokenIds;
         uint256[] memory balances;
         if (depositType == DepositType.ETHER) {
@@ -1164,9 +1166,49 @@ contract ApplicationTest is
                     execLayerData
                 );
             vm.stopPrank();
-        } else if (depositType == DepositType.ERC1155_BATCH) {
+        } else if (depositType == DepositType.ERC1155_BATCH_ZERO) {
             depositor = address(_assetReceiver);
             portalAddress = address(_contracts.core.erc1155BatchPortal);
+            vm.startPrank(depositor);
+            _contracts.dev.testMultiToken.setApprovalForAll(portalAddress, true);
+            vm.recordLogs();
+            _contracts.core.erc1155BatchPortal
+                .depositBatchERC1155Token(
+                    _contracts.dev.testMultiToken,
+                    appContract,
+                    tokenIds,
+                    values,
+                    baseLayerData,
+                    execLayerData
+                );
+            vm.stopPrank();
+        } else if (depositType == DepositType.ERC1155_BATCH_ONE) {
+            depositor = address(_assetReceiver);
+            portalAddress = address(_contracts.core.erc1155BatchPortal);
+            values = new uint256[](1);
+            values[0] = value;
+            tokenIds = new uint256[](1);
+            tokenIds[0] = tokenId;
+            balances = new uint256[](1);
+            balances[0] = balance;
+            vm.startPrank(depositor);
+            _contracts.dev.testMultiToken.mintBatch(tokenIds, balances);
+            _contracts.dev.testMultiToken.setApprovalForAll(portalAddress, true);
+            vm.recordLogs();
+            _contracts.core.erc1155BatchPortal
+                .depositBatchERC1155Token(
+                    _contracts.dev.testMultiToken,
+                    appContract,
+                    tokenIds,
+                    values,
+                    baseLayerData,
+                    execLayerData
+                );
+            vm.stopPrank();
+        } else if (depositType == DepositType.ERC1155_BATCH_MANY) {
+            depositor = address(_assetReceiver);
+            portalAddress = address(_contracts.core.erc1155BatchPortal);
+            values = vm.randomUint256Array(vm.randomUint(2, 10));
             tokenIds = vm.randomUniqueUint256Array(values.length);
             balances = vm.randomUintGe(values);
             vm.startPrank(depositor);
@@ -1239,14 +1281,13 @@ contract ApplicationTest is
                             );
                             assertEq(arg1, tokenId);
                             assertEq(arg2, value);
-                        } else if (depositType == DepositType.ERC1155_BATCH) {
+                        } else if (depositType == DepositType.ERC1155_BATCH_ONE) {
                             assertEq(
                                 log.topics[1],
                                 address(_contracts.core.erc1155BatchPortal).asTopic()
                             );
-                            assertEq(tokenIds.length, 1);
-                            assertEq(arg1, tokenIds[0]);
-                            assertEq(arg2, values[0]);
+                            assertEq(arg1, tokenId);
+                            assertEq(arg2, value);
                         } else {
                             revert UnexpectedLog(log);
                         }
@@ -1280,15 +1321,15 @@ contract ApplicationTest is
             assertEq(numOfErc721Transfers, (depositType == DepositType.ERC721) ? 1 : 0);
             assertEq(
                 numOfErc1155SingleTransfers,
-                ((depositType == DepositType.ERC1155_SINGLE)
-                        || ((depositType == DepositType.ERC1155_BATCH)
-                            && (tokenIds.length == 1)))
+                (depositType == DepositType.ERC1155_SINGLE
+                        || depositType == DepositType.ERC1155_BATCH_ONE)
                     ? 1
                     : 0
             );
             assertEq(
                 numOfErc1155BatchTransfers,
-                ((depositType == DepositType.ERC1155_BATCH) && (tokenIds.length != 1))
+                (depositType == DepositType.ERC1155_BATCH_ZERO
+                        || depositType == DepositType.ERC1155_BATCH_MANY)
                     ? 1
                     : 0
             );
@@ -1314,7 +1355,11 @@ contract ApplicationTest is
                 _contracts.dev.testMultiToken.balanceOf(depositor, tokenId),
                 balance - value
             );
-        } else if (depositType == DepositType.ERC1155_BATCH) {
+        } else if (
+            depositType == DepositType.ERC1155_BATCH_ZERO
+                || depositType == DepositType.ERC1155_BATCH_ONE
+                || depositType == DepositType.ERC1155_BATCH_MANY
+        ) {
             assertEq(
                 _contracts.dev.testMultiToken
                     .balanceOfBatch(depositor.repeat(tokenIds.length), tokenIds),
@@ -1398,7 +1443,10 @@ contract ApplicationTest is
                     tokenId,
                     new bytes(0)
                 );
-            } else if (depositType == DepositType.ERC1155_SINGLE) {
+            } else if (
+                depositType == DepositType.ERC1155_SINGLE
+                    || depositType == DepositType.ERC1155_BATCH_ONE
+            ) {
                 isRevertExpected = true;
                 errorData = abi.encodeWithSelector(
                     AssetReceiver.Erc1155Rejected.selector,
@@ -1409,27 +1457,20 @@ contract ApplicationTest is
                     value,
                     new bytes(0)
                 );
-            } else if (depositType == DepositType.ERC1155_BATCH) {
+            } else if (
+                depositType == DepositType.ERC1155_BATCH_ZERO
+                    || depositType == DepositType.ERC1155_BATCH_MANY
+            ) {
                 isRevertExpected = true;
-                errorData = (tokenIds.length == 1)
-                    ? abi.encodeWithSelector(
-                        AssetReceiver.Erc1155Rejected.selector,
-                        _erc1155Token,
-                        _appContract,
-                        _appContract,
-                        tokenIds[0],
-                        values[0],
-                        new bytes(0)
-                    )
-                    : abi.encodeWithSelector(
-                        AssetReceiver.Erc1155BatchRejected.selector,
-                        _erc1155Token,
-                        _appContract,
-                        _appContract,
-                        tokenIds,
-                        values,
-                        new bytes(0)
-                    );
+                errorData = abi.encodeWithSelector(
+                    AssetReceiver.Erc1155BatchRejected.selector,
+                    _erc1155Token,
+                    _appContract,
+                    _appContract,
+                    tokenIds,
+                    values,
+                    new bytes(0)
+                );
             }
 
             if (isRevertExpected) {
@@ -1506,10 +1547,16 @@ contract ApplicationTest is
                         (uint256 arg1, uint256 arg2) =
                             abi.decode(log.data, (uint256, uint256));
 
-                        if (depositType == DepositType.ERC1155_SINGLE) {
+                        if (
+                            depositType == DepositType.ERC1155_SINGLE
+                                || depositType == DepositType.ERC1155_BATCH_ONE
+                        ) {
                             assertEq(arg1, tokenId);
                             assertEq(arg2, value);
-                        } else if (depositType == DepositType.ERC1155_BATCH) {
+                        } else if (
+                            depositType == DepositType.ERC1155_BATCH_ZERO
+                                || depositType == DepositType.ERC1155_BATCH_MANY
+                        ) {
                             assertEq(tokenIds.length, 1);
                             assertEq(arg1, tokenIds[0]);
                             assertEq(arg2, values[0]);
@@ -1543,15 +1590,15 @@ contract ApplicationTest is
             assertEq(numOfErc721Transfers, (depositType == DepositType.ERC721) ? 1 : 0);
             assertEq(
                 numOfErc1155SingleTransfers,
-                ((depositType == DepositType.ERC1155_SINGLE)
-                        || ((depositType == DepositType.ERC1155_BATCH)
-                            && (tokenIds.length == 1)))
+                (depositType == DepositType.ERC1155_SINGLE
+                        || depositType == DepositType.ERC1155_BATCH_ONE)
                     ? 1
                     : 0
             );
             assertEq(
                 numOfErc1155BatchTransfers,
-                ((depositType == DepositType.ERC1155_BATCH) && (tokenIds.length != 1))
+                (depositType == DepositType.ERC1155_BATCH_ZERO
+                        || depositType == DepositType.ERC1155_BATCH_MANY)
                     ? 1
                     : 0
             );
@@ -1668,7 +1715,11 @@ contract ApplicationTest is
                 assertEq(
                     _contracts.dev.testMultiToken.balanceOf(depositor, tokenId), balance
                 );
-            } else if (depositType == DepositType.ERC1155_BATCH) {
+            } else if (
+                depositType == DepositType.ERC1155_BATCH_ZERO
+                    || depositType == DepositType.ERC1155_BATCH_ONE
+                    || depositType == DepositType.ERC1155_BATCH_MANY
+            ) {
                 assertEq(refundOutputSelector, Outputs.Voucher.selector);
 
                 address voucherDestination;
