@@ -170,6 +170,49 @@ contract ERC20PortalTest is RollupsTest, InputBoxTestUtils, VersionGetterTestUti
         _portal.depositERC20Tokens(_token, appContract, value, execLayerData);
     }
 
+    function testDepositRevertERC20TokenReturnsNonBooleanWord(
+        uint256 value,
+        bytes calldata execLayerData
+    ) external {
+        address sender = _randomAccountWithNoCode();
+        address appContract = _newActiveAppMock();
+
+        _randomSetup(sender, appContract, value);
+
+        vm.mockCall(
+            address(_token),
+            abi.encodeCall(IERC20.transferFrom, (sender, appContract, value)),
+            abi.encode(vm.randomUint(2, type(uint256).max))
+        );
+
+        vm.prank(sender);
+        vm.expectRevert();
+        _portal.depositERC20Tokens(_token, appContract, value, execLayerData);
+    }
+
+    function testDepositRevertERC20TokenReturnsIllSizedData(
+        uint256 value,
+        bytes calldata returnData,
+        bytes calldata execLayerData
+    ) external {
+        vm.assume(returnData.length != 32);
+
+        address sender = _randomAccountWithNoCode();
+        address appContract = _newActiveAppMock();
+
+        _randomSetup(sender, appContract, value);
+
+        vm.mockCall(
+            address(_token),
+            abi.encodeCall(IERC20.transferFrom, (sender, appContract, value)),
+            returnData
+        );
+
+        vm.prank(sender);
+        vm.expectRevert();
+        _portal.depositERC20Tokens(_token, appContract, value, execLayerData);
+    }
+
     function testDepositRevertERC20TransferDecreasedApplicationBalance(
         uint256 value,
         bytes calldata execLayerData

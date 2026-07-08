@@ -40,7 +40,7 @@ interface IERC20Portal is IPortal {
     /// to the transfer amount, it reverts with an appropriate custom error.
     /// The portal also ensures the return value of `transferFrom` is `true`,
     /// as specified in the ERC-20 standard. Empty or ill-formed return values
-    /// are not accepted and an appropriate custom error will be raised.
+    /// are not accepted and a low-level generic error is raised in those cases.
     ///
     /// @param token The ERC-20 token contract
     /// @param appContract The application contract address
