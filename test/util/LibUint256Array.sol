@@ -19,6 +19,16 @@ library LibUint256Array {
         }
     }
 
+    function randomUint256Array(Vm vm, uint256 n)
+        internal
+        returns (uint256[] memory array)
+    {
+        array = new uint256[](n);
+        for (uint256 i; i < array.length; ++i) {
+            array[i] = vm.randomUint();
+        }
+    }
+
     function randomUniqueUint256Array(Vm vm, uint256 n)
         internal
         returns (uint256[] memory array)

@@ -133,6 +133,11 @@ contract LibUint256ArrayTest is RollupsTest {
         }
     }
 
+    function testRandomUint256Array(uint8 n) external {
+        uint256[] memory array = vm.randomUint256Array(n);
+        assertEq(array.length, n);
+    }
+
     function testRandomUintGe(uint256[] memory array) external {
         uint256[] memory newArray = vm.randomUintGe(array);
         assertEq(newArray.length, array.length);
