@@ -5,6 +5,7 @@ pragma solidity ^0.8.30;
 
 import {IOwnable} from "../access/IOwnable.sol";
 import {AccountValidityProof} from "../common/AccountValidityProof.sol";
+import {AddressErrors} from "../common/AddressErrors.sol";
 import {BinaryMerkleTreeErrors} from "../common/BinaryMerkleTreeErrors.sol";
 import {IVersionGetter} from "../common/IVersionGetter.sol";
 import {OutputValidityProof} from "../common/OutputValidityProof.sol";
@@ -35,6 +36,7 @@ import {IWithdrawalOutputBuilderErrors} from "../withdrawal/IWithdrawalOutputBui
 /// - self-owned application (off-chain governance logic)
 interface IApplication is
     IOwnable,
+    AddressErrors,
     BinaryMerkleTreeErrors,
     IRefundOutputBuilderErrors,
     IWithdrawalOutputBuilderErrors,
@@ -79,15 +81,6 @@ interface IApplication is
     /// @notice Could not execute an output, because it was already executed.
     /// @param output The output
     error OutputNotReexecutable(bytes output);
-
-    /// @notice Could not execute an output, because the application contract doesn't have enough Ether.
-    /// @param value The amount of Wei necessary for the execution of the output
-    /// @param balance The current application contract balance
-    error InsufficientFunds(uint256 value, uint256 balance);
-
-    /// @notice Could not execute an output, because the target account doesn't have any code.
-    /// @param target The target account address
-    error TargetHasNoCode(address target);
 
     /// @notice Raised when the output hashes siblings array has an invalid size.
     /// @dev Please consult `CanonicalMachine` for the maximum number of outputs.
