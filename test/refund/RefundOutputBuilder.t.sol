@@ -110,6 +110,18 @@ contract RefundOutputBuilderTest is
         assertEq(payload.length, 0, "voucher payload length");
     }
 
+    function testBuildRefundOutputForIllFormedEtherDeposit(
+        address appContract,
+        bytes calldata inputPayload
+    ) external {
+        vm.assume(inputPayload.length < 52);
+        vm.expectRevert();
+        vm.prank(vm.randomAddress());
+        _refundOutputBuilder.buildRefundOutput(
+            appContract, address(_etherPortal), inputPayload
+        );
+    }
+
     function testBuildRefundOutputForErc20Deposit(
         Erc20Deposit calldata deposit,
         LibDepositEncoder.ExtraData calldata extraData
@@ -143,6 +155,18 @@ contract RefundOutputBuilderTest is
         assertEq(address(token), address(deposit.token), "transfer token");
         assertEq(to, deposit.sender, "transfer destination");
         assertEq(value, deposit.value, "transfer value");
+    }
+
+    function testBuildRefundOutputForIllFormedErc20Deposit(
+        address appContract,
+        bytes calldata inputPayload
+    ) external {
+        vm.assume(inputPayload.length < 72);
+        vm.expectRevert();
+        vm.prank(vm.randomAddress());
+        _refundOutputBuilder.buildRefundOutput(
+            appContract, address(_erc20Portal), inputPayload
+        );
     }
 
     function testBuildRefundOutputForErc721Deposit(
@@ -180,6 +204,18 @@ contract RefundOutputBuilderTest is
         assertEq(from, appContract, "transfer origin");
         assertEq(to, deposit.sender, "transfer destination");
         assertEq(tokenId, deposit.tokenId, "transfer token ID");
+    }
+
+    function testBuildRefundOutputForIllFormedErc721Deposit(
+        address appContract,
+        bytes calldata inputPayload
+    ) external {
+        vm.assume(inputPayload.length < 72);
+        vm.expectRevert();
+        vm.prank(vm.randomAddress());
+        _refundOutputBuilder.buildRefundOutput(
+            appContract, address(_erc721Portal), inputPayload
+        );
     }
 
     function testBuildRefundOutputForErc1155SingleDeposit(
@@ -224,6 +260,18 @@ contract RefundOutputBuilderTest is
         assertEq(data, new bytes(0), "transfer extra data");
     }
 
+    function testBuildRefundOutputForIllFormedErc1155SingleDeposit(
+        address appContract,
+        bytes calldata inputPayload
+    ) external {
+        vm.assume(inputPayload.length < 104);
+        vm.expectRevert();
+        vm.prank(vm.randomAddress());
+        _refundOutputBuilder.buildRefundOutput(
+            appContract, address(_erc1155SinglePortal), inputPayload
+        );
+    }
+
     function testBuildRefundOutputForErc1155BatchDeposit(
         Erc1155BatchDeposit calldata deposit,
         LibDepositEncoder.ExtraData calldata extraData
@@ -264,6 +312,18 @@ contract RefundOutputBuilderTest is
         assertEq(tokenIds, deposit.tokenIds, "transfer token IDs");
         assertEq(depositValues, deposit.values, "transfer values");
         assertEq(data, new bytes(0), "transfer extra data");
+    }
+
+    function testBuildRefundOutputForIllFormedErc1155BatchDeposit(
+        address appContract,
+        bytes calldata inputPayload
+    ) external {
+        vm.assume(inputPayload.length < 40);
+        vm.expectRevert();
+        vm.prank(vm.randomAddress());
+        _refundOutputBuilder.buildRefundOutput(
+            appContract, address(_erc1155BatchPortal), inputPayload
+        );
     }
 
     function _encodeUnknownInputSender(address inputSender)
