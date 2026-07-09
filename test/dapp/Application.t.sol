@@ -813,13 +813,15 @@ contract ApplicationTest is
                 if (topic0 == IApplication.Withdrawal.selector) {
                     ++numOfWithdrawalEventsInTx;
 
-                    // decode log data
-                    (uint64 arg1, bytes memory arg2, bytes memory arg3) =
-                        abi.decode(log.data, (uint64, bytes, bytes));
-                    assertEq(arg1, proof.accountIndex);
-                    assertEq(arg2, account);
+                    // check log topics
+                    assertEq(log.topics[1], bytes32(uint256(proof.accountIndex)));
 
-                    withdrawalOutput = arg3;
+                    // decode log data
+                    (bytes memory arg1, bytes memory arg2) =
+                        abi.decode(log.data, (bytes, bytes));
+                    assertEq(arg1, account);
+
+                    withdrawalOutput = arg2;
                 } else {
                     revert UnexpectedLog(log);
                 }
@@ -1538,15 +1540,15 @@ contract ApplicationTest is
                 Vm.Log memory log = logs[i];
                 if (log.emitter == address(_appContract)) {
                     assertEq(log.topics[0], IApplication.RefundIssued.selector);
+                    assertEq(log.topics[1], bytes32(inputIndex));
                     ++numOfRefundsIssued;
 
-                    (uint256 arg1, bytes memory arg2, bytes memory arg3) =
-                        abi.decode(log.data, (uint256, bytes, bytes));
+                    (bytes memory arg1, bytes memory arg2) =
+                        abi.decode(log.data, (bytes, bytes));
 
-                    assertEq(arg1, inputIndex);
-                    assertEq(arg2, input);
+                    assertEq(arg1, input);
 
-                    (refundOutputSelector, refundOutputArgs) = arg3.consumeBytes4();
+                    (refundOutputSelector, refundOutputArgs) = arg2.consumeBytes4();
                 } else if (log.emitter == address(_contracts.dev.testFungibleToken)) {
                     assertGe(log.topics.length, 1);
                     if (log.topics[0] == IERC20.Transfer.selector) {
