@@ -51,7 +51,7 @@ interface IApplication is
     /// @notice MUST trigger when an output is executed.
     /// @param outputIndex The index of the output
     /// @param output The output
-    event OutputExecuted(uint64 outputIndex, bytes output);
+    event OutputExecuted(uint64 indexed outputIndex, bytes output);
 
     /// @notice MUST trigger when the application is foreclosed.
     event Foreclosure();
@@ -60,7 +60,7 @@ interface IApplication is
     /// @param inputIndex The index of the input
     /// @param input The input
     /// @param output The refund output
-    event RefundIssued(uint256 inputIndex, bytes input, bytes output);
+    event RefundIssued(uint256 indexed inputIndex, bytes input, bytes output);
 
     /// @notice MUST trigger when the accounts drive Merkle root is proved.
     /// @param accountsDriveMerkleRoot The accounts drive Merkle root
@@ -70,7 +70,7 @@ interface IApplication is
     /// @param accountIndex The account index in the accounts drive
     /// @param account The account as encoded in the accounts drive
     /// @param output The withdrawal output
-    event Withdrawal(uint64 accountIndex, bytes account, bytes output);
+    event Withdrawal(uint64 indexed accountIndex, bytes account, bytes output);
 
     // Errors
 
