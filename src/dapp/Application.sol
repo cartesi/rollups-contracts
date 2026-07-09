@@ -190,15 +190,15 @@ contract Application is
     {
         // Checks
 
+        if (_refunded.get(inputIndex)) {
+            revert RefundAlreadyIssued(inputIndex);
+        }
+
         (uint256 blockNumber, address sender, bytes memory payload) =
             validateInput(inputIndex, input);
 
         if (_wasInputFinalized(inputIndex, blockNumber)) {
             revert CannotRefundFinalizedInput(inputIndex);
-        }
-
-        if (_refunded.get(inputIndex)) {
-            revert RefundAlreadyIssued(inputIndex);
         }
 
         bytes memory output = _buildRefundOutput(sender, payload);
