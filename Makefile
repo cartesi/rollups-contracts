@@ -68,6 +68,16 @@ ANVIL_DEPLOY_OPTS += --non-interactive
 ANVIL_DEPLOY_OPTS += --broadcast
 ANVIL_DEPLOY_OPTS += --slow
 
+ifdef ALCHEMY_API_KEY
+ARB_MAINNET_RPC_URL   ?= https://arb-mainnet.g.alchemy.com/v2/$(ALCHEMY_API_KEY)
+ARB_SEPOLIA_RPC_URL   ?= https://arb-sepolia.g.alchemy.com/v2/$(ALCHEMY_API_KEY)
+BASE_MAINNET_RPC_URL  ?= https://base-mainnet.g.alchemy.com/v2/$(ALCHEMY_API_KEY)
+BASE_SEPOLIA_RPC_URL  ?= https://base-sepolia.g.alchemy.com/v2/$(ALCHEMY_API_KEY)
+ETH_MAINNET_RPC_URL   ?= https://eth-mainnet.g.alchemy.com/v2/$(ALCHEMY_API_KEY)
+ETH_SEPOLIA_RPC_URL   ?= https://eth-sepolia.g.alchemy.com/v2/$(ALCHEMY_API_KEY)
+OPT_MAINNET_RPC_URL   ?= https://opt-mainnet.g.alchemy.com/v2/$(ALCHEMY_API_KEY)
+OPT_SEPOLIA_RPC_URL   ?= https://opt-sepolia.g.alchemy.com/v2/$(ALCHEMY_API_KEY)
+else
 ARB_MAINNET_RPC_URL   ?= https://arb1.arbitrum.io/rpc
 ARB_SEPOLIA_RPC_URL   ?= https://sepolia-rollup.arbitrum.io/rpc
 BASE_MAINNET_RPC_URL  ?= https://mainnet.base.org
@@ -76,6 +86,7 @@ ETH_MAINNET_RPC_URL   ?= https://eth.drpc.org
 ETH_SEPOLIA_RPC_URL   ?= https://sepolia.drpc.org
 OPT_MAINNET_RPC_URL   ?= https://mainnet.optimism.io
 OPT_SEPOLIA_RPC_URL   ?= https://sepolia.optimism.io
+endif
 
 export ARB_MAINNET_RPC_URL
 export ARB_SEPOLIA_RPC_URL
