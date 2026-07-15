@@ -1,4 +1,5 @@
 .PHONY: build
+.PHONY: check-foundry-version
 .PHONY: codegen
 .PHONY: coverage
 .PHONY: deploy-all
@@ -216,7 +217,7 @@ coverage:
 
 deploy-all: devnet deploy-livenets
 
-devnet: build
+devnet: check-foundry-version build
 	@set -eu; \
 	echo "🔨 Building Anvil devnet..." ; \
 	cleanup() { \
@@ -318,6 +319,26 @@ deploy-arb-mainnet: build
 	@echo "🌐 Running deployment script against Arbitrum Mainnet..."
 	@$(DEPLOY_CMD) $(ARB_MAINNET_DEPLOY_OPTS) $(DEPLOY_OPTS)
 	@echo "✅ Deployment script successfully ran against Arbitrum Mainnet."
+
+check-foundry-version:
+	@set -eu; \
+	for tool in $(FORGE) $(CAST) $(ANVIL); do \
+		if ! command -v "$${tool}" >/dev/null 2>&1; then \
+			echo "❌ $${tool} not found in PATH." >&2; \
+			exit 1; \
+		fi; \
+		installed=$$("$${tool}" --version 2>/dev/null \
+			| sed -nE 's/[^0-9]*([0-9]+\.[0-9]+\.[0-9]+).*/\1/p'); \
+		if [ -z "$${installed}" ]; then \
+			echo "❌ Could not parse version from '$${tool} --version' output." >&2; \
+			exit 1; \
+		fi; \
+		if [ "$${installed}" != "$(FOUNDRY_VERSION)" ]; then \
+			echo "❌ $${tool} is version $${installed}, expected $(FOUNDRY_VERSION)." >&2; \
+			exit 1; \
+		fi; \
+	done; \
+	echo "✅ Foundry $(FOUNDRY_VERSION) confirmed (forge, cast, anvil)."
 
 print-foundry-version:
 	@echo "$(FOUNDRY_VERSION)"
