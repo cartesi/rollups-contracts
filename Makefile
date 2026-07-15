@@ -15,6 +15,7 @@
 .PHONY: deploy-opt-sepolia
 .PHONY: deploy-testnets
 .PHONY: devnet
+.PHONY: install-foundry
 .PHONY: print-foundry-version
 .PHONY: publish-soldeer-package
 .PHONY: release-artifacts
@@ -47,10 +48,11 @@ DEVNET_BUNDLE               := $(BUNDLE_PREFIX)-anvil-$(FOUNDRY_VERSION).tar.gz
 
 MAKEFLAGS += --no-print-directory
 
-ANVIL   := anvil
-CAST    := cast
-FORGE   := forge
-GENHTML := genhtml
+FOUNDRYUP := foundryup
+ANVIL     := anvil
+CAST      := cast
+FORGE     := forge
+GENHTML   := genhtml
 
 DEPLOY_CMD := $(FORGE) script script/Deployment.s.sol:DeploymentScript
 
@@ -339,6 +341,9 @@ check-foundry-version:
 		fi; \
 	done; \
 	echo "✅ Foundry $(FOUNDRY_VERSION) confirmed (forge, cast, anvil)."
+
+install-foundry:
+	@$(FOUNDRYUP) -i "$(FOUNDRY_VERSION)"
 
 print-foundry-version:
 	@echo "$(FOUNDRY_VERSION)"
