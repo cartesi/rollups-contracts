@@ -50,7 +50,6 @@ ANVIL   := anvil
 CAST    := cast
 FORGE   := forge
 GENHTML := genhtml
-LCOV    := lcov
 
 DEPLOY_CMD := $(FORGE) script script/Deployment.s.sol:DeploymentScript
 
