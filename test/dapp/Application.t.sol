@@ -2089,18 +2089,16 @@ contract ApplicationTest is
         assertEq(msg.sender, address(this), "called by external account");
         uint256 lastProcessedBlockNumber = vm.getBlockNumber();
         vm.roll(vm.randomUint(lastProcessedBlockNumber + 1, type(uint256).max));
+        bytes32 outputsMerkleRoot = _proofComponents.outputsMerkleRoot;
+        bytes32[] memory proof = _proofComponents.getOutputsMerkleRootProof();
         vm.prank(_authority.owner());
         _authority.submitClaim(
-            address(_appContract),
-            lastProcessedBlockNumber,
-            _proofComponents.outputsMerkleRoot,
-            _proofComponents.getOutputsMerkleRootProof()
+            address(_appContract), lastProcessedBlockNumber, outputsMerkleRoot, proof
         );
+        bytes32 machineMerkleRoot = _proofComponents.getMachineMerkleRoot();
         vm.prank(vm.randomAddress());
         _authority.acceptClaim(
-            address(_appContract),
-            lastProcessedBlockNumber,
-            _proofComponents.getMachineMerkleRoot()
+            address(_appContract), lastProcessedBlockNumber, machineMerkleRoot
         );
         vm.prank(_appContract.getGuardian());
         _appContract.foreclose();
@@ -2111,15 +2109,12 @@ contract ApplicationTest is
 
     function _submitAndAcceptClaim() internal {
         _proofComponents = _buildProofComponents();
+        bytes32 outputsMerkleRoot = _proofComponents.outputsMerkleRoot;
+        bytes32[] memory proof = _proofComponents.getOutputsMerkleRootProof();
         bytes32 machineMerkleRoot = _proofComponents.getMachineMerkleRoot();
 
         vm.prank(_authority.owner());
-        _authority.submitClaim(
-            address(_appContract),
-            0,
-            _proofComponents.outputsMerkleRoot,
-            _proofComponents.getOutputsMerkleRootProof()
-        );
+        _authority.submitClaim(address(_appContract), 0, outputsMerkleRoot, proof);
 
         vm.prank(vm.randomAddress());
         _authority.acceptClaim(address(_appContract), 0, machineMerkleRoot);
