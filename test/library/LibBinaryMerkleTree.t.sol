@@ -11,6 +11,7 @@ import {LibBinaryMerkleTree} from "src/library/LibBinaryMerkleTree.sol";
 import {LibKeccak256} from "src/library/LibKeccak256.sol";
 import {LibMath} from "src/library/LibMath.sol";
 
+import {CompressedNode} from "../util/CompressedNode.sol";
 import {LibBinaryMerkleTreeHelper} from "../util/LibBinaryMerkleTreeHelper.sol";
 
 library ExternalLibBinaryMerkleTree {
@@ -44,6 +45,16 @@ library ExternalLibBinaryMerkleTree {
         );
     }
 
+    function merkleRootFromCompressedNodes(
+        CompressedNode[] memory compressedNodes,
+        bytes32 defaultNode,
+        uint256 height
+    ) external pure returns (bytes32) {
+        return LibBinaryMerkleTreeHelper.merkleRootFromCompressedNodes(
+            compressedNodes, defaultNode, height, nodeFromChildren
+        );
+    }
+
     function siblings(
         bytes32[] memory nodes,
         bytes32 defaultNode,
@@ -52,6 +63,17 @@ library ExternalLibBinaryMerkleTree {
     ) external pure returns (bytes32[] memory) {
         return LibBinaryMerkleTreeHelper.siblings(
             nodes, defaultNode, nodeIndex, height, nodeFromChildren
+        );
+    }
+
+    function siblings(
+        CompressedNode[] memory compressedNodes,
+        bytes32 defaultNode,
+        uint256 nodeIndex,
+        uint256 height
+    ) external pure returns (bytes32[] memory sibs) {
+        return LibBinaryMerkleTreeHelper.siblings(
+            compressedNodes, defaultNode, nodeIndex, height, nodeFromChildren
         );
     }
 
@@ -69,6 +91,64 @@ library ExternalLibBinaryMerkleTree {
         returns (bytes[] memory dataBlocks)
     {
         return LibBinaryMerkleTreeHelper.splitIntoBlocks(data, dataBlockSize);
+    }
+
+    function compress(bytes32[] memory nodes)
+        external
+        pure
+        returns (CompressedNode[] memory compressedNodes)
+    {
+        return LibBinaryMerkleTreeHelper.compress(nodes);
+    }
+
+    function decompress(CompressedNode[] memory compressedNodes)
+        external
+        pure
+        returns (bytes32[] memory nodes)
+    {
+        return LibBinaryMerkleTreeHelper.decompress(compressedNodes);
+    }
+
+    function decompressedLength(CompressedNode[] memory compressedNodes)
+        external
+        pure
+        returns (uint256 len)
+    {
+        return LibBinaryMerkleTreeHelper.decompressedLength(compressedNodes);
+    }
+
+    function parentLevel(bytes32[] memory nodes, bytes32 defaultNode)
+        external
+        pure
+        returns (bytes32[] memory)
+    {
+        return LibBinaryMerkleTreeHelper.parentLevel(nodes, defaultNode, nodeFromChildren);
+    }
+
+    function at(bytes32[] memory nodes, uint256 index, bytes32 defaultNode)
+        external
+        pure
+        returns (bytes32)
+    {
+        return LibBinaryMerkleTreeHelper.at(nodes, index, defaultNode);
+    }
+
+    function parentLevel(CompressedNode[] memory compressedNodes, bytes32 defaultNode)
+        external
+        pure
+        returns (CompressedNode[] memory level)
+    {
+        return LibBinaryMerkleTreeHelper.parentLevel(
+            compressedNodes, defaultNode, nodeFromChildren
+        );
+    }
+
+    function at(
+        CompressedNode[] memory compressedNodes,
+        uint256 index,
+        bytes32 defaultNode
+    ) external pure returns (bytes32) {
+        return LibBinaryMerkleTreeHelper.at(compressedNodes, index, defaultNode);
     }
 
     function leafFromDataBlock(bytes memory data) internal pure returns (bytes32 leaf) {
@@ -93,6 +173,7 @@ library ExternalLibBinaryMerkleTree {
 }
 
 contract LibBinaryMerkleTreeTest is Test {
+    using ExternalLibBinaryMerkleTree for CompressedNode[];
     using ExternalLibBinaryMerkleTree for bytes32[];
     using ExternalLibBinaryMerkleTree for bytes[];
     using ExternalLibBinaryMerkleTree for bytes;
@@ -362,6 +443,76 @@ contract LibBinaryMerkleTreeTest is Test {
         // Then, we call the merkleRoot function and expect an error.
         vm.expectRevert(_encodeDriveSmallerThanData(1 << log2DriveSize, data.length));
         data.merkleRoot(log2DriveSize, log2DataBlockSize);
+    }
+
+    function testCompression(bytes32[] calldata nodes, uint256 index, bytes32 defaultNode)
+        external
+    {
+        CompressedNode[] memory compressedNodes = nodes.compress();
+
+        assertLe(
+            compressedNodes.length,
+            nodes.length,
+            "|compress(x)| > |x| [compression caused expansion]"
+        );
+
+        assertEq(
+            nodes.length,
+            compressedNodes.decompressedLength(),
+            "|x| - |compress(x)| = SUM_i compress(x)[i].extra"
+        );
+
+        assertEq(
+            compressedNodes.decompress(),
+            nodes,
+            "decompress(compress(x)) != x [not inverse function]"
+        );
+
+        assertEq(
+            compressedNodes.at(index, defaultNode),
+            nodes.at(index, defaultNode),
+            "decompress(at(compress(x), ...)) != at(x, ...)"
+        );
+
+        assertEq(
+            compressedNodes.parentLevel(defaultNode).decompress(),
+            nodes.parentLevel(defaultNode),
+            "decompress(parentLevel(compress(x), ...)) != parentLevel(x, ...)"
+        );
+
+        uint256 minHeight = LibMath.ceilLog2(nodes.length);
+
+        if (minHeight >= 1) {
+            uint256 invalidHeight = vm.randomUint(0, minHeight - 1);
+            vm.expectRevert(LibBinaryMerkleTreeHelper.InvalidHeight.selector);
+            nodes.merkleRootFromNodes(defaultNode, invalidHeight);
+            vm.expectRevert(LibBinaryMerkleTreeHelper.InvalidHeight.selector);
+            compressedNodes.merkleRootFromCompressedNodes(defaultNode, invalidHeight);
+        }
+
+        uint256 height = vm.randomUint(minHeight, 256);
+
+        assertEq(
+            compressedNodes.merkleRootFromCompressedNodes(defaultNode, height),
+            nodes.merkleRootFromNodes(defaultNode, height),
+            "merkleRootFromCompressedNodes(compress(x), ...) != merkleRootFromNodes(x, ...)"
+        );
+
+        if (height < 256) {
+            uint256 invalidNodeIndex = vm.randomUint(1 << height, type(uint256).max);
+            vm.expectRevert(LibBinaryMerkleTreeHelper.InvalidNodeIndex.selector);
+            nodes.siblings(defaultNode, invalidNodeIndex, height);
+            vm.expectRevert(LibBinaryMerkleTreeHelper.InvalidNodeIndex.selector);
+            compressedNodes.siblings(defaultNode, invalidNodeIndex, height);
+        }
+
+        uint256 validNodeIndex = vm.randomUint(height);
+
+        assertEq(
+            compressedNodes.siblings(defaultNode, validNodeIndex, height),
+            nodes.siblings(defaultNode, validNodeIndex, height),
+            "siblings(compress(x), ...) != siblings(x, ...)"
+        );
     }
 
     function _encodeInvalidNodeIndex(uint256 nodeIndex, uint256 height)

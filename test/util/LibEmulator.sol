@@ -13,14 +13,19 @@ import {LibKeccak256} from "src/library/LibKeccak256.sol";
 
 import {ExternalLibBinaryMerkleTree} from "../library/LibBinaryMerkleTree.t.sol";
 import {LibBytes32Array} from "../util/LibBytes32Array.sol";
+import {CompressedNode} from "./CompressedNode.sol";
 import {LibBinaryMerkleTreeHelper} from "./LibBinaryMerkleTreeHelper.sol";
+import {LibSparseNodeArray} from "./LibSparseNodeArray.sol";
+import {SparseNode} from "./SparseNode.sol";
 
 library LibEmulator {
     using SafeCast for uint256;
     using LibBinaryMerkleTree for bytes;
     using LibBytes32Array for bytes32[];
+    using LibSparseNodeArray for SparseNode[];
     using LibBinaryMerkleTreeHelper for bytes32[];
     using ExternalLibBinaryMerkleTree for bytes32[];
+    using ExternalLibBinaryMerkleTree for CompressedNode[];
 
     struct State {
         bytes[] outputs;
@@ -29,21 +34,21 @@ library LibEmulator {
 
     struct ProofComponents {
         bytes32 outputsMerkleRoot;
-        bytes32 forkNodeLeftChild;
-        bytes32 forkNodeRightChild;
-        bytes32[] forkNodeSiblings;
-        bytes32[] outputsMerkleRootSiblings;
-        bytes32[] accountsDriveMerkleRootSiblings;
+        CompressedNode[] compressedNodes;
     }
+
+    /// @notice This error is raised whenever too many accounts
+    /// were added to the emulator state.
+    error TooManyAccounts();
 
     type OutputIndex is uint64;
     type AccountIndex is uint64;
 
     bytes32 constant NO_OUTPUT_SENTINEL_VALUE = bytes32(0);
+    bytes32 constant DEFAULT_NODE = bytes32(0);
     uint8 constant LOG2_LEAVES_PER_ACCOUNT = 0;
     uint8 constant LOG2_MAX_NUM_OF_ACCOUNTS = 17;
     uint64 constant ACCOUNTS_DRIVE_START_INDEX = 0x240000000;
-    uint8 constant FORK_NODE_HEIGHT = 51;
 
     // -------------
     // state changes
@@ -63,6 +68,7 @@ library LibEmulator {
         returns (AccountIndex accountIndex)
     {
         bytes[] storage accounts = state.accounts;
+        require(accounts.length < (1 << LOG2_MAX_NUM_OF_ACCOUNTS), TooManyAccounts());
         accountIndex = AccountIndex.wrap(accounts.length.toUint64());
         accounts.push(account);
     }
@@ -139,64 +145,6 @@ library LibEmulator {
         return getAccountsDriveMerkleRoot(getAccountMerkleRoots(state));
     }
 
-    function buildProofComponents(State storage state)
-        internal
-        view
-        returns (ProofComponents memory pc)
-    {
-        pc.outputsMerkleRoot = getOutputsMerkleRoot(state);
-
-        pc.outputsMerkleRootSiblings = new bytes32[](FORK_NODE_HEIGHT - 1);
-        pc.accountsDriveMerkleRootSiblings =
-            new bytes32[](FORK_NODE_HEIGHT - 1 - getAccountsDriveRootNodeHeight());
-        pc.forkNodeSiblings =
-            new bytes32[](CanonicalMachine.MEMORY_TREE_HEIGHT - FORK_NODE_HEIGHT);
-
-        pc.forkNodeLeftChild = pc.outputsMerkleRootSiblings
-            .merkleRootAfterReplacement(
-                getOutputsMerkleRootNodeIndex()
-                    & ((1 << pc.outputsMerkleRootSiblings.length) - 1),
-                keccak256(abi.encode(pc.outputsMerkleRoot))
-            );
-
-        pc.forkNodeRightChild =
-            pc.accountsDriveMerkleRootSiblings
-                .merkleRootAfterReplacement(
-                    (getAccountsDriveStartNodeIndex() >> getAccountsDriveRootNodeHeight())
-                        & ((1 << pc.accountsDriveMerkleRootSiblings.length) - 1),
-                    getAccountsDriveMerkleRoot(state)
-                );
-    }
-
-    function getOutputsMerkleRootProof(ProofComponents memory pc)
-        internal
-        pure
-        returns (bytes32[] memory outputsMerkleRootProof)
-    {
-        bytes32[] memory forkNodeChildSibling = new bytes32[](1);
-        forkNodeChildSibling[0] = pc.forkNodeRightChild;
-
-        outputsMerkleRootProof = pc.outputsMerkleRootSiblings.concat(forkNodeChildSibling)
-            .concat(pc.forkNodeSiblings);
-
-        require(
-            outputsMerkleRootProof.length == CanonicalMachine.MEMORY_TREE_HEIGHT,
-            "unexpected outputs Merkle root proof length"
-        );
-    }
-
-    function getMachineMerkleRoot(ProofComponents memory pc)
-        internal
-        pure
-        returns (bytes32)
-    {
-        return pc.forkNodeSiblings
-            .merkleRootAfterReplacement(
-                getOutputsMerkleRootNodeIndex() >> FORK_NODE_HEIGHT,
-                LibKeccak256.hashPair(pc.forkNodeLeftChild, pc.forkNodeRightChild)
-            );
-    }
-
     function getAccountRootSiblings(State storage state, AccountIndex accountIndex)
         internal
         view
@@ -212,45 +160,100 @@ library LibEmulator {
         );
     }
 
+    function buildProofComponents(State storage state)
+        internal
+        view
+        returns (ProofComponents memory pc)
+    {
+        pc.outputsMerkleRoot = getOutputsMerkleRoot(state);
+
+        uint256 numOfAccounts = state.accounts.length;
+        uint256 maxNumOfAccounts = 1 << LOG2_MAX_NUM_OF_ACCOUNTS;
+
+        uint256 sparseNodeCount = 1 + numOfAccounts;
+
+        require(numOfAccounts <= maxNumOfAccounts, TooManyAccounts());
+
+        if (numOfAccounts < maxNumOfAccounts) {
+            // If the number of accounts has not reached the limit,
+            // we add a sparse node to pad the accounts drive with
+            // zeroes (empty accounts).
+            ++sparseNodeCount;
+        }
+
+        SparseNode[] memory sparseNodes = new SparseNode[](sparseNodeCount);
+
+        uint256 sparseNodeIndex;
+
+        sparseNodes[sparseNodeIndex++] = SparseNode({
+            value: keccak256(abi.encode(pc.outputsMerkleRoot)),
+            index: getOutputsMerkleRootNodeIndex(),
+            extra: 0
+        });
+
+        for (uint256 i; i < numOfAccounts; ++i) {
+            sparseNodes[sparseNodeIndex++] = SparseNode({
+                value: getAccountMerkleRoot(state.accounts[i]),
+                index: getAccountsDriveStartNodeIndex() + i,
+                extra: 0
+            });
+        }
+
+        if (numOfAccounts < maxNumOfAccounts) {
+            sparseNodes[sparseNodeIndex++] = SparseNode({
+                value: getEmptyAccountMerkleRoot(),
+                index: getAccountsDriveStartNodeIndex() + numOfAccounts,
+                extra: maxNumOfAccounts - numOfAccounts - 1
+            });
+        }
+
+        assert(sparseNodeIndex == sparseNodeCount);
+
+        pc.compressedNodes = sparseNodes.toCompressedNodeArray(DEFAULT_NODE);
+    }
+
+    // ------------------------
+    // proof components queries
+    // ------------------------
+
+    function getOutputsMerkleRootProof(ProofComponents memory pc)
+        internal
+        pure
+        returns (bytes32[] memory outputsMerkleRootProof)
+    {
+        return pc.compressedNodes
+            .siblings(
+                DEFAULT_NODE,
+                getOutputsMerkleRootNodeIndex(),
+                CanonicalMachine.MEMORY_TREE_HEIGHT
+            );
+    }
+
+    function getMachineMerkleRoot(ProofComponents memory pc)
+        internal
+        pure
+        returns (bytes32)
+    {
+        return pc.compressedNodes
+            .merkleRootFromCompressedNodes(
+                DEFAULT_NODE, CanonicalMachine.MEMORY_TREE_HEIGHT
+            );
+    }
+
     function getAccountsDriveMerkleRootProof(ProofComponents memory pc)
         internal
         pure
         returns (bytes32[] memory accountsDriveMerkleRootProof)
     {
-        bytes32[] memory forkNodeChildSibling = new bytes32[](1);
-        forkNodeChildSibling[0] = pc.forkNodeLeftChild;
+        bytes32[] memory siblings = pc.compressedNodes
+            .siblings(
+                DEFAULT_NODE,
+                getAccountsDriveStartNodeIndex(),
+                CanonicalMachine.MEMORY_TREE_HEIGHT
+            );
 
-        require(
-            pc.accountsDriveMerkleRootSiblings.length
-                == (FORK_NODE_HEIGHT - 1 - LOG2_MAX_NUM_OF_ACCOUNTS
-                        - LOG2_LEAVES_PER_ACCOUNT),
-            "unexpected accounts drive Merkle root siblings length"
-        );
-
-        require(
-            (getOutputsMerkleRootNodeIndex() >> (FORK_NODE_HEIGHT - 1)) & 1 == 0,
-            "outputs merkle root predecessor is left node"
-        );
-
-        require(
-            (getAccountsDriveStartNodeIndex() >> (FORK_NODE_HEIGHT - 1)) & 1 == 1,
-            "accounts drive predecessor is right node"
-        );
-
-        require(
-            pc.forkNodeSiblings.length
-                == (CanonicalMachine.MEMORY_TREE_HEIGHT - FORK_NODE_HEIGHT),
-            "unexpected fork node siblings length"
-        );
-
-        accountsDriveMerkleRootProof = pc.accountsDriveMerkleRootSiblings
-            .concat(forkNodeChildSibling).concat(pc.forkNodeSiblings);
-
-        require(
-            accountsDriveMerkleRootProof.length + getAccountsDriveRootNodeHeight()
-                == CanonicalMachine.MEMORY_TREE_HEIGHT,
-            "unexpected accounts drive Merkle root proof length"
-        );
+        (, accountsDriveMerkleRootProof) =
+            siblings.split(LOG2_LEAVES_PER_ACCOUNT + LOG2_MAX_NUM_OF_ACCOUNTS);
     }
 
     // -----------------
