@@ -8,7 +8,12 @@ import {IWithdrawalOutputBuilderErrors} from "./IWithdrawalOutputBuilderErrors.s
 interface IWithdrawalOutputBuilder is IWithdrawalOutputBuilderErrors {
     /// @notice Build an output that, when executed by the application
     /// contract, transfers the funds of an account to its owner.
-    /// The encoding of the account is application-specific.
+    /// The encoding of the account is application-specific but must comply
+    /// with one convention: The account byte array must end with the account owner
+    /// encoded as a 20-byte big-endian string. This convention allows the node to
+    /// query an account by its owner from the accounts drive. The contract must not
+    /// assume the account is well-formed. Instead, it should validate its length
+    /// (possibly raising an `InvalidAccountSize` error) and its contents.
     /// This function will be called via the `STATICCALL` opcode,
     /// so any state changes such as contract creations,
     /// log emissions, storage writes, self-destructions

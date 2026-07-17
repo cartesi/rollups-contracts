@@ -4,11 +4,11 @@
 pragma solidity ^0.8.30;
 
 interface IWithdrawalOutputBuilderErrors {
-    /// @notice This error is raised whenever a user provides an account
-    /// too short for the builder to decode. The error is accompanied by
+    /// @notice This error is raised whenever a user provides an ill-sized
+    /// account for the builder to decode. The error is accompanied by
     /// the size of the account whose funds were attempted to be withdrawn
-    /// and the minimum expected account size suitable for on-chain decoding.
+    /// and the expected account size suitable for on-chain decoding.
     /// @param attemptedAccountSize The attempted account size, in bytes.
-    /// @param minAccountSize The minimum expected account size, in bytes.
-    error AccountTooShort(uint64 attemptedAccountSize, uint64 minAccountSize);
+    /// @param accountSize The expected account size, in bytes.
+    error InvalidAccountSize(uint256 attemptedAccountSize, uint64 accountSize);
 }
