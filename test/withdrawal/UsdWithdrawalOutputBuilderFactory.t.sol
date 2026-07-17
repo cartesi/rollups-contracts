@@ -106,13 +106,11 @@ contract UsdWithdrawalOutputBuilderTest is RollupsTest, VersionGetterTestUtils {
         IERC20 token,
         bytes32 salt,
         address user,
-        uint64 balance,
-        bytes calldata padding
+        uint96 balance
     ) external {
         IUsdWithdrawalOutputBuilder usdWithdrawalOutputBuilder;
         usdWithdrawalOutputBuilder = _factory.newUsdWithdrawalOutputBuilder(token, salt);
-        bytes memory account = abi.encodePacked(_encodeAccount(user, balance), padding);
-        assertGe(account.length, 28);
+        bytes memory account = _encodeAccount(user, balance);
         bytes memory output;
         output = usdWithdrawalOutputBuilder.buildWithdrawalOutput(appContract, account);
         (bytes4 outputSelector, bytes memory outputArgs) = output.consumeBytes4();
@@ -136,39 +134,40 @@ contract UsdWithdrawalOutputBuilderTest is RollupsTest, VersionGetterTestUtils {
     ) external {
         IUsdWithdrawalOutputBuilder usdWithdrawalOutputBuilder;
         usdWithdrawalOutputBuilder = _factory.newUsdWithdrawalOutputBuilder(token, salt);
-        uint64 accountSize = uint64(vm.randomUint(0, 27));
+        uint256 accountSize =
+            vm.randomBool() ? vm.randomUint(0, 31) : vm.randomUint(33, (1 << 16));
         bytes memory account = vm.randomBytes(accountSize);
-        vm.expectRevert(_encodeAccountTooShort(accountSize));
+        vm.expectRevert(_encodeInvalidAccountSize(accountSize));
         usdWithdrawalOutputBuilder.buildWithdrawalOutput(appContract, account);
     }
 
-    function _encodeAccount(address user, uint64 balance)
+    function _encodeAccount(address user, uint96 balance)
         internal
         pure
         returns (bytes memory account)
     {
-        account = new bytes(28);
+        account = new bytes(32);
 
         // Encode balance in little-endian order
-        for (uint256 i; i < 8; ++i) {
+        for (uint256 i; i < 12; ++i) {
             account[i] = bytes1(uint8((balance >> (8 * i)) & 0xff));
         }
 
         // Encode user address in big-endian order
         for (uint256 i; i < 20; ++i) {
-            account[i + 8] = bytes1((bytes20(user) << (8 * i)) & bytes1(0xff));
+            account[i + 12] = bytes1((bytes20(user) << (8 * i)) & bytes1(0xff));
         }
     }
 
-    function _encodeAccountTooShort(uint64 attemptedAccountSize)
+    function _encodeInvalidAccountSize(uint256 attemptedAccountSize)
         internal
         pure
         returns (bytes memory)
     {
         return abi.encodeWithSelector(
-            IWithdrawalOutputBuilderErrors.AccountTooShort.selector,
+            IWithdrawalOutputBuilderErrors.InvalidAccountSize.selector,
             attemptedAccountSize,
-            28
+            32
         );
     }
 }

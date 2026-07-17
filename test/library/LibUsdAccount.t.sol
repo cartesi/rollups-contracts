@@ -14,73 +14,73 @@ library ExternalLibUsdAccount {
     function decode(bytes calldata account)
         external
         pure
-        returns (address user, uint64 balance)
+        returns (address user, uint96 balance)
     {
         (user, balance) = LibUsdAccount.decode(account);
     }
 }
 
 contract LibUsdAccountTest is Test {
-    function testEncodeDecode(address user, uint64 balance) external pure {
+    function testEncodeDecode(address user, uint96 balance) external pure {
         bytes memory account = LibUsdAccount.encode(user, balance);
-        assertEq(account.length, 28, "account length");
-        (address user2, uint64 balance2) = ExternalLibUsdAccount.decode(account);
+        assertEq(account.length, 32, "account length");
+        (address user2, uint96 balance2) = ExternalLibUsdAccount.decode(account);
         assertEq(user, user2, "account user");
         assertEq(balance, balance2, "account balance");
     }
 
-    function testDecode(bytes28 seed, bytes calldata padding) external pure {
-        bytes memory account = abi.encodePacked(seed, padding);
+    function testDecode(bytes32 seed) external pure {
+        bytes memory account = abi.encodePacked(seed);
         ExternalLibUsdAccount.decode(account);
     }
 
-    function testDecodeRevertsAccountIsTooShort(uint256) external {
-        uint64 accountSize = uint64(vm.randomUint(0, 27));
+    function testDecodeRevertsInvalidAccountSize(uint16 accountSize) external {
+        vm.assume(accountSize != 32);
         bytes memory account = vm.randomBytes(accountSize);
-        vm.expectRevert(_encodeAccountTooShort(accountSize));
+        vm.expectRevert(_encodeInvalidAccountSize(accountSize));
         ExternalLibUsdAccount.decode(account);
     }
 
     function testEncodeExample() external pure {
         address user = 0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266;
-        uint64 balance = 0x0123456789abcdef;
+        uint96 balance = 0x0123456789abcdef01234567;
         assertEq(
             LibUsdAccount.encode(user, balance),
-            hex"efcdab8967452301f39fd6e51aad88f6f4ce6ab8827279cfffb92266",
+            hex"67452301efcdab8967452301f39fd6e51aad88f6f4ce6ab8827279cfffb92266",
             "example account"
         );
     }
 
     function testDecodeExample() external pure {
         bytes memory account =
-            hex"efcdab8967452301f39fd6e51aad88f6f4ce6ab8827279cfffb92266";
-        (address user, uint64 balance) = ExternalLibUsdAccount.decode(account);
+            hex"67452301efcdab8967452301f39fd6e51aad88f6f4ce6ab8827279cfffb92266";
+        (address user, uint96 balance) = ExternalLibUsdAccount.decode(account);
         assertEq(user, 0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266, "user");
-        assertEq(balance, 0x0123456789abcdef, "balance");
+        assertEq(balance, 0x0123456789abcdef01234567, "balance");
     }
 
     function testEncodeZero() external pure {
         assertEq(
-            LibUsdAccount.encode(address(0), uint64(0)), new bytes(28), "zero account"
+            LibUsdAccount.encode(address(0), uint96(0)), new bytes(32), "zero account"
         );
     }
 
     function testDecodeZero() external pure {
-        bytes memory account = new bytes(28);
-        (address user, uint64 balance) = ExternalLibUsdAccount.decode(account);
+        bytes memory account = new bytes(32);
+        (address user, uint96 balance) = ExternalLibUsdAccount.decode(account);
         assertEq(user, address(0), "user");
-        assertEq(balance, uint64(0), "balance");
+        assertEq(balance, uint96(0), "balance");
     }
 
-    function _encodeAccountTooShort(uint64 attemptedAccountSize)
+    function _encodeInvalidAccountSize(uint256 attemptedAccountSize)
         internal
         pure
         returns (bytes memory)
     {
         return abi.encodeWithSelector(
-            IWithdrawalOutputBuilderErrors.AccountTooShort.selector,
+            IWithdrawalOutputBuilderErrors.InvalidAccountSize.selector,
             attemptedAccountSize,
-            28
+            32
         );
     }
 }

@@ -468,7 +468,7 @@ contract ApplicationTest is
 
     struct UsdAccount {
         address user;
-        uint64 balance;
+        uint96 balance;
     }
 
     function testValidateAccounts(bool addAccounts, UsdAccount[10] calldata newAccounts)
@@ -692,8 +692,8 @@ contract ApplicationTest is
         _appContract.withdraw(account, proof);
     }
 
-    function testWithdrawalRevertsAccountIsTooShort(uint256) external {
-        uint64 accountSize = uint64(vm.randomUint(0, 27));
+    function testWithdrawalRevertsInvalidAccountSize(uint256) external {
+        uint256 accountSize = vm.randomUint(0, 31);
         string memory name = string.concat("RandomBytes", vm.toString(accountSize));
         bytes memory account = _getAccount(name);
         AccountValidityProof memory proof = _getAccountValidityProof(name);
@@ -705,7 +705,7 @@ contract ApplicationTest is
         _appContract.foreclose();
         _proveAccountsDriveMerkleRoot();
 
-        vm.expectRevert(_encodeAccountTooShort(accountSize));
+        vm.expectRevert(_encodeInvalidAccountSize(accountSize));
         vm.prank(vm.randomAddress());
         _appContract.withdraw(account, proof);
     }
@@ -757,15 +757,11 @@ contract ApplicationTest is
     }
 
     function testWithdrawal(uint256) external {
-        string[] memory names = new string[](8);
+        string[] memory names = new string[](4);
         names[0] = "Alice";
         names[1] = "Bob";
         names[2] = "Charles";
-        names[3] = "RandomBytes28";
-        names[4] = "RandomBytes29";
-        names[5] = "RandomBytes30";
-        names[6] = "RandomBytes31";
-        names[7] = "RandomBytes32";
+        names[3] = "RandomBytes32";
 
         string memory name = names[vm.randomUint(0, names.length - 1)];
         bytes memory account = _getAccount(name);
@@ -2007,7 +2003,7 @@ contract ApplicationTest is
         }
     }
 
-    function _encodeUsdAccount(address user, uint64 balance)
+    function _encodeUsdAccount(address user, uint96 balance)
         internal
         pure
         returns (bytes memory)
@@ -2038,15 +2034,15 @@ contract ApplicationTest is
         return _accountNames[vm.randomUint(0, _accountNames.length - 1)];
     }
 
-    function _generateAccount() internal view returns (bytes memory) {
+    function _generateAccount() internal returns (bytes memory) {
         uint256 log2MaxAccountSize = LibEmulator.getLog2MaxAccountSize();
-        uint256 accountSize = vm.randomUint(log2MaxAccountSize);
+        uint256 accountSize = vm.randomUint(0, 1 << log2MaxAccountSize);
         return vm.randomBytes(accountSize);
     }
 
     function _generateIllSizedAccount() internal returns (bytes memory) {
         uint256 log2MaxAccountSize = LibEmulator.getLog2MaxAccountSize();
-        uint256 accountSize = vm.randomUint(1 << log2MaxAccountSize, 1 << 16);
+        uint256 accountSize = vm.randomUint(1 + (1 << log2MaxAccountSize), 1 << 16);
         return vm.randomBytes(accountSize);
     }
 
@@ -2313,15 +2309,15 @@ contract ApplicationTest is
         return abi.encodeWithSelector(SafeERC20.SafeERC20FailedOperation.selector, token);
     }
 
-    function _encodeAccountTooShort(uint64 attemptedAccountSize)
+    function _encodeInvalidAccountSize(uint256 attemptedAccountSize)
         internal
         pure
         returns (bytes memory)
     {
         return abi.encodeWithSelector(
-            IWithdrawalOutputBuilderErrors.AccountTooShort.selector,
+            IWithdrawalOutputBuilderErrors.InvalidAccountSize.selector,
             attemptedAccountSize,
-            28
+            32
         );
     }
 
