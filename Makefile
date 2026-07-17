@@ -324,7 +324,7 @@ $(ARTIFACTS_BUNDLE): build | $(DIST)
 
 $(DEPLOYMENT_ADDRESSES_BUNDLE): deploy-livenets | $(DIST)
 	@echo "📦 Creating $@..."
-	@tar -czf $@ $(foreach id, $(LIVENET_CHAIN_IDS), deployments/$(id))
+	@tar -czf $@ $(addprefix deployments/, $(LIVENET_CHAIN_IDS))
 	@echo "✅ Created $@."
 
 $(DEVNET_BUNDLE): devnet | $(DIST)
