@@ -9,7 +9,7 @@ import {IERC721Receiver} from "@openzeppelin-contracts-5.2.0/token/ERC721/IERC72
 import {Vm} from "forge-std-1.9.6/src/Vm.sol";
 
 import {IInputBox} from "src/inputs/IInputBox.sol";
-import {IERC721Portal} from "src/portals/IERC721Portal.sol";
+import {IErc721Portal} from "src/portals/IErc721Portal.sol";
 
 import {InputBoxTestUtils} from "../util/InputBoxTestUtils.sol";
 import {LibBytes} from "../util/LibBytes.sol";
@@ -17,12 +17,12 @@ import {LibTopic} from "../util/LibTopic.sol";
 import {RollupsTest} from "../util/RollupsTest.sol";
 import {VersionGetterTestUtils} from "../util/VersionGetterTestUtils.sol";
 
-contract ERC721PortalTest is RollupsTest, InputBoxTestUtils, VersionGetterTestUtils {
+contract Erc721PortalTest is RollupsTest, InputBoxTestUtils, VersionGetterTestUtils {
     using LibTopic for address;
     using LibBytes for bytes;
 
     IInputBox _inputBox;
-    IERC721Portal _portal;
+    IErc721Portal _portal;
 
     function setUp() public {
         _inputBox = _contracts.core.inputBox;
@@ -45,7 +45,7 @@ contract ERC721PortalTest is RollupsTest, InputBoxTestUtils, VersionGetterTestUt
 
         vm.prank(sender);
         vm.expectRevert(_encodeApplicationNotDeployed(appContract));
-        _portal.depositERC721Token(
+        _portal.depositErc721Token(
             token, appContract, tokenId, baseLayerData, execLayerData
         );
     }
@@ -67,7 +67,7 @@ contract ERC721PortalTest is RollupsTest, InputBoxTestUtils, VersionGetterTestUt
 
         vm.prank(sender);
         vm.expectRevert(_encodeApplicationReverted(appContract, errorData));
-        _portal.depositERC721Token(
+        _portal.depositErc721Token(
             token, appContract, tokenId, baseLayerData, execLayerData
         );
     }
@@ -91,7 +91,7 @@ contract ERC721PortalTest is RollupsTest, InputBoxTestUtils, VersionGetterTestUt
 
         vm.prank(sender);
         vm.expectRevert(_encodeIllformedApplicationReturnData(appContract, returnData));
-        _portal.depositERC721Token(
+        _portal.depositErc721Token(
             token, appContract, tokenId, baseLayerData, execLayerData
         );
     }
@@ -112,7 +112,7 @@ contract ERC721PortalTest is RollupsTest, InputBoxTestUtils, VersionGetterTestUt
 
         vm.prank(sender);
         vm.expectRevert(_encodeIllformedApplicationReturnData(appContract, returnData));
-        _portal.depositERC721Token(
+        _portal.depositErc721Token(
             token, appContract, tokenId, baseLayerData, execLayerData
         );
     }
@@ -132,7 +132,7 @@ contract ERC721PortalTest is RollupsTest, InputBoxTestUtils, VersionGetterTestUt
 
         vm.prank(sender);
         vm.expectRevert(_encodeInputBoxNotDeployed(inputBox));
-        _portal.depositERC721Token(
+        _portal.depositErc721Token(
             token, appContract, tokenId, baseLayerData, execLayerData
         );
     }
@@ -151,7 +151,7 @@ contract ERC721PortalTest is RollupsTest, InputBoxTestUtils, VersionGetterTestUt
 
         vm.prank(sender);
         vm.expectRevert(_encodeApplicationForeclosed(appContract));
-        _portal.depositERC721Token(
+        _portal.depositErc721Token(
             token, appContract, tokenId, baseLayerData, execLayerData
         );
     }
@@ -181,7 +181,7 @@ contract ERC721PortalTest is RollupsTest, InputBoxTestUtils, VersionGetterTestUt
         vm.recordLogs();
 
         vm.prank(sender);
-        _portal.depositERC721Token(
+        _portal.depositErc721Token(
             token, appContract, tokenId, baseLayerData, execLayerData
         );
 

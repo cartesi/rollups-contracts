@@ -7,9 +7,9 @@ import {IERC20} from "@openzeppelin-contracts-5.2.0/token/ERC20/IERC20.sol";
 import {SafeERC20} from "@openzeppelin-contracts-5.2.0/token/ERC20/utils/SafeERC20.sol";
 
 import {RollupsContract} from "../common/RollupsContract.sol";
-import {ISafeERC20Transfer} from "./ISafeERC20Transfer.sol";
+import {ISafeErc20Transfer} from "./ISafeErc20Transfer.sol";
 
-contract SafeERC20Transfer is ISafeERC20Transfer, RollupsContract {
+contract SafeErc20Transfer is ISafeErc20Transfer, RollupsContract {
     using SafeERC20 for IERC20;
 
     function safeTransfer(IERC20 token, address to, uint256 value) external override {

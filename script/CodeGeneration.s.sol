@@ -84,21 +84,21 @@ contract DeployersCodeGenerationScript is CodeGenerationScript {
         _addImport("src/dapp", "ApplicationFactory");
         _addImport("src/dapp", "IApplicationFactory");
         _addImport("src/dapp", "SelfHostedApplicationFactory");
-        _addImport("src/delegatecall", "ISafeERC20Transfer");
-        _addImport("src/delegatecall", "SafeERC20Transfer");
+        _addImport("src/delegatecall", "ISafeErc20Transfer");
+        _addImport("src/delegatecall", "SafeErc20Transfer");
         _addImport("src/devnet", "TestFungibleToken");
         _addImport("src/devnet", "TestMultiToken");
         _addImport("src/devnet", "TestNonFungibleToken");
         _addImport("src/inputs", "InputBox");
-        _addImport("src/portals", "ERC1155BatchPortal");
-        _addImport("src/portals", "ERC1155SinglePortal");
-        _addImport("src/portals", "ERC20Portal");
-        _addImport("src/portals", "ERC721Portal");
+        _addImport("src/portals", "Erc1155BatchPortal");
+        _addImport("src/portals", "Erc1155SinglePortal");
+        _addImport("src/portals", "Erc20Portal");
+        _addImport("src/portals", "Erc721Portal");
         _addImport("src/portals", "EtherPortal");
-        _addImport("src/portals", "IERC1155BatchPortal");
-        _addImport("src/portals", "IERC1155SinglePortal");
-        _addImport("src/portals", "IERC20Portal");
-        _addImport("src/portals", "IERC721Portal");
+        _addImport("src/portals", "IErc1155BatchPortal");
+        _addImport("src/portals", "IErc1155SinglePortal");
+        _addImport("src/portals", "IErc20Portal");
+        _addImport("src/portals", "IErc721Portal");
         _addImport("src/portals", "IEtherPortal");
         _addImport("src/refund", "IRefundOutputBuilder");
         _addImport("src/refund", "RefundOutputBuilder");
@@ -121,25 +121,25 @@ contract DeployersCodeGenerationScript is CodeGenerationScript {
             _addDeployer("AuthorityFactory", paramTypes);
             _addDeployer("InputBox", paramTypes);
             _addDeployer("QuorumFactory", paramTypes);
-            _addDeployer("SafeERC20Transfer", paramTypes);
+            _addDeployer("SafeErc20Transfer", paramTypes);
             _addDeployer("TestFungibleToken", paramTypes);
             _addDeployer("TestMultiToken", paramTypes);
             _addDeployer("TestNonFungibleToken", paramTypes);
-            _addDeployer("ERC1155BatchPortal", paramTypes);
-            _addDeployer("ERC1155SinglePortal", paramTypes);
-            _addDeployer("ERC20Portal", paramTypes);
-            _addDeployer("ERC721Portal", paramTypes);
+            _addDeployer("Erc1155BatchPortal", paramTypes);
+            _addDeployer("Erc1155SinglePortal", paramTypes);
+            _addDeployer("Erc20Portal", paramTypes);
+            _addDeployer("Erc721Portal", paramTypes);
             _addDeployer("EtherPortal", paramTypes);
         }
 
         {
             string[] memory paramTypes = new string[](6);
             paramTypes[0] = "IEtherPortal";
-            paramTypes[1] = "IERC20Portal";
-            paramTypes[2] = "IERC721Portal";
-            paramTypes[3] = "IERC1155SinglePortal";
-            paramTypes[4] = "IERC1155BatchPortal";
-            paramTypes[5] = "ISafeERC20Transfer";
+            paramTypes[1] = "IErc20Portal";
+            paramTypes[2] = "IErc721Portal";
+            paramTypes[3] = "IErc1155SinglePortal";
+            paramTypes[4] = "IErc1155BatchPortal";
+            paramTypes[5] = "ISafeErc20Transfer";
             _addDeployer("RefundOutputBuilder", paramTypes);
         }
 
@@ -151,7 +151,7 @@ contract DeployersCodeGenerationScript is CodeGenerationScript {
 
         {
             string[] memory paramTypes = new string[](1);
-            paramTypes[0] = "ISafeERC20Transfer";
+            paramTypes[0] = "ISafeErc20Transfer";
             _addDeployer("UsdWithdrawalOutputBuilderFactory", paramTypes);
         }
 

@@ -6,7 +6,7 @@ pragma solidity ^0.8.30;
 import {RollupsTest} from "../util/RollupsTest.sol";
 import {VersionGetterTestUtils} from "../util/VersionGetterTestUtils.sol";
 
-contract SafeERC20TransferTest is RollupsTest, VersionGetterTestUtils {
+contract SafeErc20TransferTest is RollupsTest, VersionGetterTestUtils {
     function testVersion() external view {
         _testVersion(_contracts.core.safeErc20Transfer);
     }

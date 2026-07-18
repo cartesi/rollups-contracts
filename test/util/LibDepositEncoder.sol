@@ -35,7 +35,7 @@ library LibDepositEncoder {
         pure
         returns (bytes memory payload)
     {
-        return InputEncoding.encodeERC20Deposit(
+        return InputEncoding.encodeErc20Deposit(
             deposit.token, deposit.sender, deposit.value, extraData.execLayerData
         );
     }
@@ -45,7 +45,7 @@ library LibDepositEncoder {
         pure
         returns (bytes memory payload)
     {
-        return InputEncoding.encodeERC721Deposit(
+        return InputEncoding.encodeErc721Deposit(
             deposit.token,
             deposit.sender,
             deposit.tokenId,
@@ -59,7 +59,7 @@ library LibDepositEncoder {
         pure
         returns (bytes memory payload)
     {
-        return InputEncoding.encodeSingleERC1155Deposit(
+        return InputEncoding.encodeSingleErc1155Deposit(
             deposit.token,
             deposit.sender,
             deposit.tokenId,
@@ -74,7 +74,7 @@ library LibDepositEncoder {
         pure
         returns (bytes memory payload)
     {
-        return InputEncoding.encodeBatchERC1155Deposit(
+        return InputEncoding.encodeBatchErc1155Deposit(
             deposit.token,
             deposit.sender,
             deposit.tokenIds,

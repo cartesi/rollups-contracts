@@ -55,7 +55,7 @@ library InputEncoding {
     /// @param value The amount of tokens being sent
     /// @param execLayerData Additional data to be interpreted by the execution layer
     /// @return The encoded input payload
-    function encodeERC20Deposit(
+    function encodeErc20Deposit(
         IERC20 token,
         address sender,
         uint256 value,
@@ -92,7 +92,7 @@ library InputEncoding {
     /// @param execLayerData Additional data to be interpreted by the execution layer
     /// @return The encoded input payload
     /// @dev `baseLayerData` should be forwarded to `token`.
-    function encodeERC721Deposit(
+    function encodeErc721Deposit(
         IERC721 token,
         address sender,
         uint256 tokenId,
@@ -132,7 +132,7 @@ library InputEncoding {
     /// @param execLayerData Additional data to be interpreted by the execution layer
     /// @return The encoded input payload
     /// @dev `baseLayerData` should be forwarded to `token`.
-    function encodeSingleERC1155Deposit(
+    function encodeSingleErc1155Deposit(
         IERC1155 token,
         address sender,
         uint256 tokenId,
@@ -175,7 +175,7 @@ library InputEncoding {
     /// @param execLayerData Additional data to be interpreted by the execution layer
     /// @return The encoded input payload
     /// @dev `baseLayerData` should be forwarded to `token`.
-    function encodeBatchERC1155Deposit(
+    function encodeBatchErc1155Deposit(
         IERC1155 token,
         address sender,
         uint256[] calldata tokenIds,

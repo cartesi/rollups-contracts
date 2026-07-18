@@ -5,10 +5,10 @@ pragma solidity ^0.8.30;
 
 import {DelegateCallVoucher} from "../common/DelegateCallVoucher.sol";
 import {Erc20Deposit} from "../common/Erc20Deposit.sol";
-import {ISafeERC20Transfer} from "../delegatecall/ISafeERC20Transfer.sol";
+import {ISafeErc20Transfer} from "../delegatecall/ISafeErc20Transfer.sol";
 
 library LibErc20Deposit {
-    function buildRefund(Erc20Deposit memory deposit, ISafeERC20Transfer safeTransfer)
+    function buildRefund(Erc20Deposit memory deposit, ISafeErc20Transfer safeTransfer)
         internal
         pure
         returns (DelegateCallVoucher memory delegateCallVoucher)
@@ -16,7 +16,7 @@ library LibErc20Deposit {
         return DelegateCallVoucher({
             destination: address(safeTransfer),
             payload: abi.encodeCall(
-                ISafeERC20Transfer.safeTransfer,
+                ISafeErc20Transfer.safeTransfer,
                 (deposit.token, deposit.sender, deposit.value)
             )
         });

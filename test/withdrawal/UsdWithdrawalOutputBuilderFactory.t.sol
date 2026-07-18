@@ -8,7 +8,7 @@ import {Vm} from "forge-std-1.9.6/src/Vm.sol";
 import {IERC20} from "@openzeppelin-contracts-5.2.0/token/ERC20/IERC20.sol";
 
 import {Outputs} from "src/common/Outputs.sol";
-import {ISafeERC20Transfer} from "src/delegatecall/ISafeERC20Transfer.sol";
+import {ISafeErc20Transfer} from "src/delegatecall/ISafeErc20Transfer.sol";
 import {IUsdWithdrawalOutputBuilder} from "src/withdrawal/IUsdWithdrawalOutputBuilder.sol";
 import {IUsdWithdrawalOutputBuilderFactory} from "src/withdrawal/IUsdWithdrawalOutputBuilderFactory.sol";
 import {IWithdrawalOutputBuilderErrors} from "src/withdrawal/IWithdrawalOutputBuilderErrors.sol";
@@ -20,7 +20,7 @@ import {VersionGetterTestUtils} from "../util/VersionGetterTestUtils.sol";
 contract UsdWithdrawalOutputBuilderTest is RollupsTest, VersionGetterTestUtils {
     using LibBytes for bytes;
 
-    ISafeERC20Transfer _safeErc20Transfer;
+    ISafeErc20Transfer _safeErc20Transfer;
     IUsdWithdrawalOutputBuilderFactory _factory;
 
     function setUp() external {
@@ -119,7 +119,7 @@ contract UsdWithdrawalOutputBuilderTest is RollupsTest, VersionGetterTestUtils {
             abi.decode(outputArgs, (address, bytes));
         assertEq(destination, address(_safeErc20Transfer));
         (bytes4 funcSelector, bytes memory callArgs) = payload.consumeBytes4();
-        assertEq(funcSelector, ISafeERC20Transfer.safeTransfer.selector);
+        assertEq(funcSelector, ISafeErc20Transfer.safeTransfer.selector);
         (address token2, address to, uint256 value) =
             abi.decode(callArgs, (address, address, uint256));
         assertEq(token2, address(token));

@@ -8,7 +8,7 @@ import {IERC20} from "@openzeppelin-contracts-5.2.0/token/ERC20/IERC20.sol";
 import {Vm} from "forge-std-1.9.6/src/Vm.sol";
 
 import {IInputBox} from "src/inputs/IInputBox.sol";
-import {IERC20Portal} from "src/portals/IERC20Portal.sol";
+import {IErc20Portal} from "src/portals/IErc20Portal.sol";
 
 import {InputBoxTestUtils} from "../util/InputBoxTestUtils.sol";
 import {LibBytes} from "../util/LibBytes.sol";
@@ -16,12 +16,12 @@ import {LibTopic} from "../util/LibTopic.sol";
 import {RollupsTest} from "../util/RollupsTest.sol";
 import {VersionGetterTestUtils} from "../util/VersionGetterTestUtils.sol";
 
-contract ERC20PortalTest is RollupsTest, InputBoxTestUtils, VersionGetterTestUtils {
+contract Erc20PortalTest is RollupsTest, InputBoxTestUtils, VersionGetterTestUtils {
     using LibTopic for address;
     using LibBytes for bytes;
 
     IInputBox _inputBox;
-    IERC20Portal _portal;
+    IErc20Portal _portal;
     IERC20 _token;
 
     function setUp() public {
@@ -45,7 +45,7 @@ contract ERC20PortalTest is RollupsTest, InputBoxTestUtils, VersionGetterTestUti
 
         vm.prank(sender);
         vm.expectRevert(_encodeApplicationNotDeployed(appContract));
-        _portal.depositERC20Tokens(_token, appContract, value, execLayerData);
+        _portal.depositErc20Tokens(_token, appContract, value, execLayerData);
     }
 
     function testDepositRevertApplicationReverted(
@@ -62,7 +62,7 @@ contract ERC20PortalTest is RollupsTest, InputBoxTestUtils, VersionGetterTestUti
 
         vm.prank(sender);
         vm.expectRevert(_encodeApplicationReverted(appContract, errorData));
-        _portal.depositERC20Tokens(_token, appContract, value, execLayerData);
+        _portal.depositErc20Tokens(_token, appContract, value, execLayerData);
     }
 
     function testDepositRevertIllformedApplicationReturnDataSize(
@@ -81,7 +81,7 @@ contract ERC20PortalTest is RollupsTest, InputBoxTestUtils, VersionGetterTestUti
 
         vm.prank(sender);
         vm.expectRevert(_encodeIllformedApplicationReturnData(appContract, returnData));
-        _portal.depositERC20Tokens(_token, appContract, value, execLayerData);
+        _portal.depositErc20Tokens(_token, appContract, value, execLayerData);
     }
 
     function testDepositRevertIllformedApplicationReturnData(
@@ -97,7 +97,7 @@ contract ERC20PortalTest is RollupsTest, InputBoxTestUtils, VersionGetterTestUti
 
         vm.prank(sender);
         vm.expectRevert(_encodeIllformedApplicationReturnData(appContract, returnData));
-        _portal.depositERC20Tokens(_token, appContract, value, execLayerData);
+        _portal.depositErc20Tokens(_token, appContract, value, execLayerData);
     }
 
     function testDepositRevertInputBoxNotDeployed(
@@ -112,7 +112,7 @@ contract ERC20PortalTest is RollupsTest, InputBoxTestUtils, VersionGetterTestUti
 
         vm.prank(sender);
         vm.expectRevert(_encodeInputBoxNotDeployed(inputBox));
-        _portal.depositERC20Tokens(_token, appContract, value, execLayerData);
+        _portal.depositErc20Tokens(_token, appContract, value, execLayerData);
     }
 
     function testDepositRevertApplicationForeclosed(
@@ -126,10 +126,10 @@ contract ERC20PortalTest is RollupsTest, InputBoxTestUtils, VersionGetterTestUti
 
         vm.prank(sender);
         vm.expectRevert(_encodeApplicationForeclosed(appContract));
-        _portal.depositERC20Tokens(_token, appContract, value, execLayerData);
+        _portal.depositErc20Tokens(_token, appContract, value, execLayerData);
     }
 
-    function testDepositRevertERC20TokenReverts(
+    function testDepositRevertErc20TokenReverts(
         uint256 value,
         bytes calldata execLayerData,
         bytes calldata errorData
@@ -147,10 +147,10 @@ contract ERC20PortalTest is RollupsTest, InputBoxTestUtils, VersionGetterTestUti
 
         vm.prank(sender);
         vm.expectRevert(errorData);
-        _portal.depositERC20Tokens(_token, appContract, value, execLayerData);
+        _portal.depositErc20Tokens(_token, appContract, value, execLayerData);
     }
 
-    function testDepositRevertERC20TokenReturnsFalse(
+    function testDepositRevertErc20TokenReturnsFalse(
         uint256 value,
         bytes calldata execLayerData
     ) external {
@@ -166,11 +166,11 @@ contract ERC20PortalTest is RollupsTest, InputBoxTestUtils, VersionGetterTestUti
         );
 
         vm.prank(sender);
-        vm.expectRevert(IERC20Portal.ERC20TransferFailed.selector);
-        _portal.depositERC20Tokens(_token, appContract, value, execLayerData);
+        vm.expectRevert(IErc20Portal.Erc20TransferFailed.selector);
+        _portal.depositErc20Tokens(_token, appContract, value, execLayerData);
     }
 
-    function testDepositRevertERC20TokenReturnsNonBooleanWord(
+    function testDepositRevertErc20TokenReturnsNonBooleanWord(
         uint256 value,
         bytes calldata execLayerData
     ) external {
@@ -187,10 +187,10 @@ contract ERC20PortalTest is RollupsTest, InputBoxTestUtils, VersionGetterTestUti
 
         vm.prank(sender);
         vm.expectRevert();
-        _portal.depositERC20Tokens(_token, appContract, value, execLayerData);
+        _portal.depositErc20Tokens(_token, appContract, value, execLayerData);
     }
 
-    function testDepositRevertERC20TokenReturnsIllSizedData(
+    function testDepositRevertErc20TokenReturnsIllSizedData(
         uint256 value,
         bytes calldata returnData,
         bytes calldata execLayerData
@@ -210,10 +210,10 @@ contract ERC20PortalTest is RollupsTest, InputBoxTestUtils, VersionGetterTestUti
 
         vm.prank(sender);
         vm.expectRevert();
-        _portal.depositERC20Tokens(_token, appContract, value, execLayerData);
+        _portal.depositErc20Tokens(_token, appContract, value, execLayerData);
     }
 
-    function testDepositRevertERC20TransferDecreasedApplicationBalance(
+    function testDepositRevertErc20TransferDecreasedApplicationBalance(
         uint256 value,
         bytes calldata execLayerData
     ) external {
@@ -243,15 +243,15 @@ contract ERC20PortalTest is RollupsTest, InputBoxTestUtils, VersionGetterTestUti
         vm.prank(sender);
         vm.expectRevert(
             abi.encodeWithSelector(
-                IERC20Portal.ERC20TransferDecreasedApplicationBalance.selector,
+                IErc20Portal.Erc20TransferDecreasedApplicationBalance.selector,
                 currentBalance,
                 fakePostTransferBalance
             )
         );
-        _portal.depositERC20Tokens(_token, appContract, value, execLayerData);
+        _portal.depositErc20Tokens(_token, appContract, value, execLayerData);
     }
 
-    function testDepositRevertERC20TransferValueIsNotBalanceDelta(
+    function testDepositRevertErc20TransferValueIsNotBalanceDelta(
         uint256 value,
         bytes calldata execLayerData
     ) external {
@@ -282,12 +282,12 @@ contract ERC20PortalTest is RollupsTest, InputBoxTestUtils, VersionGetterTestUti
         vm.prank(sender);
         vm.expectRevert(
             abi.encodeWithSelector(
-                IERC20Portal.ERC20TransferValueIsNotBalanceDelta.selector,
+                IErc20Portal.Erc20TransferValueIsNotBalanceDelta.selector,
                 value,
                 balanceDelta
             )
         );
-        _portal.depositERC20Tokens(_token, appContract, value, execLayerData);
+        _portal.depositErc20Tokens(_token, appContract, value, execLayerData);
     }
 
     function testDeposit(
@@ -309,7 +309,7 @@ contract ERC20PortalTest is RollupsTest, InputBoxTestUtils, VersionGetterTestUti
         vm.recordLogs();
 
         vm.prank(sender);
-        _portal.depositERC20Tokens(_token, appContract, value, execLayerData);
+        _portal.depositErc20Tokens(_token, appContract, value, execLayerData);
 
         Vm.Log[] memory logs = vm.getRecordedLogs();
         bytes memory input;

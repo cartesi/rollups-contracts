@@ -7,7 +7,7 @@ import {IERC20} from "@openzeppelin-contracts-5.2.0/token/ERC20/IERC20.sol";
 import {Create2} from "@openzeppelin-contracts-5.2.0/utils/Create2.sol";
 
 import {RollupsContract} from "../common/RollupsContract.sol";
-import {ISafeERC20Transfer} from "../delegatecall/ISafeERC20Transfer.sol";
+import {ISafeErc20Transfer} from "../delegatecall/ISafeErc20Transfer.sol";
 import {IUsdWithdrawalOutputBuilder} from "./IUsdWithdrawalOutputBuilder.sol";
 import {IUsdWithdrawalOutputBuilderFactory} from "./IUsdWithdrawalOutputBuilderFactory.sol";
 import {UsdWithdrawalOutputBuilder} from "./UsdWithdrawalOutputBuilder.sol";
@@ -18,9 +18,9 @@ contract UsdWithdrawalOutputBuilderFactory is
     IUsdWithdrawalOutputBuilderFactory,
     RollupsContract
 {
-    ISafeERC20Transfer immutable SAFE_ERC20_TRANSFER;
+    ISafeErc20Transfer immutable SAFE_ERC20_TRANSFER;
 
-    constructor(ISafeERC20Transfer safeErc20Transfer) {
+    constructor(ISafeErc20Transfer safeErc20Transfer) {
         SAFE_ERC20_TRANSFER = safeErc20Transfer;
     }
 
@@ -57,7 +57,7 @@ contract UsdWithdrawalOutputBuilderFactory is
         external
         view
         override
-        returns (ISafeERC20Transfer safeErc20Transfer)
+        returns (ISafeErc20Transfer safeErc20Transfer)
     {
         return SAFE_ERC20_TRANSFER;
     }

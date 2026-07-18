@@ -7,7 +7,7 @@ import {IPortal} from "./IPortal.sol";
 import {IERC721} from "@openzeppelin-contracts-5.2.0/token/ERC721/IERC721.sol";
 
 /// @title ERC-721 Portal interface
-interface IERC721Portal is IPortal {
+interface IErc721Portal is IPortal {
     // Permissionless functions
 
     /// @notice Transfer an ERC-721 token to an application contract
@@ -27,7 +27,7 @@ interface IERC721Portal is IPortal {
     /// the user can issue a refund. If the user deposits an NFT through a smart contract,
     /// a refund will only succeed if the smart contract accepts it through the `onERC721Received` callback.
     /// If the smart contract wallet does not accept the NFT through the callback, it may not be recoverable.
-    function depositERC721Token(
+    function depositErc721Token(
         IERC721 token,
         address appContract,
         uint256 tokenId,

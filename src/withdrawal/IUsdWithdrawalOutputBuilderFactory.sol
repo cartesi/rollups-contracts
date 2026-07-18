@@ -6,7 +6,7 @@ pragma solidity ^0.8.30;
 import {IERC20} from "@openzeppelin-contracts-5.2.0/token/ERC20/IERC20.sol";
 
 import {IVersionGetter} from "../common/IVersionGetter.sol";
-import {ISafeERC20Transfer} from "../delegatecall/ISafeERC20Transfer.sol";
+import {ISafeErc20Transfer} from "../delegatecall/ISafeErc20Transfer.sol";
 import {IUsdWithdrawalOutputBuilder} from "./IUsdWithdrawalOutputBuilder.sol";
 
 /// @title USD Withdrawal Output Builder Factory interface
@@ -46,5 +46,5 @@ interface IUsdWithdrawalOutputBuilderFactory is IVersionGetter {
     function getSafeErc20Transfer()
         external
         view
-        returns (ISafeERC20Transfer safeErc20Transfer);
+        returns (ISafeErc20Transfer safeErc20Transfer);
 }

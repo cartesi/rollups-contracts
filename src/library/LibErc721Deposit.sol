@@ -10,7 +10,7 @@ import {Voucher} from "../common/Voucher.sol";
 /// with abi.encodeCall (which leverages Solidity type checker) instead of
 /// abi.encodeWithSignature (which does not type-check call arguments).
 /// @dev See https://github.com/argotorg/solidity/issues/3556
-interface IERC721SafeTransferFromWithoutData {
+interface IErc721SafeTransferFromWithoutData {
     function safeTransferFrom(address, address, uint256) external;
 }
 
@@ -24,7 +24,7 @@ library LibErc721Deposit {
             destination: address(deposit.token),
             value: 0,
             payload: abi.encodeCall(
-                IERC721SafeTransferFromWithoutData.safeTransferFrom,
+                IErc721SafeTransferFromWithoutData.safeTransferFrom,
                 (appContract, deposit.sender, deposit.tokenId)
             )
         });
