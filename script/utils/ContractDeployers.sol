@@ -11,21 +11,21 @@ import {QuorumFactory} from "src/consensus/quorum/QuorumFactory.sol";
 import {ApplicationFactory} from "src/dapp/ApplicationFactory.sol";
 import {IApplicationFactory} from "src/dapp/IApplicationFactory.sol";
 import {SelfHostedApplicationFactory} from "src/dapp/SelfHostedApplicationFactory.sol";
-import {ISafeERC20Transfer} from "src/delegatecall/ISafeERC20Transfer.sol";
-import {SafeERC20Transfer} from "src/delegatecall/SafeERC20Transfer.sol";
+import {ISafeErc20Transfer} from "src/delegatecall/ISafeErc20Transfer.sol";
+import {SafeErc20Transfer} from "src/delegatecall/SafeErc20Transfer.sol";
 import {TestFungibleToken} from "src/devnet/TestFungibleToken.sol";
 import {TestMultiToken} from "src/devnet/TestMultiToken.sol";
 import {TestNonFungibleToken} from "src/devnet/TestNonFungibleToken.sol";
 import {InputBox} from "src/inputs/InputBox.sol";
-import {ERC1155BatchPortal} from "src/portals/ERC1155BatchPortal.sol";
-import {ERC1155SinglePortal} from "src/portals/ERC1155SinglePortal.sol";
-import {ERC20Portal} from "src/portals/ERC20Portal.sol";
-import {ERC721Portal} from "src/portals/ERC721Portal.sol";
+import {Erc1155BatchPortal} from "src/portals/Erc1155BatchPortal.sol";
+import {Erc1155SinglePortal} from "src/portals/Erc1155SinglePortal.sol";
+import {Erc20Portal} from "src/portals/Erc20Portal.sol";
+import {Erc721Portal} from "src/portals/Erc721Portal.sol";
 import {EtherPortal} from "src/portals/EtherPortal.sol";
-import {IERC1155BatchPortal} from "src/portals/IERC1155BatchPortal.sol";
-import {IERC1155SinglePortal} from "src/portals/IERC1155SinglePortal.sol";
-import {IERC20Portal} from "src/portals/IERC20Portal.sol";
-import {IERC721Portal} from "src/portals/IERC721Portal.sol";
+import {IErc1155BatchPortal} from "src/portals/IErc1155BatchPortal.sol";
+import {IErc1155SinglePortal} from "src/portals/IErc1155SinglePortal.sol";
+import {IErc20Portal} from "src/portals/IErc20Portal.sol";
+import {IErc721Portal} from "src/portals/IErc721Portal.sol";
 import {IEtherPortal} from "src/portals/IEtherPortal.sol";
 import {IRefundOutputBuilder} from "src/refund/IRefundOutputBuilder.sol";
 import {RefundOutputBuilder} from "src/refund/RefundOutputBuilder.sol";
@@ -98,19 +98,19 @@ function deployQuorumFactory() returns (QuorumFactory deployment) {
     }
 }
 
-function deploySafeERC20Transfer() returns (SafeERC20Transfer deployment) {
+function deploySafeErc20Transfer() returns (SafeErc20Transfer deployment) {
     bytes32 salt;
-    bytes memory creationCode = type(SafeERC20Transfer).creationCode;
+    bytes memory creationCode = type(SafeErc20Transfer).creationCode;
     bytes memory encodedArgs = abi.encode();
     bytes memory initCode = abi.encodePacked(creationCode, encodedArgs);
     bytes32 initCodeHash = keccak256(initCode);
     address precomputedAddress = computeAddress(salt, initCodeHash);
     if (precomputedAddress.code.length == 0) {
-        deployment = new SafeERC20Transfer{salt: salt}();
+        deployment = new SafeErc20Transfer{salt: salt}();
         assert(address(deployment) == precomputedAddress);
         assert(address(deployment).code.length > 0);
     } else {
-        deployment = SafeERC20Transfer(precomputedAddress);
+        deployment = SafeErc20Transfer(precomputedAddress);
     }
 }
 
@@ -162,67 +162,67 @@ function deployTestNonFungibleToken() returns (TestNonFungibleToken deployment) 
     }
 }
 
-function deployERC1155BatchPortal() returns (ERC1155BatchPortal deployment) {
+function deployErc1155BatchPortal() returns (Erc1155BatchPortal deployment) {
     bytes32 salt;
-    bytes memory creationCode = type(ERC1155BatchPortal).creationCode;
+    bytes memory creationCode = type(Erc1155BatchPortal).creationCode;
     bytes memory encodedArgs = abi.encode();
     bytes memory initCode = abi.encodePacked(creationCode, encodedArgs);
     bytes32 initCodeHash = keccak256(initCode);
     address precomputedAddress = computeAddress(salt, initCodeHash);
     if (precomputedAddress.code.length == 0) {
-        deployment = new ERC1155BatchPortal{salt: salt}();
+        deployment = new Erc1155BatchPortal{salt: salt}();
         assert(address(deployment) == precomputedAddress);
         assert(address(deployment).code.length > 0);
     } else {
-        deployment = ERC1155BatchPortal(precomputedAddress);
+        deployment = Erc1155BatchPortal(precomputedAddress);
     }
 }
 
-function deployERC1155SinglePortal() returns (ERC1155SinglePortal deployment) {
+function deployErc1155SinglePortal() returns (Erc1155SinglePortal deployment) {
     bytes32 salt;
-    bytes memory creationCode = type(ERC1155SinglePortal).creationCode;
+    bytes memory creationCode = type(Erc1155SinglePortal).creationCode;
     bytes memory encodedArgs = abi.encode();
     bytes memory initCode = abi.encodePacked(creationCode, encodedArgs);
     bytes32 initCodeHash = keccak256(initCode);
     address precomputedAddress = computeAddress(salt, initCodeHash);
     if (precomputedAddress.code.length == 0) {
-        deployment = new ERC1155SinglePortal{salt: salt}();
+        deployment = new Erc1155SinglePortal{salt: salt}();
         assert(address(deployment) == precomputedAddress);
         assert(address(deployment).code.length > 0);
     } else {
-        deployment = ERC1155SinglePortal(precomputedAddress);
+        deployment = Erc1155SinglePortal(precomputedAddress);
     }
 }
 
-function deployERC20Portal() returns (ERC20Portal deployment) {
+function deployErc20Portal() returns (Erc20Portal deployment) {
     bytes32 salt;
-    bytes memory creationCode = type(ERC20Portal).creationCode;
+    bytes memory creationCode = type(Erc20Portal).creationCode;
     bytes memory encodedArgs = abi.encode();
     bytes memory initCode = abi.encodePacked(creationCode, encodedArgs);
     bytes32 initCodeHash = keccak256(initCode);
     address precomputedAddress = computeAddress(salt, initCodeHash);
     if (precomputedAddress.code.length == 0) {
-        deployment = new ERC20Portal{salt: salt}();
+        deployment = new Erc20Portal{salt: salt}();
         assert(address(deployment) == precomputedAddress);
         assert(address(deployment).code.length > 0);
     } else {
-        deployment = ERC20Portal(precomputedAddress);
+        deployment = Erc20Portal(precomputedAddress);
     }
 }
 
-function deployERC721Portal() returns (ERC721Portal deployment) {
+function deployErc721Portal() returns (Erc721Portal deployment) {
     bytes32 salt;
-    bytes memory creationCode = type(ERC721Portal).creationCode;
+    bytes memory creationCode = type(Erc721Portal).creationCode;
     bytes memory encodedArgs = abi.encode();
     bytes memory initCode = abi.encodePacked(creationCode, encodedArgs);
     bytes32 initCodeHash = keccak256(initCode);
     address precomputedAddress = computeAddress(salt, initCodeHash);
     if (precomputedAddress.code.length == 0) {
-        deployment = new ERC721Portal{salt: salt}();
+        deployment = new Erc721Portal{salt: salt}();
         assert(address(deployment) == precomputedAddress);
         assert(address(deployment).code.length > 0);
     } else {
-        deployment = ERC721Portal(precomputedAddress);
+        deployment = Erc721Portal(precomputedAddress);
     }
 }
 
@@ -244,11 +244,11 @@ function deployEtherPortal() returns (EtherPortal deployment) {
 
 function deployRefundOutputBuilder(
     IEtherPortal param1,
-    IERC20Portal param2,
-    IERC721Portal param3,
-    IERC1155SinglePortal param4,
-    IERC1155BatchPortal param5,
-    ISafeERC20Transfer param6
+    IErc20Portal param2,
+    IErc721Portal param3,
+    IErc1155SinglePortal param4,
+    IErc1155BatchPortal param5,
+    ISafeErc20Transfer param6
 ) returns (RefundOutputBuilder deployment) {
     bytes32 salt;
     bytes memory creationCode = type(RefundOutputBuilder).creationCode;
@@ -285,7 +285,7 @@ function deployApplicationFactory(IRefundOutputBuilder param1)
     }
 }
 
-function deployUsdWithdrawalOutputBuilderFactory(ISafeERC20Transfer param1)
+function deployUsdWithdrawalOutputBuilderFactory(ISafeErc20Transfer param1)
     returns (UsdWithdrawalOutputBuilderFactory deployment)
 {
     bytes32 salt;

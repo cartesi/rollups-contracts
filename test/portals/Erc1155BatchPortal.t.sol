@@ -9,7 +9,7 @@ import {IERC1155Receiver} from "@openzeppelin-contracts-5.2.0/token/ERC1155/IERC
 import {Vm} from "forge-std-1.9.6/src/Vm.sol";
 
 import {IInputBox} from "src/inputs/IInputBox.sol";
-import {IERC1155BatchPortal} from "src/portals/IERC1155BatchPortal.sol";
+import {IErc1155BatchPortal} from "src/portals/IErc1155BatchPortal.sol";
 
 import {InputBoxTestUtils} from "../util/InputBoxTestUtils.sol";
 import {LibAddressArray} from "../util/LibAddressArray.sol";
@@ -19,7 +19,7 @@ import {LibUint256Array} from "../util/LibUint256Array.sol";
 import {RollupsTest} from "../util/RollupsTest.sol";
 import {VersionGetterTestUtils} from "../util/VersionGetterTestUtils.sol";
 
-contract ERC1155BatchPortalTest is
+contract Erc1155BatchPortalTest is
     RollupsTest,
     InputBoxTestUtils,
     VersionGetterTestUtils
@@ -31,7 +31,7 @@ contract ERC1155BatchPortalTest is
     using LibBytes for bytes;
 
     IInputBox _inputBox;
-    IERC1155BatchPortal _portal;
+    IErc1155BatchPortal _portal;
 
     function setUp() public {
         _inputBox = _contracts.core.inputBox;
@@ -54,7 +54,7 @@ contract ERC1155BatchPortalTest is
 
         vm.prank(sender);
         vm.expectRevert(_encodeApplicationNotDeployed(appContract));
-        _portal.depositBatchERC1155Token(
+        _portal.depositBatchErc1155Token(
             token, appContract, tokenIds, values, baseLayerData, execLayerData
         );
     }
@@ -76,7 +76,7 @@ contract ERC1155BatchPortalTest is
 
         vm.prank(sender);
         vm.expectRevert(_encodeApplicationReverted(appContract, errorData));
-        _portal.depositBatchERC1155Token(
+        _portal.depositBatchErc1155Token(
             token, appContract, tokenIds, values, baseLayerData, execLayerData
         );
     }
@@ -100,7 +100,7 @@ contract ERC1155BatchPortalTest is
 
         vm.prank(sender);
         vm.expectRevert(_encodeIllformedApplicationReturnData(appContract, returnData));
-        _portal.depositBatchERC1155Token(
+        _portal.depositBatchErc1155Token(
             token, appContract, tokenIds, values, baseLayerData, execLayerData
         );
     }
@@ -121,7 +121,7 @@ contract ERC1155BatchPortalTest is
 
         vm.prank(sender);
         vm.expectRevert(_encodeIllformedApplicationReturnData(appContract, returnData));
-        _portal.depositBatchERC1155Token(
+        _portal.depositBatchErc1155Token(
             token, appContract, tokenIds, values, baseLayerData, execLayerData
         );
     }
@@ -141,7 +141,7 @@ contract ERC1155BatchPortalTest is
 
         vm.prank(sender);
         vm.expectRevert(_encodeInputBoxNotDeployed(inputBox));
-        _portal.depositBatchERC1155Token(
+        _portal.depositBatchErc1155Token(
             token, appContract, tokenIds, values, baseLayerData, execLayerData
         );
     }
@@ -160,7 +160,7 @@ contract ERC1155BatchPortalTest is
 
         vm.prank(sender);
         vm.expectRevert(_encodeApplicationForeclosed(appContract));
-        _portal.depositBatchERC1155Token(
+        _portal.depositBatchErc1155Token(
             token, appContract, tokenIds, values, baseLayerData, execLayerData
         );
     }
@@ -190,7 +190,7 @@ contract ERC1155BatchPortalTest is
         vm.recordLogs();
 
         vm.prank(sender);
-        _portal.depositBatchERC1155Token(
+        _portal.depositBatchErc1155Token(
             token, appContract, tokenIds, values, baseLayerData, execLayerData
         );
 

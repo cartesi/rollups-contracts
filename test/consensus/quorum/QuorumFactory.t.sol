@@ -14,7 +14,7 @@ import {IApplicationChecker} from "src/dapp/IApplicationChecker.sol";
 import {ApplicationForeclosureMock} from "../../util/ApplicationForeclosureMock.sol";
 import {Claim} from "../../util/Claim.sol";
 import {ConsensusTestUtils} from "../../util/ConsensusTestUtils.sol";
-import {ERC165Test} from "../../util/ERC165Test.sol";
+import {Erc165Test} from "../../util/Erc165Test.sol";
 import {LibAddressArray} from "../../util/LibAddressArray.sol";
 import {LibBytes} from "../../util/LibBytes.sol";
 import {LibClaim} from "../../util/LibClaim.sol";
@@ -28,7 +28,7 @@ import {Vm} from "forge-std-1.9.6/src/Vm.sol";
 
 contract QuorumFactoryTest is
     RollupsTest,
-    ERC165Test,
+    Erc165Test,
     ConsensusTestUtils,
     VersionGetterTestUtils
 {

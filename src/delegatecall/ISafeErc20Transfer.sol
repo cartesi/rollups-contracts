@@ -7,7 +7,7 @@ import {IERC20} from "@openzeppelin-contracts-5.2.0/token/ERC20/IERC20.sol";
 
 import {IVersionGetter} from "../common/IVersionGetter.sol";
 
-interface ISafeERC20Transfer is IVersionGetter {
+interface ISafeErc20Transfer is IVersionGetter {
     /// @notice Safely transfer ERC-20 tokens.
     /// @param token The ERC-20 token contract
     /// @param to The token recipient address

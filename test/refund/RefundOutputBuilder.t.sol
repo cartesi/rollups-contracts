@@ -14,12 +14,12 @@ import {Erc20Deposit} from "src/common/Erc20Deposit.sol";
 import {Erc721Deposit} from "src/common/Erc721Deposit.sol";
 import {EtherDeposit} from "src/common/EtherDeposit.sol";
 import {Outputs} from "src/common/Outputs.sol";
-import {ISafeERC20Transfer} from "src/delegatecall/ISafeERC20Transfer.sol";
+import {ISafeErc20Transfer} from "src/delegatecall/ISafeErc20Transfer.sol";
 import {LibBytes} from "src/library/LibBytes.sol";
-import {IERC1155BatchPortal} from "src/portals/IERC1155BatchPortal.sol";
-import {IERC1155SinglePortal} from "src/portals/IERC1155SinglePortal.sol";
-import {IERC20Portal} from "src/portals/IERC20Portal.sol";
-import {IERC721Portal} from "src/portals/IERC721Portal.sol";
+import {IErc1155BatchPortal} from "src/portals/IErc1155BatchPortal.sol";
+import {IErc1155SinglePortal} from "src/portals/IErc1155SinglePortal.sol";
+import {IErc20Portal} from "src/portals/IErc20Portal.sol";
+import {IErc721Portal} from "src/portals/IErc721Portal.sol";
 import {IEtherPortal} from "src/portals/IEtherPortal.sol";
 import {IRefundOutputBuilder} from "src/refund/IRefundOutputBuilder.sol";
 import {IRefundOutputBuilderErrors} from "src/refund/IRefundOutputBuilderErrors.sol";
@@ -44,11 +44,11 @@ contract RefundOutputBuilderTest is
     using LibDepositEncoder for Erc1155BatchDeposit;
 
     IEtherPortal _etherPortal;
-    IERC20Portal _erc20Portal;
-    IERC721Portal _erc721Portal;
-    IERC1155SinglePortal _erc1155SinglePortal;
-    IERC1155BatchPortal _erc1155BatchPortal;
-    ISafeERC20Transfer _safeErc20Transfer;
+    IErc20Portal _erc20Portal;
+    IErc721Portal _erc721Portal;
+    IErc1155SinglePortal _erc1155SinglePortal;
+    IErc1155BatchPortal _erc1155BatchPortal;
+    ISafeErc20Transfer _safeErc20Transfer;
     IRefundOutputBuilder _refundOutputBuilder;
 
     function setUp() external {
@@ -146,7 +146,7 @@ contract RefundOutputBuilderTest is
 
         (bool isCall, bytes4 sel2, bytes memory args2) = payload.consumeBytes4();
         assertTrue(isCall, "is Solidity function call");
-        assertEq(sel2, ISafeERC20Transfer.safeTransfer.selector, "call selector");
+        assertEq(sel2, ISafeErc20Transfer.safeTransfer.selector, "call selector");
 
         IERC20 token;
         address to;

@@ -8,7 +8,7 @@ import {IERC165} from "@openzeppelin-contracts-5.2.0/utils/introspection/IERC165
 import {Test} from "forge-std-1.9.6/src/Test.sol";
 
 /// @notice Tests contracts that implement ERC-165
-abstract contract ERC165Test is Test {
+abstract contract Erc165Test is Test {
     /// @notice Array of supported interfaces
     bytes4[] _supportedInterfaces;
 

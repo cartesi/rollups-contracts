@@ -7,23 +7,23 @@ import {IPortal} from "./IPortal.sol";
 import {IERC20} from "@openzeppelin-contracts-5.2.0/token/ERC20/IERC20.sol";
 
 /// @title ERC-20 Portal interface
-interface IERC20Portal is IPortal {
+interface IErc20Portal is IPortal {
     // Errors
 
     /// @notice Failed to transfer ERC-20 tokens to application
-    error ERC20TransferFailed();
+    error Erc20TransferFailed();
 
     /// @notice ERC-20 transfer decreased application balance
     /// @param balanceBefore The application balance before the transfer
     /// @param balanceAfter The application balance after the transfer
-    error ERC20TransferDecreasedApplicationBalance(
+    error Erc20TransferDecreasedApplicationBalance(
         uint256 balanceBefore, uint256 balanceAfter
     );
 
     /// @notice ERC-20 transfer value is different from application balance delta
     /// @param value The transfer value
     /// @param balanceDelta The application balance delta (after - before)
-    error ERC20TransferValueIsNotBalanceDelta(uint256 value, uint256 balanceDelta);
+    error Erc20TransferValueIsNotBalanceDelta(uint256 value, uint256 balanceDelta);
 
     // Permissionless functions
 
@@ -47,9 +47,9 @@ interface IERC20Portal is IPortal {
     /// @param value The amount of tokens to be transferred
     /// @param execLayerData Additional data to be interpreted by the execution layer
     ///
-    /// @dev May raise ERC20TransferFailed, ERC20TransferDecreasedApplicationBalance,
-    /// or ERC20TransferValueIsNotBalanceDelta.
-    function depositERC20Tokens(
+    /// @dev May raise Erc20TransferFailed, Erc20TransferDecreasedApplicationBalance,
+    /// or Erc20TransferValueIsNotBalanceDelta.
+    function depositErc20Tokens(
         IERC20 token,
         address appContract,
         uint256 value,

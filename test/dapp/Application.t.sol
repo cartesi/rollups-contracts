@@ -13,7 +13,7 @@ import {Outputs} from "src/common/Outputs.sol";
 import {WithdrawalConfig} from "src/common/WithdrawalConfig.sol";
 import {IAuthority} from "src/consensus/authority/IAuthority.sol";
 import {IApplication} from "src/dapp/IApplication.sol";
-import {ISafeERC20Transfer} from "src/delegatecall/ISafeERC20Transfer.sol";
+import {ISafeErc20Transfer} from "src/delegatecall/ISafeErc20Transfer.sol";
 import {IInputBox} from "src/inputs/IInputBox.sol";
 import {LibUsdAccount} from "src/library/LibUsdAccount.sol";
 import {IRefundOutputBuilderErrors} from "src/refund/IRefundOutputBuilderErrors.sol";
@@ -94,7 +94,7 @@ contract ApplicationTest is
     IERC20 _erc20Token;
     IERC721 _erc721Token;
     IERC1155 _erc1155Token;
-    ISafeERC20Transfer _safeErc20Transfer;
+    ISafeErc20Transfer _safeErc20Transfer;
     AssetReceiver _assetReceiver;
     OutputExecutionChecker _outputExecutionChecker;
     RefundIssuanceChecker _refundIssuanceChecker;
@@ -305,8 +305,8 @@ contract ApplicationTest is
         _appContract.executeOutput(output, proof);
     }
 
-    function testExecuteERC20TransferVoucher() external {
-        string memory name = "ERC20TransferVoucher";
+    function testExecuteErc20TransferVoucher() external {
+        string memory name = "Erc20TransferVoucher";
         bytes memory output = _getOutput(name);
         OutputValidityProof memory proof = _getOutputValidityProof(name);
 
@@ -332,7 +332,7 @@ contract ApplicationTest is
     }
 
     function testExecuteVoucherToAddressWithNoCode() external {
-        string memory name = "ERC20TransferVoucher";
+        string memory name = "Erc20TransferVoucher";
         bytes memory output = _getOutput(name);
         OutputValidityProof memory proof = _getOutputValidityProof(name);
 
@@ -345,8 +345,8 @@ contract ApplicationTest is
         _appContract.executeOutput(output, proof);
     }
 
-    function testExecuteERC721TransferVoucher() external {
-        string memory name = "ERC721TransferVoucher";
+    function testExecuteErc721TransferVoucher() external {
+        string memory name = "Erc721TransferVoucher";
         bytes memory output = _getOutput(name);
         OutputValidityProof memory proof = _getOutputValidityProof(name);
 
@@ -354,8 +354,8 @@ contract ApplicationTest is
         _testErc721Transfer(output, proof);
     }
 
-    function testExecuteERC1155SingleTransferVoucher() external {
-        string memory name = "ERC1155SingleTransferVoucher";
+    function testExecuteErc1155SingleTransferVoucher() external {
+        string memory name = "Erc1155SingleTransferVoucher";
         bytes memory output = _getOutput(name);
         OutputValidityProof memory proof = _getOutputValidityProof(name);
 
@@ -363,8 +363,8 @@ contract ApplicationTest is
         _testErc1155SingleTransfer(output, proof);
     }
 
-    function testExecuteERC1155BatchTransferVoucher() external {
-        string memory name = "ERC1155BatchTransferVoucher";
+    function testExecuteErc1155BatchTransferVoucher() external {
+        string memory name = "Erc1155BatchTransferVoucher";
         bytes memory output = _getOutput(name);
         OutputValidityProof memory proof = _getOutputValidityProof(name);
 
@@ -405,8 +405,8 @@ contract ApplicationTest is
         _appContract.executeOutput(output, proof);
     }
 
-    function testExecuteERC20TransferDelegateCallVoucherFail() external {
-        string memory name = "ERC20DelegateCallVoucher";
+    function testExecuteErc20TransferDelegateCallVoucherFail() external {
+        string memory name = "Erc20DelegateCallVoucher";
         bytes memory output = _getOutput(name);
         OutputValidityProof memory proof = _getOutputValidityProof(name);
 
@@ -414,8 +414,8 @@ contract ApplicationTest is
         _testErc20Fail(output, proof);
     }
 
-    function testExecuteERC20TransferDelegateCallVoucherNoCode() external {
-        string memory name = "ERC20DelegateCallVoucher";
+    function testExecuteErc20TransferDelegateCallVoucherNoCode() external {
+        string memory name = "Erc20DelegateCallVoucher";
         bytes memory output = _getOutput(name);
         OutputValidityProof memory proof = _getOutputValidityProof(name);
 
@@ -427,8 +427,8 @@ contract ApplicationTest is
         _appContract.executeOutput(output, proof);
     }
 
-    function testExecuteERC20TransferDelegateCallVoucherSuccess() external {
-        string memory name = "ERC20DelegateCallVoucher";
+    function testExecuteErc20TransferDelegateCallVoucherSuccess() external {
+        string memory name = "Erc20DelegateCallVoucher";
         bytes memory output = _getOutput(name);
         OutputValidityProof memory proof = _getOutputValidityProof(name);
 
@@ -606,7 +606,7 @@ contract ApplicationTest is
         _appContract.withdraw(account, proof);
     }
 
-    function testWithdrawalRevertsERC20InsufficientBalance(uint256) external {
+    function testWithdrawalRevertsErc20InsufficientBalance(uint256) external {
         string memory name = "Alice";
         bytes memory account = _getAccount(name);
         (, uint256 amount) = ExternalLibUsdAccount.decode(account);
@@ -648,7 +648,7 @@ contract ApplicationTest is
         _appContract.withdraw(account, proof);
     }
 
-    function testWithdrawalRevertsSafeERC20FailedOperation(uint256 returnValue) external {
+    function testWithdrawalRevertsSafeErc20FailedOperation(uint256 returnValue) external {
         vm.assume(returnValue != 1);
 
         string memory name = "Alice";
@@ -675,7 +675,7 @@ contract ApplicationTest is
         _appContract.withdraw(account, proof);
     }
 
-    function testWithdrawalRevertsSafeERC20FailedOperation() external {
+    function testWithdrawalRevertsSafeErc20FailedOperation() external {
         string memory name = "Alice";
         bytes memory account = _getAccount(name);
         AccountValidityProof memory proof = _getAccountValidityProof(name);
@@ -851,7 +851,7 @@ contract ApplicationTest is
 
             // decode delegatecall payload
             (bytes4 funcsel2, bytes memory callargs2) = payload.consumeBytes4();
-            assertEq(funcsel2, ISafeERC20Transfer.safeTransfer.selector);
+            assertEq(funcsel2, ISafeErc20Transfer.safeTransfer.selector);
             (address token, address to, uint256 value) =
                 abi.decode(callargs2, (address, address, uint256));
             assertEq(token, address(_erc20Token));
@@ -1157,7 +1157,7 @@ contract ApplicationTest is
                 .approve(portalAddress, vm.randomUint(value, balance));
             vm.recordLogs();
             _contracts.core.erc20Portal
-                .depositERC20Tokens(
+                .depositErc20Tokens(
                     _contracts.dev.testFungibleToken, appContract, value, execLayerData
                 );
             vm.stopPrank();
@@ -1169,7 +1169,7 @@ contract ApplicationTest is
             _contracts.dev.testNonFungibleToken.approve(portalAddress, tokenId);
             vm.recordLogs();
             _contracts.core.erc721Portal
-                .depositERC721Token(
+                .depositErc721Token(
                     _contracts.dev.testNonFungibleToken,
                     appContract,
                     tokenId,
@@ -1185,7 +1185,7 @@ contract ApplicationTest is
             _contracts.dev.testMultiToken.setApprovalForAll(portalAddress, true);
             vm.recordLogs();
             _contracts.core.erc1155SinglePortal
-                .depositSingleERC1155Token(
+                .depositSingleErc1155Token(
                     _contracts.dev.testMultiToken,
                     appContract,
                     tokenId,
@@ -1201,7 +1201,7 @@ contract ApplicationTest is
             _contracts.dev.testMultiToken.setApprovalForAll(portalAddress, true);
             vm.recordLogs();
             _contracts.core.erc1155BatchPortal
-                .depositBatchERC1155Token(
+                .depositBatchErc1155Token(
                     _contracts.dev.testMultiToken,
                     appContract,
                     tokenIds,
@@ -1224,7 +1224,7 @@ contract ApplicationTest is
             _contracts.dev.testMultiToken.setApprovalForAll(portalAddress, true);
             vm.recordLogs();
             _contracts.core.erc1155BatchPortal
-                .depositBatchERC1155Token(
+                .depositBatchErc1155Token(
                     _contracts.dev.testMultiToken,
                     appContract,
                     tokenIds,
@@ -1244,7 +1244,7 @@ contract ApplicationTest is
             _contracts.dev.testMultiToken.setApprovalForAll(portalAddress, true);
             vm.recordLogs();
             _contracts.core.erc1155BatchPortal
-                .depositBatchERC1155Token(
+                .depositBatchErc1155Token(
                     _contracts.dev.testMultiToken,
                     appContract,
                     tokenIds,
@@ -1664,7 +1664,7 @@ contract ApplicationTest is
                 bytes memory arguments;
 
                 (selector, arguments) = voucherPayload.consumeBytes4();
-                assertEq(selector, ISafeERC20Transfer.safeTransfer.selector);
+                assertEq(selector, ISafeErc20Transfer.safeTransfer.selector);
 
                 (address refundToken, address refundRecipient, uint256 refundAmount) =
                     abi.decode(arguments, (address, address, uint256));
@@ -1860,7 +1860,7 @@ contract ApplicationTest is
             )
         );
         _nameOutput(
-            "ERC20TransferVoucher",
+            "Erc20TransferVoucher",
             _addOutput(
                 _encodeVoucher(
                     address(_erc20Token),
@@ -1872,7 +1872,7 @@ contract ApplicationTest is
             )
         );
         _nameOutput(
-            "ERC721TransferVoucher",
+            "Erc721TransferVoucher",
             _addOutput(
                 _encodeVoucher(
                     address(_erc721Token),
@@ -1887,7 +1887,7 @@ contract ApplicationTest is
             )
         );
         _nameOutput(
-            "ERC1155SingleTransferVoucher",
+            "Erc1155SingleTransferVoucher",
             _addOutput(
                 _encodeVoucher(
                     address(_erc1155Token),
@@ -1906,7 +1906,7 @@ contract ApplicationTest is
             )
         );
         _nameOutput(
-            "ERC1155BatchTransferVoucher",
+            "Erc1155BatchTransferVoucher",
             _addOutput(
                 _encodeVoucher(
                     address(_erc1155Token),
@@ -1925,12 +1925,12 @@ contract ApplicationTest is
             )
         );
         _nameOutput(
-            "ERC20DelegateCallVoucher",
+            "Erc20DelegateCallVoucher",
             _addOutput(
                 _encodeDelegateCallVoucher(
                     address(_safeErc20Transfer),
                     abi.encodeCall(
-                        ISafeERC20Transfer.safeTransfer,
+                        ISafeErc20Transfer.safeTransfer,
                         (_erc20Token, address(_assetReceiver), TRANSFER_AMOUNT)
                     )
                 )

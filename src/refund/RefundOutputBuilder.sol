@@ -12,7 +12,7 @@ import {EtherDeposit} from "../common/EtherDeposit.sol";
 import {InputEncoding} from "../common/InputEncoding.sol";
 import {RollupsContract} from "../common/RollupsContract.sol";
 import {Voucher} from "../common/Voucher.sol";
-import {ISafeERC20Transfer} from "../delegatecall/ISafeERC20Transfer.sol";
+import {ISafeErc20Transfer} from "../delegatecall/ISafeErc20Transfer.sol";
 import {LibDelegateCallVoucher} from "../library/LibDelegateCallVoucher.sol";
 import {LibErc1155BatchDeposit} from "../library/LibErc1155BatchDeposit.sol";
 import {LibErc1155SingleDeposit} from "../library/LibErc1155SingleDeposit.sol";
@@ -20,10 +20,10 @@ import {LibErc20Deposit} from "../library/LibErc20Deposit.sol";
 import {LibErc721Deposit} from "../library/LibErc721Deposit.sol";
 import {LibEtherDeposit} from "../library/LibEtherDeposit.sol";
 import {LibVoucher} from "../library/LibVoucher.sol";
-import {IERC1155BatchPortal} from "../portals/IERC1155BatchPortal.sol";
-import {IERC1155SinglePortal} from "../portals/IERC1155SinglePortal.sol";
-import {IERC20Portal} from "../portals/IERC20Portal.sol";
-import {IERC721Portal} from "../portals/IERC721Portal.sol";
+import {IErc1155BatchPortal} from "../portals/IErc1155BatchPortal.sol";
+import {IErc1155SinglePortal} from "../portals/IErc1155SinglePortal.sol";
+import {IErc20Portal} from "../portals/IErc20Portal.sol";
+import {IErc721Portal} from "../portals/IErc721Portal.sol";
 import {IEtherPortal} from "../portals/IEtherPortal.sol";
 import {IRefundOutputBuilder} from "./IRefundOutputBuilder.sol";
 
@@ -38,19 +38,19 @@ contract RefundOutputBuilder is IRefundOutputBuilder, RollupsContract {
     using LibDelegateCallVoucher for DelegateCallVoucher;
 
     IEtherPortal immutable ETHER_PORTAL;
-    IERC20Portal immutable ERC20_PORTAL;
-    IERC721Portal immutable ERC721_PORTAL;
-    IERC1155SinglePortal immutable ERC1155_SINGLE_PORTAL;
-    IERC1155BatchPortal immutable ERC1155_BATCH_PORTAL;
-    ISafeERC20Transfer immutable SAFE_TRANSFER;
+    IErc20Portal immutable ERC20_PORTAL;
+    IErc721Portal immutable ERC721_PORTAL;
+    IErc1155SinglePortal immutable ERC1155_SINGLE_PORTAL;
+    IErc1155BatchPortal immutable ERC1155_BATCH_PORTAL;
+    ISafeErc20Transfer immutable SAFE_TRANSFER;
 
     constructor(
         IEtherPortal etherPortal,
-        IERC20Portal erc20Portal,
-        IERC721Portal erc721Portal,
-        IERC1155SinglePortal erc1155SinglePortal,
-        IERC1155BatchPortal erc1155BatchPortal,
-        ISafeERC20Transfer safeTransfer
+        IErc20Portal erc20Portal,
+        IErc721Portal erc721Portal,
+        IErc1155SinglePortal erc1155SinglePortal,
+        IErc1155BatchPortal erc1155BatchPortal,
+        ISafeErc20Transfer safeTransfer
     ) {
         ETHER_PORTAL = etherPortal;
         ERC20_PORTAL = erc20Portal;

@@ -17,15 +17,15 @@ graph TD
     ApplicationFactory[Application Factory]:::core
     Validator:::external
     EtherPortal[Ether Portal]:::core
-    ERC20Portal[ERC-20 Portal]:::core
-    ERC721Portal[ERC-721 Portal]:::core
-    ERC1155SinglePortal[ERC-1155 Single Transfer Portal]:::core
-    ERC1155BatchPortal[ERC-1155 Batch Transfer Portal]:::core
+    Erc20Portal[ERC-20 Portal]:::core
+    Erc721Portal[ERC-721 Portal]:::core
+    Erc1155SinglePortal[ERC-1155 Single Transfer Portal]:::core
+    Erc1155BatchPortal[ERC-1155 Batch Transfer Portal]:::core
     Consensus:::external
 
-    ERC20[Any ERC-20 token]:::external
-    ERC721[Any ERC-721 token]:::external
-    ERC1155[Any ERC-1155 token]:::external
+    Erc20[Any ERC-20 token]:::external
+    Erc721[Any ERC-721 token]:::external
+    Erc1155[Any ERC-1155 token]:::external
     ApplicationOwner[Application Owner]:::external
     Anyone1[Anyone]:::external
     Anyone2[Anyone]:::external
@@ -42,23 +42,23 @@ graph TD
     Anyone2 -- depositEther ---> EtherPortal
     EtherPortal -- "Ether transfer" ----> Anyone3
     EtherPortal -- addInput -----> InputBox
-    Anyone2 -- depositERC20Tokens ---> ERC20Portal
-    ERC20Portal -- transferFrom ----> ERC20
-    ERC20Portal -- addInput -----> InputBox
-    Anyone2 -- depositERC721Token ---> ERC721Portal
-    ERC721Portal -- safeTransferFrom ----> ERC721
-    ERC721Portal -- addInput -----> InputBox
-    Anyone2 -- depositSingleERC1155Token ---> ERC1155SinglePortal
-    ERC1155SinglePortal -- safeTransferFrom ----> ERC1155
-    ERC1155SinglePortal -- addInput -----> InputBox
-    Anyone2 -- depositBatchERC1155Token ---> ERC1155BatchPortal
-    ERC1155BatchPortal -- safeBatchTransferFrom ----> ERC1155
-    ERC1155BatchPortal -- addInput -----> InputBox
+    Anyone2 -- depositErc20Tokens ---> Erc20Portal
+    Erc20Portal -- transferFrom ----> Erc20
+    Erc20Portal -- addInput -----> InputBox
+    Anyone2 -- depositErc721Token ---> Erc721Portal
+    Erc721Portal -- safeTransferFrom ----> Erc721
+    Erc721Portal -- addInput -----> InputBox
+    Anyone2 -- depositSingleErc1155Token ---> Erc1155SinglePortal
+    Erc1155SinglePortal -- safeTransferFrom ----> Erc1155
+    Erc1155SinglePortal -- addInput -----> InputBox
+    Anyone2 -- depositBatchErc1155Token ---> Erc1155BatchPortal
+    Erc1155BatchPortal -- safeBatchTransferFrom ----> Erc1155
+    Erc1155BatchPortal -- addInput -----> InputBox
 
-    class ERC20,ERC721,ERC1155 hasLink
-    click ERC20 href "https://eips.ethereum.org/EIPS/eip-20"
-    click ERC721 href "https://eips.ethereum.org/EIPS/eip-721"
-    click ERC1155 href "https://eips.ethereum.org/EIPS/eip-1155"
+    class Erc20,Erc721,Erc1155 hasLink
+    click Erc20 href "https://eips.ethereum.org/EIPS/eip-20"
+    click Erc721 href "https://eips.ethereum.org/EIPS/eip-721"
+    click Erc1155 href "https://eips.ethereum.org/EIPS/eip-1155"
 ```
 
 ### Input Box

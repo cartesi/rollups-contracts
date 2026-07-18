@@ -7,7 +7,7 @@ import {IPortal} from "./IPortal.sol";
 import {IERC1155} from "@openzeppelin-contracts-5.2.0/token/ERC1155/IERC1155.sol";
 
 /// @title ERC-1155 Single Transfer Portal interface
-interface IERC1155SinglePortal is IPortal {
+interface IErc1155SinglePortal is IPortal {
     // Permissionless functions
 
     /// @notice Transfer ERC-1155 tokens of a single type to an application contract
@@ -27,7 +27,7 @@ interface IERC1155SinglePortal is IPortal {
     /// the user can issue a refund. If the user deposits ERC-1155 tokens through a smart contract,
     /// a refund will only succeed if the smart contract accepts it through the `onERC1155Received`/`onERC1155BatchReceived` callback.
     /// If the smart contract wallet does not accept the tokens through the callback, they may not be recoverable.
-    function depositSingleERC1155Token(
+    function depositSingleErc1155Token(
         IERC1155 token,
         address appContract,
         uint256 tokenId,
