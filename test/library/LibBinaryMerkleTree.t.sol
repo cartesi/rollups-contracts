@@ -329,15 +329,15 @@ contract LibBinaryMerkleTreeTest is Test {
             vm.expectRevert(LibBinaryMerkleTreeHelper.InvalidHeight.selector);
             nodes.merkleRootFromNodes(defaultNode, invalidHeight);
             vm.expectRevert(LibBinaryMerkleTreeHelper.InvalidHeight.selector);
-            compressedNodes.merkleRootFromCompressedNodes(defaultNode, invalidHeight);
+            compressedNodes.merkleRootFromNodes(defaultNode, invalidHeight);
         }
 
         uint256 height = vm.randomUint(minHeight, 256);
 
         assertEq(
-            compressedNodes.merkleRootFromCompressedNodes(defaultNode, height),
+            compressedNodes.merkleRootFromNodes(defaultNode, height),
             nodes.merkleRootFromNodes(defaultNode, height),
-            "merkleRootFromCompressedNodes(compress(x), ...) != merkleRootFromNodes(x, ...)"
+            "merkleRootFromNodes(compress(x), ...) != merkleRootFromNodes(x, ...)"
         );
 
         if (height < 256) {

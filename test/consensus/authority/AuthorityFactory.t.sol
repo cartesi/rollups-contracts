@@ -1,19 +1,17 @@
 // (c) Cartesi and individual authors (see AUTHORS)
 // SPDX-License-Identifier: Apache-2.0 (see LICENSE)
 
-/// @title Authority Factory Test
 pragma solidity ^0.8.30;
 
 import {Ownable} from "@openzeppelin-contracts-5.2.0/access/Ownable.sol";
+
 import {Vm} from "forge-std-1.9.6/src/Vm.sol";
 
 import {IConsensus} from "src/consensus/IConsensus.sol";
 import {IConsensusFactoryErrors} from "src/consensus/IConsensusFactoryErrors.sol";
 import {IOutputsMerkleRootValidator} from "src/consensus/IOutputsMerkleRootValidator.sol";
-import {AuthorityFactory} from "src/consensus/authority/AuthorityFactory.sol";
 import {IAuthority} from "src/consensus/authority/IAuthority.sol";
 import {IAuthorityFactory} from "src/consensus/authority/IAuthorityFactory.sol";
-import {IApplicationChecker} from "src/dapp/IApplicationChecker.sol";
 
 import {ApplicationForeclosureMock} from "../../util/ApplicationForeclosureMock.sol";
 import {Claim} from "../../util/Claim.sol";
@@ -21,13 +19,52 @@ import {ConsensusTestUtils} from "../../util/ConsensusTestUtils.sol";
 import {Erc165Test} from "../../util/Erc165Test.sol";
 import {LibAddressArray} from "../../util/LibAddressArray.sol";
 import {LibBytes} from "../../util/LibBytes.sol";
-import {LibClaim} from "../../util/LibClaim.sol";
 import {LibConsensus} from "../../util/LibConsensus.sol";
 import {LibTopic} from "../../util/LibTopic.sol";
 import {LibUint256Array} from "../../util/LibUint256Array.sol";
 import {OwnableTest} from "../../util/OwnableTest.sol";
 import {RollupsTest} from "../../util/RollupsTest.sol";
 import {VersionGetterTestUtils} from "../../util/VersionGetterTestUtils.sol";
+
+struct DeploymentArgs {
+    bool deterministic;
+    address authorityOwner;
+    uint256 epochLength;
+    uint256 claimStagingPeriod;
+    bytes32 salt;
+}
+
+library LibAuthorityFactory {
+    function newAuthority(
+        IAuthorityFactory factory,
+        DeploymentArgs calldata deploymentArgs
+    ) external returns (IAuthority) {
+        return deploymentArgs.deterministic
+            ? factory.newAuthority(
+                deploymentArgs.authorityOwner,
+                deploymentArgs.epochLength,
+                deploymentArgs.claimStagingPeriod,
+                deploymentArgs.salt
+            )
+            : factory.newAuthority(
+                deploymentArgs.authorityOwner,
+                deploymentArgs.epochLength,
+                deploymentArgs.claimStagingPeriod
+            );
+    }
+
+    function calculateAuthorityAddress(
+        IAuthorityFactory factory,
+        DeploymentArgs calldata deploymentArgs
+    ) external view returns (address) {
+        return factory.calculateAuthorityAddress(
+            deploymentArgs.authorityOwner,
+            deploymentArgs.epochLength,
+            deploymentArgs.claimStagingPeriod,
+            deploymentArgs.salt
+        );
+    }
+}
 
 contract AuthorityFactoryTest is
     RollupsTest,
@@ -36,14 +73,14 @@ contract AuthorityFactoryTest is
     ConsensusTestUtils,
     VersionGetterTestUtils
 {
+    using LibAuthorityFactory for IAuthorityFactory;
     using LibUint256Array for uint256[];
     using LibConsensus for IAuthority;
     using LibAddressArray for Vm;
     using LibTopic for address;
-    using LibClaim for Claim;
     using LibBytes for bytes;
 
-    AuthorityFactory _factory;
+    IAuthorityFactory _factory;
 
     function setUp() public {
         _factory = _contracts.core.authorityFactory;
@@ -56,506 +93,436 @@ contract AuthorityFactoryTest is
         _testVersion(_factory);
     }
 
-    function testNewAuthority(
-        address authorityOwner,
-        uint256 epochLength,
-        uint256 claimStagingPeriod
-    ) public {
-        vm.recordLogs();
-
-        try _factory.newAuthority(
-            authorityOwner, epochLength, claimStagingPeriod
-        ) returns (
-            IAuthority authority
-        ) {
-            Vm.Log[] memory logs = vm.getRecordedLogs();
-            _testNewAuthoritySuccess(
-                authorityOwner, epochLength, claimStagingPeriod, authority, logs
-            );
-        } catch (bytes memory errorData) {
-            _testNewAuthorityFailure(authorityOwner, epochLength, errorData);
-            return;
-        }
-    }
-
-    function testNewAuthorityDeterministic(
-        address authorityOwner,
-        uint256 epochLength,
-        uint256 claimStagingPeriod,
-        bytes32 salt
-    ) public {
-        address precalculatedAddress =
-            _factory.calculateAuthorityAddress(
-                authorityOwner, epochLength, claimStagingPeriod, salt
-            );
+    function testNewAuthority(DeploymentArgs calldata deploymentArgs) external {
+        address authorityAddress = _factory.calculateAuthorityAddress(deploymentArgs);
 
         vm.recordLogs();
 
-        try _factory.newAuthority(
-            authorityOwner, epochLength, claimStagingPeriod, salt
-        ) returns (
-            IAuthority authority
-        ) {
+        try _factory.newAuthority(deploymentArgs) returns (IAuthority authority) {
             Vm.Log[] memory logs = vm.getRecordedLogs();
 
+            if (deploymentArgs.deterministic) {
+                assertEq(
+                    authorityAddress,
+                    address(authority),
+                    "calculateAuthorityAddress(...) != newAuthority(...)"
+                );
+            }
+
+            uint256 numOfAuthorityCreated;
+            uint256 numOfOwnershipTransferred;
+
+            for (uint256 i; i < logs.length; ++i) {
+                Vm.Log memory log = logs[i];
+                if (log.emitter == address(_factory)) {
+                    bytes32 topic0 = log.topics[0];
+                    if (topic0 == IAuthorityFactory.AuthorityCreated.selector) {
+                        ++numOfAuthorityCreated;
+                        address arg1 = abi.decode(log.data, (address));
+                        assertEq(arg1, address(authority));
+                    } else {
+                        revert UnexpectedLog(log);
+                    }
+                } else if (log.emitter == address(authority)) {
+                    bytes32 topic0 = log.topics[0];
+                    if (topic0 == Ownable.OwnershipTransferred.selector) {
+                        ++numOfOwnershipTransferred;
+                        assertEq(log.topics[1], address(0).asTopic());
+                        assertEq(log.topics[2], deploymentArgs.authorityOwner.asTopic());
+                    } else {
+                        revert UnexpectedLog(log);
+                    }
+                } else {
+                    revert UnexpectedLog(log);
+                }
+            }
+
+            assertEq(numOfAuthorityCreated, 1);
+            assertEq(numOfOwnershipTransferred, 1);
+
+            // Test getters
+            assertEq(authority.owner(), deploymentArgs.authorityOwner);
+            assertNotEq(deploymentArgs.authorityOwner, address(0));
+            assertEq(authority.getEpochLength(), deploymentArgs.epochLength);
+            assertGt(deploymentArgs.epochLength, 0);
+            assertEq(authority.getClaimStagingPeriod(), deploymentArgs.claimStagingPeriod);
+
+            // We check that initially all outputs Merkle roots are invalid.
+            assertFalse(
+                authority.isOutputsMerkleRootValid(vm.randomAddress(), _randomBytes32()),
+                "initially, isOutputsMerkleRootValid(...) == false"
+            );
+
+            // We check that initially no machine Merkle root has been finalized.
             assertEq(
-                precalculatedAddress,
-                address(authority),
-                "calculateAuthorityAddress(...) != newAuthority(...)"
+                authority.getLastFinalizedMachineMerkleRoot(vm.randomAddress()),
+                bytes32(0),
+                "initially, getLastFinalizedMachineMerkleRoot(...) == bytes32(0)"
             );
 
-            _testNewAuthoritySuccess(
-                authorityOwner, epochLength, claimStagingPeriod, authority, logs
+            // We check that initially no input was finalized.
+            assertFalse(
+                authority.wasInputFinalized(
+                    vm.randomAddress(), // appContract
+                    vm.randomUint(), // inputIndex
+                    vm.randomUint() // blockNumber
+                ),
+                "initially, wasInputFinalized(...) == false"
             );
-        } catch (bytes memory errorData) {
-            _testNewAuthorityFailure(authorityOwner, epochLength, errorData);
-            return;
-        }
 
-        assertEq(
-            _factory.calculateAuthorityAddress(
-                authorityOwner, epochLength, claimStagingPeriod, salt
-            ),
-            precalculatedAddress,
-            "calculateAuthorityAddress(...) is not a pure function"
-        );
+            Claim memory randomClaim;
+            randomClaim.appContract = vm.randomAddress();
+            randomClaim.lastProcessedBlockNumber = vm.randomUint();
+            randomClaim.machineMerkleRoot = _randomBytes32();
+            IConsensus.Claim memory stagedClaimInfo = authority.getClaim(randomClaim);
 
-        // Cannot deploy an application with the same salt twice
-        try _factory.newAuthority(authorityOwner, epochLength, claimStagingPeriod, salt) {
-            revert("second deterministic deployment did not revert");
-        } catch (bytes memory errorData) {
+            // We check that initially no claim is staged.
             assertEq(
-                errorData,
-                new bytes(0),
-                "second deterministic deployment did not revert with empty error data"
+                uint256(stagedClaimInfo.status),
+                uint256(IConsensus.ClaimStatus.UNSTAGED),
+                "initially, getClaim(...).status == ClaimStatus.UNSTAGED"
             );
+
+            // Also, initially, no claim-related events were emitted.
+            assertEq(authority.getNumberOfSubmittedClaims(vm.randomAddress()), 0);
+            assertEq(authority.getNumberOfStagedClaims(vm.randomAddress()), 0);
+            assertEq(authority.getNumberOfAcceptedClaims(vm.randomAddress()), 0);
+
+            // Test ERC-165 interface
+            _testSupportsInterface(authority);
+
+            // Test version
+            _testVersion(authority);
+
+            if (deploymentArgs.deterministic) {
+                assertEq(
+                    _factory.calculateAuthorityAddress(deploymentArgs),
+                    authorityAddress,
+                    "calculateAuthorityAddress(...) is not a pure function"
+                );
+
+                // Cannot deploy an application with the same salt twice
+                try _factory.newAuthority(deploymentArgs) {
+                    revert("second deterministic deployment did not revert");
+                } catch (bytes memory errorData) {
+                    assertEq(
+                        errorData,
+                        new bytes(0),
+                        "second deterministic deployment did not revert with empty error data"
+                    );
+                }
+            }
+        } catch (bytes memory errorData) {
+            (bytes4 selector, bytes memory errorArgs) = errorData.consumeBytes4();
+            if (selector == Ownable.OwnableInvalidOwner.selector) {
+                address owner = abi.decode(errorArgs, (address));
+                assertEq(owner, deploymentArgs.authorityOwner);
+                assertEq(owner, address(0));
+            } else if (selector == IConsensusFactoryErrors.ZeroEpochLength.selector) {
+                assertEq(errorArgs.length, 0);
+                assertEq(deploymentArgs.epochLength, 0);
+            } else {
+                revert UnexpectedError(errorData);
+            }
         }
     }
 
-    function testRenounceOwnership(
-        address authorityOwner,
-        uint256 epochLength,
-        uint256 claimStagingPeriod,
-        bool nonDeterministicDeployment
-    ) external {
-        IAuthority authority = _newAuthority(
-            authorityOwner, epochLength, claimStagingPeriod, nonDeterministicDeployment
-        );
-        _testRenounceOwnership(authority);
+    function testRenounceOwnership(DeploymentArgs calldata deploymentArgs) external {
+        _testRenounceOwnership(_newAuthority(deploymentArgs));
     }
 
-    function testUnauthorizedAccount(
-        address authorityOwner,
-        uint256 epochLength,
-        uint256 claimStagingPeriod,
-        bool nonDeterministicDeployment
-    ) external {
-        IAuthority authority = _newAuthority(
-            authorityOwner, epochLength, claimStagingPeriod, nonDeterministicDeployment
-        );
-        _testUnauthorizedAccount(authority);
+    function testUnauthorizedAccount(DeploymentArgs calldata deploymentArgs) external {
+        _testUnauthorizedAccount(_newAuthority(deploymentArgs));
     }
 
-    function testInvalidOwner(
-        address authorityOwner,
-        uint256 epochLength,
-        uint256 claimStagingPeriod,
-        bool nonDeterministicDeployment
-    ) external {
-        IAuthority authority = _newAuthority(
-            authorityOwner, epochLength, claimStagingPeriod, nonDeterministicDeployment
-        );
-        _testInvalidOwner(authority);
+    function testInvalidOwner(DeploymentArgs calldata deploymentArgs) external {
+        _testInvalidOwner(_newAuthority(deploymentArgs));
     }
 
-    function testTransferOwnership(
-        address authorityOwner,
-        uint256 epochLength,
-        uint256 claimStagingPeriod,
-        bool nonDeterministicDeployment
-    ) external {
-        IAuthority authority = _newAuthority(
-            authorityOwner, epochLength, claimStagingPeriod, nonDeterministicDeployment
-        );
-        _testTransferOwnership(authority);
+    function testTransferOwnership(DeploymentArgs calldata deploymentArgs) external {
+        _testTransferOwnership(_newAuthority(deploymentArgs));
     }
 
-    function testSubmitClaimRevertsOwnableUnauthorizedAccount(
-        address authorityOwner,
-        uint256 epochLength,
-        uint256 claimStagingPeriod,
-        bool nonDeterministicDeployment,
-        Claim memory claim
-    ) external {
-        IAuthority authority = _newAuthority(
-            authorityOwner, epochLength, claimStagingPeriod, nonDeterministicDeployment
-        );
+    function testSubmitClaimRevertsOwnableUnauthorizedAccount(DeploymentArgs calldata deploymentArgs)
+        external
+    {
+        (IAuthority authority, Claim memory claim) = _newAuthorityAndClaim(deploymentArgs);
 
-        claim.appContract = _newActiveAppMock();
+        _rollPast(claim.lastProcessedBlockNumber);
 
-        claim.lastProcessedBlockNumber = _randomEpochFinalBlockNumber(epochLength);
-        vm.roll(_randomUintGt(claim.lastProcessedBlockNumber));
-
-        claim.proof = _randomLeafProof();
-
-        address nonAuthorityOwner = _randomAddressDifferentFromZeroAnd(authorityOwner);
+        address nonAuthorityOwner =
+            _randomAddressDifferentFromZeroAnd(deploymentArgs.authorityOwner);
 
         vm.expectRevert(_encodeOwnableUnauthorizedAccount(nonAuthorityOwner));
         vm.prank(nonAuthorityOwner);
         authority.submitClaim(claim);
     }
 
-    function testSubmitClaimRevertsNotEpochFinalBlock(
-        address authorityOwner,
-        uint256 epochLength,
-        uint256 claimStagingPeriod,
-        bool nonDeterministicDeployment,
-        Claim memory claim
-    ) external {
-        uint256 lastProcessedBlockNumber = _randomNonEpochFinalBlock(epochLength);
+    function testSubmitClaimRevertsNotEpochFinalBlock(DeploymentArgs calldata deploymentArgs)
+        external
+    {
+        (IAuthority authority, Claim memory claim) = _newAuthorityAndClaim(deploymentArgs);
+        claim.lastProcessedBlockNumber =
+            _randomNonEpochFinalBlock(deploymentArgs.epochLength);
 
-        IAuthority authority = _newAuthority(
-            authorityOwner, epochLength, claimStagingPeriod, nonDeterministicDeployment
+        _rollPast(claim.lastProcessedBlockNumber);
+
+        vm.expectRevert(
+            _encodeNotEpochFinalBlock(
+                claim.lastProcessedBlockNumber, deploymentArgs.epochLength
+            )
         );
-
-        claim.appContract = _newActiveAppMock();
-
-        claim.lastProcessedBlockNumber = lastProcessedBlockNumber;
-        vm.roll(_randomUintGt(claim.lastProcessedBlockNumber));
-
-        claim.proof = _randomLeafProof();
-
-        vm.expectRevert(_encodeNotEpochFinalBlock(lastProcessedBlockNumber, epochLength));
-        vm.prank(authorityOwner);
+        vm.prank(deploymentArgs.authorityOwner);
         authority.submitClaim(claim);
     }
 
-    function testSubmitClaimRevertNotPastBlock(
-        address authorityOwner,
-        uint256 epochLength,
-        uint256 claimStagingPeriod,
-        bool nonDeterministicDeployment,
-        Claim memory claim
-    ) external {
-        IAuthority authority = _newAuthority(
-            authorityOwner, epochLength, claimStagingPeriod, nonDeterministicDeployment
-        );
-
-        claim.appContract = _newActiveAppMock();
-
-        // Adjust the lastProcessedBlockNumber but do not roll past it.
-        claim.lastProcessedBlockNumber = _randomEpochFinalBlockNumber(epochLength);
-
-        claim.proof = _randomLeafProof();
+    function testSubmitClaimRevertNotPastBlock(DeploymentArgs calldata deploymentArgs)
+        external
+    {
+        (IAuthority authority, Claim memory claim) = _newAuthorityAndClaim(deploymentArgs);
 
         vm.expectRevert(_encodeNotPastBlock(claim.lastProcessedBlockNumber));
-        vm.prank(authorityOwner);
+        vm.prank(deploymentArgs.authorityOwner);
         authority.submitClaim(claim);
     }
 
-    function testSubmitClaimRevertApplicationNotDeployed(
-        address authorityOwner,
-        uint256 epochLength,
-        uint256 claimStagingPeriod,
-        bool nonDeterministicDeployment,
-        Claim memory claim
-    ) external {
-        IAuthority authority = _newAuthority(
-            authorityOwner, epochLength, claimStagingPeriod, nonDeterministicDeployment
-        );
-
-        // We use a random account with no code as app contract
+    function testSubmitClaimRevertApplicationNotDeployed(DeploymentArgs calldata deploymentArgs)
+        external
+    {
+        (IAuthority authority, Claim memory claim) = _newAuthorityAndClaim(deploymentArgs);
         claim.appContract = _randomAccountWithNoCode();
 
-        claim.lastProcessedBlockNumber = _randomEpochFinalBlockNumber(epochLength);
-        vm.roll(_randomUintGt(claim.lastProcessedBlockNumber));
-
-        claim.proof = _randomLeafProof();
+        _rollPast(claim.lastProcessedBlockNumber);
 
         vm.expectRevert(_encodeApplicationNotDeployed(claim.appContract));
-        vm.prank(authorityOwner);
+        vm.prank(deploymentArgs.authorityOwner);
         authority.submitClaim(claim);
     }
 
     function testSubmitClaimRevertApplicationReverted(
-        address authorityOwner,
-        uint256 epochLength,
-        uint256 claimStagingPeriod,
-        bool nonDeterministicDeployment,
-        Claim memory claim,
+        DeploymentArgs calldata deploymentArgs,
         bytes memory errorData
     ) external {
-        IAuthority authority = _newAuthority(
-            authorityOwner, epochLength, claimStagingPeriod, nonDeterministicDeployment
-        );
-
-        // We make isForeclosed() revert with an error
+        (IAuthority authority, Claim memory claim) = _newAuthorityAndClaim(deploymentArgs);
         claim.appContract = _newAppMockIsForeclosedReverts(errorData);
 
-        claim.lastProcessedBlockNumber = _randomEpochFinalBlockNumber(epochLength);
-        vm.roll(_randomUintGt(claim.lastProcessedBlockNumber));
-
-        claim.proof = _randomLeafProof();
+        _rollPast(claim.lastProcessedBlockNumber);
 
         vm.expectRevert(_encodeApplicationReverted(claim.appContract, errorData));
-        vm.prank(authorityOwner);
+        vm.prank(deploymentArgs.authorityOwner);
         authority.submitClaim(claim);
     }
 
     function testSubmitClaimRevertApplicationReturnIllSizedReturnData(
-        address authorityOwner,
-        uint256 epochLength,
-        uint256 claimStagingPeriod,
-        bool nonDeterministicDeployment,
-        Claim memory claim,
+        DeploymentArgs calldata deploymentArgs,
         bytes memory data
     ) external {
-        // We make isForeclosed() return ill-sized data
         vm.assume(data.length != 32);
 
-        IAuthority authority = _newAuthority(
-            authorityOwner, epochLength, claimStagingPeriod, nonDeterministicDeployment
-        );
-
+        (IAuthority authority, Claim memory claim) = _newAuthorityAndClaim(deploymentArgs);
         claim.appContract = _newAppMockIsForeclosedReturns(data);
 
-        claim.lastProcessedBlockNumber = _randomEpochFinalBlockNumber(epochLength);
-        vm.roll(_randomUintGt(claim.lastProcessedBlockNumber));
-
-        claim.proof = _randomLeafProof();
+        _rollPast(claim.lastProcessedBlockNumber);
 
         vm.expectRevert(_encodeIllformedApplicationReturnData(claim.appContract, data));
-        vm.prank(authorityOwner);
+        vm.prank(deploymentArgs.authorityOwner);
         authority.submitClaim(claim);
     }
 
-    function testSubmitClaimRevertApplicationReturnIllFormedReturnData(
-        address authorityOwner,
-        uint256 epochLength,
-        uint256 claimStagingPeriod,
-        bool nonDeterministicDeployment,
-        Claim memory claim
-    ) external {
-        // We make isForeclosed() return an invalid boolean (neither 0 or 1)
-        uint256 returnValue = vm.randomUint(2, type(uint256).max);
+    function testSubmitClaimRevertApplicationReturnIllFormedReturnData(DeploymentArgs calldata deploymentArgs)
+        external
+    {
+        bytes memory data = abi.encode(vm.randomUint(2, type(uint256).max));
 
-        IAuthority authority = _newAuthority(
-            authorityOwner, epochLength, claimStagingPeriod, nonDeterministicDeployment
-        );
-
-        bytes memory data = abi.encode(returnValue);
+        (IAuthority authority, Claim memory claim) = _newAuthorityAndClaim(deploymentArgs);
         claim.appContract = _newAppMockIsForeclosedReturns(data);
 
-        claim.lastProcessedBlockNumber = _randomEpochFinalBlockNumber(epochLength);
-        vm.roll(_randomUintGt(claim.lastProcessedBlockNumber));
-
-        claim.proof = _randomLeafProof();
+        _rollPast(claim.lastProcessedBlockNumber);
 
         vm.expectRevert(_encodeIllformedApplicationReturnData(claim.appContract, data));
-        vm.prank(authorityOwner);
+        vm.prank(deploymentArgs.authorityOwner);
         authority.submitClaim(claim);
     }
 
-    function testSubmitClaimRevertApplicationForeclosed(
-        address authorityOwner,
-        uint256 epochLength,
-        uint256 claimStagingPeriod,
-        bool nonDeterministicDeployment,
-        Claim memory claim
-    ) external {
-        IAuthority authority = _newAuthority(
-            authorityOwner, epochLength, claimStagingPeriod, nonDeterministicDeployment
-        );
-
-        // We make isForeclosed() return true
+    function testSubmitClaimRevertApplicationForeclosed(DeploymentArgs calldata deploymentArgs)
+        external
+    {
+        (IAuthority authority, Claim memory claim) = _newAuthorityAndClaim(deploymentArgs);
         claim.appContract = _newForeclosedAppMock();
 
-        claim.lastProcessedBlockNumber = _randomEpochFinalBlockNumber(epochLength);
-        vm.roll(_randomUintGt(claim.lastProcessedBlockNumber));
-
-        claim.proof = _randomLeafProof();
+        _rollPast(claim.lastProcessedBlockNumber);
 
         vm.expectRevert(_encodeApplicationForeclosed(claim.appContract));
-        vm.prank(authorityOwner);
+        vm.prank(deploymentArgs.authorityOwner);
         authority.submitClaim(claim);
     }
 
-    function testSubmitClaimRevertInvalidOutputsMerkleRootProofSize(
-        address authorityOwner,
-        uint256 epochLength,
-        uint256 claimStagingPeriod,
-        bool nonDeterministicDeployment,
-        Claim memory claim
-    ) external {
-        IAuthority authority = _newAuthority(
-            authorityOwner, epochLength, claimStagingPeriod, nonDeterministicDeployment
-        );
+    function testSubmitClaimRevertInvalidSiblingsArrayLength(DeploymentArgs calldata deploymentArgs)
+        external
+    {
+        (IAuthority authority, Claim memory claim) = _newAuthorityAndClaim(deploymentArgs);
+        _invalidateSiblingsArray(_pickRandomLeafProofFrom(claim.proof));
 
-        claim.appContract = _newActiveAppMock();
+        _rollPast(claim.lastProcessedBlockNumber);
 
-        claim.lastProcessedBlockNumber = _randomEpochFinalBlockNumber(epochLength);
-        vm.roll(_randomUintGt(claim.lastProcessedBlockNumber));
-
-        claim.proof = _randomProof(_randomInvalidLeafProofSize());
-
-        vm.expectRevert(_encodeInvalidOutputsMerkleRootProofSize(claim.proof.length));
-        vm.prank(authorityOwner);
+        vm.expectRevert(_encodeInvalidSiblingsArrayLength());
+        vm.prank(deploymentArgs.authorityOwner);
         authority.submitClaim(claim);
     }
 
-    function testSubmitAndAcceptClaim(
-        address authorityOwner,
-        uint256 epochLength,
-        uint256 claimStagingPeriod,
-        bool nonDeterministicDeployment,
-        Claim memory claim
-    ) external {
-        IAuthority authority = _newAuthority(
-            authorityOwner, epochLength, claimStagingPeriod, nonDeterministicDeployment
-        );
+    function testSubmitClaimRevertInvalidMachineMerkleProof(DeploymentArgs calldata deploymentArgs)
+        external
+    {
+        (IAuthority authority, Claim memory claim) = _newAuthorityAndClaim(deploymentArgs);
+        _alterDataBlock(_pickRandomLeafProofFrom(claim.proof));
 
-        claim.appContract = address(new ApplicationForeclosureMock());
+        _rollPast(claim.lastProcessedBlockNumber);
+
+        vm.expectRevert(_encodeInvalidMachineMerkleProof());
+        vm.prank(deploymentArgs.authorityOwner);
+        authority.submitClaim(claim);
+    }
+
+    function testSubmitClaimRevertInvalidPostEpochMachineIflagsYRegister(DeploymentArgs calldata deploymentArgs)
+        external
+    {
+        IAuthority authority = _newAuthority(deploymentArgs);
+        Claim memory claim = _newClaim(deploymentArgs.epochLength, _initBadIflagsY);
+
+        _rollPast(claim.lastProcessedBlockNumber);
+
+        vm.expectRevert(_encodeInvalidPostEpochMachineIflagsYRegister());
+        vm.prank(deploymentArgs.authorityOwner);
+        authority.submitClaim(claim);
+    }
+
+    function testSubmitClaimRevertInvalidPostEpochMachineHtifTohostRegister(DeploymentArgs calldata deploymentArgs)
+        external
+    {
+        IAuthority authority = _newAuthority(deploymentArgs);
+        Claim memory claim = _newClaim(deploymentArgs.epochLength, _initBadHtifTohost);
+
+        _rollPast(claim.lastProcessedBlockNumber);
+
+        vm.expectRevert(_encodeInvalidPostEpochMachineHtifTohostRegister());
+        vm.prank(deploymentArgs.authorityOwner);
+        authority.submitClaim(claim);
+    }
+
+    function testSubmitAndAcceptClaim(DeploymentArgs calldata deploymentArgs) external {
+        IAuthority authority = _newAuthority(deploymentArgs);
+        address appContract = address(new ApplicationForeclosureMock());
+        address authorityOwner = deploymentArgs.authorityOwner;
 
         address[] memory appContractSingleton = new address[](1);
-        appContractSingleton[0] = claim.appContract;
+        appContractSingleton[0] = appContract;
 
-        uint256[] memory blockNumbers = _randomEpochFinalBlockNumbers(epochLength);
+        uint256[] memory blockNumbers =
+            _randomEpochFinalBlockNumbers(deploymentArgs.epochLength);
 
         {
-            (bool isEmpty, uint256 max) = blockNumbers.max();
+            (bool isEmpty, uint256 maxBlockNumber) = blockNumbers.max();
             assertFalse(isEmpty, "unexpected empty array of epoch final block numbers");
-            vm.roll(_randomUintGt(max));
+            _rollPast(maxBlockNumber);
         }
 
         bytes32 lastFinalizedMachineMerkleRoot;
         uint256 firstUnprocessedBlockNumber;
 
         for (uint256 claimIndex; claimIndex < blockNumbers.length; ++claimIndex) {
-            claim.lastProcessedBlockNumber = blockNumbers[claimIndex];
-            claim.outputsMerkleRoot = _randomBytes32();
-            claim.proof = _randomLeafProof();
+            uint256 blockNumber = blockNumbers[claimIndex];
+            bool notFirstClaim = blockNumbers.containsBefore(blockNumber, claimIndex);
 
-            bytes32 machineMerkleRoot = claim.computeMachineMerkleRoot();
+            Claim memory claim = _randomClaim(appContract, blockNumber);
+
+            bytes32 machineMerkleRoot = claim.machineMerkleRoot;
+            bytes32 outputsMerkleRoot = claim.proof.txBufferProof.dataBlock;
 
             uint256 totalNumOfSubmittedClaims =
-                authority.getNumberOfSubmittedClaims(claim.appContract);
+                authority.getNumberOfSubmittedClaims(appContract);
             uint256 totalNumOfStagedClaims =
-                authority.getNumberOfStagedClaims(claim.appContract);
+                authority.getNumberOfStagedClaims(appContract);
             uint256 totalNumOfAcceptedClaims =
-                authority.getNumberOfAcceptedClaims(claim.appContract);
+                authority.getNumberOfAcceptedClaims(appContract);
 
-            try this.simulateForeclosureAndClaimSubmission(
-                authority, authorityOwner, claim
-            ) {}
-            catch (bytes memory errorData) {
-                (bytes4 errorSelector, bytes memory errorArgs) = errorData.consumeBytes4();
-                if (errorSelector == IConsensus.NotFirstClaim.selector) {
-                    (address arg1, uint256 arg2) =
-                        abi.decode(errorArgs, (address, uint256));
-                    assertEq(arg1, claim.appContract);
-                    assertEq(arg2, claim.lastProcessedBlockNumber);
-                    assertTrue(blockNumbers.containsBefore(arg2, claimIndex));
-                } else if (
-                    errorSelector == IApplicationChecker.ApplicationForeclosed.selector
-                ) {
-                    (address arg1) = abi.decode(errorArgs, (address));
-                    assertEq(
-                        arg1,
-                        claim.appContract,
-                        "ApplicationForeclosed.appContract != appContract"
-                    );
-                } else {
-                    revert UnexpectedError(errorData);
-                }
+            vm.expectRevert(
+                notFirstClaim
+                    ? _encodeNotFirstClaim(claim)
+                    : _encodeApplicationForeclosed(appContract)
+            );
+            this.simulateForeclosureAndClaimSubmission(authority, authorityOwner, claim);
+
+            if (notFirstClaim) {
+                vm.expectRevert(_encodeNotFirstClaim(claim));
+            } else {
+                vm.recordLogs();
             }
 
-            vm.recordLogs();
+            vm.prank(authorityOwner);
+            authority.submitClaim(claim);
 
-            vm.prank(authority.owner());
-            try authority.submitClaim(
-                claim.appContract,
-                claim.lastProcessedBlockNumber,
-                claim.outputsMerkleRoot,
-                claim.proof
-            ) {}
-            catch (bytes memory errorData) {
-                (bytes4 errorSelector, bytes memory errorArgs) = errorData.consumeBytes4();
-                if (errorSelector == IConsensus.NotFirstClaim.selector) {
-                    (address arg1, uint256 arg2) =
-                        abi.decode(errorArgs, (address, uint256));
-                    assertEq(arg1, claim.appContract);
-                    assertEq(arg2, claim.lastProcessedBlockNumber);
-                    assertTrue(blockNumbers.containsBefore(arg2, claimIndex));
-                } else {
-                    revert UnexpectedError(errorData);
-                }
-
-                // Proceed to the next claim.
-                continue;
+            if (notFirstClaim) {
+                continue; // Proceed to next claim.
             }
 
-            {
-                Vm.Log[] memory logs = vm.getRecordedLogs();
+            Vm.Log[] memory logs = vm.getRecordedLogs();
 
-                uint256 numOfClaimSubmittedEvents;
-                uint256 numOfClaimStagedEvents;
+            uint256 numOfClaimSubmittedEvents;
+            uint256 numOfClaimStagedEvents;
 
-                for (uint256 i; i < logs.length; ++i) {
-                    Vm.Log memory log = logs[i];
-                    if (log.emitter == address(authority)) {
-                        require(log.topics.length >= 1, UnexpectedLog(log));
-                        bytes32 topic0 = log.topics[0];
-                        if (topic0 == IConsensus.ClaimSubmitted.selector) {
-                            (uint256 arg0, bytes32 arg1, bytes32 arg2) =
-                                abi.decode(log.data, (uint256, bytes32, bytes32));
-                            assertEq(log.topics[1], authority.owner().asTopic());
-                            assertEq(log.topics[2], claim.appContract.asTopic());
-                            assertEq(log.topics.length, 3);
-                            assertEq(arg0, claim.lastProcessedBlockNumber);
-                            assertEq(arg1, claim.outputsMerkleRoot);
-                            assertEq(arg2, machineMerkleRoot);
-                            ++numOfClaimSubmittedEvents;
-                        } else if (topic0 == IConsensus.ClaimStaged.selector) {
-                            (uint256 arg0, bytes32 arg1, bytes32 arg2) =
-                                abi.decode(log.data, (uint256, bytes32, bytes32));
-                            assertEq(log.topics[1], claim.appContract.asTopic());
-                            assertEq(arg0, claim.lastProcessedBlockNumber);
-                            assertEq(arg1, claim.outputsMerkleRoot);
-                            assertEq(arg2, machineMerkleRoot);
-                            ++numOfClaimStagedEvents;
-                        } else {
-                            revert UnexpectedLog(log);
-                        }
+            for (uint256 i; i < logs.length; ++i) {
+                Vm.Log memory log = logs[i];
+                if (log.emitter == address(authority)) {
+                    require(log.topics.length >= 1, UnexpectedLog(log));
+                    bytes32 topic0 = log.topics[0];
+                    if (topic0 == IConsensus.ClaimSubmitted.selector) {
+                        (uint256 arg0, bytes32 arg1, bytes32 arg2) =
+                            abi.decode(log.data, (uint256, bytes32, bytes32));
+                        assertEq(log.topics.length, 3);
+                        assertEq(log.topics[1], authorityOwner.asTopic());
+                        assertEq(log.topics[2], appContract.asTopic());
+                        assertEq(arg0, blockNumber);
+                        assertEq(arg1, outputsMerkleRoot);
+                        assertEq(arg2, machineMerkleRoot);
+                        ++numOfClaimSubmittedEvents;
+                    } else if (topic0 == IConsensus.ClaimStaged.selector) {
+                        (uint256 arg0, bytes32 arg1, bytes32 arg2) =
+                            abi.decode(log.data, (uint256, bytes32, bytes32));
+                        assertEq(log.topics[1], appContract.asTopic());
+                        assertEq(arg0, blockNumber);
+                        assertEq(arg1, outputsMerkleRoot);
+                        assertEq(arg2, machineMerkleRoot);
+                        ++numOfClaimStagedEvents;
                     } else {
                         revert UnexpectedLog(log);
                     }
+                } else {
+                    revert UnexpectedLog(log);
                 }
-
-                assertEq(numOfClaimSubmittedEvents, 1, "expected 1 ClaimSubmitted event");
-                assertEq(numOfClaimStagedEvents, 1, "expected 1 ClaimStaged event");
             }
 
+            assertEq(numOfClaimSubmittedEvents, 1, "expected 1 ClaimSubmitted event");
+            assertEq(numOfClaimStagedEvents, 1, "expected 1 ClaimStaged event");
+
             assertEq(
-                authority.getNumberOfSubmittedClaims(claim.appContract),
+                authority.getNumberOfSubmittedClaims(appContract),
                 totalNumOfSubmittedClaims + 1,
                 "Total number of submitted claims should be increased by number of events"
             );
 
             assertEq(
-                authority.getNumberOfStagedClaims(claim.appContract),
+                authority.getNumberOfStagedClaims(appContract),
                 totalNumOfStagedClaims + 1,
                 "Total number of staged claims should be increased by number of events"
             );
 
             assertEq(
-                authority.getNumberOfAcceptedClaims(claim.appContract),
+                authority.getNumberOfAcceptedClaims(appContract),
                 totalNumOfAcceptedClaims,
                 "Total number of accepted claims should be the same after a submission"
             );
 
-            IConsensus.Claim memory stagedClaimInfo = authority.getClaim(
-                claim.appContract, claim.lastProcessedBlockNumber, machineMerkleRoot
-            );
+            IConsensus.Claim memory stagedClaimInfo = authority.getClaim(claim);
 
             assertEq(
                 uint256(stagedClaimInfo.status),
@@ -571,7 +538,7 @@ contract AuthorityFactoryTest is
 
             assertEq(
                 stagedClaimInfo.stagedOutputsMerkleRoot,
-                claim.outputsMerkleRoot,
+                outputsMerkleRoot,
                 "After staging, getClaim(...).stagedOutputsMerkleRoot == outputsMerkleRoot"
             );
 
@@ -600,18 +567,19 @@ contract AuthorityFactoryTest is
 
                 // If the claim was successfully accepted, then its last processed
                 // block number cannot be equal to any past successful claim.
-                if (isEmpty || claim.lastProcessedBlockNumber > max) {
+                if (isEmpty || blockNumber > max) {
                     lastFinalizedMachineMerkleRoot = machineMerkleRoot;
-                    firstUnprocessedBlockNumber = claim.lastProcessedBlockNumber + 1;
+                    firstUnprocessedBlockNumber = blockNumber + 1;
                 }
             }
 
-            if (claimStagingPeriod >= 1) {
+            if (deploymentArgs.claimStagingPeriod >= 1) {
                 vm.roll(
                     vm.randomUint(
                         vm.getBlockNumber(),
                         _boundedSum(
-                            stagedClaimInfo.stagingBlockNumber, claimStagingPeriod - 1
+                            stagedClaimInfo.stagingBlockNumber,
+                            deploymentArgs.claimStagingPeriod - 1
                         )
                     )
                 );
@@ -621,21 +589,19 @@ contract AuthorityFactoryTest is
 
                 vm.expectRevert(
                     _encodeClaimStagingPeriodNotOverYet(
-                        claim.appContract,
-                        claim.lastProcessedBlockNumber,
+                        appContract,
+                        blockNumber,
                         machineMerkleRoot,
                         numberOfBlocksAfterStaging,
-                        claimStagingPeriod
+                        deploymentArgs.claimStagingPeriod
                     )
                 );
                 vm.prank(vm.randomAddress());
-                authority.acceptClaim(
-                    claim.appContract, claim.lastProcessedBlockNumber, machineMerkleRoot
-                );
+                authority.acceptClaim(claim);
             }
 
             if (
-                claimStagingPeriod
+                deploymentArgs.claimStagingPeriod
                     > type(uint256).max - stagedClaimInfo.stagingBlockNumber
             ) {
                 continue; // Cannot go past the claim staging period
@@ -643,71 +609,66 @@ contract AuthorityFactoryTest is
 
             vm.roll(
                 vm.randomUint(
-                    stagedClaimInfo.stagingBlockNumber + claimStagingPeriod,
+                    stagedClaimInfo.stagingBlockNumber
+                        + deploymentArgs.claimStagingPeriod,
                     type(uint256).max
                 )
             );
 
-            vm.expectRevert(_encodeApplicationForeclosed(claim.appContract));
+            vm.expectRevert(_encodeApplicationForeclosed(appContract));
             this.simulateForeclosureAndClaimAcceptance(authority, claim);
 
             vm.recordLogs();
 
             vm.prank(vm.randomAddress());
-            authority.acceptClaim(
-                claim.appContract, claim.lastProcessedBlockNumber, machineMerkleRoot
-            );
+            authority.acceptClaim(appContract, blockNumber, machineMerkleRoot);
 
-            {
-                Vm.Log[] memory logs = vm.getRecordedLogs();
+            logs = vm.getRecordedLogs();
 
-                uint256 numOfClaimAcceptedEvents;
+            uint256 numOfClaimAcceptedEvents;
 
-                for (uint256 i; i < logs.length; ++i) {
-                    Vm.Log memory log = logs[i];
-                    if (log.emitter == address(authority)) {
-                        require(log.topics.length >= 1, UnexpectedLog(log));
-                        bytes32 topic0 = log.topics[0];
-                        if (topic0 == IConsensus.ClaimAccepted.selector) {
-                            (uint256 arg0, bytes32 arg1, bytes32 arg2) =
-                                abi.decode(log.data, (uint256, bytes32, bytes32));
-                            assertEq(log.topics[1], claim.appContract.asTopic());
-                            assertEq(arg0, claim.lastProcessedBlockNumber);
-                            assertEq(arg1, claim.outputsMerkleRoot);
-                            assertEq(arg2, machineMerkleRoot);
-                            ++numOfClaimAcceptedEvents;
-                        } else {
-                            revert UnexpectedLog(log);
-                        }
+            for (uint256 i; i < logs.length; ++i) {
+                Vm.Log memory log = logs[i];
+                if (log.emitter == address(authority)) {
+                    require(log.topics.length >= 1, UnexpectedLog(log));
+                    bytes32 topic0 = log.topics[0];
+                    if (topic0 == IConsensus.ClaimAccepted.selector) {
+                        (uint256 arg0, bytes32 arg1, bytes32 arg2) =
+                            abi.decode(log.data, (uint256, bytes32, bytes32));
+                        assertEq(log.topics[1], appContract.asTopic());
+                        assertEq(arg0, blockNumber);
+                        assertEq(arg1, outputsMerkleRoot);
+                        assertEq(arg2, machineMerkleRoot);
+                        ++numOfClaimAcceptedEvents;
                     } else {
                         revert UnexpectedLog(log);
                     }
+                } else {
+                    revert UnexpectedLog(log);
                 }
-
-                assertEq(numOfClaimAcceptedEvents, 1, "expected 1 ClaimAccepted event");
             }
 
+            assertEq(numOfClaimAcceptedEvents, 1, "expected 1 ClaimAccepted event");
+
             assertEq(
-                authority.getNumberOfSubmittedClaims(claim.appContract),
+                authority.getNumberOfSubmittedClaims(appContract),
                 totalNumOfSubmittedClaims + 1,
                 "Total number of submitted claims should be increased by number of events"
             );
 
             assertEq(
-                authority.getNumberOfStagedClaims(claim.appContract),
+                authority.getNumberOfStagedClaims(appContract),
                 totalNumOfStagedClaims + 1,
                 "Total number of staged claims should be increased by number of events"
             );
 
             assertEq(
-                authority.getNumberOfAcceptedClaims(claim.appContract),
+                authority.getNumberOfAcceptedClaims(appContract),
                 totalNumOfAcceptedClaims + 1,
                 "Total number of accepted claims should be increased by number of events"
             );
 
-            IConsensus.Claim memory acceptedClaimInfo = authority.getClaim(
-                claim.appContract, claim.lastProcessedBlockNumber, machineMerkleRoot
-            );
+            IConsensus.Claim memory acceptedClaimInfo = authority.getClaim(claim);
 
             assertEq(
                 uint256(acceptedClaimInfo.status),
@@ -728,9 +689,7 @@ contract AuthorityFactoryTest is
             );
 
             assertTrue(
-                authority.isOutputsMerkleRootValid(
-                    claim.appContract, claim.outputsMerkleRoot
-                ),
+                authority.isOutputsMerkleRootValid(appContract, outputsMerkleRoot),
                 "Once a claim is accepted, the outputs Merkle root is valid"
             );
 
@@ -740,7 +699,7 @@ contract AuthorityFactoryTest is
             );
 
             assertEq(
-                authority.getLastFinalizedMachineMerkleRoot(claim.appContract),
+                authority.getLastFinalizedMachineMerkleRoot(appContract),
                 lastFinalizedMachineMerkleRoot,
                 "Check last finalized machine Merkle root"
             );
@@ -748,7 +707,7 @@ contract AuthorityFactoryTest is
             if (firstUnprocessedBlockNumber >= 1) {
                 assertTrue(
                     authority.wasInputFinalized(
-                        claim.appContract,
+                        appContract,
                         vm.randomUint(), // inputIndex
                         vm.randomUint(0, firstUnprocessedBlockNumber - 1)
                     ),
@@ -758,7 +717,7 @@ contract AuthorityFactoryTest is
 
             assertFalse(
                 authority.wasInputFinalized(
-                    claim.appContract,
+                    appContract,
                     vm.randomUint(), // inputIndex
                     vm.randomUint(firstUnprocessedBlockNumber, type(uint256).max)
                 ),
@@ -780,350 +739,136 @@ contract AuthorityFactoryTest is
                 "Last finalized machine Merkle root for other apps should remain the same"
             );
 
-            vm.expectRevert(
-                _encodeClaimNotStaged(
-                    claim.appContract,
-                    claim.lastProcessedBlockNumber,
-                    machineMerkleRoot,
-                    IConsensus.ClaimStatus.ACCEPTED
-                )
-            );
+            vm.expectRevert(_encodeClaimNotStagedButAccepted(claim));
             vm.prank(vm.randomAddress());
-            authority.acceptClaim(
-                claim.appContract, claim.lastProcessedBlockNumber, machineMerkleRoot
-            );
+            authority.acceptClaim(claim);
         }
     }
 
-    function testAcceptClaimRevertApplicationNotDeployed(
-        address authorityOwner,
-        uint256 epochLength,
-        uint256 claimStagingPeriod,
-        bool nonDeterministicDeployment,
-        bytes32 machineMerkleRoot
-    ) external {
-        IAuthority authority = _newAuthority(
-            authorityOwner, epochLength, claimStagingPeriod, nonDeterministicDeployment
-        );
+    function testAcceptClaimRevertApplicationNotDeployed(DeploymentArgs calldata deploymentArgs)
+        external
+    {
+        (IAuthority authority, Claim memory claim) = _newAuthorityAndClaim(deploymentArgs);
+        claim.appContract = _randomAccountWithNoCode();
 
-        // We use a random account with no code as app contract
-        address appContract = _randomAccountWithNoCode();
+        _rollPast(claim.lastProcessedBlockNumber);
 
-        uint256 lastProcessedBlockNumber = _randomEpochFinalBlockNumber(epochLength);
-        vm.roll(_randomUintGt(lastProcessedBlockNumber));
-
-        vm.expectRevert(_encodeApplicationNotDeployed(appContract));
+        vm.expectRevert(_encodeApplicationNotDeployed(claim.appContract));
         vm.prank(vm.randomAddress());
-        authority.acceptClaim(appContract, lastProcessedBlockNumber, machineMerkleRoot);
+        authority.acceptClaim(claim);
     }
 
     function testAcceptClaimRevertApplicationReverted(
-        address authorityOwner,
-        uint256 epochLength,
-        uint256 claimStagingPeriod,
-        bool nonDeterministicDeployment,
-        bytes32 machineMerkleRoot,
+        DeploymentArgs calldata deploymentArgs,
         bytes memory errorData
     ) external {
-        IAuthority authority = _newAuthority(
-            authorityOwner, epochLength, claimStagingPeriod, nonDeterministicDeployment
-        );
+        (IAuthority authority, Claim memory claim) = _newAuthorityAndClaim(deploymentArgs);
+        claim.appContract = _newAppMockIsForeclosedReverts(errorData);
 
-        // We make isForeclosed() revert with an error
-        address appContract = _newAppMockIsForeclosedReverts(errorData);
+        _rollPast(claim.lastProcessedBlockNumber);
 
-        uint256 lastProcessedBlockNumber = _randomEpochFinalBlockNumber(epochLength);
-        vm.roll(_randomUintGt(lastProcessedBlockNumber));
-
-        vm.expectRevert(_encodeApplicationReverted(appContract, errorData));
+        vm.expectRevert(_encodeApplicationReverted(claim.appContract, errorData));
         vm.prank(vm.randomAddress());
-        authority.acceptClaim(appContract, lastProcessedBlockNumber, machineMerkleRoot);
+        authority.acceptClaim(claim);
     }
 
     function testAcceptClaimRevertApplicationReturnIllSizedReturnData(
-        address authorityOwner,
-        uint256 epochLength,
-        uint256 claimStagingPeriod,
-        bool nonDeterministicDeployment,
-        bytes32 machineMerkleRoot,
+        DeploymentArgs calldata deploymentArgs,
         bytes memory data
     ) external {
-        // We make isForeclosed() return ill-sized data
         vm.assume(data.length != 32);
 
-        IAuthority authority = _newAuthority(
-            authorityOwner, epochLength, claimStagingPeriod, nonDeterministicDeployment
-        );
+        (IAuthority authority, Claim memory claim) = _newAuthorityAndClaim(deploymentArgs);
+        claim.appContract = _newAppMockIsForeclosedReturns(data);
 
-        address appContract = _newAppMockIsForeclosedReturns(data);
+        _rollPast(claim.lastProcessedBlockNumber);
 
-        uint256 lastProcessedBlockNumber = _randomEpochFinalBlockNumber(epochLength);
-        vm.roll(_randomUintGt(lastProcessedBlockNumber));
-
-        vm.expectRevert(_encodeIllformedApplicationReturnData(appContract, data));
+        vm.expectRevert(_encodeIllformedApplicationReturnData(claim.appContract, data));
         vm.prank(vm.randomAddress());
-        authority.acceptClaim(appContract, lastProcessedBlockNumber, machineMerkleRoot);
+        authority.acceptClaim(claim);
     }
 
-    function testAcceptClaimRevertApplicationReturnIllFormedReturnData(
-        address authorityOwner,
-        uint256 epochLength,
-        uint256 claimStagingPeriod,
-        bool nonDeterministicDeployment,
-        bytes32 machineMerkleRoot
-    ) external {
-        // We make isForeclosed() return an invalid boolean (neither 0 or 1)
-        uint256 returnValue = vm.randomUint(2, type(uint256).max);
+    function testAcceptClaimRevertApplicationReturnIllFormedReturnData(DeploymentArgs calldata deploymentArgs)
+        external
+    {
+        bytes memory data = abi.encode(vm.randomUint(2, type(uint256).max));
 
-        IAuthority authority = _newAuthority(
-            authorityOwner, epochLength, claimStagingPeriod, nonDeterministicDeployment
-        );
+        (IAuthority authority, Claim memory claim) = _newAuthorityAndClaim(deploymentArgs);
+        claim.appContract = _newAppMockIsForeclosedReturns(data);
 
-        bytes memory data = abi.encode(returnValue);
-        address appContract = _newAppMockIsForeclosedReturns(data);
+        _rollPast(claim.lastProcessedBlockNumber);
 
-        uint256 lastProcessedBlockNumber = _randomEpochFinalBlockNumber(epochLength);
-        vm.roll(_randomUintGt(lastProcessedBlockNumber));
-
-        vm.expectRevert(_encodeIllformedApplicationReturnData(appContract, data));
+        vm.expectRevert(_encodeIllformedApplicationReturnData(claim.appContract, data));
         vm.prank(vm.randomAddress());
-        authority.acceptClaim(appContract, lastProcessedBlockNumber, machineMerkleRoot);
+        authority.acceptClaim(claim);
     }
 
-    function testAcceptClaimRevertApplicationForeclosed(
-        address authorityOwner,
-        uint256 epochLength,
-        uint256 claimStagingPeriod,
-        bool nonDeterministicDeployment,
-        bytes32 machineMerkleRoot
-    ) external {
-        IAuthority authority = _newAuthority(
-            authorityOwner, epochLength, claimStagingPeriod, nonDeterministicDeployment
-        );
+    function testAcceptClaimRevertApplicationForeclosed(DeploymentArgs calldata deploymentArgs)
+        external
+    {
+        (IAuthority authority, Claim memory claim) = _newAuthorityAndClaim(deploymentArgs);
+        claim.appContract = _newForeclosedAppMock();
 
-        address appContract = _newForeclosedAppMock();
+        _rollPast(claim.lastProcessedBlockNumber);
 
-        uint256 lastProcessedBlockNumber = _randomEpochFinalBlockNumber(epochLength);
-        vm.roll(_randomUintGt(lastProcessedBlockNumber));
-
-        vm.expectRevert(_encodeApplicationForeclosed(appContract));
+        vm.expectRevert(_encodeApplicationForeclosed(claim.appContract));
         vm.prank(vm.randomAddress());
-        authority.acceptClaim(appContract, lastProcessedBlockNumber, machineMerkleRoot);
+        authority.acceptClaim(claim);
     }
 
-    function testAcceptClaimRevertsNotEpochFinalBlock(
-        address authorityOwner,
-        uint256 epochLength,
-        uint256 claimStagingPeriod,
-        bool nonDeterministicDeployment,
-        bytes32 machineMerkleRoot
-    ) external {
-        IAuthority authority = _newAuthority(
-            authorityOwner, epochLength, claimStagingPeriod, nonDeterministicDeployment
-        );
+    function testAcceptClaimRevertsNotEpochFinalBlock(DeploymentArgs calldata deploymentArgs)
+        external
+    {
+        (IAuthority authority, Claim memory claim) = _newAuthorityAndClaim(deploymentArgs);
+        claim.lastProcessedBlockNumber =
+            _randomNonEpochFinalBlock(deploymentArgs.epochLength);
 
-        address appContract = _newActiveAppMock();
-
-        uint256 lastProcessedBlockNumber = _randomNonEpochFinalBlock(epochLength);
-        vm.roll(_randomUintGt(lastProcessedBlockNumber));
-
-        vm.expectRevert(_encodeNotEpochFinalBlock(lastProcessedBlockNumber, epochLength));
-        vm.prank(vm.randomAddress());
-        authority.acceptClaim(appContract, lastProcessedBlockNumber, machineMerkleRoot);
-    }
-
-    function testAcceptClaimRevertsNotPastBlock(
-        address authorityOwner,
-        uint256 epochLength,
-        uint256 claimStagingPeriod,
-        bool nonDeterministicDeployment,
-        bytes32 machineMerkleRoot
-    ) external {
-        IAuthority authority = _newAuthority(
-            authorityOwner, epochLength, claimStagingPeriod, nonDeterministicDeployment
-        );
-
-        address appContract = _newActiveAppMock();
-
-        // Adjust the lastProcessedBlockNumber but do not roll past it.
-        uint256 lastProcessedBlockNumber = _randomEpochFinalBlockNumber(epochLength);
-
-        vm.expectRevert(_encodeNotPastBlock(lastProcessedBlockNumber));
-        vm.prank(vm.randomAddress());
-        authority.acceptClaim(appContract, lastProcessedBlockNumber, machineMerkleRoot);
-    }
-
-    function testAcceptClaimRevertsUnstagedClaim(
-        address authorityOwner,
-        uint256 epochLength,
-        uint256 claimStagingPeriod,
-        bool nonDeterministicDeployment,
-        bytes32 machineMerkleRoot
-    ) external {
-        IAuthority authority = _newAuthority(
-            authorityOwner, epochLength, claimStagingPeriod, nonDeterministicDeployment
-        );
-
-        address appContract = _newActiveAppMock();
-
-        uint256 lastProcessedBlockNumber = _randomEpochFinalBlockNumber(epochLength);
-        vm.roll(_randomUintGt(lastProcessedBlockNumber));
+        _rollPast(claim.lastProcessedBlockNumber);
 
         vm.expectRevert(
-            _encodeClaimNotStaged(
-                appContract,
-                lastProcessedBlockNumber,
-                machineMerkleRoot,
-                IConsensus.ClaimStatus.UNSTAGED
+            _encodeNotEpochFinalBlock(
+                claim.lastProcessedBlockNumber, deploymentArgs.epochLength
             )
         );
         vm.prank(vm.randomAddress());
-        authority.acceptClaim(appContract, lastProcessedBlockNumber, machineMerkleRoot);
+        authority.acceptClaim(claim);
     }
 
-    function _testNewAuthoritySuccess(
-        address authorityOwner,
-        uint256 epochLength,
-        uint256 claimStagingPeriod,
-        IAuthority authority,
-        Vm.Log[] memory logs
-    ) internal {
-        uint256 numOfAuthorityCreated;
-        uint256 numOfOwnershipTransferred;
+    function testAcceptClaimRevertsNotPastBlock(DeploymentArgs calldata deploymentArgs)
+        external
+    {
+        (IAuthority authority, Claim memory claim) = _newAuthorityAndClaim(deploymentArgs);
 
-        for (uint256 i; i < logs.length; ++i) {
-            Vm.Log memory log = logs[i];
-            if (log.emitter == address(_factory)) {
-                bytes32 topic0 = log.topics[0];
-                if (topic0 == IAuthorityFactory.AuthorityCreated.selector) {
-                    ++numOfAuthorityCreated;
-                    address authorityAddress = abi.decode(log.data, (address));
-                    assertEq(address(authority), authorityAddress);
-                } else {
-                    revert UnexpectedLog(log);
-                }
-            } else if (log.emitter == address(authority)) {
-                bytes32 topic0 = log.topics[0];
-                if (topic0 == Ownable.OwnershipTransferred.selector) {
-                    ++numOfOwnershipTransferred;
-                    assertEq(log.topics[1], address(0).asTopic());
-                    assertEq(log.topics[2], authorityOwner.asTopic());
-                } else {
-                    revert UnexpectedLog(log);
-                }
-            } else {
-                revert UnexpectedLog(log);
-            }
-        }
-
-        assertEq(numOfAuthorityCreated, 1, "number of AuthorityCreated events");
-        assertEq(numOfOwnershipTransferred, 1, "number of OwnershipTransferred events");
-
-        _testVersion(authority);
-
-        assertEq(authority.owner(), authorityOwner, "owner() == authorityOwner");
-        assertNotEq(authorityOwner, address(0), "owner() != address(0)");
-
-        assertEq(
-            authority.getEpochLength(), epochLength, "getEpochLength() == epochLength"
-        );
-        assertGt(epochLength, 0, "getEpochLength() > 0");
-
-        assertEq(
-            authority.getClaimStagingPeriod(),
-            claimStagingPeriod,
-            "getClaimStagingPeriod() == claimStagingPeriod"
-        );
-
-        // We check that initially all outputs Merkle roots are invalid.
-        assertFalse(
-            authority.isOutputsMerkleRootValid(vm.randomAddress(), _randomBytes32()),
-            "initially, isOutputsMerkleRootValid(...) == false"
-        );
-
-        // We check that initially no machine Merkle root has been finalized.
-        assertEq(
-            authority.getLastFinalizedMachineMerkleRoot(vm.randomAddress()),
-            bytes32(0),
-            "initially, getLastFinalizedMachineMerkleRoot(...) == bytes32(0)"
-        );
-
-        // We check that initially no input was finalized.
-        assertEq(
-            authority.wasInputFinalized(
-                vm.randomAddress(), // appContract
-                vm.randomUint(), // inputIndex
-                vm.randomUint() // blockNumber
-            ),
-            false,
-            "initially, wasInputFinalized(...) == false"
-        );
-
-        // We check that initially no claim is staged.
-        assertEq(
-            uint256(
-                authority.getClaim(vm.randomAddress(), vm.randomUint(), _randomBytes32())
-                .status
-            ),
-            uint256(IConsensus.ClaimStatus.UNSTAGED),
-            "initially, getClaim(...).status == ClaimStatus.UNSTAGED"
-        );
-
-        // Also, initially, no `ClaimSubmitted`, `ClaimStaged` or `ClaimAccepted` were emitted.
-        assertEq(
-            authority.getNumberOfSubmittedClaims(vm.randomAddress()),
-            0,
-            "initially, getNumberOfSubmittedClaims(...) == 0"
-        );
-        assertEq(
-            authority.getNumberOfStagedClaims(vm.randomAddress()),
-            0,
-            "initially, getNumberOfStagedClaims(...) == 0"
-        );
-        assertEq(
-            authority.getNumberOfAcceptedClaims(vm.randomAddress()),
-            0,
-            "initially, getNumberOfAcceptedClaims(...) == 0"
-        );
-
-        // Test ERC-165 interface
-        _testSupportsInterface(authority);
+        vm.expectRevert(_encodeNotPastBlock(claim.lastProcessedBlockNumber));
+        vm.prank(vm.randomAddress());
+        authority.acceptClaim(claim);
     }
 
-    function _testNewAuthorityFailure(
-        address authorityOwner,
-        uint256 epochLength,
-        bytes memory errorData
-    ) internal pure {
-        (bytes4 errorSelector, bytes memory errorArgs) = errorData.consumeBytes4();
-        if (errorSelector == Ownable.OwnableInvalidOwner.selector) {
-            address owner = abi.decode(errorArgs, (address));
-            assertEq(owner, authorityOwner, "OwnableInvalidOwner.owner != owner");
-            assertEq(owner, address(0), "OwnableInvalidOwner.owner != address(0)");
-        } else if (errorSelector == IConsensusFactoryErrors.ZeroEpochLength.selector) {
-            assertEq(errorArgs.length, 0, "expected ZeroEpochLength to have no args");
-            assertEq(epochLength, 0, "expected epoch length to be zero");
-        } else {
-            revert UnexpectedError(errorData);
-        }
+    function testAcceptClaimRevertsUnstagedClaim(DeploymentArgs calldata deploymentArgs)
+        external
+    {
+        (IAuthority authority, Claim memory claim) = _newAuthorityAndClaim(deploymentArgs);
+
+        _rollPast(claim.lastProcessedBlockNumber);
+
+        vm.expectRevert(_encodeClaimNotStagedButUnstaged(claim));
+        vm.prank(vm.randomAddress());
+        authority.acceptClaim(claim);
     }
 
-    function _newAuthority(
-        address authorityOwner,
-        uint256 epochLength,
-        uint256 claimStagingPeriod,
-        bool nonDeterministicDeployment
-    ) internal returns (IAuthority) {
-        if (nonDeterministicDeployment) {
-            vm.assumeNoRevert();
-            return _factory.newAuthority(authorityOwner, epochLength, claimStagingPeriod);
-        } else {
-            bytes32 salt = _randomBytes32();
-            vm.assumeNoRevert();
-            return
-                _factory.newAuthority(
-                    authorityOwner, epochLength, claimStagingPeriod, salt
-                );
-        }
+    function _newAuthority(DeploymentArgs calldata deploymentArgs)
+        internal
+        returns (IAuthority)
+    {
+        vm.assumeNoRevert();
+        return _factory.newAuthority(deploymentArgs);
+    }
+
+    function _newAuthorityAndClaim(DeploymentArgs calldata deploymentArgs)
+        internal
+        returns (IAuthority authority, Claim memory claim)
+    {
+        authority = _newAuthority(deploymentArgs);
+        claim = _randomClaim(deploymentArgs.epochLength);
     }
 }

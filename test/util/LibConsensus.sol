@@ -12,8 +12,24 @@ library LibConsensus {
         consensus.submitClaim(
             claim.appContract,
             claim.lastProcessedBlockNumber,
-            claim.outputsMerkleRoot,
+            claim.machineMerkleRoot,
             claim.proof
+        );
+    }
+
+    function getClaim(IConsensus consensus, Claim memory claim)
+        internal
+        view
+        returns (IConsensus.Claim memory stagedClaimInfo)
+    {
+        return consensus.getClaim(
+            claim.appContract, claim.lastProcessedBlockNumber, claim.machineMerkleRoot
+        );
+    }
+
+    function acceptClaim(IConsensus consensus, Claim memory claim) internal {
+        consensus.acceptClaim(
+            claim.appContract, claim.lastProcessedBlockNumber, claim.machineMerkleRoot
         );
     }
 
@@ -22,8 +38,7 @@ library LibConsensus {
         view
         returns (bool)
     {
-        return consensus.isOutputsMerkleRootValid(
-            claim.appContract, claim.outputsMerkleRoot
-        );
+        bytes32 outputsMerkleRoot = claim.proof.txBufferProof.dataBlock;
+        return consensus.isOutputsMerkleRootValid(claim.appContract, outputsMerkleRoot);
     }
 }

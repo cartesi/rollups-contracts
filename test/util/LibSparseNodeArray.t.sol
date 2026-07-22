@@ -50,7 +50,7 @@ contract LibSparseNodeArrayTest is Test {
             compressedNodes.siblings(defaultValue, nodeIndex, height);
 
         assertEq(
-            compressedNodes.merkleRootFromCompressedNodes(defaultValue, height),
+            compressedNodes.merkleRootFromNodes(defaultValue, height),
             siblings.merkleRootAfterReplacement(nodeIndex, node)
         );
     }

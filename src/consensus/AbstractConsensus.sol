@@ -6,11 +6,10 @@ pragma solidity ^0.8.30;
 import {ERC165} from "@openzeppelin-contracts-5.2.0/utils/introspection/ERC165.sol";
 import {IERC165} from "@openzeppelin-contracts-5.2.0/utils/introspection/IERC165.sol";
 
-import {CanonicalMachine} from "../common/CanonicalMachine.sol";
+import {MachineValidityProof} from "../common/MachineValidityProof.sol";
 import {RollupsContract} from "../common/RollupsContract.sol";
 import {ApplicationChecker} from "../dapp/ApplicationChecker.sol";
-import {LibBinaryMerkleTree} from "../library/LibBinaryMerkleTree.sol";
-import {LibKeccak256} from "../library/LibKeccak256.sol";
+import {LibMachineValidityProof} from "../library/LibMachineValidityProof.sol";
 import {IConsensus} from "./IConsensus.sol";
 import {IConsensusFactoryErrors} from "./IConsensusFactoryErrors.sol";
 import {IOutputsMerkleRootValidator} from "./IOutputsMerkleRootValidator.sol";
@@ -22,7 +21,7 @@ abstract contract AbstractConsensus is
     ApplicationChecker,
     RollupsContract
 {
-    using LibBinaryMerkleTree for bytes32[];
+    using LibMachineValidityProof for MachineValidityProof;
 
     /// @notice The epoch length
     uint256 immutable EPOCH_LENGTH;
@@ -231,6 +230,7 @@ abstract contract AbstractConsensus is
     /// @param lastProcessedBlockNumber The number of the last processed block
     /// @param outputsMerkleRoot The output Merkle root
     /// @param machineMerkleRoot The machine Merkle root
+    /// @dev Assumes the machine is proven to be manually yielded with an 'rx accepted' reason.
     /// @dev Assumes outputs Merkle root is proven to be at the start of the machine TX buffer.
     /// @dev Assumes the last processed block number is valid.
     /// @dev Checks whether the app is foreclosed.
@@ -257,6 +257,7 @@ abstract contract AbstractConsensus is
     /// @param lastProcessedBlockNumber The number of the last processed block
     /// @param outputsMerkleRoot The output Merkle root
     /// @param machineMerkleRoot The machine Merkle root
+    /// @dev Assumes the machine is proven to be manually yielded with an 'rx accepted' reason.
     /// @dev Assumes outputs Merkle root is proven to be at the start of the machine TX buffer.
     /// @dev Assumes the last processed block number is valid.
     /// @dev Assumes the claim was previously submitted.
@@ -285,33 +286,14 @@ abstract contract AbstractConsensus is
         }
     }
 
-    /// @notice Compute the machine Merkle root given an outputs Merkle root and a proof.
-    /// @param outputsMerkleRoot The outputs Merkle root
-    /// @param proof The bottom-up Merkle proof of the outputs Merkle root at the start of the machine TX buffer
-    /// @return machineMerkleRoot The machine Merkle root
-    function _computeMachineMerkleRoot(
-        bytes32 outputsMerkleRoot,
-        bytes32[] calldata proof
-    ) internal pure returns (bytes32 machineMerkleRoot) {
-        _checkProofSize(proof.length, CanonicalMachine.MEMORY_TREE_HEIGHT);
-        machineMerkleRoot = proof.merkleRootAfterReplacement(
-            CanonicalMachine.TX_BUFFER_START >> CanonicalMachine.LOG2_DATA_BLOCK_SIZE,
-            keccak256(abi.encode(outputsMerkleRoot)),
-            LibKeccak256.hashPair
-        );
-    }
-
-    /// @notice Check the size of a supplied proof against the expected proof size.
-    /// @param suppliedProofSize Supplied proof size
-    /// @param expectedProofSize Expected proof size
-    /// @dev Raises an `InvalidOutputsMerkleRootProofSize` error if sizes differ.
-    function _checkProofSize(uint256 suppliedProofSize, uint256 expectedProofSize)
-        internal
-        pure
-    {
-        require(
-            suppliedProofSize == expectedProofSize,
-            InvalidOutputsMerkleRootProofSize(suppliedProofSize, expectedProofSize)
-        );
+    /// @notice Validates a machine given its Merkle root and a validity proof.
+    /// @param machineMerkleRoot The machine Merkle root
+    /// @param proof The machine validity proof
+    /// @return outputsMerkleRoot The proven outputs Merkle root
+    function _validateMachine(
+        bytes32 machineMerkleRoot,
+        MachineValidityProof calldata proof
+    ) internal pure returns (bytes32 outputsMerkleRoot) {
+        return proof.validate(machineMerkleRoot);
     }
 }

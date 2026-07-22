@@ -4,6 +4,8 @@
 pragma solidity ^0.8.30;
 
 import {IVersionGetter} from "../common/IVersionGetter.sol";
+import {MachineValidationErrors} from "../common/MachineValidationErrors.sol";
+import {MachineValidityProof} from "../common/MachineValidityProof.sol";
 import {IApplicationChecker} from "../dapp/IApplicationChecker.sol";
 import {IOutputsMerkleRootValidator} from "./IOutputsMerkleRootValidator.sol";
 
@@ -44,7 +46,12 @@ import {IOutputsMerkleRootValidator} from "./IOutputsMerkleRootValidator.sol";
 /// claim can be finally accepted, and any outputs generated during that epoch can now be
 /// validated on-chain.
 ///
-interface IConsensus is IOutputsMerkleRootValidator, IApplicationChecker, IVersionGetter {
+interface IConsensus is
+    IOutputsMerkleRootValidator,
+    IApplicationChecker,
+    IVersionGetter,
+    MachineValidationErrors
+{
     /// @notice The status of a claim.
     /// @param UNSTAGED The claim was neither staged nor accepted
     /// @param STAGED The claim was staged but not accepted
@@ -152,25 +159,18 @@ interface IConsensus is IOutputsMerkleRootValidator, IApplicationChecker, IVersi
         uint256 claimStagingPeriod
     );
 
-    /// @notice Supplied output tree proof size is incorrect
-    /// @param suppliedProofSize Supplied proof size
-    /// @param expectedProofSize Expected proof size
-    error InvalidOutputsMerkleRootProofSize(
-        uint256 suppliedProofSize, uint256 expectedProofSize
-    );
-
     /// @notice Submit a claim to the consensus.
     /// @param appContract The application contract address
     /// @param lastProcessedBlockNumber The number of the last processed block
-    /// @param outputsMerkleRoot The outputs Merkle root
-    /// @param proof The bottom-up Merkle proof of the outputs Merkle root at the start of the machine TX buffer
+    /// @param machineMerkleRoot The machine Merkle root
+    /// @param proof The machine validity proof
     /// @dev MUST fire a `ClaimSubmitted` event.
     /// @dev MAY fire a `ClaimStaged` event, if the staging criteria is met.
     function submitClaim(
         address appContract,
         uint256 lastProcessedBlockNumber,
-        bytes32 outputsMerkleRoot,
-        bytes32[] calldata proof
+        bytes32 machineMerkleRoot,
+        MachineValidityProof calldata proof
     ) external;
 
     /// @notice Accept a staged claim whose staging period has elapsed.

@@ -6,6 +6,7 @@ pragma solidity ^0.8.30;
 import {IERC165} from "@openzeppelin-contracts-5.2.0/utils/introspection/IERC165.sol";
 import {BitMaps} from "@openzeppelin-contracts-5.2.0/utils/structs/BitMaps.sol";
 
+import {MachineValidityProof} from "../../common/MachineValidityProof.sol";
 import {AbstractConsensus} from "../AbstractConsensus.sol";
 import {IQuorum} from "./IQuorum.sol";
 import {IQuorumFactoryErrors} from "./IQuorumFactoryErrors.sol";
@@ -77,15 +78,15 @@ contract Quorum is IQuorum, AbstractConsensus {
     function submitClaim(
         address appContract,
         uint256 lastProcessedBlockNumber,
-        bytes32 outputsMerkleRoot,
-        bytes32[] calldata proof
+        bytes32 machineMerkleRoot,
+        MachineValidityProof calldata proof
     ) external override {
         uint256 id = _validatorId[msg.sender];
         require(id > 0, CallerIsNotValidator(msg.sender));
 
         _validateLastProcessedBlockNumber(lastProcessedBlockNumber);
 
-        bytes32 machineMerkleRoot = _computeMachineMerkleRoot(outputsMerkleRoot, proof);
+        bytes32 outputsMerkleRoot = _validateMachine(machineMerkleRoot, proof);
 
         Votes storage votes =
             _getVotes(appContract, lastProcessedBlockNumber, machineMerkleRoot);

@@ -8,6 +8,7 @@ import {AddressErrors} from "src/common/AddressErrors.sol";
 import {BinaryMerkleTreeErrors} from "src/common/BinaryMerkleTreeErrors.sol";
 import {CanonicalMachine} from "src/common/CanonicalMachine.sol";
 import {Inputs} from "src/common/Inputs.sol";
+import {MachineValidityProof} from "src/common/MachineValidityProof.sol";
 import {OutputValidityProof} from "src/common/OutputValidityProof.sol";
 import {Outputs} from "src/common/Outputs.sol";
 import {WithdrawalConfig} from "src/common/WithdrawalConfig.sol";
@@ -117,6 +118,7 @@ contract ApplicationTest is
     function setUp() public {
         _initVariables();
 
+        _initEmulator();
         _addAccounts();
         _proofComponents = _buildProofComponents();
 
@@ -1990,6 +1992,11 @@ contract ApplicationTest is
         return _emulator.getOutputValidityProof(_outputIndexByName[name]);
     }
 
+    function _initEmulator() internal {
+        _emulator.setIflagsY(1);
+        _emulator.setHtifTohostRxAccepted();
+    }
+
     function _addAccounts() internal {
         _nameAccount("Alice", _addAccount(_encodeUsdAccount(_nextAddress(), 100000000)));
         _nameAccount("Bob", _addAccount(_encodeUsdAccount(_nextAddress(), 9000000001)));
@@ -2089,13 +2096,12 @@ contract ApplicationTest is
         assertEq(msg.sender, address(this), "called by external account");
         uint256 lastProcessedBlockNumber = vm.getBlockNumber();
         vm.roll(vm.randomUint(lastProcessedBlockNumber + 1, type(uint256).max));
-        bytes32 outputsMerkleRoot = _proofComponents.outputsMerkleRoot;
-        bytes32[] memory proof = _proofComponents.getOutputsMerkleRootProof();
+        bytes32 machineMerkleRoot = _proofComponents.getMachineMerkleRoot();
+        MachineValidityProof memory proof = _proofComponents.getMachineValidityProof();
         vm.prank(_authority.owner());
         _authority.submitClaim(
-            address(_appContract), lastProcessedBlockNumber, outputsMerkleRoot, proof
+            address(_appContract), lastProcessedBlockNumber, machineMerkleRoot, proof
         );
-        bytes32 machineMerkleRoot = _proofComponents.getMachineMerkleRoot();
         vm.prank(vm.randomAddress());
         _authority.acceptClaim(
             address(_appContract), lastProcessedBlockNumber, machineMerkleRoot
@@ -2109,12 +2115,11 @@ contract ApplicationTest is
 
     function _submitAndAcceptClaim() internal {
         _proofComponents = _buildProofComponents();
-        bytes32 outputsMerkleRoot = _proofComponents.outputsMerkleRoot;
-        bytes32[] memory proof = _proofComponents.getOutputsMerkleRootProof();
         bytes32 machineMerkleRoot = _proofComponents.getMachineMerkleRoot();
+        MachineValidityProof memory proof = _proofComponents.getMachineValidityProof();
 
         vm.prank(_authority.owner());
-        _authority.submitClaim(address(_appContract), 0, outputsMerkleRoot, proof);
+        _authority.submitClaim(address(_appContract), 0, machineMerkleRoot, proof);
 
         vm.prank(vm.randomAddress());
         _authority.acceptClaim(address(_appContract), 0, machineMerkleRoot);

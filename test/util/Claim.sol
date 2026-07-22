@@ -3,9 +3,11 @@
 
 pragma solidity ^0.8.30;
 
+import {MachineValidityProof} from "src/common/MachineValidityProof.sol";
+
 struct Claim {
     address appContract;
     uint256 lastProcessedBlockNumber;
-    bytes32 outputsMerkleRoot;
-    bytes32[] proof;
+    bytes32 machineMerkleRoot;
+    MachineValidityProof proof;
 }
