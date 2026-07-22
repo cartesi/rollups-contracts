@@ -8,6 +8,7 @@ import {IERC165} from "@openzeppelin-contracts-5.2.0/utils/introspection/IERC165
 import {BitMaps} from "@openzeppelin-contracts-5.2.0/utils/structs/BitMaps.sol";
 
 import {IOwnable} from "../../access/IOwnable.sol";
+import {MachineValidityProof} from "../../common/MachineValidityProof.sol";
 import {AbstractConsensus} from "../AbstractConsensus.sol";
 import {IConsensus} from "../IConsensus.sol";
 import {IAuthority} from "./IAuthority.sol";
@@ -35,8 +36,8 @@ contract Authority is IAuthority, AbstractConsensus, Ownable {
     function submitClaim(
         address appContract,
         uint256 lastProcessedBlockNumber,
-        bytes32 outputsMerkleRoot,
-        bytes32[] calldata proof
+        bytes32 machineMerkleRoot,
+        MachineValidityProof calldata proof
     ) external override onlyOwner {
         _validateLastProcessedBlockNumber(lastProcessedBlockNumber);
 
@@ -48,7 +49,7 @@ contract Authority is IAuthority, AbstractConsensus, Ownable {
             !bitmap.get(epochNumber), NotFirstClaim(appContract, lastProcessedBlockNumber)
         );
 
-        bytes32 machineMerkleRoot = _computeMachineMerkleRoot(outputsMerkleRoot, proof);
+        bytes32 outputsMerkleRoot = _validateMachine(machineMerkleRoot, proof);
 
         _submitClaim(
             msg.sender,

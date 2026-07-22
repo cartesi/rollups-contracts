@@ -43,7 +43,7 @@ library LibBinaryMerkleTreeHelper {
     /// @param nodeFromChildren The function that computes nodes from their children
     /// @return The root of the Merkle tree
     /// @dev Raises an `InvalidHeight` error if more than `2^height` nodes are provided.
-    function merkleRootFromCompressedNodes(
+    function merkleRootFromNodes(
         CompressedNode[] memory compressedNodes,
         bytes32 defaultNode,
         uint256 height,

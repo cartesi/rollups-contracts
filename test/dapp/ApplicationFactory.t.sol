@@ -521,7 +521,7 @@ contract ApplicationFactoryTest is
         // the accounts drive Merkle root, given the withdrawal config
         // of the application.
         bytes32[] memory proof =
-            _randomProof(_getAccountsDriveMerkleRootProofSize(deploymentArgs));
+            _randomBytes32Array(_getAccountsDriveMerkleRootProofSize(deploymentArgs));
 
         // Compute the machine Merkle root from the random Merkle proof and
         // accounts drive Merkle root, so that we can be sure that it differs
@@ -581,7 +581,7 @@ contract ApplicationFactoryTest is
         // the accounts drive Merkle root, given the withdrawal config
         // of the application.
         bytes32[] memory proof =
-            _randomProof(_getAccountsDriveMerkleRootProofSize(deploymentArgs));
+            _randomBytes32Array(_getAccountsDriveMerkleRootProofSize(deploymentArgs));
 
         // Compute the machine Merkle root from the random Merkle proof and
         // accounts drive Merkle root, so that we later prove it bottom-up.
@@ -692,7 +692,7 @@ contract ApplicationFactoryTest is
         // To do so, we need to first clear the mocked calls.
         {
             accountsDriveMerkleRoot = bytes32(vm.randomUint());
-            proof = _randomProof(proof.length);
+            proof = _randomBytes32Array(proof.length);
             vm.clearMockedCalls();
             _mockGetLastFinalizedMachineMerkleRoot(
                 deploymentArgs.outputsMerkleRootValidator,

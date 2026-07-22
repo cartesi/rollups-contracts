@@ -3,13 +3,14 @@
 
 pragma solidity ^0.8.30;
 
+import {Vm} from "forge-std-1.9.6/src/Vm.sol";
+
 import {IConsensus} from "src/consensus/IConsensus.sol";
 import {IConsensusFactoryErrors} from "src/consensus/IConsensusFactoryErrors.sol";
 import {IOutputsMerkleRootValidator} from "src/consensus/IOutputsMerkleRootValidator.sol";
 import {IQuorum} from "src/consensus/quorum/IQuorum.sol";
 import {IQuorumFactory} from "src/consensus/quorum/IQuorumFactory.sol";
 import {IQuorumFactoryErrors} from "src/consensus/quorum/IQuorumFactoryErrors.sol";
-import {IApplicationChecker} from "src/dapp/IApplicationChecker.sol";
 
 import {ApplicationForeclosureMock} from "../../util/ApplicationForeclosureMock.sol";
 import {Claim} from "../../util/Claim.sol";
@@ -17,14 +18,97 @@ import {ConsensusTestUtils} from "../../util/ConsensusTestUtils.sol";
 import {Erc165Test} from "../../util/Erc165Test.sol";
 import {LibAddressArray} from "../../util/LibAddressArray.sol";
 import {LibBytes} from "../../util/LibBytes.sol";
-import {LibClaim} from "../../util/LibClaim.sol";
 import {LibConsensus} from "../../util/LibConsensus.sol";
 import {LibTopic} from "../../util/LibTopic.sol";
 import {LibUint256Array} from "../../util/LibUint256Array.sol";
 import {RollupsTest} from "../../util/RollupsTest.sol";
 import {VersionGetterTestUtils} from "../../util/VersionGetterTestUtils.sol";
 
-import {Vm} from "forge-std-1.9.6/src/Vm.sol";
+struct DeploymentArgs {
+    bool deterministic;
+    address[] validators;
+    uint256 epochLength;
+    uint256 claimStagingPeriod;
+    bytes32 salt;
+}
+
+library LibQuorumFactory {
+    function newQuorum(IQuorumFactory factory, DeploymentArgs calldata deploymentArgs)
+        external
+        returns (IQuorum)
+    {
+        return deploymentArgs.deterministic
+            ? factory.newQuorum(
+                deploymentArgs.validators,
+                deploymentArgs.epochLength,
+                deploymentArgs.claimStagingPeriod,
+                deploymentArgs.salt
+            )
+            : factory.newQuorum(
+                deploymentArgs.validators,
+                deploymentArgs.epochLength,
+                deploymentArgs.claimStagingPeriod
+            );
+    }
+
+    function calculateQuorumAddress(
+        IQuorumFactory factory,
+        DeploymentArgs calldata deploymentArgs
+    ) external view returns (address) {
+        return factory.calculateQuorumAddress(
+            deploymentArgs.validators,
+            deploymentArgs.epochLength,
+            deploymentArgs.claimStagingPeriod,
+            deploymentArgs.salt
+        );
+    }
+}
+
+struct AppEpoch {
+    address appContract;
+    uint256 lastProcessedBlockNumber;
+}
+
+library LibQuorum {
+    function numOfValidatorsInFavorOfAnyClaimInEpoch(
+        IQuorum quorum,
+        AppEpoch memory appEpoch
+    ) internal view returns (uint256) {
+        return quorum.numOfValidatorsInFavorOfAnyClaimInEpoch(
+            appEpoch.appContract, appEpoch.lastProcessedBlockNumber
+        );
+    }
+
+    function isValidatorInFavorOfAnyClaimInEpoch(
+        IQuorum quorum,
+        AppEpoch memory appEpoch,
+        uint256 id
+    ) internal view returns (bool) {
+        return quorum.isValidatorInFavorOfAnyClaimInEpoch(
+            appEpoch.appContract, appEpoch.lastProcessedBlockNumber, id
+        );
+    }
+
+    function numOfValidatorsInFavorOf(IQuorum quorum, Claim memory claim)
+        internal
+        view
+        returns (uint256)
+    {
+        return quorum.numOfValidatorsInFavorOf(
+            claim.appContract, claim.lastProcessedBlockNumber, claim.machineMerkleRoot
+        );
+    }
+
+    function isValidatorInFavorOf(IQuorum quorum, Claim memory claim, uint256 id)
+        internal
+        view
+        returns (bool)
+    {
+        return quorum.isValidatorInFavorOf(
+            claim.appContract, claim.lastProcessedBlockNumber, claim.machineMerkleRoot, id
+        );
+    }
+}
 
 contract QuorumFactoryTest is
     RollupsTest,
@@ -32,14 +116,15 @@ contract QuorumFactoryTest is
     ConsensusTestUtils,
     VersionGetterTestUtils
 {
+    using LibQuorumFactory for IQuorumFactory;
     using LibAddressArray for address[];
     using LibAddressArray for Vm;
     using LibUint256Array for uint256[];
     using LibUint256Array for Vm;
     using LibConsensus for IQuorum;
+    using LibQuorum for IQuorum;
     using LibTopic for address;
     using LibBytes for bytes;
-    using LibClaim for Claim;
 
     IQuorumFactory _factory;
 
@@ -54,316 +139,340 @@ contract QuorumFactoryTest is
         _testVersion(_factory);
     }
 
-    function testNewQuorum(
-        address[] memory validators,
-        uint256 epochLength,
-        uint256 claimStagingPeriod
-    ) public {
-        vm.recordLogs();
-
-        try _factory.newQuorum(validators, epochLength, claimStagingPeriod) returns (
-            IQuorum quorum
-        ) {
-            Vm.Log[] memory logs = vm.getRecordedLogs();
-            _testNewQuorumSuccess(
-                validators, epochLength, claimStagingPeriod, quorum, logs
-            );
-        } catch (bytes memory errorData) {
-            _testNewQuorumFailure(validators, epochLength, errorData);
-            return;
-        }
-    }
-
-    function testNewQuorumDeterministic(
-        address[] memory validators,
-        uint256 epochLength,
-        uint256 claimStagingPeriod,
-        bytes32 salt
-    ) public {
-        address precalculatedAddress = _factory.calculateQuorumAddress(
-            validators, epochLength, claimStagingPeriod, salt
-        );
+    function testNewQuorum(DeploymentArgs calldata deploymentArgs) external {
+        address quorumAddress = _factory.calculateQuorumAddress(deploymentArgs);
 
         vm.recordLogs();
 
-        try _factory.newQuorum(
-            validators, epochLength, claimStagingPeriod, salt
-        ) returns (
-            IQuorum quorum
-        ) {
+        try _factory.newQuorum(deploymentArgs) returns (IQuorum quorum) {
             Vm.Log[] memory logs = vm.getRecordedLogs();
 
+            if (deploymentArgs.deterministic) {
+                assertEq(
+                    quorumAddress,
+                    address(quorum),
+                    "calculateQuorumAddress(...) != newQuorum(...)"
+                );
+            }
+
+            uint256 numOfQuorumCreated;
+
+            for (uint256 i; i < logs.length; ++i) {
+                Vm.Log memory log = logs[i];
+                if (log.emitter == address(_factory)) {
+                    bytes32 topic0 = log.topics[0];
+                    if (topic0 == IQuorumFactory.QuorumCreated.selector) {
+                        ++numOfQuorumCreated;
+                        address arg1 = abi.decode(log.data, (address));
+                        assertEq(arg1, address(quorum));
+                    } else {
+                        revert UnexpectedLog(log);
+                    }
+                } else {
+                    revert UnexpectedLog(log);
+                }
+            }
+
+            assertEq(numOfQuorumCreated, 1);
+
+            // Test getters
+            uint256 numOfValidators = quorum.numOfValidators();
+            assertGe(numOfValidators, 1);
+            assertLe(numOfValidators, deploymentArgs.validators.length);
+            assertEq(quorum.getEpochLength(), deploymentArgs.epochLength);
+            assertGt(deploymentArgs.epochLength, 0);
+            assertEq(quorum.getClaimStagingPeriod(), deploymentArgs.claimStagingPeriod);
+
+            // We first check that any validator in the validators array
+            // has a unique ID and that this ID is assigned to them.
+            address[] calldata validators = deploymentArgs.validators;
+            address validator = validators[vm.randomUint(0, validators.length - 1)];
+            assertNotEq(validator, address(0), "Validators should be != address(0)");
+            assertGe(quorum.validatorId(validator), 1);
+            assertLe(quorum.validatorId(validator), numOfValidators);
+            assertEq(quorum.validatorById(quorum.validatorId(validator)), validator);
+
+            // Then we check that any valid ID is assigned to a validator in the array.
+            // By the pidgenhole principle, this can already be assumed if the
+            // number of unique validators is less than or equal to the length
+            // of the original array. Nevertheless, we test this for redundancy.
+            uint256 id = vm.randomUint(1, numOfValidators);
+            assertTrue(validators.contains(quorum.validatorById(id)));
+
+            // We check that zero address and zero ID map to each other.
+            assertEq(quorum.validatorId(address(0)), 0, "validatorId(0) == 0");
+            assertEq(quorum.validatorById(0), address(0), "validatorById(0) == 0");
+
+            // We check that non-validators are assigned ID zero.
+            assertEq(quorum.validatorId(vm.randomAddressNotIn(validators)), 0);
+
+            // We check that invalid IDs map to the zero address.
+            assertEq(quorum.validatorById(_randomUintGt(numOfValidators)), address(0));
+
+            // We pick random values for function arguments
+            address appContract = vm.randomAddress();
+            bytes32 outputsMerkleRoot = _randomBytes32();
+            bytes32 machineMerkleRoot = _randomBytes32();
+            uint256 inputIndex = vm.randomUint();
+            uint256 blockNumber = vm.randomUint();
+            uint256 lastProcessedBlockNumber = vm.randomUint();
+
+            // We construct an AppEpoch struct from these random values
+            AppEpoch memory appEpoch;
+            appEpoch.appContract = appContract;
+            appEpoch.lastProcessedBlockNumber = lastProcessedBlockNumber;
+
+            // We construct a claim from these random values
+            // The proof field will not be used
+            Claim memory claim;
+            claim.appContract = appContract;
+            claim.lastProcessedBlockNumber = lastProcessedBlockNumber;
+            claim.machineMerkleRoot = machineMerkleRoot;
+
+            // We check that initially all outputs Merkle roots are invalid.
+            assertFalse(quorum.isOutputsMerkleRootValid(appContract, outputsMerkleRoot));
+
+            // We check that initially no machine Merkle root has been finalized.
+            assertEq(quorum.getLastFinalizedMachineMerkleRoot(appContract), bytes32(0));
+
+            // We check that initially no input was finalized.
+            assertFalse(quorum.wasInputFinalized(appContract, inputIndex, blockNumber));
+
+            // We check that initially no validator is in favor of any claim.
+            assertEq(quorum.numOfValidatorsInFavorOfAnyClaimInEpoch(appEpoch), 0);
+            assertEq(quorum.numOfValidatorsInFavorOf(claim), 0);
+            assertFalse(quorum.isValidatorInFavorOfAnyClaimInEpoch(appEpoch, id));
+            assertFalse(quorum.isValidatorInFavorOf(claim, id));
+
+            // We check that initially every claim is unstaged.
             assertEq(
-                precalculatedAddress,
-                address(quorum),
-                "calculateQuorumAddress(...) != newQuorum(...)"
+                uint256(quorum.getClaim(claim).status),
+                uint256(IConsensus.ClaimStatus.UNSTAGED),
+                "initially, getClaim(...).status == ClaimStatus.UNSTAGED"
             );
 
-            _testNewQuorumSuccess(
-                validators, epochLength, claimStagingPeriod, quorum, logs
-            );
+            // Also, initially, no claim-related events were emitted.
+            assertEq(quorum.getNumberOfSubmittedClaims(vm.randomAddress()), 0);
+            assertEq(quorum.getNumberOfStagedClaims(vm.randomAddress()), 0);
+            assertEq(quorum.getNumberOfAcceptedClaims(vm.randomAddress()), 0);
+
+            // Test ERC-165 interface
+            _testSupportsInterface(quorum);
+
+            // Test version
+            _testVersion(quorum);
+
+            if (deploymentArgs.deterministic) {
+                assertEq(
+                    _factory.calculateQuorumAddress(deploymentArgs),
+                    quorumAddress,
+                    "calculateQuorumAddress(...) is not a pure function"
+                );
+
+                // Cannot deploy an application with the same salt twice
+                try _factory.newQuorum(deploymentArgs) {
+                    revert("second deterministic deployment did not revert");
+                } catch (bytes memory errorData) {
+                    assertEq(
+                        errorData,
+                        new bytes(0),
+                        "second deterministic deployment did not revert with empty error data"
+                    );
+                }
+            }
         } catch (bytes memory errorData) {
-            _testNewQuorumFailure(validators, epochLength, errorData);
-            return;
-        }
-
-        assertEq(
-            _factory.calculateQuorumAddress(
-                validators, epochLength, claimStagingPeriod, salt
-            ),
-            precalculatedAddress,
-            "calculateQuorumAddress(...) is not a pure function"
-        );
-
-        // Cannot deploy an application with the same salt twice
-        try _factory.newQuorum(validators, epochLength, claimStagingPeriod, salt) {
-            revert("second deterministic deployment did not revert");
-        } catch (bytes memory errorData) {
-            assertEq(
-                errorData,
-                new bytes(0),
-                "second deterministic deployment did not revert with empty error data"
-            );
+            (bytes4 selector, bytes memory errorArgs) = errorData.consumeBytes4();
+            if (selector == IQuorumFactoryErrors.ZeroAddressValidator.selector) {
+                assertEq(errorArgs.length, 0);
+                assertTrue(deploymentArgs.validators.contains(address(0)));
+            } else if (selector == IQuorumFactoryErrors.EmptyQuorum.selector) {
+                assertEq(errorArgs.length, 0);
+                assertEq(deploymentArgs.validators.length, 0);
+            } else if (selector == IConsensusFactoryErrors.ZeroEpochLength.selector) {
+                assertEq(errorArgs.length, 0);
+                assertEq(deploymentArgs.epochLength, 0);
+            } else {
+                revert UnexpectedError(errorData);
+            }
         }
     }
 
-    function testSubmitClaimRevertsCallerIsNotValidator(
-        address[] memory validators,
-        uint256 epochLength,
-        uint256 claimStagingPeriod,
-        bool nonDeterministicDeployment,
-        Claim memory claim
-    ) external {
-        IQuorum quorum = _newQuorum(
-            validators, epochLength, claimStagingPeriod, nonDeterministicDeployment
-        );
+    function testSubmitClaimRevertsCallerIsNotValidator(DeploymentArgs calldata deploymentArgs)
+        external
+    {
+        (IQuorum quorum, Claim memory claim) = _newQuorumAndClaim(deploymentArgs);
 
-        claim.appContract = _newActiveAppMock();
+        _rollPast(claim.lastProcessedBlockNumber);
 
-        claim.lastProcessedBlockNumber = _randomEpochFinalBlockNumber(epochLength);
-        vm.roll(_randomUintGt(claim.lastProcessedBlockNumber));
-
-        claim.proof = _randomLeafProof();
-
-        address caller = vm.randomAddressNotIn(validators);
+        address caller = vm.randomAddressNotIn(deploymentArgs.validators);
 
         vm.expectRevert(_encodeCallerIsNotValidator(caller));
         vm.prank(caller); // non-validator address
         quorum.submitClaim(claim);
     }
 
-    function testSubmitClaimRevertsNotEpochFinalBlock(
-        address[] memory validators,
-        uint256 epochLength,
-        uint256 claimStagingPeriod,
-        bool nonDeterministicDeployment,
-        Claim memory claim
-    ) external {
-        uint256 lastProcessedBlockNumber = _randomNonEpochFinalBlock(epochLength);
+    function testSubmitClaimRevertsNotEpochFinalBlock(DeploymentArgs calldata deploymentArgs)
+        external
+    {
+        (IQuorum quorum, Claim memory claim) = _newQuorumAndClaim(deploymentArgs);
+        claim.lastProcessedBlockNumber =
+            _randomNonEpochFinalBlock(deploymentArgs.epochLength);
 
-        IQuorum quorum = _newQuorum(
-            validators, epochLength, claimStagingPeriod, nonDeterministicDeployment
+        _rollPast(claim.lastProcessedBlockNumber);
+
+        vm.expectRevert(
+            _encodeNotEpochFinalBlock(
+                claim.lastProcessedBlockNumber, deploymentArgs.epochLength
+            )
         );
-
-        claim.appContract = _newActiveAppMock();
-
-        claim.lastProcessedBlockNumber = lastProcessedBlockNumber;
-        vm.roll(_randomUintGt(lastProcessedBlockNumber));
-
-        claim.proof = _randomLeafProof();
-
-        vm.expectRevert(_encodeNotEpochFinalBlock(lastProcessedBlockNumber, epochLength));
-        vm.prank(vm.randomAddressIn(validators));
+        vm.prank(vm.randomAddressIn(deploymentArgs.validators));
         quorum.submitClaim(claim);
     }
 
-    function testSubmitClaimRevertNotPastBlock(
-        address[] memory validators,
-        uint256 epochLength,
-        uint256 claimStagingPeriod,
-        bool nonDeterministicDeployment,
-        Claim memory claim
-    ) external {
-        IQuorum quorum = _newQuorum(
-            validators, epochLength, claimStagingPeriod, nonDeterministicDeployment
-        );
-
-        claim.appContract = _newActiveAppMock();
-
-        // Adjust the lastProcessedBlockNumber but do not roll past it.
-        claim.lastProcessedBlockNumber = _randomEpochFinalBlockNumber(epochLength);
-
-        claim.proof = _randomLeafProof();
+    function testSubmitClaimRevertNotPastBlock(DeploymentArgs calldata deploymentArgs)
+        external
+    {
+        (IQuorum quorum, Claim memory claim) = _newQuorumAndClaim(deploymentArgs);
 
         vm.expectRevert(_encodeNotPastBlock(claim.lastProcessedBlockNumber));
-        vm.prank(vm.randomAddressIn(validators));
+        vm.prank(vm.randomAddressIn(deploymentArgs.validators));
         quorum.submitClaim(claim);
     }
 
-    function testSubmitClaimRevertApplicationNotDeployed(
-        address[] memory validators,
-        uint256 epochLength,
-        uint256 claimStagingPeriod,
-        bool nonDeterministicDeployment,
-        Claim memory claim
-    ) external {
-        IQuorum quorum = _newQuorum(
-            validators, epochLength, claimStagingPeriod, nonDeterministicDeployment
-        );
-
-        // We use a random account with no code as app contract
+    function testSubmitClaimRevertApplicationNotDeployed(DeploymentArgs calldata deploymentArgs)
+        external
+    {
+        (IQuorum quorum, Claim memory claim) = _newQuorumAndClaim(deploymentArgs);
         claim.appContract = _randomAccountWithNoCode();
 
-        claim.lastProcessedBlockNumber = _randomEpochFinalBlockNumber(epochLength);
-        vm.roll(_randomUintGt(claim.lastProcessedBlockNumber));
-
-        claim.proof = _randomLeafProof();
+        _rollPast(claim.lastProcessedBlockNumber);
 
         vm.expectRevert(_encodeApplicationNotDeployed(claim.appContract));
-        vm.prank(vm.randomAddressIn(validators));
+        vm.prank(vm.randomAddressIn(deploymentArgs.validators));
         quorum.submitClaim(claim);
     }
 
     function testSubmitClaimRevertApplicationReverted(
-        address[] memory validators,
-        uint256 epochLength,
-        uint256 claimStagingPeriod,
-        bool nonDeterministicDeployment,
-        Claim memory claim,
+        DeploymentArgs calldata deploymentArgs,
         bytes memory errorData
     ) external {
-        IQuorum quorum = _newQuorum(
-            validators, epochLength, claimStagingPeriod, nonDeterministicDeployment
-        );
-
-        // We make isForeclosed() revert with an error
+        (IQuorum quorum, Claim memory claim) = _newQuorumAndClaim(deploymentArgs);
         claim.appContract = _newAppMockIsForeclosedReverts(errorData);
 
-        claim.lastProcessedBlockNumber = _randomEpochFinalBlockNumber(epochLength);
-        vm.roll(_randomUintGt(claim.lastProcessedBlockNumber));
-
-        claim.proof = _randomLeafProof();
+        _rollPast(claim.lastProcessedBlockNumber);
 
         vm.expectRevert(_encodeApplicationReverted(claim.appContract, errorData));
-        vm.prank(vm.randomAddressIn(validators));
+        vm.prank(vm.randomAddressIn(deploymentArgs.validators));
         quorum.submitClaim(claim);
     }
 
     function testSubmitClaimRevertApplicationReturnIllSizedReturnData(
-        address[] memory validators,
-        uint256 epochLength,
-        uint256 claimStagingPeriod,
-        bool nonDeterministicDeployment,
-        Claim memory claim,
+        DeploymentArgs calldata deploymentArgs,
         bytes memory data
     ) external {
-        // We make isForeclosed() return ill-sized data
         vm.assume(data.length != 32);
 
-        IQuorum quorum = _newQuorum(
-            validators, epochLength, claimStagingPeriod, nonDeterministicDeployment
-        );
-
+        (IQuorum quorum, Claim memory claim) = _newQuorumAndClaim(deploymentArgs);
         claim.appContract = _newAppMockIsForeclosedReturns(data);
 
-        claim.lastProcessedBlockNumber = _randomEpochFinalBlockNumber(epochLength);
-        vm.roll(_randomUintGt(claim.lastProcessedBlockNumber));
-
-        claim.proof = _randomLeafProof();
+        _rollPast(claim.lastProcessedBlockNumber);
 
         vm.expectRevert(_encodeIllformedApplicationReturnData(claim.appContract, data));
-        vm.prank(vm.randomAddressIn(validators));
+        vm.prank(vm.randomAddressIn(deploymentArgs.validators));
         quorum.submitClaim(claim);
     }
 
-    function testSubmitClaimRevertApplicationReturnIllFormedReturnData(
-        address[] memory validators,
-        uint256 epochLength,
-        uint256 claimStagingPeriod,
-        bool nonDeterministicDeployment,
-        Claim memory claim
-    ) external {
-        // We make isForeclosed() return an invalid boolean (neither 0 or 1)
-        uint256 returnValue = vm.randomUint(2, type(uint256).max);
+    function testSubmitClaimRevertApplicationReturnIllFormedReturnData(DeploymentArgs calldata deploymentArgs)
+        external
+    {
+        bytes memory data = abi.encode(vm.randomUint(2, type(uint256).max));
 
-        IQuorum quorum = _newQuorum(
-            validators, epochLength, claimStagingPeriod, nonDeterministicDeployment
-        );
-
-        bytes memory data = abi.encode(returnValue);
+        (IQuorum quorum, Claim memory claim) = _newQuorumAndClaim(deploymentArgs);
         claim.appContract = _newAppMockIsForeclosedReturns(data);
 
-        claim.lastProcessedBlockNumber = _randomEpochFinalBlockNumber(epochLength);
-        vm.roll(_randomUintGt(claim.lastProcessedBlockNumber));
-
-        claim.proof = _randomLeafProof();
+        _rollPast(claim.lastProcessedBlockNumber);
 
         vm.expectRevert(_encodeIllformedApplicationReturnData(claim.appContract, data));
-        vm.prank(vm.randomAddressIn(validators));
+        vm.prank(vm.randomAddressIn(deploymentArgs.validators));
         quorum.submitClaim(claim);
     }
 
-    function testSubmitClaimRevertApplicationForeclosed(
-        address[] memory validators,
-        uint256 epochLength,
-        uint256 claimStagingPeriod,
-        bool nonDeterministicDeployment,
-        Claim memory claim
-    ) external {
-        IQuorum quorum = _newQuorum(
-            validators, epochLength, claimStagingPeriod, nonDeterministicDeployment
-        );
-
-        // We make isForeclosed() return true
+    function testSubmitClaimRevertApplicationForeclosed(DeploymentArgs calldata deploymentArgs)
+        external
+    {
+        (IQuorum quorum, Claim memory claim) = _newQuorumAndClaim(deploymentArgs);
         claim.appContract = _newForeclosedAppMock();
 
-        claim.lastProcessedBlockNumber = _randomEpochFinalBlockNumber(epochLength);
-        vm.roll(_randomUintGt(claim.lastProcessedBlockNumber));
-
-        claim.proof = _randomLeafProof();
+        _rollPast(claim.lastProcessedBlockNumber);
 
         vm.expectRevert(_encodeApplicationForeclosed(claim.appContract));
-        vm.prank(vm.randomAddressIn(validators));
+        vm.prank(vm.randomAddressIn(deploymentArgs.validators));
         quorum.submitClaim(claim);
     }
 
-    function testSubmitClaimRevertInvalidOutputsMerkleRootProofSize(
-        address[] memory validators,
-        uint256 epochLength,
-        uint256 claimStagingPeriod,
-        bool nonDeterministicDeployment,
-        Claim memory claim
-    ) external {
-        IQuorum quorum = _newQuorum(
-            validators, epochLength, claimStagingPeriod, nonDeterministicDeployment
-        );
+    function testSubmitClaimRevertInvalidSiblingsArrayLength(DeploymentArgs calldata deploymentArgs)
+        external
+    {
+        (IQuorum quorum, Claim memory claim) = _newQuorumAndClaim(deploymentArgs);
+        _invalidateSiblingsArray(_pickRandomLeafProofFrom(claim.proof));
 
-        claim.appContract = _newActiveAppMock();
+        _rollPast(claim.lastProcessedBlockNumber);
 
-        claim.lastProcessedBlockNumber = _randomEpochFinalBlockNumber(epochLength);
-        vm.roll(_randomUintGt(claim.lastProcessedBlockNumber));
-
-        claim.proof = _randomProof(_randomInvalidLeafProofSize());
-
-        vm.expectRevert(_encodeInvalidOutputsMerkleRootProofSize(claim.proof.length));
-        vm.prank(vm.randomAddressIn(validators));
+        vm.expectRevert(_encodeInvalidSiblingsArrayLength());
+        vm.prank(vm.randomAddressIn(deploymentArgs.validators));
         quorum.submitClaim(claim);
     }
 
-    function testSubmitAndAcceptClaim(
-        address[] memory validators,
-        uint256 epochLength,
-        uint256 claimStagingPeriod,
-        bool nonDeterministicDeployment
-    ) external {
-        IQuorum quorum = _newQuorum(
-            validators, epochLength, claimStagingPeriod, nonDeterministicDeployment
-        );
+    function testSubmitClaimRevertInvalidMachineMerkleProof(DeploymentArgs calldata deploymentArgs)
+        external
+    {
+        (IQuorum quorum, Claim memory claim) = _newQuorumAndClaim(deploymentArgs);
+        _alterDataBlock(_pickRandomLeafProofFrom(claim.proof));
 
+        _rollPast(claim.lastProcessedBlockNumber);
+
+        vm.expectRevert(_encodeInvalidMachineMerkleProof());
+        vm.prank(vm.randomAddressIn(deploymentArgs.validators));
+        quorum.submitClaim(claim);
+    }
+
+    function testSubmitClaimRevertInvalidPostEpochMachineIflagsYRegister(DeploymentArgs calldata deploymentArgs)
+        external
+    {
+        IQuorum quorum = _newQuorum(deploymentArgs);
+        Claim memory claim = _newClaim(deploymentArgs.epochLength, _initBadIflagsY);
+
+        _rollPast(claim.lastProcessedBlockNumber);
+
+        vm.expectRevert(_encodeInvalidPostEpochMachineIflagsYRegister());
+        vm.prank(vm.randomAddressIn(deploymentArgs.validators));
+        quorum.submitClaim(claim);
+    }
+
+    function testSubmitClaimRevertInvalidPostEpochMachineHtifTohostRegister(DeploymentArgs calldata deploymentArgs)
+        external
+    {
+        IQuorum quorum = _newQuorum(deploymentArgs);
+        Claim memory claim = _newClaim(deploymentArgs.epochLength, _initBadHtifTohost);
+
+        _rollPast(claim.lastProcessedBlockNumber);
+
+        vm.expectRevert(_encodeInvalidPostEpochMachineHtifTohostRegister());
+        vm.prank(vm.randomAddressIn(deploymentArgs.validators));
+        quorum.submitClaim(claim);
+    }
+
+    function testSubmitAndAcceptClaim(DeploymentArgs calldata deploymentArgs) external {
+        IQuorum quorum = _newQuorum(deploymentArgs);
         address appContract = address(new ApplicationForeclosureMock());
+        uint256 epochLength = deploymentArgs.epochLength;
+        uint256 claimStagingPeriod = deploymentArgs.claimStagingPeriod;
+        address[] calldata validators = deploymentArgs.validators;
 
         address[] memory appContractSingleton = new address[](1);
         appContractSingleton[0] = appContract;
+
+        address notAppContract = vm.randomAddressNotIn(appContractSingleton);
 
         uint256[] memory blockNumbers = _randomEpochFinalBlockNumbers(epochLength);
 
@@ -372,17 +481,30 @@ contract QuorumFactoryTest is
 
         for (uint256 claimIndex; claimIndex < blockNumbers.length; ++claimIndex) {
             uint256 lastProcessedBlockNumber = blockNumbers[claimIndex];
+
+            // Create an AppEpoch struct so that we can more easily query info
+            // regarding validator claims for that specific epoch.
+            AppEpoch memory appEpoch = AppEpoch({
+                appContract: appContract,
+                lastProcessedBlockNumber: lastProcessedBlockNumber
+            });
+
+            // Create an AppEpoch struct so that we can more easily query info
+            // regarding validator claims for another app.
+            AppEpoch memory notAppEpoch = AppEpoch({
+                appContract: notAppContract,
+                lastProcessedBlockNumber: lastProcessedBlockNumber
+            });
+
             bool wasEpochStaged =
                 blockNumbers.containsBefore(lastProcessedBlockNumber, claimIndex);
 
-            Claim memory winningClaim = Claim({
-                appContract: appContract,
-                lastProcessedBlockNumber: lastProcessedBlockNumber,
-                outputsMerkleRoot: _randomBytes32(),
-                proof: _randomLeafProof()
-            });
+            Claim memory winningClaim = _randomClaim(appEpoch);
+            Claim memory randomClaim = _randomClaim(appEpoch);
+            Claim memory notAppClaim = _randomClaim(notAppEpoch);
 
-            bytes32 winningMachineMerkleRoot = winningClaim.computeMachineMerkleRoot();
+            bytes32 winningMachineMerkleRoot = winningClaim.machineMerkleRoot;
+            bytes32 winningOutputsMerkleRoot = winningClaim.proof.txBufferProof.dataBlock;
 
             // Divide validators into three categories:
             // - winners: they form a majority and vote on the same claim
@@ -424,42 +546,18 @@ contract QuorumFactoryTest is
                 assertEq(nonVoterIds.length, numOfNonVoters);
             }
 
+            uint256 numOfValidatorsInFavorOfAnyClaimInEpoch =
+                quorum.numOfValidatorsInFavorOfAnyClaimInEpoch(appEpoch);
+
             if (wasEpochStaged) {
-                assertGe(
-                    quorum.numOfValidatorsInFavorOfAnyClaimInEpoch(
-                        appContract, lastProcessedBlockNumber
-                    ),
-                    majority,
-                    "Expected a majority of validators to be in favor of any claim in epoch"
-                );
+                assertGe(numOfValidatorsInFavorOfAnyClaimInEpoch, majority);
             } else {
-                assertEq(
-                    quorum.numOfValidatorsInFavorOfAnyClaimInEpoch(
-                        appContract, lastProcessedBlockNumber
-                    ),
-                    0,
-                    "Expected no validator to be in favor of any claim in epoch"
-                );
-                assertEq(
-                    quorum.numOfValidatorsInFavorOf(
-                        appContract, lastProcessedBlockNumber, winningMachineMerkleRoot
-                    ),
-                    0,
-                    "Expected no validator to be in favor of the winning claim in epoch"
-                );
-                assertEq(
-                    quorum.numOfValidatorsInFavorOf(
-                        appContract, lastProcessedBlockNumber, _randomBytes32()
-                    ),
-                    0,
-                    "Expected no validator to be in favor of any random claim in epoch"
-                );
+                assertEq(numOfValidatorsInFavorOfAnyClaimInEpoch, 0);
+                assertEq(quorum.numOfValidatorsInFavorOf(winningClaim), 0);
+                assertEq(quorum.numOfValidatorsInFavorOf(randomClaim), 0);
             }
 
-            // If behind last-processed block number, roll past it
-            if (vm.getBlockNumber() <= lastProcessedBlockNumber) {
-                vm.roll(_randomUintGt(lastProcessedBlockNumber));
-            }
+            _rollPast(lastProcessedBlockNumber);
 
             uint256 numOfWinningVotes;
             uint256 numOfLosingVotes;
@@ -467,46 +565,35 @@ contract QuorumFactoryTest is
             for (uint256 i; i < ids.length; ++i) {
                 uint256 id = ids[i];
 
-                if (!wasEpochStaged) {
-                    assertFalse(
-                        quorum.isValidatorInFavorOfAnyClaimInEpoch(
-                            appContract, lastProcessedBlockNumber, id
-                        ),
-                        "Expected validator to not be in favor of any claim in epoch"
-                    );
-                    assertFalse(
-                        quorum.isValidatorInFavorOf(
-                            appContract, lastProcessedBlockNumber, _randomBytes32(), id
-                        ),
-                        "Expected validator to not be in favor of any random claim in epoch"
-                    );
-                }
+                bool notFirstClaim =
+                    quorum.isValidatorInFavorOfAnyClaimInEpoch(appEpoch, id);
 
-                if (nonVoterIds.contains(id)) {
-                    continue; // skip voting
+                if (!wasEpochStaged) {
+                    assertFalse(notFirstClaim);
+                    assertFalse(quorum.isValidatorInFavorOf(randomClaim, id));
                 }
 
                 Claim memory claim;
                 bytes32 machineMerkleRoot;
+                bytes32 outputsMerkleRoot;
 
                 if (winnerIds.contains(id)) {
-                    (claim, machineMerkleRoot) = (winningClaim, winningMachineMerkleRoot);
+                    claim = winningClaim;
+                    machineMerkleRoot = winningMachineMerkleRoot;
+                    outputsMerkleRoot = winningOutputsMerkleRoot;
                     ++numOfWinningVotes;
                 } else if (loserIds.contains(id)) {
-                    (claim, machineMerkleRoot) =
-                        _randomClaimDifferentFrom(winningClaim, winningMachineMerkleRoot);
+                    claim = _randomCompetingClaim(winningClaim);
+                    machineMerkleRoot = claim.machineMerkleRoot;
+                    outputsMerkleRoot = claim.proof.txBufferProof.dataBlock;
                     ++numOfLosingVotes;
                 } else {
-                    revert("unexpected validator category");
+                    require(nonVoterIds.contains(id), "expected non-voter");
+                    continue; // skip voting
                 }
 
                 if (!wasEpochStaged) {
-                    assertFalse(
-                        quorum.isValidatorInFavorOf(
-                            appContract, lastProcessedBlockNumber, machineMerkleRoot, id
-                        ),
-                        "Expected validator to not be in favor of claim"
-                    );
+                    assertFalse(quorum.isValidatorInFavorOf(claim, id));
                 }
 
                 uint256 totalNumOfSubmittedClaimsBefore =
@@ -517,118 +604,31 @@ contract QuorumFactoryTest is
                     quorum.getNumberOfAcceptedClaims(appContract);
 
                 uint256 numOfValidatorsInFavorOfAnyClaimInEpochBefore =
-                    quorum.numOfValidatorsInFavorOfAnyClaimInEpoch(
-                        appContract, lastProcessedBlockNumber
-                    );
-
+                    quorum.numOfValidatorsInFavorOfAnyClaimInEpoch(appEpoch);
                 uint256 numOfValidatorsInFavorOfClaimBefore =
-                    quorum.numOfValidatorsInFavorOf(
-                        appContract, lastProcessedBlockNumber, machineMerkleRoot
-                    );
+                    quorum.numOfValidatorsInFavorOf(claim);
 
                 address validator = quorum.validatorById(id);
                 assertTrue(validators.contains(validator), "voter is not validator");
 
-                try this.simulateForeclosureAndClaimSubmission(quorum, validator, claim) {
-                    revert("expected simulation to revert");
-                } catch (bytes memory errorData) {
-                    (bytes4 errorSelector, bytes memory errorArgs) =
-                        errorData.consumeBytes4();
-                    if (errorSelector == IConsensus.NotFirstClaim.selector) {
-                        (address arg1, uint256 arg2) =
-                            abi.decode(errorArgs, (address, uint256));
-                        assertEq(
-                            arg1, appContract, "NotFirstClaim.appContract != appContract"
-                        );
-                        assertEq(
-                            arg2,
-                            lastProcessedBlockNumber,
-                            "NotFirstClaim.lastProcessedBlockNumber != lastProcessedBlockNumber"
-                        );
-                        assertTrue(
-                            wasEpochStaged,
-                            "NotFirstClaim should only be raised if epoch was already staged"
-                        );
-                        assertTrue(
-                            quorum.isValidatorInFavorOfAnyClaimInEpoch(
-                                appContract, lastProcessedBlockNumber, id
-                            ),
-                            "Expected isValidatorInFavorOfAnyClaimInEpoch(...) to return true after NotFirstClaim"
-                        );
-                        assertFalse(
-                            quorum.isValidatorInFavorOf(
-                                appContract,
-                                lastProcessedBlockNumber,
-                                machineMerkleRoot,
-                                id
-                            ),
-                            "Expected isValidatorInFavorOf(...) to return false after NotFirstClaim"
-                        );
-                    } else if (
-                        errorSelector
-                            == IApplicationChecker.ApplicationForeclosed.selector
-                    ) {
-                        (address arg1) = abi.decode(errorArgs, (address));
-                        assertEq(
-                            arg1,
-                            appContract,
-                            "ApplicationForeclosed.appContract != appContract"
-                        );
-                    } else {
-                        revert UnexpectedError(errorData);
-                    }
+                vm.expectRevert(
+                    notFirstClaim
+                        ? _encodeNotFirstClaim(claim)
+                        : _encodeApplicationForeclosed(appContract)
+                );
+                this.simulateForeclosureAndClaimSubmission(quorum, validator, claim);
+
+                if (notFirstClaim) {
+                    vm.expectRevert(_encodeNotFirstClaim(claim));
+                } else {
+                    vm.recordLogs();
                 }
 
-                vm.recordLogs();
-
                 vm.prank(validator);
-                try quorum.submitClaim(
-                    claim.appContract,
-                    claim.lastProcessedBlockNumber,
-                    claim.outputsMerkleRoot,
-                    claim.proof
-                ) {}
-                catch (bytes memory errorData) {
-                    (bytes4 errorSelector, bytes memory errorArgs) =
-                        errorData.consumeBytes4();
-                    if (errorSelector == IConsensus.NotFirstClaim.selector) {
-                        (address arg1, uint256 arg2) =
-                            abi.decode(errorArgs, (address, uint256));
-                        assertEq(
-                            arg1,
-                            claim.appContract,
-                            "NotFirstClaim.appContract != appContract"
-                        );
-                        assertEq(
-                            arg2,
-                            claim.lastProcessedBlockNumber,
-                            "NotFirstClaim.lastProcessedBlockNumber != lastProcessedBlockNumber"
-                        );
-                        assertTrue(
-                            wasEpochStaged,
-                            "NotFirstClaim should only be raised if epoch was already staged"
-                        );
-                        assertTrue(
-                            quorum.isValidatorInFavorOfAnyClaimInEpoch(
-                                claim.appContract, claim.lastProcessedBlockNumber, id
-                            ),
-                            "Expected isValidatorInFavorOfAnyClaimInEpoch(...) to return true after NotFirstClaim"
-                        );
-                        assertFalse(
-                            quorum.isValidatorInFavorOf(
-                                claim.appContract,
-                                claim.lastProcessedBlockNumber,
-                                machineMerkleRoot,
-                                id
-                            ),
-                            "Expected isValidatorInFavorOf(...) to return false after NotFirstClaim"
-                        );
-                    } else {
-                        revert UnexpectedError(errorData);
-                    }
+                quorum.submitClaim(claim);
 
-                    // Proceed to the next claim.
-                    continue;
+                if (notFirstClaim) {
+                    continue; // Proceed to next claim.
                 }
 
                 Vm.Log[] memory logs = vm.getRecordedLogs();
@@ -647,7 +647,7 @@ contract QuorumFactoryTest is
                             assertEq(log.topics[1], validator.asTopic());
                             assertEq(log.topics[2], appContract.asTopic());
                             assertEq(arg0, lastProcessedBlockNumber);
-                            assertEq(arg1, claim.outputsMerkleRoot);
+                            assertEq(arg1, outputsMerkleRoot);
                             assertEq(arg2, machineMerkleRoot);
                             ++numOfClaimSubmittedEvents;
                         } else if (topic0 == IConsensus.ClaimStaged.selector) {
@@ -655,7 +655,7 @@ contract QuorumFactoryTest is
                                 abi.decode(log.data, (uint256, bytes32, bytes32));
                             assertEq(log.topics[1], appContract.asTopic());
                             assertEq(arg0, lastProcessedBlockNumber);
-                            assertEq(arg1, claim.outputsMerkleRoot);
+                            assertEq(arg1, outputsMerkleRoot);
                             assertEq(arg2, machineMerkleRoot);
                             ++numOfClaimStagedEvents;
                         } else {
@@ -668,9 +668,7 @@ contract QuorumFactoryTest is
 
                 assertEq(numOfClaimSubmittedEvents, 1, "expected 1 ClaimSubmitted event");
 
-                IConsensus.Claim memory submittedClaim = quorum.getClaim(
-                    appContract, lastProcessedBlockNumber, machineMerkleRoot
-                );
+                IConsensus.Claim memory submittedClaim = quorum.getClaim(claim);
 
                 if (wasEpochStaged) {
                     assertEq(numOfClaimStagedEvents, 0, "expected 0 ClaimStaged events");
@@ -691,9 +689,7 @@ contract QuorumFactoryTest is
                             "expected claim to be staged if claim reached majority"
                         );
                     } else {
-                        assertEq(
-                            numOfClaimStagedEvents, 0, "expected 0 ClaimStaged events"
-                        );
+                        assertEq(numOfClaimStagedEvents, 0);
                         assertEq(
                             uint256(submittedClaim.status),
                             uint256(IConsensus.ClaimStatus.UNSTAGED),
@@ -702,13 +698,10 @@ contract QuorumFactoryTest is
                     }
                 }
 
-                if (
-                    submittedClaim.status == IConsensus.ClaimStatus.STAGED
-                        || submittedClaim.status == IConsensus.ClaimStatus.ACCEPTED
-                ) {
+                if (submittedClaim.status != IConsensus.ClaimStatus.UNSTAGED) {
                     assertEq(
                         submittedClaim.stagedOutputsMerkleRoot,
-                        claim.outputsMerkleRoot,
+                        outputsMerkleRoot,
                         "expected outputs Merkle root to be staged"
                     );
                 }
@@ -769,7 +762,26 @@ contract QuorumFactoryTest is
                     "Total number of accepted claims should remain the same"
                 );
 
-                address notAppContract = vm.randomAddressNotIn(appContractSingleton);
+                assertTrue(
+                    quorum.isValidatorInFavorOfAnyClaimInEpoch(appEpoch, id),
+                    "Expected validator to be in favor of any claim in epoch"
+                );
+                assertEq(
+                    quorum.numOfValidatorsInFavorOfAnyClaimInEpoch(appEpoch),
+                    numOfValidatorsInFavorOfAnyClaimInEpochBefore + 1,
+                    "Number of validators in favor of any claim in epoch should be incremented"
+                );
+
+                assertEq(
+                    quorum.numOfValidatorsInFavorOf(claim),
+                    numOfValidatorsInFavorOfClaimBefore + 1,
+                    "Number of validators in favor of claim should be incremented"
+                );
+
+                assertTrue(
+                    quorum.isValidatorInFavorOf(claim, id),
+                    "Expected validator to be in favor of claim"
+                );
 
                 assertFalse(
                     quorum.wasInputFinalized(
@@ -780,99 +792,21 @@ contract QuorumFactoryTest is
                     "Check all inputs from other apps were not finalized"
                 );
 
-                assertEq(
-                    quorum.getNumberOfSubmittedClaims(notAppContract),
-                    0,
-                    "Total number of submitted claims should be zero for other apps"
-                );
+                assertEq(quorum.getNumberOfSubmittedClaims(notAppContract), 0);
+                assertEq(quorum.getNumberOfStagedClaims(notAppContract), 0);
+                assertEq(quorum.getNumberOfAcceptedClaims(notAppContract), 0);
+                assertEq(quorum.numOfValidatorsInFavorOfAnyClaimInEpoch(notAppEpoch), 0);
+                assertFalse(quorum.isValidatorInFavorOfAnyClaimInEpoch(notAppEpoch, id));
+                assertEq(quorum.numOfValidatorsInFavorOf(notAppClaim), 0);
+                assertFalse(quorum.isValidatorInFavorOf(notAppClaim, id));
 
-                assertEq(
-                    quorum.getNumberOfStagedClaims(notAppContract),
-                    0,
-                    "Total number of staged claims should be zero for other apps"
-                );
-
-                assertEq(
-                    quorum.getNumberOfAcceptedClaims(notAppContract),
-                    0,
-                    "Total number of accepted claims should be zero for other apps"
-                );
-
-                assertEq(
-                    quorum.numOfValidatorsInFavorOfAnyClaimInEpoch(
-                        appContract, lastProcessedBlockNumber
-                    ),
-                    numOfValidatorsInFavorOfAnyClaimInEpochBefore + 1,
-                    "Number of validators in favor of any claim in epoch should be incremented"
-                );
-
-                assertEq(
-                    quorum.numOfValidatorsInFavorOfAnyClaimInEpoch(
-                        notAppContract, lastProcessedBlockNumber
-                    ),
-                    0,
-                    "Number of validators in favor of any claim in epoch should be zero for other apps"
-                );
-
-                assertTrue(
-                    quorum.isValidatorInFavorOfAnyClaimInEpoch(
-                        appContract, lastProcessedBlockNumber, id
-                    ),
-                    "Expected validator to be in favor of any claim in epoch"
-                );
-
-                assertFalse(
-                    quorum.isValidatorInFavorOfAnyClaimInEpoch(
-                        notAppContract, lastProcessedBlockNumber, id
-                    ),
-                    "Validator shouldn't be in favor of any claim in epoch for other apps"
-                );
-
-                assertEq(
-                    quorum.numOfValidatorsInFavorOf(
-                        appContract, lastProcessedBlockNumber, machineMerkleRoot
-                    ),
-                    numOfValidatorsInFavorOfClaimBefore + 1,
-                    "Number of validators in favor of claim should be incremented"
-                );
-
-                assertEq(
-                    quorum.numOfValidatorsInFavorOf(
-                        notAppContract, lastProcessedBlockNumber, machineMerkleRoot
-                    ),
-                    0,
-                    "Number of validators in favor of claim should be zero for other apps"
-                );
-
-                assertTrue(
-                    quorum.isValidatorInFavorOf(
-                        appContract, lastProcessedBlockNumber, machineMerkleRoot, id
-                    ),
-                    "Expected validator to be in favor of claim"
-                );
-
-                assertFalse(
-                    quorum.isValidatorInFavorOf(
-                        notAppContract, lastProcessedBlockNumber, machineMerkleRoot, id
-                    ),
-                    "Validator shouldn't be in favor of claim for other apps"
-                );
-
-                vm.expectRevert(
-                    abi.encodeWithSelector(
-                        IConsensus.NotFirstClaim.selector,
-                        appContract,
-                        lastProcessedBlockNumber
-                    )
-                );
+                vm.expectRevert(_encodeNotFirstClaim(claim));
                 vm.prank(validator);
                 quorum.submitClaim(claim);
             }
 
             if (!wasEpochStaged) {
-                IConsensus.Claim memory stagedClaim = quorum.getClaim(
-                    appContract, lastProcessedBlockNumber, winningMachineMerkleRoot
-                );
+                IConsensus.Claim memory stagedClaim = quorum.getClaim(winningClaim);
 
                 assertEq(
                     uint256(stagedClaim.status),
@@ -882,7 +816,7 @@ contract QuorumFactoryTest is
 
                 assertEq(
                     stagedClaim.stagedOutputsMerkleRoot,
-                    winningClaim.outputsMerkleRoot,
+                    winningOutputsMerkleRoot,
                     "Expected winning outputs Merkle root to be staged"
                 );
 
@@ -909,9 +843,7 @@ contract QuorumFactoryTest is
                         )
                     );
                     vm.prank(vm.randomAddress());
-                    quorum.acceptClaim(
-                        appContract, lastProcessedBlockNumber, winningMachineMerkleRoot
-                    );
+                    quorum.acceptClaim(winningClaim);
                 }
 
                 // skip acceptance because cannot roll past claim staging period
@@ -948,9 +880,7 @@ contract QuorumFactoryTest is
                 vm.recordLogs();
 
                 vm.prank(vm.randomAddress());
-                quorum.acceptClaim(
-                    appContract, lastProcessedBlockNumber, winningMachineMerkleRoot
-                );
+                quorum.acceptClaim(winningClaim);
 
                 Vm.Log[] memory logs = vm.getRecordedLogs();
 
@@ -966,7 +896,7 @@ contract QuorumFactoryTest is
                                 abi.decode(log.data, (uint256, bytes32, bytes32));
                             assertEq(log.topics[1], appContract.asTopic());
                             assertEq(arg0, lastProcessedBlockNumber);
-                            assertEq(arg1, winningClaim.outputsMerkleRoot);
+                            assertEq(arg1, winningOutputsMerkleRoot);
                             assertEq(arg2, winningMachineMerkleRoot);
                             ++numOfClaimAcceptedEvents;
                         } else {
@@ -997,9 +927,7 @@ contract QuorumFactoryTest is
                     "Total number of accepted claims should be increased by number of events"
                 );
 
-                IConsensus.Claim memory acceptedClaim = quorum.getClaim(
-                    appContract, lastProcessedBlockNumber, winningMachineMerkleRoot
-                );
+                IConsensus.Claim memory acceptedClaim = quorum.getClaim(winningClaim);
 
                 assertEq(
                     uint256(acceptedClaim.status),
@@ -1009,7 +937,7 @@ contract QuorumFactoryTest is
 
                 assertEq(
                     acceptedClaim.stagedOutputsMerkleRoot,
-                    winningClaim.outputsMerkleRoot,
+                    winningOutputsMerkleRoot,
                     "Expected winning outputs Merkle root to be accepted"
                 );
 
@@ -1019,45 +947,29 @@ contract QuorumFactoryTest is
                     "Expected accepted claim staging period to have elapsed"
                 );
 
-                assertEq(
-                    numOfWinningVotes, numOfWinners, "# winning votes == # winner voters"
-                );
-                assertEq(
-                    numOfLosingVotes, numOfLosers, "# losing votes == # loser voters"
-                );
+                assertEq(numOfWinningVotes, numOfWinners);
+                assertEq(numOfLosingVotes, numOfLosers);
+
                 assertTrue(
                     quorum.isOutputsMerkleRootValid(winningClaim),
                     "The outputs Merkle root should be valid"
                 );
 
                 assertEq(
-                    quorum.numOfValidatorsInFavorOfAnyClaimInEpoch(
-                        appContract, lastProcessedBlockNumber
-                    ),
+                    quorum.numOfValidatorsInFavorOfAnyClaimInEpoch(appEpoch),
                     numOfWinningVotes + numOfLosingVotes,
-                    "numOfValidatorsInFavorOfAnyClaimInEpoch(...) == # winning votes + # losing votes"
+                    "numOfValidatorsInFavorOfAnyClaimInEpoch(...) == # votes"
                 );
 
                 assertEq(
-                    quorum.numOfValidatorsInFavorOf(
-                        appContract, lastProcessedBlockNumber, winningMachineMerkleRoot
-                    ),
+                    quorum.numOfValidatorsInFavorOf(winningClaim),
                     numOfWinningVotes,
                     "numOfValidatorsInFavorOf(winningClaim...) = # winning votes"
                 );
 
-                vm.expectRevert(
-                    _encodeClaimNotStaged(
-                        appContract,
-                        lastProcessedBlockNumber,
-                        winningMachineMerkleRoot,
-                        IConsensus.ClaimStatus.ACCEPTED
-                    )
-                );
+                vm.expectRevert(_encodeClaimNotStagedButAccepted(winningClaim));
                 vm.prank(vm.randomAddress());
-                quorum.acceptClaim(
-                    appContract, lastProcessedBlockNumber, winningMachineMerkleRoot
-                );
+                quorum.acceptClaim(winningClaim);
 
                 (bool isEmpty, uint256 max) = blockNumbers.maxBefore(claimIndex);
 
@@ -1071,404 +983,131 @@ contract QuorumFactoryTest is
         }
     }
 
-    function testAcceptClaimRevertApplicationNotDeployed(
-        address[] memory validators,
-        uint256 epochLength,
-        uint256 claimStagingPeriod,
-        bool nonDeterministicDeployment,
-        bytes32 machineMerkleRoot
-    ) external {
-        IQuorum quorum = _newQuorum(
-            validators, epochLength, claimStagingPeriod, nonDeterministicDeployment
-        );
+    function testAcceptClaimRevertApplicationNotDeployed(DeploymentArgs calldata deploymentArgs)
+        external
+    {
+        (IQuorum quorum, Claim memory claim) = _newQuorumAndClaim(deploymentArgs);
+        claim.appContract = _randomAccountWithNoCode();
 
-        // We use a random account with no code as app contract
-        address appContract = _randomAccountWithNoCode();
+        _rollPast(claim.lastProcessedBlockNumber);
 
-        uint256 lastProcessedBlockNumber = _randomEpochFinalBlockNumber(epochLength);
-        vm.roll(_randomUintGt(lastProcessedBlockNumber));
-
-        vm.expectRevert(_encodeApplicationNotDeployed(appContract));
+        vm.expectRevert(_encodeApplicationNotDeployed(claim.appContract));
         vm.prank(vm.randomAddress());
-        quorum.acceptClaim(appContract, lastProcessedBlockNumber, machineMerkleRoot);
+        quorum.acceptClaim(claim);
     }
 
     function testAcceptClaimRevertApplicationReverted(
-        address[] memory validators,
-        uint256 epochLength,
-        uint256 claimStagingPeriod,
-        bool nonDeterministicDeployment,
-        bytes32 machineMerkleRoot,
+        DeploymentArgs calldata deploymentArgs,
         bytes memory errorData
     ) external {
-        IQuorum quorum = _newQuorum(
-            validators, epochLength, claimStagingPeriod, nonDeterministicDeployment
-        );
+        (IQuorum quorum, Claim memory claim) = _newQuorumAndClaim(deploymentArgs);
+        claim.appContract = _newAppMockIsForeclosedReverts(errorData);
 
-        // We make isForeclosed() revert with an error
-        address appContract = _newAppMockIsForeclosedReverts(errorData);
+        _rollPast(claim.lastProcessedBlockNumber);
 
-        uint256 lastProcessedBlockNumber = _randomEpochFinalBlockNumber(epochLength);
-        vm.roll(_randomUintGt(lastProcessedBlockNumber));
-
-        vm.expectRevert(_encodeApplicationReverted(appContract, errorData));
+        vm.expectRevert(_encodeApplicationReverted(claim.appContract, errorData));
         vm.prank(vm.randomAddress());
-        quorum.acceptClaim(appContract, lastProcessedBlockNumber, machineMerkleRoot);
+        quorum.acceptClaim(claim);
     }
 
     function testAcceptClaimRevertApplicationReturnIllSizedReturnData(
-        address[] memory validators,
-        uint256 epochLength,
-        uint256 claimStagingPeriod,
-        bool nonDeterministicDeployment,
-        bytes32 machineMerkleRoot,
+        DeploymentArgs calldata deploymentArgs,
         bytes memory data
     ) external {
-        // We make isForeclosed() return ill-sized data
         vm.assume(data.length != 32);
 
-        IQuorum quorum = _newQuorum(
-            validators, epochLength, claimStagingPeriod, nonDeterministicDeployment
-        );
+        (IQuorum quorum, Claim memory claim) = _newQuorumAndClaim(deploymentArgs);
+        claim.appContract = _newAppMockIsForeclosedReturns(data);
 
-        address appContract = _newAppMockIsForeclosedReturns(data);
+        _rollPast(claim.lastProcessedBlockNumber);
 
-        uint256 lastProcessedBlockNumber = _randomEpochFinalBlockNumber(epochLength);
-        vm.roll(_randomUintGt(lastProcessedBlockNumber));
-
-        vm.expectRevert(_encodeIllformedApplicationReturnData(appContract, data));
+        vm.expectRevert(_encodeIllformedApplicationReturnData(claim.appContract, data));
         vm.prank(vm.randomAddress());
-        quorum.acceptClaim(appContract, lastProcessedBlockNumber, machineMerkleRoot);
+        quorum.acceptClaim(claim);
     }
 
-    function testAcceptClaimRevertApplicationReturnIllFormedReturnData(
-        address[] memory validators,
-        uint256 epochLength,
-        uint256 claimStagingPeriod,
-        bool nonDeterministicDeployment,
-        bytes32 machineMerkleRoot
-    ) external {
-        // We make isForeclosed() return an invalid boolean (neither 0 or 1)
-        uint256 returnValue = vm.randomUint(2, type(uint256).max);
+    function testAcceptClaimRevertApplicationReturnIllFormedReturnData(DeploymentArgs calldata deploymentArgs)
+        external
+    {
+        bytes memory data = abi.encode(vm.randomUint(2, type(uint256).max));
 
-        IQuorum quorum = _newQuorum(
-            validators, epochLength, claimStagingPeriod, nonDeterministicDeployment
-        );
+        (IQuorum quorum, Claim memory claim) = _newQuorumAndClaim(deploymentArgs);
+        claim.appContract = _newAppMockIsForeclosedReturns(data);
 
-        bytes memory data = abi.encode(returnValue);
-        address appContract = _newAppMockIsForeclosedReturns(data);
+        _rollPast(claim.lastProcessedBlockNumber);
 
-        uint256 lastProcessedBlockNumber = _randomEpochFinalBlockNumber(epochLength);
-        vm.roll(_randomUintGt(lastProcessedBlockNumber));
-
-        vm.expectRevert(_encodeIllformedApplicationReturnData(appContract, data));
+        vm.expectRevert(_encodeIllformedApplicationReturnData(claim.appContract, data));
         vm.prank(vm.randomAddress());
-        quorum.acceptClaim(appContract, lastProcessedBlockNumber, machineMerkleRoot);
+        quorum.acceptClaim(claim);
     }
 
-    function testAcceptClaimRevertApplicationForeclosed(
-        address[] memory validators,
-        uint256 epochLength,
-        uint256 claimStagingPeriod,
-        bool nonDeterministicDeployment,
-        bytes32 machineMerkleRoot
-    ) external {
-        IQuorum quorum = _newQuorum(
-            validators, epochLength, claimStagingPeriod, nonDeterministicDeployment
-        );
+    function testAcceptClaimRevertApplicationForeclosed(DeploymentArgs calldata deploymentArgs)
+        external
+    {
+        (IQuorum quorum, Claim memory claim) = _newQuorumAndClaim(deploymentArgs);
+        claim.appContract = _newForeclosedAppMock();
 
-        address appContract = _newForeclosedAppMock();
+        _rollPast(claim.lastProcessedBlockNumber);
 
-        uint256 lastProcessedBlockNumber = _randomEpochFinalBlockNumber(epochLength);
-        vm.roll(_randomUintGt(lastProcessedBlockNumber));
-
-        vm.expectRevert(_encodeApplicationForeclosed(appContract));
+        vm.expectRevert(_encodeApplicationForeclosed(claim.appContract));
         vm.prank(vm.randomAddress());
-        quorum.acceptClaim(appContract, lastProcessedBlockNumber, machineMerkleRoot);
+        quorum.acceptClaim(claim);
     }
 
-    function testAcceptClaimRevertsNotEpochFinalBlock(
-        address[] memory validators,
-        uint256 epochLength,
-        uint256 claimStagingPeriod,
-        bool nonDeterministicDeployment,
-        bytes32 machineMerkleRoot
-    ) external {
-        IQuorum quorum = _newQuorum(
-            validators, epochLength, claimStagingPeriod, nonDeterministicDeployment
-        );
+    function testAcceptClaimRevertsNotEpochFinalBlock(DeploymentArgs calldata deploymentArgs)
+        external
+    {
+        (IQuorum quorum, Claim memory claim) = _newQuorumAndClaim(deploymentArgs);
+        claim.lastProcessedBlockNumber =
+            _randomNonEpochFinalBlock(deploymentArgs.epochLength);
 
-        address appContract = _newActiveAppMock();
-
-        uint256 lastProcessedBlockNumber = _randomNonEpochFinalBlock(epochLength);
-        vm.roll(_randomUintGt(lastProcessedBlockNumber));
-
-        vm.expectRevert(_encodeNotEpochFinalBlock(lastProcessedBlockNumber, epochLength));
-        vm.prank(vm.randomAddress());
-        quorum.acceptClaim(appContract, lastProcessedBlockNumber, machineMerkleRoot);
-    }
-
-    function testAcceptClaimRevertsNotPastBlock(
-        address[] memory validators,
-        uint256 epochLength,
-        uint256 claimStagingPeriod,
-        bool nonDeterministicDeployment,
-        bytes32 machineMerkleRoot
-    ) external {
-        IQuorum quorum = _newQuorum(
-            validators, epochLength, claimStagingPeriod, nonDeterministicDeployment
-        );
-
-        address appContract = _newActiveAppMock();
-
-        // Adjust the lastProcessedBlockNumber but do not roll past it.
-        uint256 lastProcessedBlockNumber = _randomEpochFinalBlockNumber(epochLength);
-
-        vm.expectRevert(_encodeNotPastBlock(lastProcessedBlockNumber));
-        vm.prank(vm.randomAddress());
-        quorum.acceptClaim(appContract, lastProcessedBlockNumber, machineMerkleRoot);
-    }
-
-    function testAcceptClaimRevertsUnstagedClaim(
-        address[] memory validators,
-        uint256 epochLength,
-        uint256 claimStagingPeriod,
-        bool nonDeterministicDeployment,
-        bytes32 machineMerkleRoot
-    ) external {
-        IQuorum quorum = _newQuorum(
-            validators, epochLength, claimStagingPeriod, nonDeterministicDeployment
-        );
-
-        address appContract = _newActiveAppMock();
-
-        uint256 lastProcessedBlockNumber = _randomEpochFinalBlockNumber(epochLength);
-        vm.roll(_randomUintGt(lastProcessedBlockNumber));
+        _rollPast(claim.lastProcessedBlockNumber);
 
         vm.expectRevert(
-            _encodeClaimNotStaged(
-                appContract,
-                lastProcessedBlockNumber,
-                machineMerkleRoot,
-                IConsensus.ClaimStatus.UNSTAGED
+            _encodeNotEpochFinalBlock(
+                claim.lastProcessedBlockNumber, deploymentArgs.epochLength
             )
         );
         vm.prank(vm.randomAddress());
-        quorum.acceptClaim(appContract, lastProcessedBlockNumber, machineMerkleRoot);
+        quorum.acceptClaim(claim);
     }
 
-    function _testNewQuorumSuccess(
-        address[] memory validators,
-        uint256 epochLength,
-        uint256 claimStagingPeriod,
-        IQuorum quorum,
-        Vm.Log[] memory logs
-    ) internal {
-        uint256 numOfQuorumCreated;
+    function testAcceptClaimRevertsNotPastBlock(DeploymentArgs calldata deploymentArgs)
+        external
+    {
+        (IQuorum quorum, Claim memory claim) = _newQuorumAndClaim(deploymentArgs);
 
-        for (uint256 i; i < logs.length; ++i) {
-            Vm.Log memory log = logs[i];
-            if (log.emitter == address(_factory)) {
-                bytes32 topic0 = log.topics[0];
-                if (topic0 == IQuorumFactory.QuorumCreated.selector) {
-                    ++numOfQuorumCreated;
-                    address quorumAddress = abi.decode(log.data, (address));
-                    assertEq(quorumAddress, address(quorum));
-                } else {
-                    revert UnexpectedLog(log);
-                }
-            } else {
-                revert UnexpectedLog(log);
-            }
-        }
-
-        assertEq(numOfQuorumCreated, 1, "number of QuorumCreated events");
-
-        _testVersion(quorum);
-
-        uint256 numOfValidators = quorum.numOfValidators();
-        assertGt(numOfValidators, 0, "numOfValidators() > 0");
-
-        assertEq(quorum.getEpochLength(), epochLength, "getEpochLength() == epochLength");
-        assertGt(epochLength, 0, "getEpochLength() > 0");
-
-        assertEq(
-            quorum.getClaimStagingPeriod(),
-            claimStagingPeriod,
-            "getClaimStagingPeriod() == claimStagingPeriod"
-        );
-
-        assertLe(
-            numOfValidators,
-            validators.length,
-            "Number of unique validators <= number of validators"
-        );
-
-        // We first check that every validator in the validators array
-        // has a unique ID and that this ID is assigned to them.
-        for (uint256 i; i < validators.length; ++i) {
-            address validator = validators[i];
-            assertNotEq(validator, address(0), "Validators should be != address(0)");
-            uint256 id = quorum.validatorId(validator);
-            assertGe(id, 1, "Validator ID should be >= 1");
-            assertLe(id, numOfValidators, "Validator ID should be <= numOfValidators");
-            assertEq(quorum.validatorById(id), validator, "Validator by ID should match");
-        }
-
-        // Then we check that every ID is assigned to a validator in the array.
-        // By the pidgenhole principle, this can already be assumed if the
-        // number of unique validators is less than or equal to the length
-        // of the original array. Nevertheless, we test this for redundancy.
-        for (uint256 id = 1; id <= numOfValidators; ++id) {
-            address validator = quorum.validatorById(id);
-            bool isValidatorInArray = false;
-            for (uint256 i; i < validators.length; ++i) {
-                if (validator == validators[i]) {
-                    isValidatorInArray = true;
-                    break;
-                }
-            }
-            assertTrue(isValidatorInArray, "Validator not in array");
-        }
-
-        // We check that zero address and zero ID map to each other.
-        assertEq(quorum.validatorId(address(0)), 0, "validatorId(address(0)) == 0");
-        assertEq(quorum.validatorById(0), address(0), "validatorById(0) == address(0)");
-
-        // We check that non-validators are assigned ID zero.
-        assertEq(
-            quorum.validatorId(vm.randomAddressNotIn(validators)),
-            0,
-            "for any non-validator addr, validatorId(addr) == 0"
-        );
-
-        // We check that invalid IDs map to the zero address.
-        assertEq(
-            quorum.validatorById(vm.randomUint(numOfValidators + 1, type(uint256).max)),
-            address(0),
-            "for any id > numOfValidators(), validatorById(id) == address(0)"
-        );
-
-        // We check that initially all outputs Merkle roots are invalid.
-        assertFalse(
-            quorum.isOutputsMerkleRootValid(vm.randomAddress(), _randomBytes32()),
-            "initially, isOutputsMerkleRootValid(...) == false"
-        );
-
-        // We check that initially no machine Merkle root has been finalized.
-        assertEq(
-            quorum.getLastFinalizedMachineMerkleRoot(vm.randomAddress()),
-            bytes32(0),
-            "initially, getLastFinalizedMachineMerkleRoot(...) == bytes32(0)"
-        );
-
-        // We check that initially no input was finalized.
-        assertEq(
-            quorum.wasInputFinalized(
-                vm.randomAddress(), // appContract
-                vm.randomUint(), // inputIndex
-                vm.randomUint() // blockNumber
-            ),
-            false,
-            "initially, wasInputFinalized(...) == false"
-        );
-
-        // We check that initially no validator is in favor of any claim in an epoch.
-        assertEq(
-            quorum.numOfValidatorsInFavorOfAnyClaimInEpoch(
-                vm.randomAddress(), vm.randomUint()
-            ),
-            0,
-            "initially, numOfValidatorsInFavorOfAnyClaimInEpoch(...) == 0"
-        );
-        assertEq(
-            quorum.numOfValidatorsInFavorOf(
-                vm.randomAddress(), vm.randomUint(), _randomBytes32()
-            ),
-            0,
-            "initially, numOfValidatorsInFavorOf(...) == 0"
-        );
-        assertFalse(
-            quorum.isValidatorInFavorOfAnyClaimInEpoch(
-                vm.randomAddress(), vm.randomUint(), vm.randomUint()
-            ),
-            "initially, isValidatorInFavorOfAnyClaimInEpoch(...) == false"
-        );
-        assertFalse(
-            quorum.isValidatorInFavorOf(
-                vm.randomAddress(), vm.randomUint(), _randomBytes32(), vm.randomUint()
-            ),
-            "initially, isValidatorInFavorOf(...) == false"
-        );
-
-        // We check that initially no claim is staged.
-        assertEq(
-            uint256(
-                quorum.getClaim(vm.randomAddress(), vm.randomUint(), _randomBytes32())
-                .status
-            ),
-            uint256(IConsensus.ClaimStatus.UNSTAGED),
-            "initially, getClaim(...).status == ClaimStatus.UNSTAGED"
-        );
-
-        // Also, initially, no `ClaimSubmitted`, `ClaimStaged` or `ClaimAccepted` were emitted.
-        assertEq(
-            quorum.getNumberOfSubmittedClaims(vm.randomAddress()),
-            0,
-            "initially, getNumberOfSubmittedClaims(...) == 0"
-        );
-        assertEq(
-            quorum.getNumberOfStagedClaims(vm.randomAddress()),
-            0,
-            "initially, getNumberOfStagedClaims(...) == 0"
-        );
-        assertEq(
-            quorum.getNumberOfAcceptedClaims(vm.randomAddress()),
-            0,
-            "initially, getNumberOfAcceptedClaims(...) == 0"
-        );
-
-        // Test ERC-165 interface
-        _testSupportsInterface(quorum);
+        vm.expectRevert(_encodeNotPastBlock(claim.lastProcessedBlockNumber));
+        vm.prank(vm.randomAddress());
+        quorum.acceptClaim(claim);
     }
 
-    function _testNewQuorumFailure(
-        address[] memory validators,
-        uint256 epochLength,
-        bytes memory errorData
-    ) internal pure {
-        (bytes4 errorSelector, bytes memory errorArgs) = errorData.consumeBytes4();
-        if (errorSelector == IQuorumFactoryErrors.ZeroAddressValidator.selector) {
-            assertEq(errorArgs.length, 0, "Expected ZeroAddressValidator to have no args");
-            assertTrue(
-                validators.contains(address(0)),
-                "expected validators to contain address(0)"
-            );
-        } else if (errorSelector == IQuorumFactoryErrors.EmptyQuorum.selector) {
-            assertEq(errorArgs.length, 0, "Expected EmptyQuorum to have no arguments");
-            assertEq(validators.length, 0, "expected validators to be empty");
-        } else if (errorSelector == IConsensusFactoryErrors.ZeroEpochLength.selector) {
-            assertEq(errorArgs.length, 0, "expected ZeroEpochLength to have no args");
-            assertEq(epochLength, 0, "expected epoch length to be zero");
-        } else {
-            revert UnexpectedError(errorData);
-        }
+    function testAcceptClaimRevertsUnstagedClaim(DeploymentArgs calldata deploymentArgs)
+        external
+    {
+        (IQuorum quorum, Claim memory claim) = _newQuorumAndClaim(deploymentArgs);
+
+        _rollPast(claim.lastProcessedBlockNumber);
+
+        vm.expectRevert(_encodeClaimNotStagedButUnstaged(claim));
+        vm.prank(vm.randomAddress());
+        quorum.acceptClaim(claim);
     }
 
-    function _newQuorum(
-        address[] memory validators,
-        uint256 epochLength,
-        uint256 claimStagingPeriod,
-        bool nonDeterministicDeployment
-    ) internal returns (IQuorum) {
-        if (nonDeterministicDeployment) {
-            vm.assumeNoRevert();
-            return _factory.newQuorum(validators, epochLength, claimStagingPeriod);
-        } else {
-            bytes32 salt = _randomBytes32();
-            vm.assumeNoRevert();
-            return _factory.newQuorum(validators, epochLength, claimStagingPeriod, salt);
-        }
+    function _newQuorum(DeploymentArgs calldata deploymentArgs)
+        internal
+        returns (IQuorum)
+    {
+        vm.assumeNoRevert();
+        return _factory.newQuorum(deploymentArgs);
+    }
+
+    function _newQuorumAndClaim(DeploymentArgs calldata deploymentArgs)
+        internal
+        returns (IQuorum quorum, Claim memory claim)
+    {
+        quorum = _newQuorum(deploymentArgs);
+        claim = _randomClaim(deploymentArgs.epochLength);
     }
 
     function _encodeCallerIsNotValidator(address caller)
@@ -1477,5 +1116,12 @@ contract QuorumFactoryTest is
         returns (bytes memory)
     {
         return abi.encodeWithSelector(IQuorum.CallerIsNotValidator.selector, caller);
+    }
+
+    function _randomClaim(AppEpoch memory appEpoch)
+        internal
+        returns (Claim memory claim)
+    {
+        return _randomClaim(appEpoch.appContract, appEpoch.lastProcessedBlockNumber);
     }
 }
