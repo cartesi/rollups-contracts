@@ -17,9 +17,9 @@ import {Ownable} from "@openzeppelin-contracts-5.2.0/access/Ownable.sol";
 
 import {Vm} from "forge-std-1.9.6/src/Vm.sol";
 
-import {ExternalLibBinaryMerkleTree} from "../library/LibBinaryMerkleTree.t.sol";
 import {ConsensusTestUtils} from "../util/ConsensusTestUtils.sol";
 import {LibAddressArray} from "../util/LibAddressArray.sol";
+import {LibBinaryKeccak256MerkleTree} from "../util/LibBinaryKeccak256MerkleTree.sol";
 import {LibBytes} from "../util/LibBytes.sol";
 import {LibTopic} from "../util/LibTopic.sol";
 import {OwnableTest} from "../util/OwnableTest.sol";
@@ -81,7 +81,7 @@ contract ApplicationFactoryTest is
     ConsensusTestUtils
 {
     using LibApplicationFactory for IApplicationFactory;
-    using ExternalLibBinaryMerkleTree for bytes32[];
+    using LibBinaryKeccak256MerkleTree for bytes32[];
     using LibWithdrawalConfig for WithdrawalConfig;
     using LibAddressArray for Vm;
     using LibTopic for address;
