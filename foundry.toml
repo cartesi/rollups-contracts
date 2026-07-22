@@ -8,7 +8,7 @@ evm_version = "prague"
 always_use_create_2_factory = true
 remappings = [
     "@openzeppelin-contracts-5.2.0/=dependencies/@openzeppelin-contracts-5.2.0/",
-    "cartesi-machine-solidity-step-0.14.0/=dependencies/cartesi-machine-solidity-step-0.14.0/",
+    "cartesi-machine-solidity-step-0.15.0/=dependencies/cartesi-machine-solidity-step-0.15.0/",
     "forge-std-1.9.6/=dependencies/forge-std-1.9.6/",
 ]
 fs_permissions = [
@@ -40,7 +40,7 @@ exclude_lints = ["incorrect-shift"]
 [dependencies]
 "@openzeppelin-contracts" = "5.2.0"
 forge-std = "1.9.6"
-cartesi-machine-solidity-step = { version = "0.14.0", git = "https://github.com/cartesi/machine-solidity-step.git", tag = "v0.14.0" }
+cartesi-machine-solidity-step = { version = "0.15.0", git = "https://github.com/cartesi/machine-solidity-step.git", rev = "v0.15.0-test1" }
 
 [rpc_endpoints]
 arb_mainnet = "${ARB_MAINNET_RPC_URL}"
