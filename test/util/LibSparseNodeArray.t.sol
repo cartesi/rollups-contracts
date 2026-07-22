@@ -7,15 +7,15 @@ import {Test} from "forge-std-1.9.6/src/Test.sol";
 
 import {LibMath} from "src/library/LibMath.sol";
 
-import {ExternalLibBinaryMerkleTree} from "../library/LibBinaryMerkleTree.t.sol";
+import {LibBinaryKeccak256MerkleTree} from "../util/LibBinaryKeccak256MerkleTree.sol";
 import {CompressedNode} from "./CompressedNode.sol";
 import {LibSparseNodeArray} from "./LibSparseNodeArray.sol";
 import {SparseNode} from "./SparseNode.sol";
 
 contract LibSparseNodeArrayTest is Test {
     using LibSparseNodeArray for SparseNode[];
-    using ExternalLibBinaryMerkleTree for bytes32[];
-    using ExternalLibBinaryMerkleTree for CompressedNode[];
+    using LibBinaryKeccak256MerkleTree for bytes32[];
+    using LibBinaryKeccak256MerkleTree for CompressedNode[];
 
     function testToCompressedNodeArray(bytes32 defaultValue) external {
         uint256 sparseNodeCount = vm.randomUint(1, 10);

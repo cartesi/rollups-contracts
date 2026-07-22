@@ -31,7 +31,6 @@ import {SafeCast} from "@openzeppelin-contracts-5.2.0/utils/math/SafeCast.sol";
 
 import {Vm} from "forge-std-1.9.6/src/Vm.sol";
 
-import {ExternalLibBinaryMerkleTree} from "../library/LibBinaryMerkleTree.t.sol";
 import {ExternalLibUsdAccount} from "../library/LibUsdAccount.t.sol";
 import {AddressGenerator} from "../util/AddressGenerator.sol";
 import {AssetReceiver} from "../util/AssetReceiver.sol";
@@ -39,6 +38,7 @@ import {ConsensusTestUtils} from "../util/ConsensusTestUtils.sol";
 import {EtherReceiver, IEtherReceiver} from "../util/EtherReceiver.sol";
 import {InputBoxTestUtils} from "../util/InputBoxTestUtils.sol";
 import {LibAddressArray} from "../util/LibAddressArray.sol";
+import {LibBinaryKeccak256MerkleTree} from "../util/LibBinaryKeccak256MerkleTree.sol";
 import {LibBytes} from "../util/LibBytes.sol";
 import {LibBytes32Array} from "../util/LibBytes32Array.sol";
 import {LibEmulator} from "../util/LibEmulator.sol";
@@ -64,7 +64,7 @@ contract ApplicationTest is
     using LibAddressArray for address;
     using LibEmulator for LibEmulator.State;
     using LibEmulator for LibEmulator.ProofComponents;
-    using ExternalLibBinaryMerkleTree for bytes32[];
+    using LibBinaryKeccak256MerkleTree for bytes32[];
 
     enum DepositType {
         ETHER,

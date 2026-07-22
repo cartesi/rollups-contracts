@@ -11,7 +11,7 @@ import {OutputValidityProof} from "src/common/OutputValidityProof.sol";
 import {LibBinaryMerkleTree} from "src/library/LibBinaryMerkleTree.sol";
 import {LibKeccak256} from "src/library/LibKeccak256.sol";
 
-import {ExternalLibBinaryMerkleTree} from "../library/LibBinaryMerkleTree.t.sol";
+import {LibBinaryKeccak256MerkleTree} from "../util/LibBinaryKeccak256MerkleTree.sol";
 import {LibBytes32Array} from "../util/LibBytes32Array.sol";
 import {CompressedNode} from "./CompressedNode.sol";
 import {LibBinaryMerkleTreeHelper} from "./LibBinaryMerkleTreeHelper.sol";
@@ -24,8 +24,8 @@ library LibEmulator {
     using LibBytes32Array for bytes32[];
     using LibSparseNodeArray for SparseNode[];
     using LibBinaryMerkleTreeHelper for bytes32[];
-    using ExternalLibBinaryMerkleTree for bytes32[];
-    using ExternalLibBinaryMerkleTree for CompressedNode[];
+    using LibBinaryKeccak256MerkleTree for bytes32[];
+    using LibBinaryKeccak256MerkleTree for CompressedNode[];
 
     struct State {
         bytes[] outputs;
