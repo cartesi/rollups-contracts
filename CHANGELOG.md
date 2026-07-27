@@ -1,5 +1,162 @@
 # @cartesi/rollups
 
+## 3.0.0-alpha.7
+
+### Major Changes
+
+- Replace the generic data availability solution with an explicit input box contract ([#537](https://github.com/cartesi/rollups-contracts/pull/537))
+
+  - Replace `getDataAvailability()` (returning `bytes`) with `getInputBox()` (returning `IInputBox`) in `IApplication`
+  - Replace the `bytes dataAvailability` parameter with an `IInputBox inputBox` parameter in the `Application` constructor, in `IApplicationFactory` (`newApplication`, `calculateApplicationAddress`) and in `ISelfHostedApplicationFactory` (`deployContracts`, `calculateAddresses`)
+  - Replace the `bytes dataAvailability` field with an `IInputBox inputBox` field in the `ApplicationCreated` event
+  - Remove the `DataAvailability` library
+
+- Make portals read the input box from the application contract instead of holding it as an immutable
+
+  - Remove the `getInputBox()` function from `IPortal` and the `IInputBox` parameter from every portal constructor
+  - Make `IPortal` inherit from `IApplicationChecker`, because deposits (since 3.0.0-alpha.2) may revert with `ApplicationNotDeployed`, `ApplicationReverted` or `IllformedApplicationReturnData`
+  - Add an `InputBoxNotDeployed` error to `IApplicationChecker`, raised when the input box advertised by the application has no code
+  - As a consequence, a deposit is now routed to the input box chosen by the application, instead of the one hard-wired into the portal
+
+- Change the `submitClaim` function to prove that the post-epoch machine is manually yielded with an `rx accepted` reason ([#538](https://github.com/cartesi/rollups-contracts/issues/538))
+
+  - Replace the `bytes32 outputsMerkleRoot` and `bytes32[] proof` parameters with `bytes32 machineMerkleRoot` and `MachineValidityProof proof` in `IConsensus.submitClaim` (implemented by `Authority` and `Quorum`)
+  - Add the `MachineValidityProof` struct, which bundles three `LeafProof` structs proving the `iflags_Y` register, the HTIF `tohost` register and the first data block of the CMIO tx buffer
+  - Add the `LeafProof` struct (a 32-byte data block plus its bottom-up siblings)
+  - Remove the `InvalidOutputsMerkleRootProofSize` error from `IConsensus`, and make `IConsensus` inherit from the new `MachineValidationErrors` interface instead, which defines `InvalidSiblingsArrayLength`, `InvalidMachineMerkleProof`, `InvalidPostEpochMachineIflagsYRegister` and `InvalidPostEpochMachineHtifTohostRegister`
+  - A machine that fails these checks may have reached an unrecoverable state, in which case the application should be foreclosed so that users can recover funds through emergency withdrawals and deposit refunds
+
+- Require the account owner to occupy the last 20 bytes of every encoded account ([#540](https://github.com/cartesi/rollups-contracts/issues/540))
+
+  - Account encodings remain application-specific, but must now end with the account owner address encoded as a 20-byte big-endian string, so that the node can extract owners from the accounts drive and serve owner-to-account-index lookups
+  - Change the USD account encoding accordingly: the balance is now a `uint96` (up from `uint64`) stored little-endian in the first 12 bytes, and the owner address occupies the last 20 bytes
+  - Require USD accounts to be exactly 32 bytes long (there is no more tail padding, and the account must fit in a single data block)
+  - Replace the `AccountTooShort(uint64 attemptedAccountSize, uint64 minAccountSize)` error with `InvalidAccountSize(uint256 attemptedAccountSize, uint64 accountSize)` in `IWithdrawalOutputBuilderErrors`
+
+- Treat `ERC` as a regular word in `camelCase` and `PascalCase` identifiers
+
+  This is a mechanical rename (replace `ERC` with `Erc` in Cartesi-owned identifiers) motivated by Forge's Rust binding generation, which turned `IERC20Portal` into `ierc20_portal` instead of `i_erc20_portal`. Definitions imported from OpenZeppelin are unaffected.
+
+  - Contracts: `ERC20Portal`, `ERC721Portal`, `ERC1155SinglePortal`, `ERC1155BatchPortal` and `SafeERC20Transfer` become `Erc20Portal`, `Erc721Portal`, `Erc1155SinglePortal`, `Erc1155BatchPortal` and `SafeErc20Transfer`
+  - Interfaces: `IERC20Portal`, `IERC721Portal`, `IERC1155SinglePortal`, `IERC1155BatchPortal` and `ISafeERC20Transfer` become `IErc20Portal`, `IErc721Portal`, `IErc1155SinglePortal`, `IErc1155BatchPortal` and `ISafeErc20Transfer`
+  - Deposit functions: `depositERC20Tokens`, `depositERC721Token`, `depositSingleERC1155Token` and `depositBatchERC1155Token` become `depositErc20Tokens`, `depositErc721Token`, `depositSingleErc1155Token` and `depositBatchErc1155Token`
+  - `InputEncoding` functions: `encodeERC20Deposit`, `encodeERC721Deposit`, `encodeSingleERC1155Deposit` and `encodeBatchERC1155Deposit` become `encodeErc20Deposit`, `encodeErc721Deposit`, `encodeSingleErc1155Deposit` and `encodeBatchErc1155Deposit`
+  - Errors: `ERC20TransferFailed` becomes `Erc20TransferFailed`
+
+- Remove the `IApplicationForeclosure` and `IApplicationWithdrawal` interfaces, moving all of their definitions into `IApplication`
+
+  The individual events, errors and functions are unchanged, but clients importing these two interfaces directly must now import `IApplication` instead. `IApplication` also inherits from `AddressErrors`, `BinaryMerkleTreeErrors`, `IRefundOutputBuilderErrors` and `IWithdrawalOutputBuilderErrors`.
+
+- Reject deposits of fee-on-transfer ERC-20 tokens
+
+  Some non-compliant ERC-20 tokens charge a fee per transfer, so the recipient balance grows by less than the transfer value. The ERC-20 portal now compares the application balance before and after the transfer and reverts unless the delta matches the deposited value exactly. This prevents the application from believing it holds more tokens than it does on the base layer, which would otherwise lead to insolvency and to withdrawal and refund outputs that cannot be executed.
+
+  - Add the `Erc20TransferDecreasedApplicationBalance(uint256 balanceBefore, uint256 balanceAfter)` and `Erc20TransferValueIsNotBalanceDelta(uint256 value, uint256 balanceDelta)` errors to `IErc20Portal`
+
+- Restrict consensus migration to the deployment block
+
+  `migrateToOutputsMerkleRootValidator` now reverts with the new `NotDeploymentBlock` error if called in any block other than the one in which the application was deployed. This protects users from application owners who could otherwise take control of locked funds by swapping the outputs Merkle root validator; the owner now serves merely as an implementation detail that lets factories deploy application-consensus pairs in a single transaction.
+
+- Remove the `appOwner` parameter from `ISelfHostedApplicationFactory.deployContracts` and `calculateAddresses`
+
+  The factory now deploys the application under its own ownership and immediately renounces it, so self-hosted applications are ownerless from the start and can no longer migrate to another outputs Merkle root validator.
+
+- Add a `wasInputFinalized(address appContract, uint256 inputIndex, uint256 blockNumber)` function to `IOutputsMerkleRootValidator`
+
+  Implementers of this interface outside of this repository must implement the new function. `AbstractConsensus` (and therefore `Authority` and `Quorum`) implements it by comparing the block number against the application's first unprocessed block number.
+
+- Add an `IRefundOutputBuilder` parameter to the `ApplicationFactory` constructor
+
+  The refund output builder is a factory-wide immutable rather than a per-application parameter, so it is not part of `WithdrawalConfig` and is not passed to `newApplication`.
+
+- Apply the checks-effects-interactions pattern to `executeOutput`, `issueRefund` and `withdraw`, and remove the `ReentrancyGuard`
+
+  This is cheaper than acquiring and releasing a reentrancy lock (one fewer storage read and write), but it changes what on-chain observers see during the interaction: `wasOutputExecuted`, `wasRefundForInputIssued` and `wereAccountFundsWithdrawn` now return `true`, and the corresponding events are emitted, *before* the output is executed. Off-chain components such as the Cartesi Rollups Node are unaffected.
+
+- Index application contract event parameters
+
+  `OutputExecuted`, `RefundIssued` and `Withdrawal` now declare their index parameter (`outputIndex`, `inputIndex` and `accountIndex`, respectively) as `indexed`, which changes the event topic layout and allows filtering by index. This adds a negligible gas cost to `executeOutput`, `issueRefund` and `withdraw`.
+
+- Revert output execution when the target account has no code
+
+  - Add the `TargetHasNoCode(address target)` error to the new `AddressErrors` interface, inherited by `IApplication`
+  - Raise it from `executeOutput` when a voucher with a non-empty payload or a delegate-call voucher target an account with no code
+  - Move the `InsufficientFunds` error from `IApplication` to `AddressErrors` (still reachable through `IApplication`)
+
+  This can indicate a programming error (the back-end emitted an executable output targetting to the wrong address) or an operational one (the target was never deployed to the target network). If the target can still be deployed to the expected address, the application can be fixed on the fly; otherwise, foreclosure is the best alternative.
+
+- Make `foreclose()` revert with `Foreclosed()` if the application has already been foreclosed ([#534](https://github.com/cartesi/rollups-contracts/issues/534))
+
+  As a result, an application emits the `Foreclosure()` event at most once.
+
+- Discontinue npm and Cannon distribution ([#531](https://github.com/cartesi/rollups-contracts/issues/531))
+
+  - Stop publishing the `@cartesi/rollups` package to npmjs.com, and remove `package.json`, the pnpm lockfile and the pnpm/corepack dependency
+  - Remove `cannonfile.toml` and all Cannon support
+  - Remove the `.changeset` directory; changelogs are now written manually on every release
+  - Define the project version in `src/common/Version.sol` (generated from the `Makefile`) instead of in `package.json`
+  - The contracts source code remains available through the Soldeer package and its artifacts through GitHub releases
+
+- Restrict the published build artifacts to a curated subset of contracts ([#539](https://github.com/cartesi/rollups-contracts/issues/539))
+
+  The artifacts tarball and the Rust bindings crate now contain only the contracts that clients (`rollups-ts`, `rollups-explorer`, `rollups-node`) are expected to use. Artifacts for dependencies (OpenZeppelin, Machine Solidity Step), test utilities and internal libraries are no longer published. Concrete deployed contracts are included alongside their interfaces so that `rollups-ts` can generate wagmi hooks, but using interfaces is recommended wherever possible.
+
+- Bump the Solidity pragma of all contracts to `^0.8.30`
+
+- Bump Foundry from 1.4.3 to 1.5.1
+
+### Minor Changes
+
+- Add deposit refunds, which let users recover assets from unprocessed deposits after an application is foreclosed ([#512](https://github.com/cartesi/rollups-contracts/issues/512))
+
+  - Add the `RefundOutputBuilder` contract (along with the `IRefundOutputBuilder` and `IRefundOutputBuilderErrors` interfaces), which decodes a deposit input and builds an output transferring the asset back to the original depositor. It is static-called by the application, and supports Ether, ERC-20, ERC-721 and single and batch ERC-1155 deposits made through the canonical portals. It is deployed as a core contract on all supported networks.
+  - Add an `issueRefund(uint256 inputIndex, bytes input)` function to `IApplication`, callable by anyone once the application is foreclosed, for inputs that were never finalized. On success it marks the input as refunded, emits a `RefundIssued(uint256 indexed inputIndex, bytes input, bytes output)` event, and executes the refund output.
+  - Add `getRefundOutputBuilder`, `getNumberOfIssuedRefunds` and `wasRefundForInputIssued` view functions to `IApplication`
+  - Add `validateInput(uint256 inputIndex, bytes input)` and `validateInputHash(uint256 inputIndex, bytes32 inputHash)` view functions to `IApplication`, which check an input against the application's input box and decode it
+  - Add the `CannotRefundFinalizedInput`, `RefundAlreadyIssued`, `InvalidInputIndex`, `InvalidInputHash` and `IllFormedInput` errors to `IApplication`, and the `UnknownInputSender` error to `IRefundOutputBuilderErrors` (raised for non-deposit inputs or inputs from non-canonical portals)
+  - Add decoding counterparts to `InputEncoding` (`decodeEtherDeposit`, `decodeErc20Deposit`, `decodeErc721Deposit`, `decodeErc1155SingleDeposit`, `decodeErc1155BatchDeposit`) along with the corresponding deposit structs and libraries
+  - Document in the portal interfaces that a refund may fail if the depositor is a contract that does not accept the asset back (for example, a smart contract wallet with no `receive` entrypoint, or one that does not implement the ERC-721/ERC-1155 receiver hooks); in that case the funds may not be recoverable
+
+- Support emergency withdrawals even in the absence of accepted claims ([#530](https://github.com/cartesi/rollups-contracts/issues/530))
+
+  In `proveAccountsDriveMerkleRoot`, if the outputs Merkle root validator reports a zeroed last-finalized machine Merkle root, the application's template hash is used instead. This covers the edge case in which the accounts drive is not initially empty.
+
+- Make `Authority` and `Quorum` return `true` from `supportsInterface` for the `IOutputsMerkleRootValidator` interface ID
+
+- Deploy a `UsdWithdrawalOutputBuilder` to devnet ([#532](https://github.com/cartesi/rollups-contracts/issues/532))
+
+  It is deployed through the `UsdWithdrawalOutputBuilderFactory` with `TestFungibleToken` as the backing ERC-20 token, and stored as `TestUsdWithdrawalOutputBuilder` to make it clear that it is devnet-only.
+
+- Add recipient-taking mint and burn entrypoints to the devnet test tokens
+
+  - `TestFungibleToken`: `mint(address to, uint256 value)` and `burn(uint256 value)`, compatible with the `cast erc20 mint` and `cast erc20 burn` commands introduced in Foundry 1.5.0
+  - `TestNonFungibleToken`: `mint(address to, uint256 tokenId)`
+  - `TestMultiToken`: `mint(address to, uint256 tokenId, uint256 value)` and `mintBatch(address to, uint256[] tokenIds, uint256[] values)`
+
+- Add `test` directory to published Soldeer package
+
+### Patch Changes
+
+- Bump `cartesi-machine-solidity-step` from 0.13.0 to 0.15.0-test1 (a further bump is expected once a definitive 0.15.0 tag is released)
+- Bump the Foundry toolchain action from 1.3.1 to 1.8.0
+- Refactor the deployment pipeline: replace the Bash scripts with a `Makefile`, add a code-generation Forge script that emits typed contract deployers (`script/utils/ContractDeployers.sol`) and the version constants, add a CI job that checks the generated code is up to date, and set `always_use_create_2_factory` ([#529](https://github.com/cartesi/rollups-contracts/issues/529))
+- Reuse the deployment script code in the tests, and drop the `SimpleERC*` helpers in favour of the devnet `Test*Token` contracts ([#528](https://github.com/cartesi/rollups-contracts/issues/528))
+- Add `Makefile` targets: `install-foundry`, `check-foundry-version` (a prerequisite of `devnet`, so a state dump is never produced with the wrong Foundry version), `coverage`, `rust-bindings`, `publish-soldeer-package`, `release-artifacts`, `deploy-livenets` and `codegen`
+- Build the RPC URL for each chain automatically when the `ALCHEMY_API_KEY` environment variable is set, and rename the networks to match the Alchemy subdomains
+- Add the `build` target as a prerequisite of every deployment target, so parallel deployments do not race to fetch the Solidity compiler or rebuild redundantly
+- Check that a refund has not already been issued before validating the input, so `issueRefund` reverts earlier in that case
+- Check whether an output was already executed before building it, since the execution check has a bounded cost and is more susceptible to race conditions, while output builders behave almost as pure functions
+- Annotate the assembly blocks in `LibKeccak256`, `LibError` and `LibAddress` as memory-safe
+- Move the helper `ExternalLibBinaryMerkleTree` library out of the test file and rename it `LibBinaryKeccak256MerkleTree`, making the hash function explicit
+- Turn on the `fmt.single_line_imports` Foundry option, introduced in Foundry 1.5.0
+- Fix the documentation on `LibWithdrawalConfig` ([#509](https://github.com/cartesi/rollups-contracts/issues/509))
+- Fix the ERC-20 portal documentation, which claimed a custom error is raised when the token returns an empty or ill-formed value instead of an ABI-encoded boolean; in reality Solidity type-checks it and raises a low-level error
+- Fix the deployment documentation on the Ethereum mainnet RPC URL environment variable and Make target
+- Fix the README, which described Dave as a future plan even though it has long been implemented and integrated through the `DaveConsensus` contract
+- Fix a typo in `ISafeErc20Transfer`, the `Erc1155BatchDeposit` NatSpec, and assorted minor documentation issues
+- Remove the unused gas-optimization, smart-contract-audit and update-dependencies issue templates, and drop the `T-*` labels
+- Improve test quality and coverage: fuzz application deployment arguments in the factory tests, test ill-formed inputs via a mocked input box, test ERC-1155 batch deposits with zero, one and many token IDs separately, test refunds with ill-formed payloads and reverting ERC-20 transfers, test outputs targeting contracts that reject assets, test re-execution attempts through all three entrypoints, and define custom errors for internal test failures
+
 ## 3.0.0-alpha.6
 
 ### Minor Changes
