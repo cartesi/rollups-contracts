@@ -10,7 +10,7 @@ import {IVersionGetter} from "../common/IVersionGetter.sol";
 interface ISafeERC20Transfer is IVersionGetter {
     /// @notice Safely transfer ERC-20 tokens.
     /// @param token The ERC-20 token contract
-    /// @param to The token receipient address
+    /// @param to The token recipient address
     /// @param value The amount of tokens
     function safeTransfer(IERC20 token, address to, uint256 value) external;
 }
