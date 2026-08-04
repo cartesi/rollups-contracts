@@ -189,7 +189,7 @@ FORGE_BIND_OPTS  += --crate-name "$(PROJECT_NAME)"
 FORGE_BIND_OPTS  += --crate-version "$(PROJECT_VERSION)"
 FORGE_BIND_OPTS  += --crate-license "Apache-2.0"
 FORGE_BIND_OPTS  += --crate-description "Rust bindings for Cartesi Rollups contracts"
-FORGE_BIND_OPTS  += --alloy-version "1.0"
+FORGE_BIND_OPTS  += --alloy-version 2
 
 build:
 	@$(FORGE) build
