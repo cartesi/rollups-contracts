@@ -182,6 +182,7 @@ PUBLIC_CONTRACTS += SelfHostedApplicationFactory
 PUBLIC_CONTRACTS += TestFungibleToken
 PUBLIC_CONTRACTS += TestMultiToken
 PUBLIC_CONTRACTS += TestNonFungibleToken
+PUBLIC_CONTRACTS += TestUsdc
 PUBLIC_CONTRACTS += UsdWithdrawalOutputBuilderFactory
 
 FORGE_BIND_OPTS  += --select "^($(subst $(SPACE),|,$(PUBLIC_CONTRACTS)))$$"

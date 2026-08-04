@@ -16,6 +16,7 @@ import {SafeErc20Transfer} from "src/delegatecall/SafeErc20Transfer.sol";
 import {TestFungibleToken} from "src/devnet/TestFungibleToken.sol";
 import {TestMultiToken} from "src/devnet/TestMultiToken.sol";
 import {TestNonFungibleToken} from "src/devnet/TestNonFungibleToken.sol";
+import {TestUsdc} from "src/devnet/TestUsdc.sol";
 import {InputBox} from "src/inputs/InputBox.sol";
 import {Erc1155BatchPortal} from "src/portals/Erc1155BatchPortal.sol";
 import {Erc1155SinglePortal} from "src/portals/Erc1155SinglePortal.sol";
@@ -159,6 +160,22 @@ function deployTestNonFungibleToken() returns (TestNonFungibleToken deployment) 
         assert(address(deployment).code.length > 0);
     } else {
         deployment = TestNonFungibleToken(precomputedAddress);
+    }
+}
+
+function deployTestUsdc() returns (TestUsdc deployment) {
+    bytes32 salt;
+    bytes memory creationCode = type(TestUsdc).creationCode;
+    bytes memory encodedArgs = abi.encode();
+    bytes memory initCode = abi.encodePacked(creationCode, encodedArgs);
+    bytes32 initCodeHash = keccak256(initCode);
+    address precomputedAddress = computeAddress(salt, initCodeHash);
+    if (precomputedAddress.code.length == 0) {
+        deployment = new TestUsdc{salt: salt}();
+        assert(address(deployment) == precomputedAddress);
+        assert(address(deployment).code.length > 0);
+    } else {
+        deployment = TestUsdc(precomputedAddress);
     }
 }
 
