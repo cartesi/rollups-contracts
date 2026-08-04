@@ -8,6 +8,7 @@ import {VmSafe} from "forge-std-1.9.6/src/Vm.sol";
 import {TestFungibleToken} from "src/devnet/TestFungibleToken.sol";
 import {TestMultiToken} from "src/devnet/TestMultiToken.sol";
 import {TestNonFungibleToken} from "src/devnet/TestNonFungibleToken.sol";
+import {TestUsdc} from "src/devnet/TestUsdc.sol";
 import {IUsdWithdrawalOutputBuilder} from "src/withdrawal/IUsdWithdrawalOutputBuilder.sol";
 import {UsdWithdrawalOutputBuilder} from "src/withdrawal/UsdWithdrawalOutputBuilder.sol";
 
@@ -19,6 +20,7 @@ struct Suite {
     TestFungibleToken testFungibleToken;
     TestMultiToken testMultiToken;
     TestNonFungibleToken testNonFungibleToken;
+    TestUsdc testUsdc;
     IUsdWithdrawalOutputBuilder testUsdWithdrawalOutputBuilder;
 }
 
@@ -26,15 +28,17 @@ function deploy(CoreContracts.Suite memory core) returns (Suite memory) {
     TestFungibleToken testFungibleToken = G.deployTestFungibleToken();
     TestNonFungibleToken testNonFungibleToken = G.deployTestNonFungibleToken();
     TestMultiToken testMultiToken = G.deployTestMultiToken();
+    TestUsdc testUsdc = G.deployTestUsdc();
     IUsdWithdrawalOutputBuilder testUsdWithdrawalOutputBuilder =
         G.deployUsdWithdrawalOutputBuilder(
-            core.usdWithdrawalOutputBuilderFactory, testFungibleToken
+            core.usdWithdrawalOutputBuilderFactory, testUsdc
         );
 
     return Suite({
         testFungibleToken: testFungibleToken,
         testMultiToken: testMultiToken,
         testNonFungibleToken: testNonFungibleToken,
+        testUsdc: testUsdc,
         testUsdWithdrawalOutputBuilder: testUsdWithdrawalOutputBuilder
     });
 }
@@ -45,6 +49,7 @@ function store(VmSafe vmSafe, Suite memory s) {
     storeDeployment(
         vmSafe, type(TestNonFungibleToken).name, address(s.testNonFungibleToken)
     );
+    storeDeployment(vmSafe, type(TestUsdc).name, address(s.testUsdc));
     storeDeployment(
         vmSafe,
         string.concat("Test", type(UsdWithdrawalOutputBuilder).name),

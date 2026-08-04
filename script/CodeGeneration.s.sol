@@ -89,6 +89,7 @@ contract DeployersCodeGenerationScript is CodeGenerationScript {
         _addImport("src/devnet", "TestFungibleToken");
         _addImport("src/devnet", "TestMultiToken");
         _addImport("src/devnet", "TestNonFungibleToken");
+        _addImport("src/devnet", "TestUsdc");
         _addImport("src/inputs", "InputBox");
         _addImport("src/portals", "Erc1155BatchPortal");
         _addImport("src/portals", "Erc1155SinglePortal");
@@ -125,6 +126,7 @@ contract DeployersCodeGenerationScript is CodeGenerationScript {
             _addDeployer("TestFungibleToken", paramTypes);
             _addDeployer("TestMultiToken", paramTypes);
             _addDeployer("TestNonFungibleToken", paramTypes);
+            _addDeployer("TestUsdc", paramTypes);
             _addDeployer("Erc1155BatchPortal", paramTypes);
             _addDeployer("Erc1155SinglePortal", paramTypes);
             _addDeployer("Erc20Portal", paramTypes);

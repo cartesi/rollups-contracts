@@ -600,7 +600,7 @@ contract ApplicationTest is
         AccountValidityProof memory proof = _getAccountValidityProof(name);
 
         uint256 balance = vm.randomUint(amount, type(uint256).max);
-        _contracts.dev.testFungibleToken.mint(address(_appContract), balance);
+        _contracts.dev.testUsdc.mint(address(_appContract), balance);
 
         vm.expectRevert(IApplication.NotForeclosed.selector);
 
@@ -615,13 +615,13 @@ contract ApplicationTest is
         AccountValidityProof memory proof = _getAccountValidityProof(name);
 
         uint256 balance = vm.randomUint(0, amount - 1);
-        _contracts.dev.testFungibleToken.mint(address(_appContract), balance);
+        _contracts.dev.testUsdc.mint(address(_appContract), balance);
 
         vm.prank(_appContract.getGuardian());
         _appContract.foreclose();
         _proveAccountsDriveMerkleRoot();
 
-        vm.expectRevert(_encodeErc20InsufficientBalance(_erc20Token, amount));
+        vm.expectRevert(_encodeErc20InsufficientBalance(_contracts.dev.testUsdc, amount));
 
         vm.prank(vm.randomAddress());
         _appContract.withdraw(account, proof);
@@ -634,10 +634,12 @@ contract ApplicationTest is
         AccountValidityProof memory proof = _getAccountValidityProof(name);
 
         uint256 balance = vm.randomUint(amount, type(uint256).max);
-        _contracts.dev.testFungibleToken.mint(address(_appContract), balance);
+        _contracts.dev.testUsdc.mint(address(_appContract), balance);
 
         vm.mockCallRevert(
-            address(_erc20Token), abi.encodeCall(IERC20.transfer, (user, amount)), error
+            address(_contracts.dev.testUsdc),
+            abi.encodeCall(IERC20.transfer, (user, amount)),
+            error
         );
 
         vm.prank(_appContract.getGuardian());
@@ -659,10 +661,10 @@ contract ApplicationTest is
         AccountValidityProof memory proof = _getAccountValidityProof(name);
 
         uint256 balance = vm.randomUint(amount, type(uint256).max);
-        _contracts.dev.testFungibleToken.mint(address(_appContract), balance);
+        _contracts.dev.testUsdc.mint(address(_appContract), balance);
 
         vm.mockCall(
-            address(_erc20Token),
+            address(_contracts.dev.testUsdc),
             abi.encodeCall(IERC20.transfer, (user, amount)),
             abi.encode(returnValue)
         );
@@ -671,7 +673,7 @@ contract ApplicationTest is
         _appContract.foreclose();
         _proveAccountsDriveMerkleRoot();
 
-        vm.expectRevert(_encodeSafeErc20FailedOperation(address(_erc20Token)));
+        vm.expectRevert(_encodeSafeErc20FailedOperation(address(_contracts.dev.testUsdc)));
 
         vm.prank(vm.randomAddress());
         _appContract.withdraw(account, proof);
@@ -682,13 +684,13 @@ contract ApplicationTest is
         bytes memory account = _getAccount(name);
         AccountValidityProof memory proof = _getAccountValidityProof(name);
 
-        vm.etch(address(_erc20Token), abi.encode());
+        vm.etch(address(_contracts.dev.testUsdc), abi.encode());
 
         vm.prank(_appContract.getGuardian());
         _appContract.foreclose();
         _proveAccountsDriveMerkleRoot();
 
-        vm.expectRevert(_encodeSafeErc20FailedOperation(address(_erc20Token)));
+        vm.expectRevert(_encodeSafeErc20FailedOperation(address(_contracts.dev.testUsdc)));
 
         vm.prank(vm.randomAddress());
         _appContract.withdraw(account, proof);
@@ -701,7 +703,7 @@ contract ApplicationTest is
         AccountValidityProof memory proof = _getAccountValidityProof(name);
 
         // Give the app a random ERC-20 token balance
-        _contracts.dev.testFungibleToken.mint(address(_appContract), vm.randomUint());
+        _contracts.dev.testUsdc.mint(address(_appContract), vm.randomUint());
 
         vm.prank(_appContract.getGuardian());
         _appContract.foreclose();
@@ -771,10 +773,10 @@ contract ApplicationTest is
         AccountValidityProof memory proof = _getAccountValidityProof(name);
 
         uint256 appBalance = vm.randomUint(amount, type(uint256).max);
-        _contracts.dev.testFungibleToken.mint(address(_appContract), appBalance);
+        _contracts.dev.testUsdc.mint(address(_appContract), appBalance);
 
         uint256 userBalance = vm.randomUint(0, type(uint256).max - appBalance);
-        _contracts.dev.testFungibleToken.mint(user, userBalance);
+        _contracts.dev.testUsdc.mint(user, userBalance);
 
         uint256 numOfWithdrawalsBefore = _appContract.getNumberOfWithdrawals();
 
@@ -823,7 +825,7 @@ contract ApplicationTest is
                 } else {
                     revert UnexpectedLog(log);
                 }
-            } else if (log.emitter == address(_erc20Token)) {
+            } else if (log.emitter == address(_contracts.dev.testUsdc)) {
                 assertGe(log.topics.length, 1);
                 bytes32 topic0 = log.topics[0];
                 if (topic0 == IERC20.Transfer.selector) {
@@ -856,15 +858,17 @@ contract ApplicationTest is
             assertEq(funcsel2, ISafeErc20Transfer.safeTransfer.selector);
             (address token, address to, uint256 value) =
                 abi.decode(callargs2, (address, address, uint256));
-            assertEq(token, address(_erc20Token));
+            assertEq(token, address(_contracts.dev.testUsdc));
             assertEq(to, user);
             assertEq(value, amount);
         }
 
         assertEq(_appContract.getNumberOfWithdrawals(), numOfWithdrawalsBefore + 1);
         assertTrue(_appContract.wereAccountFundsWithdrawn(proof.accountIndex));
-        assertEq(_erc20Token.balanceOf(address(_appContract)), appBalance - amount);
-        assertEq(_erc20Token.balanceOf(user), userBalance + amount);
+        assertEq(
+            _contracts.dev.testUsdc.balanceOf(address(_appContract)), appBalance - amount
+        );
+        assertEq(_contracts.dev.testUsdc.balanceOf(user), userBalance + amount);
 
         {
             uint64 otherAccountIndex;
