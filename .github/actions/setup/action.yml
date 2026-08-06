@@ -9,7 +9,7 @@ runs:
       shell: bash
       run: echo "foundry-version=$(make print-foundry-version)" >> $GITHUB_OUTPUT
 
-    - uses: foundry-rs/foundry-toolchain@c7450ba673e133f5ee30098b3b54f444d3a2ca2d # v1.8.0
+    - uses: foundry-rs/foundry-toolchain@908c540300062bd5a7e473851cdb4282204cee09 # v1.9.1
       with:
         version: ${{ steps.set-foundry-version.outputs.foundry-version }}
 
