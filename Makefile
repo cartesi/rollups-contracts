@@ -1,18 +1,13 @@
+# Forge is not safe to run concurrently: parallel invocations race on the
+# compilation cache and on the solc downloads performed by svm-rs.
+.NOTPARALLEL:
+
 .PHONY: build
 .PHONY: check-foundry-version
 .PHONY: codegen
 .PHONY: coverage
-.PHONY: deploy-all
-.PHONY: deploy-arb-mainnet
-.PHONY: deploy-arb-sepolia
-.PHONY: deploy-base-mainnet
-.PHONY: deploy-base-sepolia
-.PHONY: deploy-eth-mainnet
-.PHONY: deploy-eth-sepolia
 .PHONY: deploy-livenets
 .PHONY: deploy-mainnets
-.PHONY: deploy-opt-mainnet
-.PHONY: deploy-opt-sepolia
 .PHONY: deploy-testnets
 .PHONY: devnet
 .PHONY: install-foundry
@@ -20,9 +15,20 @@
 .PHONY: publish-soldeer-package
 .PHONY: release-artifacts
 .PHONY: rust-bindings
+.PHONY: verify-livenets
+.PHONY: verify-mainnets
+.PHONY: verify-testnets
+
+# ------------------------------------------------------------------------------
+# Auxiliary definitions
+# ------------------------------------------------------------------------------
 
 NOOP  =
 SPACE = $(NOOP) $(NOOP)
+
+# ------------------------------------------------------------------------------
+# Project metadata
+# ------------------------------------------------------------------------------
 
 PROJECT_NAME := cartesi-rollups-contracts
 
@@ -36,8 +42,16 @@ PROJECT_VERSION := $(PROJECT_MAJOR_VERSION).$(PROJECT_MINOR_VERSION).$(PROJECT_P
 PROJECT_VERSION := $(PROJECT_VERSION)$(if $(PROJECT_PRE_RELEASE),-$(PROJECT_PRE_RELEASE))
 PROJECT_VERSION := $(PROJECT_VERSION)$(if $(PROJECT_BUILD_METADATA),+$(PROJECT_BUILD_METADATA))
 
+# ------------------------------------------------------------------------------
+# Dependency versions
+# ------------------------------------------------------------------------------
+
 FOUNDRY_VERSION := 1.5.1
 LCOV_VERSION    := 2.0
+
+# ------------------------------------------------------------------------------
+# Release artifacts (bundles)
+# ------------------------------------------------------------------------------
 
 DIST := dist
 
@@ -46,7 +60,13 @@ ARTIFACTS_BUNDLE            := $(BUNDLE_PREFIX)-artifacts.tar.gz
 DEPLOYMENT_ADDRESSES_BUNDLE := $(BUNDLE_PREFIX)-deployment-addresses.tar.gz
 DEVNET_BUNDLE               := $(BUNDLE_PREFIX)-anvil-$(FOUNDRY_VERSION).tar.gz
 
-MAKEFLAGS += --no-print-directory
+RELEASE_ARTIFACTS += $(ARTIFACTS_BUNDLE)
+RELEASE_ARTIFACTS += $(DEPLOYMENT_ADDRESSES_BUNDLE)
+RELEASE_ARTIFACTS += $(DEVNET_BUNDLE)
+
+# ------------------------------------------------------------------------------
+# Dependencies
+# ------------------------------------------------------------------------------
 
 FOUNDRYUP := foundryup
 ANVIL     := anvil
@@ -54,7 +74,18 @@ CAST      := cast
 FORGE     := forge
 GENHTML   := genhtml
 
+# ------------------------------------------------------------------------------
+# Commands
+# ------------------------------------------------------------------------------
+
 DEPLOY_CMD := $(FORGE) script script/Deployment.s.sol:DeploymentScript
+VERIFY_CMD := $(FORGE) verify-contract --guess-constructor-args --watch
+
+# ------------------------------------------------------------------------------
+# Anvil devnet
+# ------------------------------------------------------------------------------
+
+ANVIL_CHAIN_ID := 31337
 
 ANVIL_RPC_URL := http://127.0.0.1:8545
 ANVIL_PK      := 0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80
@@ -69,6 +100,10 @@ ANVIL_DEPLOY_OPTS += --rpc-url $(ANVIL_RPC_URL)
 ANVIL_DEPLOY_OPTS += --non-interactive
 ANVIL_DEPLOY_OPTS += --broadcast
 ANVIL_DEPLOY_OPTS += --slow
+
+# ------------------------------------------------------------------------------
+# Ethereum JSON-RPC API entrypoint URLs
+# ------------------------------------------------------------------------------
 
 ifdef ALCHEMY_API_KEY
 ARB_MAINNET_RPC_URL   ?= https://arb-mainnet.g.alchemy.com/v2/$(ALCHEMY_API_KEY)
@@ -99,59 +134,64 @@ export ETH_SEPOLIA_RPC_URL
 export OPT_MAINNET_RPC_URL
 export OPT_SEPOLIA_RPC_URL
 
-ANVIL_CHAIN_ID         := 31337
-ARB_MAINNET_CHAIN_ID   := 42161
-ARB_SEPOLIA_CHAIN_ID   := 421614
-BASE_MAINNET_CHAIN_ID  := 8453
-BASE_SEPOLIA_CHAIN_ID  := 84532
-ETH_MAINNET_CHAIN_ID   := 1
-ETH_SEPOLIA_CHAIN_ID   := 11155111
-OPT_MAINNET_CHAIN_ID   := 10
-OPT_SEPOLIA_CHAIN_ID   := 11155420
+# ------------------------------------------------------------------------------
+# Supported (live) networks
+# ------------------------------------------------------------------------------
 
-ARB_MAINNET_DEPLOY_OPTS   += --rpc-url arb_mainnet
-ARB_MAINNET_DEPLOY_OPTS   += --chain-id $(ARB_MAINNET_CHAIN_ID)
+CHAIN_ID.arb-mainnet   := 42161
+CHAIN_ID.arb-sepolia   := 421614
+CHAIN_ID.base-mainnet  := 8453
+CHAIN_ID.base-sepolia  := 84532
+CHAIN_ID.eth-mainnet   := 1
+CHAIN_ID.eth-sepolia   := 11155111
+CHAIN_ID.opt-mainnet   := 10
+CHAIN_ID.opt-sepolia   := 11155420
 
-ARB_SEPOLIA_DEPLOY_OPTS   += --rpc-url arb_sepolia
-ARB_SEPOLIA_DEPLOY_OPTS   += --chain-id $(ARB_SEPOLIA_CHAIN_ID)
+LABEL.arb-mainnet      := Arbitrum Mainnet
+LABEL.arb-sepolia      := Arbitrum Sepolia
+LABEL.base-mainnet     := Base Mainnet
+LABEL.base-sepolia     := Base Sepolia
+LABEL.eth-mainnet      := Ethereum Mainnet
+LABEL.eth-sepolia      := Ethereum Sepolia
+LABEL.opt-mainnet      := OP Mainnet
+LABEL.opt-sepolia      := OP Sepolia
 
-BASE_MAINNET_DEPLOY_OPTS  += --rpc-url base_mainnet
-BASE_MAINNET_DEPLOY_OPTS  += --chain-id $(BASE_MAINNET_CHAIN_ID)
+TESTNETS := arb-sepolia base-sepolia eth-sepolia opt-sepolia
+MAINNETS := arb-mainnet base-mainnet eth-mainnet opt-mainnet
+LIVENETS := $(TESTNETS) $(MAINNETS)
 
-BASE_SEPOLIA_DEPLOY_OPTS  += --rpc-url base_sepolia
-BASE_SEPOLIA_DEPLOY_OPTS  += --chain-id $(BASE_SEPOLIA_CHAIN_ID)
+# The RPC URL alias is the chain name with underscores, as in foundry.toml
+# $(1) = chain name, e.g. eth-mainnet
+define CHAIN_OPTS_TEMPLATE
+CHAIN_OPTS.$(1) := --rpc-url $(subst -,_,$(1)) --chain-id $(CHAIN_ID.$(1))
+endef
 
-ETH_MAINNET_DEPLOY_OPTS   += --rpc-url eth_mainnet
-ETH_MAINNET_DEPLOY_OPTS   += --chain-id $(ETH_MAINNET_CHAIN_ID)
+# Define a CHAIN_OPTS.<chain> variable for each livenet
+$(foreach n,$(LIVENETS),$(eval $(call CHAIN_OPTS_TEMPLATE,$(n))))
 
-ETH_SEPOLIA_DEPLOY_OPTS   += --rpc-url eth_sepolia
-ETH_SEPOLIA_DEPLOY_OPTS   += --chain-id $(ETH_SEPOLIA_CHAIN_ID)
-
-OPT_MAINNET_DEPLOY_OPTS   += --rpc-url opt_mainnet
-OPT_MAINNET_DEPLOY_OPTS   += --chain-id $(OPT_MAINNET_CHAIN_ID)
-
-OPT_SEPOLIA_DEPLOY_OPTS   += --rpc-url opt_sepolia
-OPT_SEPOLIA_DEPLOY_OPTS   += --chain-id $(OPT_SEPOLIA_CHAIN_ID)
-
-TESTNET_CHAIN_IDS  += $(ARB_SEPOLIA_CHAIN_ID)
-TESTNET_CHAIN_IDS  += $(BASE_SEPOLIA_CHAIN_ID)
-TESTNET_CHAIN_IDS  += $(ETH_SEPOLIA_CHAIN_ID)
-TESTNET_CHAIN_IDS  += $(OPT_SEPOLIA_CHAIN_ID)
-
-MAINNET_CHAIN_IDS  += $(ARB_MAINNET_CHAIN_ID)
-MAINNET_CHAIN_IDS  += $(BASE_MAINNET_CHAIN_ID)
-MAINNET_CHAIN_IDS  += $(ETH_MAINNET_CHAIN_ID)
-MAINNET_CHAIN_IDS  += $(OPT_MAINNET_CHAIN_ID)
-
+TESTNET_CHAIN_IDS  := $(foreach n,$(TESTNETS),$(CHAIN_ID.$(n)))
+MAINNET_CHAIN_IDS  := $(foreach n,$(MAINNETS),$(CHAIN_ID.$(n)))
 LIVENET_CHAIN_IDS  := $(TESTNET_CHAIN_IDS) $(MAINNET_CHAIN_IDS)
 
-PUBLIC_CONTRACTS += ApplicationFactory
-PUBLIC_CONTRACTS += AuthorityFactory
-PUBLIC_CONTRACTS += Erc1155BatchPortal
-PUBLIC_CONTRACTS += Erc1155SinglePortal
-PUBLIC_CONTRACTS += Erc20Portal
-PUBLIC_CONTRACTS += Erc721Portal
-PUBLIC_CONTRACTS += EtherPortal
+# ------------------------------------------------------------------------------
+# Contracts
+# ------------------------------------------------------------------------------
+
+DEPLOYED_CORE_CONTRACTS += ApplicationFactory
+DEPLOYED_CORE_CONTRACTS += AuthorityFactory
+DEPLOYED_CORE_CONTRACTS += Erc1155BatchPortal
+DEPLOYED_CORE_CONTRACTS += Erc1155SinglePortal
+DEPLOYED_CORE_CONTRACTS += Erc20Portal
+DEPLOYED_CORE_CONTRACTS += Erc721Portal
+DEPLOYED_CORE_CONTRACTS += EtherPortal
+DEPLOYED_CORE_CONTRACTS += InputBox
+DEPLOYED_CORE_CONTRACTS += QuorumFactory
+DEPLOYED_CORE_CONTRACTS += RefundOutputBuilder
+DEPLOYED_CORE_CONTRACTS += SafeErc20Transfer
+DEPLOYED_CORE_CONTRACTS += SelfHostedApplicationFactory
+DEPLOYED_CORE_CONTRACTS += UsdWithdrawalOutputBuilderFactory
+
+PUBLIC_CONTRACTS += $(DEPLOYED_CORE_CONTRACTS)
 PUBLIC_CONTRACTS += IApplication
 PUBLIC_CONTRACTS += IApplicationFactory
 PUBLIC_CONTRACTS += IAuthority
@@ -172,18 +212,16 @@ PUBLIC_CONTRACTS += ISelfHostedApplicationFactory
 PUBLIC_CONTRACTS += IUsdWithdrawalOutputBuilder
 PUBLIC_CONTRACTS += IUsdWithdrawalOutputBuilderFactory
 PUBLIC_CONTRACTS += IWithdrawalOutputBuilder
-PUBLIC_CONTRACTS += InputBox
 PUBLIC_CONTRACTS += Inputs
 PUBLIC_CONTRACTS += Outputs
-PUBLIC_CONTRACTS += QuorumFactory
-PUBLIC_CONTRACTS += RefundOutputBuilder
-PUBLIC_CONTRACTS += SafeErc20Transfer
-PUBLIC_CONTRACTS += SelfHostedApplicationFactory
 PUBLIC_CONTRACTS += TestFungibleToken
 PUBLIC_CONTRACTS += TestMultiToken
 PUBLIC_CONTRACTS += TestNonFungibleToken
 PUBLIC_CONTRACTS += TestUsdc
-PUBLIC_CONTRACTS += UsdWithdrawalOutputBuilderFactory
+
+# ------------------------------------------------------------------------------
+# Rust bindings generation options
+# ------------------------------------------------------------------------------
 
 FORGE_BIND_OPTS  += --select "^($(subst $(SPACE),|,$(PUBLIC_CONTRACTS)))$$"
 FORGE_BIND_OPTS  += --crate-name "$(PROJECT_NAME)"
@@ -192,24 +230,59 @@ FORGE_BIND_OPTS  += --crate-license "Apache-2.0"
 FORGE_BIND_OPTS  += --crate-description "Rust bindings for Cartesi Rollups contracts"
 FORGE_BIND_OPTS  += --alloy-version 2
 
+# ------------------------------------------------------------------------------
+# Generated files
+# ------------------------------------------------------------------------------
+
+GENERATED_FILE_DEPLOYERS := script/utils/ContractDeployers.sol
+GENERATED_FILE_VERSION   := src/common/Version.sol
+
+GENERATED_FILES += $(GENERATED_FILE_DEPLOYERS)
+GENERATED_FILES += $(GENERATED_FILE_VERSION)
+
+# ------------------------------------------------------------------------------
+# Tar deterministic archive-creation options
+# ------------------------------------------------------------------------------
+
+TAR_DETERMINISTIC_CREATE_OPTS += --sort=name
+TAR_DETERMINISTIC_CREATE_OPTS += --mtime=@0
+TAR_DETERMINISTIC_CREATE_OPTS += --owner=1000
+TAR_DETERMINISTIC_CREATE_OPTS += --group=1000
+TAR_DETERMINISTIC_CREATE_OPTS += --numeric-owner
+
+# ------------------------------------------------------------------------------
+# Deployment artifacts
+# ------------------------------------------------------------------------------
+
+DEPLOYMENTS := deployments
+
+DEVNET_DEPLOYMENTS_DIR   := $(DEPLOYMENTS)/$(ANVIL_CHAIN_ID)
+LIVENET_DEPLOYMENTS_DIRS := $(addprefix $(DEPLOYMENTS)/, $(LIVENET_CHAIN_IDS))
+
+# ------------------------------------------------------------------------------
+# Rules
+# ------------------------------------------------------------------------------
+
 build:
 	@$(FORGE) build
 
-codegen:
-	@echo "🚧 Generating code..."
-	@$(FORGE) script script/CodeGeneration.s.sol:DeployersCodeGenerationScript
-	@$(FORGE) script script/CodeGeneration.s.sol:VersionCodeGenerationScript \
-		--sig 'run(uint64,uint64,uint64,string,string)' -- \
-		"$(PROJECT_MAJOR_VERSION)" \
-		"$(PROJECT_MINOR_VERSION)" \
-		"$(PROJECT_PATCH_VERSION)" \
-		"$(PROJECT_PRE_RELEASE)" \
-		"$(PROJECT_BUILD_METADATA)"
-	@echo "🚧 Formatting generated code..."
-	@$(FORGE) fmt \
-		script/utils/ContractDeployers.sol \
-		src/common/Version.sol
-	@echo "✅ Successfully generated and formatted code."
+codegen: $(GENERATED_FILES)
+
+$(GENERATED_FILE_DEPLOYERS): CODEGEN_SCRIPT := DeployersCodeGenerationScript
+
+$(GENERATED_FILE_VERSION):   CODEGEN_SCRIPT := VersionCodeGenerationScript
+$(GENERATED_FILE_VERSION):   CODEGEN_ARGS   += "$(PROJECT_MAJOR_VERSION)"
+$(GENERATED_FILE_VERSION):   CODEGEN_ARGS   += "$(PROJECT_MINOR_VERSION)"
+$(GENERATED_FILE_VERSION):   CODEGEN_ARGS   += "$(PROJECT_PATCH_VERSION)"
+$(GENERATED_FILE_VERSION):   CODEGEN_ARGS   += "$(PROJECT_PRE_RELEASE)"
+$(GENERATED_FILE_VERSION):   CODEGEN_ARGS   += "$(PROJECT_BUILD_METADATA)"
+
+.PHONY: $(GENERATED_FILES)
+$(GENERATED_FILES):
+	@echo "🚧 Generating $@..."
+	@$(FORGE) script script/CodeGeneration.s.sol:$(CODEGEN_SCRIPT) -- $(CODEGEN_ARGS)
+	@$(FORGE) fmt $@
+	@echo "✅ Generated $@."
 
 coverage:
 	@echo "🚧 Generating coverage data..."
@@ -218,9 +291,7 @@ coverage:
 	@$(GENHTML) -o coverage lcov.info --rc derive_function_end_line=0
 	@echo "✅ Successfully generated coverage report."
 
-deploy-all: devnet deploy-livenets
-
-devnet: check-foundry-version build
+devnet: check-foundry-version
 	@set -eu; \
 	echo "🔨 Building Anvil devnet..." ; \
 	cleanup() { \
@@ -272,56 +343,20 @@ devnet: check-foundry-version build
 	echo "✅ Successfully built Anvil devnet."
 
 deploy-livenets: deploy-testnets deploy-mainnets
+deploy-testnets: $(addprefix deploy-,$(TESTNETS))
+deploy-mainnets: $(addprefix deploy-,$(MAINNETS))
 
-deploy-testnets: deploy-eth-sepolia
-deploy-testnets: deploy-opt-sepolia
-deploy-testnets: deploy-base-sepolia
-deploy-testnets: deploy-arb-sepolia
+# $(1) = chain name, e.g. eth-mainnet
+define DEPLOY_CHAIN_RULE_TEMPLATE
+.PHONY: deploy-$(1)
+deploy-$(1):
+	@echo "🌐 Running deployment script against $(LABEL.$(1))..."
+	@$$(DEPLOY_CMD) $$(CHAIN_OPTS.$(1)) $$(DEPLOY_OPTS)
+	@echo "✅ Deployment script successfully ran against $(LABEL.$(1))."
+endef
 
-deploy-mainnets: deploy-eth-mainnet
-deploy-mainnets: deploy-opt-mainnet
-deploy-mainnets: deploy-base-mainnet
-deploy-mainnets: deploy-arb-mainnet
-
-deploy-eth-sepolia: build
-	@echo "🌐 Running deployment script against Ethereum Sepolia..."
-	@$(DEPLOY_CMD) $(ETH_SEPOLIA_DEPLOY_OPTS) $(DEPLOY_OPTS)
-	@echo "✅ Deployment script successfully ran against Ethereum Sepolia."
-
-deploy-opt-sepolia: build
-	@echo "🌐 Running deployment script against OP Sepolia..."
-	@$(DEPLOY_CMD) $(OPT_SEPOLIA_DEPLOY_OPTS) $(DEPLOY_OPTS)
-	@echo "✅ Deployment script successfully ran against OP Sepolia."
-
-deploy-base-sepolia: build
-	@echo "🌐 Running deployment script against Base Sepolia..."
-	@$(DEPLOY_CMD) $(BASE_SEPOLIA_DEPLOY_OPTS) $(DEPLOY_OPTS)
-	@echo "✅ Deployment script successfully ran against Base Sepolia."
-
-deploy-arb-sepolia: build
-	@echo "🌐 Running deployment script against Arbitrum Sepolia..."
-	@$(DEPLOY_CMD) $(ARB_SEPOLIA_DEPLOY_OPTS) $(DEPLOY_OPTS)
-	@echo "✅ Deployment script successfully ran against Arbitrum Sepolia."
-
-deploy-eth-mainnet: build
-	@echo "🌐 Running deployment script against Ethereum Mainnet..."
-	@$(DEPLOY_CMD) $(ETH_MAINNET_DEPLOY_OPTS) $(DEPLOY_OPTS)
-	@echo "✅ Deployment script successfully ran against Ethereum Mainnet."
-
-deploy-opt-mainnet: build
-	@echo "🌐 Running deployment script against OP Mainnet..."
-	@$(DEPLOY_CMD) $(OPT_MAINNET_DEPLOY_OPTS) $(DEPLOY_OPTS)
-	@echo "✅ Deployment script successfully ran against OP Mainnet."
-
-deploy-base-mainnet: build
-	@echo "🌐 Running deployment script against Base Mainnet..."
-	@$(DEPLOY_CMD) $(BASE_MAINNET_DEPLOY_OPTS) $(DEPLOY_OPTS)
-	@echo "✅ Deployment script successfully ran against Base Mainnet."
-
-deploy-arb-mainnet: build
-	@echo "🌐 Running deployment script against Arbitrum Mainnet..."
-	@$(DEPLOY_CMD) $(ARB_MAINNET_DEPLOY_OPTS) $(DEPLOY_OPTS)
-	@echo "✅ Deployment script successfully ran against Arbitrum Mainnet."
+# Define a deploy-<chain> rule for each livenet
+$(foreach n,$(LIVENETS),$(eval $(call DEPLOY_CHAIN_RULE_TEMPLATE,$(n))))
 
 check-foundry-version:
 	@set -eu; \
@@ -352,21 +387,20 @@ print-foundry-version:
 publish-soldeer-package:
 	@$(FORGE) soldeer push "$(PROJECT_NAME)~$(PROJECT_VERSION)" $(if $(DRY_RUN),--dry-run)
 
-release-artifacts: $(ARTIFACTS_BUNDLE) $(DEPLOYMENT_ADDRESSES_BUNDLE) $(DEVNET_BUNDLE)
+release-artifacts: $(RELEASE_ARTIFACTS)
 
-$(ARTIFACTS_BUNDLE): build | $(DIST)
-	@echo "📦 Creating $@..."
-	@tar -czf $@ -C out $(addsuffix .sol, $(PUBLIC_CONTRACTS))
-	@echo "✅ Created $@."
+$(ARTIFACTS_BUNDLE): build
+$(ARTIFACTS_BUNDLE): TAR_ARGS := -C out $(addsuffix .sol, $(PUBLIC_CONTRACTS))
 
-$(DEPLOYMENT_ADDRESSES_BUNDLE): deploy-livenets | $(DIST)
-	@echo "📦 Creating $@..."
-	@tar -czf $@ $(addprefix deployments/, $(LIVENET_CHAIN_IDS))
-	@echo "✅ Created $@."
+$(DEPLOYMENT_ADDRESSES_BUNDLE): deploy-livenets
+$(DEPLOYMENT_ADDRESSES_BUNDLE): TAR_ARGS := $(LIVENET_DEPLOYMENTS_DIRS)
 
-$(DEVNET_BUNDLE): devnet | $(DIST)
+$(DEVNET_BUNDLE): devnet
+$(DEVNET_BUNDLE): TAR_ARGS := $(DEVNET_DEPLOYMENTS_DIR) $(ANVIL_STATE)
+
+$(RELEASE_ARTIFACTS): | $(DIST)
 	@echo "📦 Creating $@..."
-	@tar -czf $@ deployments/$(ANVIL_CHAIN_ID) $(ANVIL_STATE)
+	@tar $(TAR_DETERMINISTIC_CREATE_OPTS) -czf $@ $(TAR_ARGS)
 	@echo "✅ Created $@."
 
 $(DIST):
@@ -374,3 +408,28 @@ $(DIST):
 
 rust-bindings:
 	@$(FORGE) bind $(FORGE_BIND_OPTS)
+
+verify-livenets: verify-testnets verify-mainnets
+verify-testnets: $(addprefix verify-,$(TESTNETS))
+verify-mainnets: $(addprefix verify-,$(MAINNETS))
+
+# $(1) = chain name, e.g. eth-mainnet
+# $(2) = contract name, e.g. InputBox
+define VERIFY_CONTRACT_RULE_TEMPLATE
+.PHONY: verify-$(1)-$(2)
+verify-$(1)-$(2): $(DEPLOYMENTS)/$(CHAIN_ID.$(1))/$(2).txt
+	@echo "🔍 Verifying $(2) on $(LABEL.$(1))..."
+	@$$(VERIFY_CMD) $$(CHAIN_OPTS.$(1)) $$(VERIFY_OPTS) -- "$$$$(cat $$<)" "$(2)"
+endef
+
+# $(1) = chain name, e.g. eth-mainnet
+define VERIFY_CHAIN_RULE_TEMPLATE
+.PHONY: verify-$(1)
+verify-$(1): $$(addprefix verify-$(1)-,$$(DEPLOYED_CORE_CONTRACTS))
+	@echo "✅ Verified deployments on $(LABEL.$(1))."
+
+$$(foreach c,$$(DEPLOYED_CORE_CONTRACTS),$$(eval $$(call VERIFY_CONTRACT_RULE_TEMPLATE,$(1),$$(c))))
+endef
+
+# Define verify-<chain> and verify-<chain>-<contract> rules for each livenet
+$(foreach n,$(LIVENETS),$(eval $(call VERIFY_CHAIN_RULE_TEMPLATE,$(n))))

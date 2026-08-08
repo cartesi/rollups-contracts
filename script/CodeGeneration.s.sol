@@ -68,7 +68,6 @@ abstract contract CodeGenerationScript is Script {
     }
 
     function _writeCodeToFile(string memory path) internal {
-        // forge-lint: disable-next-line(unsafe-cheatcode)
         vmSafe.writeFile(path, _code);
     }
 }

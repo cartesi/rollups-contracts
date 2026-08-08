@@ -66,12 +66,16 @@ of the `InputBox` contract
 deployed to the local devnet.
 
 ```sh
-cast call $(jq -r .address deployments/31337/InputBox.json) 'getDeploymentBlockNumber()(uint256)'
+cast call $(cat deployments/31337/InputBox.txt) 'getDeploymentBlockNumber()(uint256)'
 ```
 
 ## Deployment
 
 If you wish to deploy the contracts to a live network, we may suggest our [deployment guide](./docs/deployment.md).
+
+## Verification
+
+If you wish to verify contracts deployed to a live network, we may suggest our [verification guide](./docs/verification.md).
 
 ## Documentation
 

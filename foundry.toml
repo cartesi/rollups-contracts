@@ -35,7 +35,7 @@ fail_on_revert = true
 remappings_location = "config"
 
 [lint]
-exclude_lints = ["incorrect-shift"]
+exclude_lints = ["incorrect-shift", "unsafe-cheatcode"]
 
 [dependencies]
 "@openzeppelin-contracts" = "5.2.0"

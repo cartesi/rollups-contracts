@@ -6,7 +6,10 @@ the Cartesi Rollups contracts to EVM-compatible blockchains.
 ## Steps
 
 1. Make sure the correct version of Foundry is installed.
-   If necessary, consult the [Getting Started](../README.md#getting-started) section.
+
+```bash
+make check-foundry-version
+```
 
 2. Install the project dependencies through Soldeer.
 
@@ -17,6 +20,9 @@ forge soldeer install
 3. Set the `*_RPC_URL` environment variable to the JSON-RPC API entrypoint of the target chain.
    You can use a public JSON-RPC provider (e.g. from [ChainList](https://chainlist.org/))
    or a service like [Alchemy](https://www.alchemy.com/) or [Infura](https://www.infura.io/).
+   In the case of Alchemy, you can simply set the `ALCHEMY_API_KEY` environment variable,
+   and the Makefile will seamlessly construct and export the RPC URLs of each chain.
+   By default, the Makefile exports public RPC URLs, which may be rate-limited.
    Consult the `foundry.toml` file for environment variables names for each supported chain.
    For example, let us assume we want to deploy to Ethereum Mainnet.
 

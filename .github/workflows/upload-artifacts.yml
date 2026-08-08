@@ -20,7 +20,7 @@ jobs:
       - uses: ./.github/actions/setup
 
       - name: Build release artifacts
-        run: make -j release-artifacts
+        run: make release-artifacts
         env:
           ALCHEMY_API_KEY: ${{ secrets.ALCHEMY_API_KEY }}
 
