@@ -40,7 +40,7 @@ exclude_lints = ["incorrect-shift", "unsafe-cheatcode"]
 [dependencies]
 "@openzeppelin-contracts" = "5.2.0"
 forge-std = "1.9.6"
-cartesi-machine-solidity-step = { version = "0.15.0", git = "https://github.com/cartesi/machine-solidity-step.git", rev = "v0.15.0-test1" }
+cartesi-machine-solidity-step = { version = "0.15.0", git = "https://github.com/cartesi/machine-solidity-step.git", tag = "v0.15.0" }
 
 [rpc_endpoints]
 arb_mainnet = "${ARB_MAINNET_RPC_URL}"
