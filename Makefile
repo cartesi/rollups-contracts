@@ -26,28 +26,36 @@
 NOOP  =
 SPACE = $(NOOP) $(NOOP)
 
+TO_UPPER = $(subst a,A,$(subst b,B,$(subst c,C,$(subst d,D,$(subst e,E,\
+           $(subst f,F,$(subst g,G,$(subst h,H,$(subst i,I,$(subst j,J,\
+           $(subst k,K,$(subst l,L,$(subst m,M,$(subst n,N,$(subst o,O,\
+           $(subst p,P,$(subst q,Q,$(subst r,R,$(subst s,S,$(subst t,T,\
+           $(subst u,U,$(subst v,V,$(subst w,W,$(subst x,X,$(subst y,Y,\
+           $(subst z,Z,$(1)))))))))))))))))))))))))))
+
+KEBAB_TO_SCREAMING_SNAKE = $(call TO_UPPER,$(subst -,_,$(1)))
+
 # ------------------------------------------------------------------------------
 # Project metadata
 # ------------------------------------------------------------------------------
 
 PROJECT_NAME := cartesi-rollups-contracts
 
-PROJECT_MAJOR_VERSION  := 3
-PROJECT_MINOR_VERSION  := 0
-PROJECT_PATCH_VERSION  := 0
-PROJECT_PRE_RELEASE    := alpha.7
-PROJECT_BUILD_METADATA :=
+MAJOR_VERSION  := 3
+MINOR_VERSION  := 0
+PATCH_VERSION  := 0
+PRE_RELEASE    := alpha.7
+BUILD_METADATA :=
 
-PROJECT_VERSION := $(PROJECT_MAJOR_VERSION).$(PROJECT_MINOR_VERSION).$(PROJECT_PATCH_VERSION)
-PROJECT_VERSION := $(PROJECT_VERSION)$(if $(PROJECT_PRE_RELEASE),-$(PROJECT_PRE_RELEASE))
-PROJECT_VERSION := $(PROJECT_VERSION)$(if $(PROJECT_BUILD_METADATA),+$(PROJECT_BUILD_METADATA))
+VERSION := $(MAJOR_VERSION).$(MINOR_VERSION).$(PATCH_VERSION)
+VERSION := $(VERSION)$(if $(PRE_RELEASE),-$(PRE_RELEASE))
+VERSION := $(VERSION)$(if $(BUILD_METADATA),+$(BUILD_METADATA))
 
 # ------------------------------------------------------------------------------
 # Dependency versions
 # ------------------------------------------------------------------------------
 
 FOUNDRY_VERSION := 1.5.1
-LCOV_VERSION    := 2.0
 
 # ------------------------------------------------------------------------------
 # Release artifacts (bundles)
@@ -55,7 +63,7 @@ LCOV_VERSION    := 2.0
 
 DIST := dist
 
-BUNDLE_PREFIX               := $(DIST)/$(PROJECT_NAME)-$(PROJECT_VERSION)
+BUNDLE_PREFIX               := $(DIST)/$(PROJECT_NAME)-$(VERSION)
 ARTIFACTS_BUNDLE            := $(BUNDLE_PREFIX)-artifacts.tar.gz
 DEPLOYMENT_ADDRESSES_BUNDLE := $(BUNDLE_PREFIX)-deployment-addresses.tar.gz
 DEVNET_BUNDLE               := $(BUNDLE_PREFIX)-anvil-$(FOUNDRY_VERSION).tar.gz
@@ -78,8 +86,9 @@ GENHTML   := genhtml
 # Commands
 # ------------------------------------------------------------------------------
 
-DEPLOY_CMD := $(FORGE) script script/Deployment.s.sol:DeploymentScript
-VERIFY_CMD := $(FORGE) verify-contract --guess-constructor-args --watch
+CODEGEN_CMD  = $(FORGE) script script/CodeGeneration.s.sol:$(1)
+DEPLOY_CMD  := $(FORGE) script script/Deployment.s.sol:DeploymentScript
+VERIFY_CMD  := $(FORGE) verify-contract --guess-constructor-args --watch
 
 # ------------------------------------------------------------------------------
 # Anvil devnet
@@ -87,52 +96,20 @@ VERIFY_CMD := $(FORGE) verify-contract --guess-constructor-args --watch
 
 ANVIL_CHAIN_ID := 31337
 
+ANVIL_PK0 := 0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80
+
 ANVIL_RPC_URL := http://127.0.0.1:8545
-ANVIL_PK      := 0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80
 ANVIL_STATE   := state.json
 
 ANVIL_RUNTIME_OPTS += --dump-state $(ANVIL_STATE)
 ANVIL_RUNTIME_OPTS += --preserve-historical-states
 ANVIL_RUNTIME_OPTS += --quiet
 
-ANVIL_DEPLOY_OPTS += --private-key $(ANVIL_PK)
+ANVIL_DEPLOY_OPTS += --private-key $(ANVIL_PK0)
 ANVIL_DEPLOY_OPTS += --rpc-url $(ANVIL_RPC_URL)
 ANVIL_DEPLOY_OPTS += --non-interactive
 ANVIL_DEPLOY_OPTS += --broadcast
 ANVIL_DEPLOY_OPTS += --slow
-
-# ------------------------------------------------------------------------------
-# Ethereum JSON-RPC API entrypoint URLs
-# ------------------------------------------------------------------------------
-
-ifdef ALCHEMY_API_KEY
-ARB_MAINNET_RPC_URL   ?= https://arb-mainnet.g.alchemy.com/v2/$(ALCHEMY_API_KEY)
-ARB_SEPOLIA_RPC_URL   ?= https://arb-sepolia.g.alchemy.com/v2/$(ALCHEMY_API_KEY)
-BASE_MAINNET_RPC_URL  ?= https://base-mainnet.g.alchemy.com/v2/$(ALCHEMY_API_KEY)
-BASE_SEPOLIA_RPC_URL  ?= https://base-sepolia.g.alchemy.com/v2/$(ALCHEMY_API_KEY)
-ETH_MAINNET_RPC_URL   ?= https://eth-mainnet.g.alchemy.com/v2/$(ALCHEMY_API_KEY)
-ETH_SEPOLIA_RPC_URL   ?= https://eth-sepolia.g.alchemy.com/v2/$(ALCHEMY_API_KEY)
-OPT_MAINNET_RPC_URL   ?= https://opt-mainnet.g.alchemy.com/v2/$(ALCHEMY_API_KEY)
-OPT_SEPOLIA_RPC_URL   ?= https://opt-sepolia.g.alchemy.com/v2/$(ALCHEMY_API_KEY)
-else
-ARB_MAINNET_RPC_URL   ?= https://arb1.arbitrum.io/rpc
-ARB_SEPOLIA_RPC_URL   ?= https://sepolia-rollup.arbitrum.io/rpc
-BASE_MAINNET_RPC_URL  ?= https://mainnet.base.org
-BASE_SEPOLIA_RPC_URL  ?= https://sepolia.base.org
-ETH_MAINNET_RPC_URL   ?= https://eth.drpc.org
-ETH_SEPOLIA_RPC_URL   ?= https://sepolia.drpc.org
-OPT_MAINNET_RPC_URL   ?= https://mainnet.optimism.io
-OPT_SEPOLIA_RPC_URL   ?= https://sepolia.optimism.io
-endif
-
-export ARB_MAINNET_RPC_URL
-export ARB_SEPOLIA_RPC_URL
-export BASE_MAINNET_RPC_URL
-export BASE_SEPOLIA_RPC_URL
-export ETH_MAINNET_RPC_URL
-export ETH_SEPOLIA_RPC_URL
-export OPT_MAINNET_RPC_URL
-export OPT_SEPOLIA_RPC_URL
 
 # ------------------------------------------------------------------------------
 # Supported (live) networks
@@ -168,6 +145,31 @@ endef
 
 # Define a CHAIN_OPTS.<chain> variable for each livenet
 $(foreach n,$(LIVENETS),$(eval $(call CHAIN_OPTS_TEMPLATE,$(n))))
+
+ifdef ALCHEMY_API_KEY
+ALCHEMY_RPC_URL = https://$(1).g.alchemy.com/v2/$(ALCHEMY_API_KEY)
+$(foreach n,$(LIVENETS),$(eval RPC_URL.$(n) := $(call ALCHEMY_RPC_URL,$(n))))
+else
+RPC_URL.arb-mainnet   := https://arb1.arbitrum.io/rpc
+RPC_URL.arb-sepolia   := https://sepolia-rollup.arbitrum.io/rpc
+RPC_URL.base-mainnet  := https://mainnet.base.org
+RPC_URL.base-sepolia  := https://sepolia.base.org
+RPC_URL.eth-mainnet   := https://eth.drpc.org
+RPC_URL.eth-sepolia   := https://sepolia.drpc.org
+RPC_URL.opt-mainnet   := https://mainnet.optimism.io
+RPC_URL.opt-sepolia   := https://sepolia.optimism.io
+endif
+
+# The RPC URL environment variable name is the chain name converted to
+# screaming snake case and suffixed with _RPC_URL as in foundry.toml
+# $(1) = chain name, e.g. eth-mainnet
+define RPC_URL_ENV_TEMPLATE
+$(call KEBAB_TO_SCREAMING_SNAKE,$(1))_RPC_URL ?= $$(RPC_URL.$(1))
+export $(call KEBAB_TO_SCREAMING_SNAKE,$(1))_RPC_URL
+endef
+
+# Define and export a <CHAIN>_RPC_URL variable for each livenet
+$(foreach n,$(LIVENETS),$(eval $(call RPC_URL_ENV_TEMPLATE,$(n))))
 
 TESTNET_CHAIN_IDS  := $(foreach n,$(TESTNETS),$(CHAIN_ID.$(n)))
 MAINNET_CHAIN_IDS  := $(foreach n,$(MAINNETS),$(CHAIN_ID.$(n)))
@@ -223,11 +225,13 @@ PUBLIC_CONTRACTS += TestUsdc
 # Rust bindings generation options
 # ------------------------------------------------------------------------------
 
+CRATE_DESCRIPTION := Rust bindings for Cartesi Rollups contracts
+
 FORGE_BIND_OPTS  += --select "^($(subst $(SPACE),|,$(PUBLIC_CONTRACTS)))$$"
 FORGE_BIND_OPTS  += --crate-name "$(PROJECT_NAME)"
-FORGE_BIND_OPTS  += --crate-version "$(PROJECT_VERSION)"
+FORGE_BIND_OPTS  += --crate-version "$(VERSION)"
 FORGE_BIND_OPTS  += --crate-license "Apache-2.0"
-FORGE_BIND_OPTS  += --crate-description "Rust bindings for Cartesi Rollups contracts"
+FORGE_BIND_OPTS  += --crate-description "$(CRATE_DESCRIPTION)"
 FORGE_BIND_OPTS  += --alloy-version 2
 
 # ------------------------------------------------------------------------------
@@ -271,22 +275,22 @@ codegen: $(GENERATED_FILES)
 $(GENERATED_FILE_DEPLOYERS): CODEGEN_SCRIPT := DeployersCodeGenerationScript
 
 $(GENERATED_FILE_VERSION):   CODEGEN_SCRIPT := VersionCodeGenerationScript
-$(GENERATED_FILE_VERSION):   CODEGEN_ARGS   += "$(PROJECT_MAJOR_VERSION)"
-$(GENERATED_FILE_VERSION):   CODEGEN_ARGS   += "$(PROJECT_MINOR_VERSION)"
-$(GENERATED_FILE_VERSION):   CODEGEN_ARGS   += "$(PROJECT_PATCH_VERSION)"
-$(GENERATED_FILE_VERSION):   CODEGEN_ARGS   += "$(PROJECT_PRE_RELEASE)"
-$(GENERATED_FILE_VERSION):   CODEGEN_ARGS   += "$(PROJECT_BUILD_METADATA)"
+$(GENERATED_FILE_VERSION):   CODEGEN_ARGS   += "$(MAJOR_VERSION)"
+$(GENERATED_FILE_VERSION):   CODEGEN_ARGS   += "$(MINOR_VERSION)"
+$(GENERATED_FILE_VERSION):   CODEGEN_ARGS   += "$(PATCH_VERSION)"
+$(GENERATED_FILE_VERSION):   CODEGEN_ARGS   += "$(PRE_RELEASE)"
+$(GENERATED_FILE_VERSION):   CODEGEN_ARGS   += "$(BUILD_METADATA)"
 
 .PHONY: $(GENERATED_FILES)
 $(GENERATED_FILES):
 	@echo "🚧 Generating $@..."
-	@$(FORGE) script script/CodeGeneration.s.sol:$(CODEGEN_SCRIPT) -- $(CODEGEN_ARGS)
+	@$(call CODEGEN_CMD,$(CODEGEN_SCRIPT)) -- $(CODEGEN_ARGS)
 	@$(FORGE) fmt $@
 	@echo "✅ Generated $@."
 
 coverage:
 	@echo "🚧 Generating coverage data..."
-	@$(FORGE) coverage --ir-minimum --report lcov --lcov-version "$(LCOV_VERSION)"
+	@$(FORGE) coverage --ir-minimum --report lcov --lcov-version 2.0
 	@echo "🚧 Generating coverage report..."
 	@$(GENHTML) -o coverage lcov.info --rc derive_function_end_line=0
 	@echo "✅ Successfully generated coverage report."
@@ -301,17 +305,17 @@ devnet: check-foundry-version
 			kill "$${anvil_pid}"; \
 			echo "🚧 Waiting for Anvil to finish...."; \
 			wait "$${anvil_pid}"; \
-			anvil_exit_code=$$?; \
-			if [ "$${anvil_exit_code}" -eq 0 ]; then \
-				echo "✅ Anvil exited with code $${anvil_exit_code}"; \
+			errno=$$?; \
+			if [ "$${errno}" -eq 0 ]; then \
+				echo "✅ Anvil exited with code $${errno}"; \
 			else \
-				echo "❌ Anvil exited with code $${anvil_exit_code}"; \
+				echo "❌ Anvil exited with code $${errno}"; \
 				if [ "$${exit_code}" -eq 0 ]; then \
-					exit_code=$${anvil_exit_code}; \
+					exit_code=$${errno}; \
 				fi; \
 			fi; \
 		else \
-			echo "💡 Anvil (PID $${anvil_pid}) exited prematurely"; \
+			echo "💡 Anvil (PID $${anvil_pid}) exited early"; \
 		fi; \
 		exit "$${exit_code}"; \
 	}; \
@@ -335,7 +339,7 @@ devnet: check-foundry-version
 		i=$$((i+1)); \
 	done; \
 	if [ "$${listening}" -eq 0 ]; then \
-		echo "❌ Anvil did not respond within a reasonable amount of time." >&2; \
+		echo "❌ Anvil did not respond within 5s." >&2; \
 		exit 1; \
 	fi; \
 	echo "🔨 Deploying to Anvil (Chain ID: $(ANVIL_CHAIN_ID))..."; \
@@ -365,14 +369,15 @@ check-foundry-version:
 			echo "❌ $${tool} not found in PATH." >&2; \
 			exit 1; \
 		fi; \
-		installed=$$("$${tool}" --version 2>/dev/null \
-			| sed -nE 's/[^0-9]*([0-9]+\.[0-9]+\.[0-9]+).*/\1/p'); \
+		installed=$$($${tool} --version 2>/dev/null | sed -nE \
+			's/[^0-9]*([0-9]+\.[0-9]+\.[0-9]+).*/\1/p'); \
 		if [ -z "$${installed}" ]; then \
-			echo "❌ Could not parse version from '$${tool} --version' output." >&2; \
+			echo "❌ Could not parse $${tool} version." >&2; \
 			exit 1; \
 		fi; \
 		if [ "$${installed}" != "$(FOUNDRY_VERSION)" ]; then \
-			echo "❌ $${tool} is version $${installed}, expected $(FOUNDRY_VERSION)." >&2; \
+			printf '❌ Found %s %s, expected %s.\n' $${tool} \
+				"$${installed}" $(FOUNDRY_VERSION) >&2; \
 			exit 1; \
 		fi; \
 	done; \
@@ -385,18 +390,21 @@ print-foundry-version:
 	@echo "$(FOUNDRY_VERSION)"
 
 publish-soldeer-package:
-	@$(FORGE) soldeer push "$(PROJECT_NAME)~$(PROJECT_VERSION)" $(if $(DRY_RUN),--dry-run)
+	@$(FORGE) soldeer push "$(PROJECT_NAME)~$(VERSION)" \
+		$(if $(DRY_RUN),--dry-run)
 
 release-artifacts: $(RELEASE_ARTIFACTS)
 
 $(ARTIFACTS_BUNDLE): build
-$(ARTIFACTS_BUNDLE): TAR_ARGS := -C out $(addsuffix .sol, $(PUBLIC_CONTRACTS))
+$(ARTIFACTS_BUNDLE): TAR_ARGS += -C out
+$(ARTIFACTS_BUNDLE): TAR_ARGS += $(addsuffix .sol, $(PUBLIC_CONTRACTS))
 
 $(DEPLOYMENT_ADDRESSES_BUNDLE): deploy-livenets
-$(DEPLOYMENT_ADDRESSES_BUNDLE): TAR_ARGS := $(LIVENET_DEPLOYMENTS_DIRS)
+$(DEPLOYMENT_ADDRESSES_BUNDLE): TAR_ARGS += $(LIVENET_DEPLOYMENTS_DIRS)
 
 $(DEVNET_BUNDLE): devnet
-$(DEVNET_BUNDLE): TAR_ARGS := $(DEVNET_DEPLOYMENTS_DIR) $(ANVIL_STATE)
+$(DEVNET_BUNDLE): TAR_ARGS += $(DEVNET_DEPLOYMENTS_DIR)
+$(DEVNET_BUNDLE): TAR_ARGS += $(ANVIL_STATE)
 
 $(RELEASE_ARTIFACTS): | $(DIST)
 	@echo "📦 Creating $@..."
@@ -419,7 +427,8 @@ define VERIFY_CONTRACT_RULE_TEMPLATE
 .PHONY: verify-$(1)-$(2)
 verify-$(1)-$(2): $(DEPLOYMENTS)/$(CHAIN_ID.$(1))/$(2).txt
 	@echo "🔍 Verifying $(2) on $(LABEL.$(1))..."
-	@$$(VERIFY_CMD) $$(CHAIN_OPTS.$(1)) $$(VERIFY_OPTS) -- "$$$$(cat $$<)" "$(2)"
+	@$$(VERIFY_CMD) $$(CHAIN_OPTS.$(1)) $$(VERIFY_OPTS) -- \
+		"$$$$(cat $$<)" "$(2)"
 endef
 
 # $(1) = chain name, e.g. eth-mainnet
@@ -428,7 +437,8 @@ define VERIFY_CHAIN_RULE_TEMPLATE
 verify-$(1): $$(addprefix verify-$(1)-,$$(DEPLOYED_CORE_CONTRACTS))
 	@echo "✅ Verified deployments on $(LABEL.$(1))."
 
-$$(foreach c,$$(DEPLOYED_CORE_CONTRACTS),$$(eval $$(call VERIFY_CONTRACT_RULE_TEMPLATE,$(1),$$(c))))
+$$(foreach c,$$(DEPLOYED_CORE_CONTRACTS),\
+	$$(eval $$(call VERIFY_CONTRACT_RULE_TEMPLATE,$(1),$$(c))))
 endef
 
 # Define verify-<chain> and verify-<chain>-<contract> rules for each livenet
