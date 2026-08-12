@@ -126,6 +126,8 @@ contract QuorumFactoryTest is
     using LibTopic for address;
     using LibBytes for bytes;
 
+    uint256 constant MAX_VOTING_VALIDATORS = 16;
+
     IQuorumFactory _factory;
 
     function setUp() public {
@@ -462,12 +464,13 @@ contract QuorumFactoryTest is
         quorum.submitClaim(claim);
     }
 
-    function testSubmitAndAcceptClaim(DeploymentArgs calldata deploymentArgs) external {
+    function testSubmitAndAcceptClaim(DeploymentArgs memory deploymentArgs) external {
+        _restrictQuorumSize(deploymentArgs, MAX_VOTING_VALIDATORS);
         IQuorum quorum = _newQuorum(deploymentArgs);
         address appContract = address(new ApplicationForeclosureMock());
         uint256 epochLength = deploymentArgs.epochLength;
         uint256 claimStagingPeriod = deploymentArgs.claimStagingPeriod;
-        address[] calldata validators = deploymentArgs.validators;
+        address[] memory validators = deploymentArgs.validators;
 
         address[] memory appContractSingleton = new address[](1);
         appContractSingleton[0] = appContract;
@@ -1094,9 +1097,9 @@ contract QuorumFactoryTest is
         quorum.acceptClaim(claim);
     }
 
-    function _newQuorum(DeploymentArgs calldata deploymentArgs)
+    function _newQuorum(DeploymentArgs memory deploymentArgs)
         internal
-        returns (IQuorum)
+        returns (IQuorum quorum)
     {
         vm.assumeNoRevert();
         return _factory.newQuorum(deploymentArgs);
@@ -1123,5 +1126,14 @@ contract QuorumFactoryTest is
         returns (Claim memory claim)
     {
         return _randomClaim(appEpoch.appContract, appEpoch.lastProcessedBlockNumber);
+    }
+
+    function _restrictQuorumSize(DeploymentArgs memory deploymentArgs, uint256 n)
+        internal
+        pure
+    {
+        if (deploymentArgs.validators.length > n) {
+            deploymentArgs.validators = deploymentArgs.validators.truncate(n);
+        }
     }
 }

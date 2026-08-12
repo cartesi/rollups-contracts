@@ -6,6 +6,14 @@ pragma solidity ^0.8.30;
 import {Vm} from "forge-std-1.9.6/src/Vm.sol";
 
 library LibAddressArray {
+    function truncate(address[] calldata array, uint256 n)
+        external
+        pure
+        returns (address[] memory truncatedArray)
+    {
+        return array[:n];
+    }
+
     function randomAddressIn(Vm vm, address[] memory array)
         internal
         returns (address addr)
