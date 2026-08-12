@@ -391,7 +391,7 @@ print-foundry-version:
 
 publish-soldeer-package:
 	@$(FORGE) soldeer push "$(PROJECT_NAME)~$(VERSION)" \
-		$(if $(DRY_RUN),--dry-run)
+		$(if $(filter-out 0 n no false,$(DRY_RUN)),--dry-run)
 
 release-artifacts: $(RELEASE_ARTIFACTS)
 
