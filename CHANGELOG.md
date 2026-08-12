@@ -1,5 +1,43 @@
 # @cartesi/rollups
 
+## 3.0.0-alpha.8
+
+### Minor Changes
+
+- Add post-deployment verification through `verify-*` Makefile targets ([#548](https://github.com/cartesi/rollups-contracts/issues/548))
+
+  Contracts could be verified at deployment time through the `--verify` option, but verification can fail for reasons unrelated to the deployment itself, in which case the deployment script would have nothing left to broadcast. The new targets read the deployment artifacts instead, so verification can be attempted as many times as necessary. Contracts that are already verified are skipped, so the targets are idempotent, just like the deployment ones.
+
+  - Add a `verify-<chain>` target for every supported livenet, which verifies every deployed core contract on that chain, one at a time
+  - Add `verify-<chain>-<contract>` targets, for verifying a single core contract
+  - Add the aggregate `verify-testnets`, `verify-mainnets` and `verify-livenets` targets (the devnet is not covered by any of them, as it is not backed by any public explorer)
+  - Verify on Etherscan if `ETHERSCAN_API_KEY` is set, and on [Sourcify](https://sourcify.dev/) otherwise; extra options can be passed down to `forge verify-contract` through the `VERIFY_OPTS` variable
+  - Document the process, along with troubleshooting instructions, in the new verification guide at `docs/verification.md`.
+
+- Store deployment addresses in plaintext, besides JSON
+
+  The deployment script now writes a `deployments/<chain-id>/<contract-name>.txt` file containing only the address, alongside the existing `.json` file. This lets the Makefile and the documentation read deployment addresses without taking `jq` as a dependency. The README example was updated accordingly, and now reads `cat deployments/31337/InputBox.txt`.
+
+- Deprecate JSON deployment artifacts
+
+  Internally, only plaintext artifacts are used, since they do not require JSON-processing tools like `jq`. Clients are advised to migrate. Once all main clients (`dave`, `rollups-node`, `rollups-ts` and `rollups-explorer`) have migrated to plaintext artifacts, we will remove the JSON artifacts.
+
+- Add a `TestUsdc` token to the devnet
+
+  It mocks the original USD Coin token, and represents amounts with 6 decimal places instead of the OpenZeppelin default of 18, so that front-ends can be exercised against realistic values. The devnet `TestUsdWithdrawalOutputBuilder` is now backed by `TestUsdc`, instead of `TestFungibleToken`. Like the other devnet tokens, `TestUsdc` is included in the published build artifacts and in the Rust bindings crate. The mint and burn entrypoints shared by the devnet fungible tokens were extracted into a new abstract `BaseTestFungibleToken` contract.
+
+### Patch Changes
+
+- Bump `cartesi-machine-solidity-step` from the `v0.15.0-test1` tag to the definitive `v0.15.0` tag ([#547](https://github.com/cartesi/rollups-contracts/issues/547))
+- Bump the alloy version of the generated Rust bindings crate from 1.0 to 2
+- Make `publish-soldeer-package` treat `0`, `n`, `no` and `false` as falsy values of `DRY_RUN`, so that the Soldeer-publishing workflow (which evaluates `DRY_RUN` to `false` on releases) actually publishes the Soldeer package instead of merely dry-running the process ([#542](https://github.com/cartesi/rollups-contracts/issues/542))
+- Set `ALCHEMY_API_KEY` on the release-artifacts CI job, which simulates deployments to every supported network, so that the pipeline no longer depends on rate-limited public JSON-RPC providers
+- Bundle release artifacts deterministically, through `tar --sort=name --mtime=@0 --owner=1000 --group=1000 --numeric-owner`
+- Exclude the `unsafe-cheatcode` lint in `foundry.toml`, instead of disabling it at each call site
+- Documentation improvements
+- Makefile improvements
+- CI actions bumps
+
 ## 3.0.0-alpha.7
 
 ### Major Changes
