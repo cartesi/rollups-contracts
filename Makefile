@@ -253,6 +253,7 @@ TAR_DETERMINISTIC_CREATE_OPTS += --mtime=@0
 TAR_DETERMINISTIC_CREATE_OPTS += --owner=1000
 TAR_DETERMINISTIC_CREATE_OPTS += --group=1000
 TAR_DETERMINISTIC_CREATE_OPTS += --numeric-owner
+TAR_DETERMINISTIC_CREATE_OPTS += --mode=a=rX,u+w
 
 # ------------------------------------------------------------------------------
 # Deployment artifacts
