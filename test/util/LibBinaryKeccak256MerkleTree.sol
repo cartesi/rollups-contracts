@@ -3,8 +3,8 @@
 
 pragma solidity ^0.8.30;
 
-import {LibBinaryMerkleTree} from "src/library/LibBinaryMerkleTree.sol";
-import {LibKeccak256} from "src/library/LibKeccak256.sol";
+import {LibBinaryMerkleTree} from "../../src/library/LibBinaryMerkleTree.sol";
+import {LibKeccak256} from "../../src/library/LibKeccak256.sol";
 
 import {CompressedNode} from "../util/CompressedNode.sol";
 import {LibBinaryMerkleTreeHelper} from "../util/LibBinaryMerkleTreeHelper.sol";

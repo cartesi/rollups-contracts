@@ -5,19 +5,19 @@ pragma solidity ^0.8.30;
 
 import {VmSafe} from "forge-std-1.9.6/src/Vm.sol";
 
-import {AuthorityFactory} from "src/consensus/authority/AuthorityFactory.sol";
-import {QuorumFactory} from "src/consensus/quorum/QuorumFactory.sol";
-import {ApplicationFactory} from "src/dapp/ApplicationFactory.sol";
-import {SelfHostedApplicationFactory} from "src/dapp/SelfHostedApplicationFactory.sol";
-import {SafeErc20Transfer} from "src/delegatecall/SafeErc20Transfer.sol";
-import {InputBox} from "src/inputs/InputBox.sol";
-import {Erc1155BatchPortal} from "src/portals/Erc1155BatchPortal.sol";
-import {Erc1155SinglePortal} from "src/portals/Erc1155SinglePortal.sol";
-import {Erc20Portal} from "src/portals/Erc20Portal.sol";
-import {Erc721Portal} from "src/portals/Erc721Portal.sol";
-import {EtherPortal} from "src/portals/EtherPortal.sol";
-import {RefundOutputBuilder} from "src/refund/RefundOutputBuilder.sol";
-import {UsdWithdrawalOutputBuilderFactory} from "src/withdrawal/UsdWithdrawalOutputBuilderFactory.sol";
+import {AuthorityFactory} from "../../src/consensus/authority/AuthorityFactory.sol";
+import {QuorumFactory} from "../../src/consensus/quorum/QuorumFactory.sol";
+import {ApplicationFactory} from "../../src/dapp/ApplicationFactory.sol";
+import {SelfHostedApplicationFactory} from "../../src/dapp/SelfHostedApplicationFactory.sol";
+import {SafeErc20Transfer} from "../../src/delegatecall/SafeErc20Transfer.sol";
+import {InputBox} from "../../src/inputs/InputBox.sol";
+import {Erc1155BatchPortal} from "../../src/portals/Erc1155BatchPortal.sol";
+import {Erc1155SinglePortal} from "../../src/portals/Erc1155SinglePortal.sol";
+import {Erc20Portal} from "../../src/portals/Erc20Portal.sol";
+import {Erc721Portal} from "../../src/portals/Erc721Portal.sol";
+import {EtherPortal} from "../../src/portals/EtherPortal.sol";
+import {RefundOutputBuilder} from "../../src/refund/RefundOutputBuilder.sol";
+import {UsdWithdrawalOutputBuilderFactory} from "../../src/withdrawal/UsdWithdrawalOutputBuilderFactory.sol";
 
 import "./ContractDeployers.sol" as G;
 import {storeDeployment} from "./DeploymentStorage.sol";

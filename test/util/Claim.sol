@@ -3,7 +3,7 @@
 
 pragma solidity ^0.8.30;
 
-import {MachineValidityProof} from "src/common/MachineValidityProof.sol";
+import {MachineValidityProof} from "../../src/common/MachineValidityProof.sol";
 
 struct Claim {
     address appContract;

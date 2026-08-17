@@ -9,11 +9,11 @@ import {AccessLogs} from "cartesi-machine-solidity-step-0.15.0/src/AccessLogs.so
 import {EmulatorCompat} from "cartesi-machine-solidity-step-0.15.0/src/EmulatorCompat.sol";
 import {EmulatorConstants} from "cartesi-machine-solidity-step-0.15.0/src/EmulatorConstants.sol";
 
-import {AccountValidityProof} from "src/common/AccountValidityProof.sol";
-import {CanonicalMachine} from "src/common/CanonicalMachine.sol";
-import {LeafProof} from "src/common/LeafProof.sol";
-import {MachineValidityProof} from "src/common/MachineValidityProof.sol";
-import {OutputValidityProof} from "src/common/OutputValidityProof.sol";
+import {AccountValidityProof} from "../../src/common/AccountValidityProof.sol";
+import {CanonicalMachine} from "../../src/common/CanonicalMachine.sol";
+import {LeafProof} from "../../src/common/LeafProof.sol";
+import {MachineValidityProof} from "../../src/common/MachineValidityProof.sol";
+import {OutputValidityProof} from "../../src/common/OutputValidityProof.sol";
 
 import {LibBinaryKeccak256MerkleTree} from "../util/LibBinaryKeccak256MerkleTree.sol";
 import {LibBytes32Array} from "../util/LibBytes32Array.sol";

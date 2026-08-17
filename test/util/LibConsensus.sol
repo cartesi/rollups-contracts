@@ -3,7 +3,7 @@
 
 pragma solidity ^0.8.30;
 
-import {IConsensus} from "src/consensus/IConsensus.sol";
+import {IConsensus} from "../../src/consensus/IConsensus.sol";
 
 import {Claim} from "./Claim.sol";
 

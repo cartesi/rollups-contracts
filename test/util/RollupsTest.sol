@@ -6,8 +6,8 @@ pragma solidity ^0.8.30;
 import {Test} from "forge-std-1.9.6/src/Test.sol";
 import {Vm} from "forge-std-1.9.6/src/Vm.sol";
 
-import "script/utils/CoreContracts.sol" as CoreContracts;
-import "script/utils/DevContracts.sol" as DevContracts;
+import "../../script/utils/CoreContracts.sol" as CoreContracts;
+import "../../script/utils/DevContracts.sol" as DevContracts;
 
 struct ContractSuites {
     CoreContracts.Suite core;

@@ -7,11 +7,11 @@ import {Ownable} from "@openzeppelin-contracts-5.2.0/access/Ownable.sol";
 
 import {Vm} from "forge-std-1.9.6/src/Vm.sol";
 
-import {IConsensus} from "src/consensus/IConsensus.sol";
-import {IConsensusFactoryErrors} from "src/consensus/IConsensusFactoryErrors.sol";
-import {IOutputsMerkleRootValidator} from "src/consensus/IOutputsMerkleRootValidator.sol";
-import {IAuthority} from "src/consensus/authority/IAuthority.sol";
-import {IAuthorityFactory} from "src/consensus/authority/IAuthorityFactory.sol";
+import {IConsensus} from "../../../src/consensus/IConsensus.sol";
+import {IConsensusFactoryErrors} from "../../../src/consensus/IConsensusFactoryErrors.sol";
+import {IOutputsMerkleRootValidator} from "../../../src/consensus/IOutputsMerkleRootValidator.sol";
+import {IAuthority} from "../../../src/consensus/authority/IAuthority.sol";
+import {IAuthorityFactory} from "../../../src/consensus/authority/IAuthorityFactory.sol";
 
 import {ApplicationForeclosureMock} from "../../util/ApplicationForeclosureMock.sol";
 import {Claim} from "../../util/Claim.sol";

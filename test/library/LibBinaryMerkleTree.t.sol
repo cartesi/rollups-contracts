@@ -5,10 +5,10 @@ pragma solidity ^0.8.30;
 
 import {Test} from "forge-std-1.9.6/src/Test.sol";
 
-import {BinaryMerkleTreeErrors} from "src/common/BinaryMerkleTreeErrors.sol";
-import {CanonicalMachine} from "src/common/CanonicalMachine.sol";
-import {LibBinaryMerkleTree} from "src/library/LibBinaryMerkleTree.sol";
-import {LibMath} from "src/library/LibMath.sol";
+import {BinaryMerkleTreeErrors} from "../../src/common/BinaryMerkleTreeErrors.sol";
+import {CanonicalMachine} from "../../src/common/CanonicalMachine.sol";
+import {LibBinaryMerkleTree} from "../../src/library/LibBinaryMerkleTree.sol";
+import {LibMath} from "../../src/library/LibMath.sol";
 
 import {CompressedNode} from "../util/CompressedNode.sol";
 import {LibBinaryKeccak256MerkleTree} from "../util/LibBinaryKeccak256MerkleTree.sol";

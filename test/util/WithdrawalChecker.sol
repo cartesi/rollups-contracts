@@ -3,9 +3,9 @@
 
 pragma solidity ^0.8.30;
 
-import {AccountValidityProof} from "src/common/AccountValidityProof.sol";
-import {IApplication} from "src/dapp/IApplication.sol";
-import {LibBytes} from "src/library/LibBytes.sol";
+import {AccountValidityProof} from "../../src/common/AccountValidityProof.sol";
+import {IApplication} from "../../src/dapp/IApplication.sol";
+import {LibBytes} from "../../src/library/LibBytes.sol";
 
 contract WithdrawalChecker {
     using LibBytes for bytes;

@@ -4,14 +4,14 @@
 /// @title Application Factory Test
 pragma solidity ^0.8.30;
 
-import {CanonicalMachine} from "src/common/CanonicalMachine.sol";
-import {WithdrawalConfig} from "src/common/WithdrawalConfig.sol";
-import {IOutputsMerkleRootValidator} from "src/consensus/IOutputsMerkleRootValidator.sol";
-import {IApplication} from "src/dapp/IApplication.sol";
-import {IApplicationFactory} from "src/dapp/IApplicationFactory.sol";
-import {IApplicationFactoryErrors} from "src/dapp/IApplicationFactoryErrors.sol";
-import {IInputBox} from "src/inputs/IInputBox.sol";
-import {LibWithdrawalConfig} from "src/library/LibWithdrawalConfig.sol";
+import {CanonicalMachine} from "../../src/common/CanonicalMachine.sol";
+import {WithdrawalConfig} from "../../src/common/WithdrawalConfig.sol";
+import {IOutputsMerkleRootValidator} from "../../src/consensus/IOutputsMerkleRootValidator.sol";
+import {IApplication} from "../../src/dapp/IApplication.sol";
+import {IApplicationFactory} from "../../src/dapp/IApplicationFactory.sol";
+import {IApplicationFactoryErrors} from "../../src/dapp/IApplicationFactoryErrors.sol";
+import {IInputBox} from "../../src/inputs/IInputBox.sol";
+import {LibWithdrawalConfig} from "../../src/library/LibWithdrawalConfig.sol";
 
 import {Ownable} from "@openzeppelin-contracts-5.2.0/access/Ownable.sol";
 

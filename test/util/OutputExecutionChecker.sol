@@ -3,9 +3,9 @@
 
 pragma solidity ^0.8.30;
 
-import {OutputValidityProof} from "src/common/OutputValidityProof.sol";
-import {IApplication} from "src/dapp/IApplication.sol";
-import {LibBytes} from "src/library/LibBytes.sol";
+import {OutputValidityProof} from "../../src/common/OutputValidityProof.sol";
+import {IApplication} from "../../src/dapp/IApplication.sol";
+import {LibBytes} from "../../src/library/LibBytes.sol";
 
 contract OutputExecutionChecker {
     using LibBytes for bytes;

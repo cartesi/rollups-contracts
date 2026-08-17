@@ -5,12 +5,12 @@ pragma solidity ^0.8.30;
 
 import {Vm} from "forge-std-1.9.6/src/Vm.sol";
 
-import {IConsensus} from "src/consensus/IConsensus.sol";
-import {IConsensusFactoryErrors} from "src/consensus/IConsensusFactoryErrors.sol";
-import {IOutputsMerkleRootValidator} from "src/consensus/IOutputsMerkleRootValidator.sol";
-import {IQuorum} from "src/consensus/quorum/IQuorum.sol";
-import {IQuorumFactory} from "src/consensus/quorum/IQuorumFactory.sol";
-import {IQuorumFactoryErrors} from "src/consensus/quorum/IQuorumFactoryErrors.sol";
+import {IConsensus} from "../../../src/consensus/IConsensus.sol";
+import {IConsensusFactoryErrors} from "../../../src/consensus/IConsensusFactoryErrors.sol";
+import {IOutputsMerkleRootValidator} from "../../../src/consensus/IOutputsMerkleRootValidator.sol";
+import {IQuorum} from "../../../src/consensus/quorum/IQuorum.sol";
+import {IQuorumFactory} from "../../../src/consensus/quorum/IQuorumFactory.sol";
+import {IQuorumFactoryErrors} from "../../../src/consensus/quorum/IQuorumFactoryErrors.sol";
 
 import {ApplicationForeclosureMock} from "../../util/ApplicationForeclosureMock.sol";
 import {Claim} from "../../util/Claim.sol";

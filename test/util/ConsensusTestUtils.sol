@@ -6,12 +6,12 @@ pragma solidity ^0.8.30;
 import {EmulatorCompat} from "cartesi-machine-solidity-step-0.15.0/src/EmulatorCompat.sol";
 import {EmulatorConstants} from "cartesi-machine-solidity-step-0.15.0/src/EmulatorConstants.sol";
 
-import {CanonicalMachine} from "src/common/CanonicalMachine.sol";
-import {LeafProof} from "src/common/LeafProof.sol";
-import {MachineValidationErrors} from "src/common/MachineValidationErrors.sol";
-import {MachineValidityProof} from "src/common/MachineValidityProof.sol";
-import {IConsensus} from "src/consensus/IConsensus.sol";
-import {IApplication} from "src/dapp/IApplication.sol";
+import {CanonicalMachine} from "../../src/common/CanonicalMachine.sol";
+import {LeafProof} from "../../src/common/LeafProof.sol";
+import {MachineValidationErrors} from "../../src/common/MachineValidationErrors.sol";
+import {MachineValidityProof} from "../../src/common/MachineValidityProof.sol";
+import {IConsensus} from "../../src/consensus/IConsensus.sol";
+import {IApplication} from "../../src/dapp/IApplication.sol";
 
 import {ApplicationCheckerTestUtils} from "./ApplicationCheckerTestUtils.sol";
 import {Claim} from "./Claim.sol";

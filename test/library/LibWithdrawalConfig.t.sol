@@ -3,8 +3,8 @@
 
 pragma solidity ^0.8.30;
 
-import {WithdrawalConfig} from "src/common/WithdrawalConfig.sol";
-import {LibWithdrawalConfig} from "src/library/LibWithdrawalConfig.sol";
+import {WithdrawalConfig} from "../../src/common/WithdrawalConfig.sol";
+import {LibWithdrawalConfig} from "../../src/library/LibWithdrawalConfig.sol";
 
 import {WithdrawalConfigTestUtils} from "../util/WithdrawalConfigTestUtils.sol";
 

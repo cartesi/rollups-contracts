@@ -5,8 +5,8 @@ pragma solidity ^0.8.30;
 
 import {Test} from "forge-std-1.9.6/src/Test.sol";
 
-import {IVersionGetter} from "src/common/IVersionGetter.sol";
-import "src/common/Version.sol" as Version;
+import {IVersionGetter} from "../../src/common/IVersionGetter.sol";
+import "../../src/common/Version.sol" as Version;
 
 abstract contract VersionGetterTestUtils is Test {
     function _testVersion(IVersionGetter versionGetter) internal view {

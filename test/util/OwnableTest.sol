@@ -8,7 +8,7 @@ import {Vm} from "forge-std-1.9.6/src/Vm.sol";
 
 import {Ownable} from "@openzeppelin-contracts-5.2.0/access/Ownable.sol";
 
-import {IOwnable} from "src/access/IOwnable.sol";
+import {IOwnable} from "../../src/access/IOwnable.sol";
 
 import {LibAddressArray} from "./LibAddressArray.sol";
 

@@ -7,11 +7,11 @@ import {Test} from "forge-std-1.9.6/src/Test.sol";
 
 import {IERC20} from "@openzeppelin-contracts-5.2.0/token/ERC20/IERC20.sol";
 
-import {DelegateCallVoucher} from "src/common/DelegateCallVoucher.sol";
-import {Erc20Deposit} from "src/common/Erc20Deposit.sol";
-import {ISafeErc20Transfer} from "src/delegatecall/ISafeErc20Transfer.sol";
-import {LibBytes} from "src/library/LibBytes.sol";
-import {LibErc20Deposit} from "src/library/LibErc20Deposit.sol";
+import {DelegateCallVoucher} from "../../src/common/DelegateCallVoucher.sol";
+import {Erc20Deposit} from "../../src/common/Erc20Deposit.sol";
+import {ISafeErc20Transfer} from "../../src/delegatecall/ISafeErc20Transfer.sol";
+import {LibBytes} from "../../src/library/LibBytes.sol";
+import {LibErc20Deposit} from "../../src/library/LibErc20Deposit.sol";
 
 contract LibErc20DepositTest is Test {
     using LibErc20Deposit for Erc20Deposit;

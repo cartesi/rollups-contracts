@@ -5,7 +5,7 @@ pragma solidity ^0.8.30;
 
 import {Test} from "forge-std-1.9.6/src/Test.sol";
 
-import {LibMath} from "src/library/LibMath.sol";
+import {LibMath} from "../../src/library/LibMath.sol";
 
 /// @title Alternative naive, gas-inefficient implementation of LibMath
 library LibNaiveMath {

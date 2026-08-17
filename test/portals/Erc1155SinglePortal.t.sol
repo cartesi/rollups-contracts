@@ -8,8 +8,8 @@ import {IERC1155Receiver} from "@openzeppelin-contracts-5.2.0/token/ERC1155/IERC
 
 import {Vm} from "forge-std-1.9.6/src/Vm.sol";
 
-import {IInputBox} from "src/inputs/IInputBox.sol";
-import {IErc1155SinglePortal} from "src/portals/IErc1155SinglePortal.sol";
+import {IInputBox} from "../../src/inputs/IInputBox.sol";
+import {IErc1155SinglePortal} from "../../src/portals/IErc1155SinglePortal.sol";
 
 import {InputBoxTestUtils} from "../util/InputBoxTestUtils.sol";
 import {LibBytes} from "../util/LibBytes.sol";

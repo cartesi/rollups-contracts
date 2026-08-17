@@ -5,9 +5,9 @@ pragma solidity ^0.8.30;
 
 import {Test} from "forge-std-1.9.6/src/Test.sol";
 
-import {EtherDeposit} from "src/common/EtherDeposit.sol";
-import {Voucher} from "src/common/Voucher.sol";
-import {LibEtherDeposit} from "src/library/LibEtherDeposit.sol";
+import {EtherDeposit} from "../../src/common/EtherDeposit.sol";
+import {Voucher} from "../../src/common/Voucher.sol";
+import {LibEtherDeposit} from "../../src/library/LibEtherDeposit.sol";
 
 contract LibEtherDepositTest is Test {
     using LibEtherDeposit for EtherDeposit;

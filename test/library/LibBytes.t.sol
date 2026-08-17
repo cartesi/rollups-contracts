@@ -5,7 +5,7 @@ pragma solidity ^0.8.30;
 
 import {Test} from "forge-std-1.9.6/src/Test.sol";
 
-import {LibBytes} from "src/library/LibBytes.sol";
+import {LibBytes} from "../../src/library/LibBytes.sol";
 
 contract LibBytesTest is Test {
     using LibBytes for bytes;
