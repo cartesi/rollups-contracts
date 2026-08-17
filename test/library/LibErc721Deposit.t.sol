@@ -5,10 +5,10 @@ pragma solidity ^0.8.30;
 
 import {Test} from "forge-std-1.9.6/src/Test.sol";
 
-import {Erc721Deposit} from "src/common/Erc721Deposit.sol";
-import {Voucher} from "src/common/Voucher.sol";
-import {LibBytes} from "src/library/LibBytes.sol";
-import {LibErc721Deposit} from "src/library/LibErc721Deposit.sol";
+import {Erc721Deposit} from "../../src/common/Erc721Deposit.sol";
+import {Voucher} from "../../src/common/Voucher.sol";
+import {LibBytes} from "../../src/library/LibBytes.sol";
+import {LibErc721Deposit} from "../../src/library/LibErc721Deposit.sol";
 
 contract LibErc721DepositTest is Test {
     using LibErc721Deposit for Erc721Deposit;

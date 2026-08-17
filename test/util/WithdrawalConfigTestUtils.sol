@@ -5,8 +5,8 @@ pragma solidity ^0.8.30;
 
 import {Test} from "forge-std-1.9.6/src/Test.sol";
 
-import {CanonicalMachine} from "src/common/CanonicalMachine.sol";
-import {WithdrawalConfig} from "src/common/WithdrawalConfig.sol";
+import {CanonicalMachine} from "../../src/common/CanonicalMachine.sol";
+import {WithdrawalConfig} from "../../src/common/WithdrawalConfig.sol";
 
 abstract contract WithdrawalConfigTestUtils is Test {
     function _makeWithdrawalConfigValidInPlace(WithdrawalConfig memory withdrawalConfig)

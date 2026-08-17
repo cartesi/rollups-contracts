@@ -8,8 +8,8 @@ import {IERC721Receiver} from "@openzeppelin-contracts-5.2.0/token/ERC721/IERC72
 
 import {Vm} from "forge-std-1.9.6/src/Vm.sol";
 
-import {IInputBox} from "src/inputs/IInputBox.sol";
-import {IErc721Portal} from "src/portals/IErc721Portal.sol";
+import {IInputBox} from "../../src/inputs/IInputBox.sol";
+import {IErc721Portal} from "../../src/portals/IErc721Portal.sol";
 
 import {InputBoxTestUtils} from "../util/InputBoxTestUtils.sol";
 import {LibBytes} from "../util/LibBytes.sol";

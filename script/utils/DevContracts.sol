@@ -5,12 +5,12 @@ pragma solidity ^0.8.30;
 
 import {VmSafe} from "forge-std-1.9.6/src/Vm.sol";
 
-import {TestFungibleToken} from "src/devnet/TestFungibleToken.sol";
-import {TestMultiToken} from "src/devnet/TestMultiToken.sol";
-import {TestNonFungibleToken} from "src/devnet/TestNonFungibleToken.sol";
-import {TestUsdc} from "src/devnet/TestUsdc.sol";
-import {IUsdWithdrawalOutputBuilder} from "src/withdrawal/IUsdWithdrawalOutputBuilder.sol";
-import {UsdWithdrawalOutputBuilder} from "src/withdrawal/UsdWithdrawalOutputBuilder.sol";
+import {TestFungibleToken} from "../../src/devnet/TestFungibleToken.sol";
+import {TestMultiToken} from "../../src/devnet/TestMultiToken.sol";
+import {TestNonFungibleToken} from "../../src/devnet/TestNonFungibleToken.sol";
+import {TestUsdc} from "../../src/devnet/TestUsdc.sol";
+import {IUsdWithdrawalOutputBuilder} from "../../src/withdrawal/IUsdWithdrawalOutputBuilder.sol";
+import {UsdWithdrawalOutputBuilder} from "../../src/withdrawal/UsdWithdrawalOutputBuilder.sol";
 
 import "./ContractDeployers.sol" as G;
 import "./CoreContracts.sol" as CoreContracts;

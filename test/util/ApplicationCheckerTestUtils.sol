@@ -3,8 +3,8 @@
 
 pragma solidity ^0.8.30;
 
-import {IApplication} from "src/dapp/IApplication.sol";
-import {IApplicationChecker} from "src/dapp/IApplicationChecker.sol";
+import {IApplication} from "../../src/dapp/IApplication.sol";
+import {IApplicationChecker} from "../../src/dapp/IApplicationChecker.sol";
 
 import {RollupsTest} from "./RollupsTest.sol";
 

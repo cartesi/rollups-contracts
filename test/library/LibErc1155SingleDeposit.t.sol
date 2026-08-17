@@ -7,10 +7,10 @@ import {Test} from "forge-std-1.9.6/src/Test.sol";
 
 import {IERC1155} from "@openzeppelin-contracts-5.2.0/token/ERC1155/IERC1155.sol";
 
-import {Erc1155SingleDeposit} from "src/common/Erc1155SingleDeposit.sol";
-import {Voucher} from "src/common/Voucher.sol";
-import {LibBytes} from "src/library/LibBytes.sol";
-import {LibErc1155SingleDeposit} from "src/library/LibErc1155SingleDeposit.sol";
+import {Erc1155SingleDeposit} from "../../src/common/Erc1155SingleDeposit.sol";
+import {Voucher} from "../../src/common/Voucher.sol";
+import {LibBytes} from "../../src/library/LibBytes.sol";
+import {LibErc1155SingleDeposit} from "../../src/library/LibErc1155SingleDeposit.sol";
 
 contract LibErc1155SingleDepositTest is Test {
     using LibErc1155SingleDeposit for Erc1155SingleDeposit;

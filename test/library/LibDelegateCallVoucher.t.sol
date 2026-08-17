@@ -5,10 +5,10 @@ pragma solidity ^0.8.30;
 
 import {Test} from "forge-std-1.9.6/src/Test.sol";
 
-import {DelegateCallVoucher} from "src/common/DelegateCallVoucher.sol";
-import {Outputs} from "src/common/Outputs.sol";
-import {LibBytes} from "src/library/LibBytes.sol";
-import {LibDelegateCallVoucher} from "src/library/LibDelegateCallVoucher.sol";
+import {DelegateCallVoucher} from "../../src/common/DelegateCallVoucher.sol";
+import {Outputs} from "../../src/common/Outputs.sol";
+import {LibBytes} from "../../src/library/LibBytes.sol";
+import {LibDelegateCallVoucher} from "../../src/library/LibDelegateCallVoucher.sol";
 
 contract LibDelegateCallVoucherTest is Test {
     using LibBytes for bytes;

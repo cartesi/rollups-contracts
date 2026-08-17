@@ -3,8 +3,8 @@
 
 pragma solidity ^0.8.30;
 
-import {IApplication} from "src/dapp/IApplication.sol";
-import {LibBytes} from "src/library/LibBytes.sol";
+import {IApplication} from "../../src/dapp/IApplication.sol";
+import {LibBytes} from "../../src/library/LibBytes.sol";
 
 contract RefundIssuanceChecker {
     using LibBytes for bytes;

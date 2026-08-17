@@ -3,12 +3,12 @@
 
 pragma solidity ^0.8.30;
 
-import {Erc1155BatchDeposit} from "src/common/Erc1155BatchDeposit.sol";
-import {Erc1155SingleDeposit} from "src/common/Erc1155SingleDeposit.sol";
-import {Erc20Deposit} from "src/common/Erc20Deposit.sol";
-import {Erc721Deposit} from "src/common/Erc721Deposit.sol";
-import {EtherDeposit} from "src/common/EtherDeposit.sol";
-import {InputEncoding} from "src/common/InputEncoding.sol";
+import {Erc1155BatchDeposit} from "../../src/common/Erc1155BatchDeposit.sol";
+import {Erc1155SingleDeposit} from "../../src/common/Erc1155SingleDeposit.sol";
+import {Erc20Deposit} from "../../src/common/Erc20Deposit.sol";
+import {Erc721Deposit} from "../../src/common/Erc721Deposit.sol";
+import {EtherDeposit} from "../../src/common/EtherDeposit.sol";
+import {InputEncoding} from "../../src/common/InputEncoding.sol";
 
 library LibDepositDecoder {
     function decodeEtherDeposit(bytes calldata payload)

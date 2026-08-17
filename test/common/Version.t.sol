@@ -5,9 +5,9 @@ pragma solidity ^0.8.30;
 
 import {Test} from "forge-std-1.9.6/src/Test.sol";
 
-import "script/utils/SemanticVersioning.sol" as SemanticVersioning;
+import "../../script/utils/SemanticVersioning.sol" as SemanticVersioning;
 
-import "src/common/Version.sol" as Version;
+import "../../src/common/Version.sol" as Version;
 
 contract VersionTest is Test {
     string[] _strings;

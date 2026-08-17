@@ -5,8 +5,8 @@ pragma solidity ^0.8.30;
 
 import {Test} from "forge-std-1.9.6/src/Test.sol";
 
-import {LibKeccak256} from "src/library/LibKeccak256.sol";
-import {LibMath} from "src/library/LibMath.sol";
+import {LibKeccak256} from "../../src/library/LibKeccak256.sol";
+import {LibMath} from "../../src/library/LibMath.sol";
 
 /// @title Alternative naive, gas-inefficient implementation of LibKeccak256
 library LibNaiveKeccak256 {

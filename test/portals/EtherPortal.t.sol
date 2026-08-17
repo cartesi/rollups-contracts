@@ -5,8 +5,8 @@ pragma solidity ^0.8.30;
 
 import {Vm} from "forge-std-1.9.6/src/Vm.sol";
 
-import {IInputBox} from "src/inputs/IInputBox.sol";
-import {IEtherPortal} from "src/portals/IEtherPortal.sol";
+import {IInputBox} from "../../src/inputs/IInputBox.sol";
+import {IEtherPortal} from "../../src/portals/IEtherPortal.sol";
 
 import {InputBoxTestUtils} from "../util/InputBoxTestUtils.sol";
 import {LibBytes} from "../util/LibBytes.sol";

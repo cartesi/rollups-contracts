@@ -6,16 +6,16 @@ pragma solidity ^0.8.30;
 
 import {Ownable} from "@openzeppelin-contracts-5.2.0/access/Ownable.sol";
 
-import {WithdrawalConfig} from "src/common/WithdrawalConfig.sol";
-import {IConsensusFactoryErrors} from "src/consensus/IConsensusFactoryErrors.sol";
-import {IAuthority} from "src/consensus/authority/IAuthority.sol";
-import {IAuthorityFactory} from "src/consensus/authority/IAuthorityFactory.sol";
-import {IApplication} from "src/dapp/IApplication.sol";
-import {IApplicationFactory} from "src/dapp/IApplicationFactory.sol";
-import {IApplicationFactoryErrors} from "src/dapp/IApplicationFactoryErrors.sol";
-import {ISelfHostedApplicationFactory} from "src/dapp/ISelfHostedApplicationFactory.sol";
-import {IInputBox} from "src/inputs/IInputBox.sol";
-import {LibWithdrawalConfig} from "src/library/LibWithdrawalConfig.sol";
+import {WithdrawalConfig} from "../../src/common/WithdrawalConfig.sol";
+import {IConsensusFactoryErrors} from "../../src/consensus/IConsensusFactoryErrors.sol";
+import {IAuthority} from "../../src/consensus/authority/IAuthority.sol";
+import {IAuthorityFactory} from "../../src/consensus/authority/IAuthorityFactory.sol";
+import {IApplication} from "../../src/dapp/IApplication.sol";
+import {IApplicationFactory} from "../../src/dapp/IApplicationFactory.sol";
+import {IApplicationFactoryErrors} from "../../src/dapp/IApplicationFactoryErrors.sol";
+import {ISelfHostedApplicationFactory} from "../../src/dapp/ISelfHostedApplicationFactory.sol";
+import {IInputBox} from "../../src/inputs/IInputBox.sol";
+import {LibWithdrawalConfig} from "../../src/library/LibWithdrawalConfig.sol";
 
 import {LibBytes} from "../util/LibBytes.sol";
 import {RollupsTest} from "../util/RollupsTest.sol";

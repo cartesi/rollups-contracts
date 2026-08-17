@@ -5,7 +5,7 @@ pragma solidity ^0.8.30;
 
 import {Vm} from "forge-std-1.9.6/src/Vm.sol";
 
-import {LibMath} from "src/library/LibMath.sol";
+import {LibMath} from "../../src/library/LibMath.sol";
 
 import {LibBytes} from "./LibBytes.sol";
 import {LibUint256Array} from "./LibUint256Array.sol";

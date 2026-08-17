@@ -3,23 +3,23 @@
 
 pragma solidity ^0.8.30;
 
-import {AccountValidityProof} from "src/common/AccountValidityProof.sol";
-import {AddressErrors} from "src/common/AddressErrors.sol";
-import {BinaryMerkleTreeErrors} from "src/common/BinaryMerkleTreeErrors.sol";
-import {CanonicalMachine} from "src/common/CanonicalMachine.sol";
-import {Inputs} from "src/common/Inputs.sol";
-import {MachineValidityProof} from "src/common/MachineValidityProof.sol";
-import {OutputValidityProof} from "src/common/OutputValidityProof.sol";
-import {Outputs} from "src/common/Outputs.sol";
-import {WithdrawalConfig} from "src/common/WithdrawalConfig.sol";
-import {IAuthority} from "src/consensus/authority/IAuthority.sol";
-import {IApplication} from "src/dapp/IApplication.sol";
-import {ISafeErc20Transfer} from "src/delegatecall/ISafeErc20Transfer.sol";
-import {IInputBox} from "src/inputs/IInputBox.sol";
-import {LibUsdAccount} from "src/library/LibUsdAccount.sol";
-import {IRefundOutputBuilderErrors} from "src/refund/IRefundOutputBuilderErrors.sol";
-import {IWithdrawalOutputBuilder} from "src/withdrawal/IWithdrawalOutputBuilder.sol";
-import {IWithdrawalOutputBuilderErrors} from "src/withdrawal/IWithdrawalOutputBuilderErrors.sol";
+import {AccountValidityProof} from "../../src/common/AccountValidityProof.sol";
+import {AddressErrors} from "../../src/common/AddressErrors.sol";
+import {BinaryMerkleTreeErrors} from "../../src/common/BinaryMerkleTreeErrors.sol";
+import {CanonicalMachine} from "../../src/common/CanonicalMachine.sol";
+import {Inputs} from "../../src/common/Inputs.sol";
+import {MachineValidityProof} from "../../src/common/MachineValidityProof.sol";
+import {OutputValidityProof} from "../../src/common/OutputValidityProof.sol";
+import {Outputs} from "../../src/common/Outputs.sol";
+import {WithdrawalConfig} from "../../src/common/WithdrawalConfig.sol";
+import {IAuthority} from "../../src/consensus/authority/IAuthority.sol";
+import {IApplication} from "../../src/dapp/IApplication.sol";
+import {ISafeErc20Transfer} from "../../src/delegatecall/ISafeErc20Transfer.sol";
+import {IInputBox} from "../../src/inputs/IInputBox.sol";
+import {LibUsdAccount} from "../../src/library/LibUsdAccount.sol";
+import {IRefundOutputBuilderErrors} from "../../src/refund/IRefundOutputBuilderErrors.sol";
+import {IWithdrawalOutputBuilder} from "../../src/withdrawal/IWithdrawalOutputBuilder.sol";
+import {IWithdrawalOutputBuilderErrors} from "../../src/withdrawal/IWithdrawalOutputBuilderErrors.sol";
 
 import {IERC20Errors} from "@openzeppelin-contracts-5.2.0/interfaces/draft-IERC6093.sol";
 import {IERC1155Errors} from "@openzeppelin-contracts-5.2.0/interfaces/draft-IERC6093.sol";

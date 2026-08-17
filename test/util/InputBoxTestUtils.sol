@@ -5,8 +5,8 @@ pragma solidity ^0.8.30;
 
 import {Vm} from "forge-std-1.9.6/src/Vm.sol";
 
-import {Inputs} from "src/common/Inputs.sol";
-import {IInputBox} from "src/inputs/IInputBox.sol";
+import {Inputs} from "../../src/common/Inputs.sol";
+import {IInputBox} from "../../src/inputs/IInputBox.sol";
 
 import {ApplicationCheckerTestUtils} from "./ApplicationCheckerTestUtils.sol";
 import {LibBytes} from "./LibBytes.sol";
