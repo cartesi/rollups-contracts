@@ -18,7 +18,7 @@ library CanonicalMachine {
     uint8 constant LOG2_MEMORY_SIZE = 64;
 
     /// @notice Log2 of maximum number of outputs.
-    uint8 constant LOG2_MAX_OUTPUTS = 63;
+    uint64 constant LOG2_MAX_OUTPUTS = EmulatorConstants.ROLLUP_LOG2_MAX_OUTPUT_COUNT;
 
     /// @notice Log2 of data block size.
     uint8 constant LOG2_DATA_BLOCK_SIZE = Memory.LOG2_LEAF;
