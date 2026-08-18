@@ -4,6 +4,7 @@
 
 .PHONY: build
 .PHONY: check-foundry-version
+.PHONY: clean
 .PHONY: codegen
 .PHONY: coverage
 .PHONY: deploy-livenets
@@ -76,11 +77,12 @@ RELEASE_ARTIFACTS += $(DEVNET_BUNDLE)
 # Dependencies
 # ------------------------------------------------------------------------------
 
-FOUNDRYUP := foundryup
 ANVIL     := anvil
 CAST      := cast
 FORGE     := forge
+FOUNDRYUP := foundryup
 GENHTML   := genhtml
+GIT       := git
 
 # ------------------------------------------------------------------------------
 # Commands
@@ -270,6 +272,12 @@ LIVENET_DEPLOYMENTS_DIRS := $(addprefix $(DEPLOYMENTS)/, $(LIVENET_CHAIN_IDS))
 
 build:
 	@$(FORGE) build
+
+# -X honors personal (local or global) ignore rules
+# -d removes directories recursively
+# -ff removes git-sourced Soldeer dependencies
+clean:
+	@$(GIT) clean -Xdff
 
 codegen: $(GENERATED_FILES)
 
