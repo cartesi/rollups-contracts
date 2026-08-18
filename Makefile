@@ -65,9 +65,7 @@ FOUNDRY_VERSION := 1.5.1
 # Release artifacts (bundles)
 # ------------------------------------------------------------------------------
 
-DIST := dist
-
-BUNDLE_PREFIX               := $(DIST)/$(PROJECT_NAME)-$(VERSION)
+BUNDLE_PREFIX               := dist/$(PROJECT_NAME)-$(VERSION)
 ARTIFACTS_BUNDLE            := $(BUNDLE_PREFIX)-artifacts.tar.gz
 DEPLOYMENT_ADDRESSES_BUNDLE := $(BUNDLE_PREFIX)-deployment-addresses.tar.gz
 DEVNET_BUNDLE               := $(BUNDLE_PREFIX)-anvil-$(FOUNDRY_VERSION).tar.gz
@@ -436,13 +434,11 @@ $(DEVNET_BUNDLE): devnet
 $(DEVNET_BUNDLE): TAR_ARGS += $(DEVNET_DEPLOYMENTS_DIR)
 $(DEVNET_BUNDLE): TAR_ARGS += $(ANVIL_STATE)
 
-$(RELEASE_ARTIFACTS): | $(DIST)
+$(RELEASE_ARTIFACTS):
 	@echo "📦 Creating $@..."
+	@mkdir -p $(@D)
 	@tar $(TAR_DETERMINISTIC_CREATE_OPTS) -czf $@ $(TAR_ARGS)
 	@echo "✅ Created $@."
-
-$(DIST):
-	mkdir -p "$@"
 
 rust-bindings: $(DEPENDENCIES_STAMP)
 	@$(FORGE) bind $(FORGE_BIND_OPTS)
