@@ -1,5 +1,21 @@
 # @cartesi/rollups
 
+## 3.0.0-alpha.9
+
+### Minor Changes
+
+- Import contracts using relative paths only, allowing clients to import test and script contracts
+
+### Patch Changes
+
+- Import `LOG2_MAX_OUTPUTS` constant from `EmulatorConstants` instead of hard-coding it in `CanonicalMachine`; the value is still 63
+- Override file permissions with `--mode=a=rX,u+w` when bundling release artifacts
+- Improve Rust bindings CI job performance by skipping test contracts build
+- Change `build` Make target to skip test build (only necessary when running tests, see new `build-all` target)
+- Add Make targets: `build-all`, `clean`, `install-deps`, and `test`
+- Adjust documentation and CI to use new Make targets
+- Makefile improvements
+
 ## 3.0.0-alpha.8
 
 ### Minor Changes
