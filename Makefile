@@ -18,6 +18,7 @@
 .PHONY: publish-soldeer-package
 .PHONY: release-artifacts
 .PHONY: rust-bindings
+.PHONY: test
 .PHONY: verify-livenets
 .PHONY: verify-mainnets
 .PHONY: verify-testnets
@@ -445,6 +446,9 @@ $(DIST):
 
 rust-bindings: $(DEPENDENCIES_STAMP)
 	@$(FORGE) bind $(FORGE_BIND_OPTS)
+
+test: $(DEPENDENCIES_STAMP)
+	@$(FORGE) test -vvv
 
 verify-livenets: verify-testnets verify-mainnets
 verify-testnets: $(addprefix verify-,$(TESTNETS))
