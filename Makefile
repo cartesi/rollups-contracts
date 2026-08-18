@@ -11,6 +11,7 @@
 .PHONY: deploy-mainnets
 .PHONY: deploy-testnets
 .PHONY: devnet
+.PHONY: install-deps
 .PHONY: install-foundry
 .PHONY: print-foundry-version
 .PHONY: publish-soldeer-package
@@ -224,6 +225,13 @@ PUBLIC_CONTRACTS += TestNonFungibleToken
 PUBLIC_CONTRACTS += TestUsdc
 
 # ------------------------------------------------------------------------------
+# Solidity dependencies
+# ------------------------------------------------------------------------------
+
+DEPENDENCIES       := dependencies
+DEPENDENCIES_STAMP := $(DEPENDENCIES)/.installed
+
+# ------------------------------------------------------------------------------
 # Rust bindings generation options
 # ------------------------------------------------------------------------------
 
@@ -271,8 +279,8 @@ LIVENET_DEPLOYMENTS_DIRS := $(addprefix $(DEPLOYMENTS)/, $(LIVENET_CHAIN_IDS))
 # Rules
 # ------------------------------------------------------------------------------
 
-build:
-	@$(FORGE) build
+build: $(DEPENDENCIES_STAMP)
+	@$(FORGE) build --skip test
 
 # -X honors personal (local or global) ignore rules
 # -d removes directories recursively
@@ -292,20 +300,20 @@ $(GENERATED_FILE_VERSION):   CODEGEN_ARGS   += "$(PRE_RELEASE)"
 $(GENERATED_FILE_VERSION):   CODEGEN_ARGS   += "$(BUILD_METADATA)"
 
 .PHONY: $(GENERATED_FILES)
-$(GENERATED_FILES):
+$(GENERATED_FILES): $(DEPENDENCIES_STAMP)
 	@echo "🚧 Generating $@..."
 	@$(call CODEGEN_CMD,$(CODEGEN_SCRIPT)) -- $(CODEGEN_ARGS)
 	@$(FORGE) fmt $@
 	@echo "✅ Generated $@."
 
-coverage:
+coverage: $(DEPENDENCIES_STAMP)
 	@echo "🚧 Generating coverage data..."
 	@$(FORGE) coverage --ir-minimum --report lcov --lcov-version 2.0
 	@echo "🚧 Generating coverage report..."
 	@$(GENHTML) -o coverage lcov.info --rc derive_function_end_line=0
 	@echo "✅ Successfully generated coverage report."
 
-devnet: check-foundry-version
+devnet: check-foundry-version $(DEPENDENCIES_STAMP)
 	@set -eu; \
 	echo "🔨 Building Anvil devnet..." ; \
 	cleanup() { \
@@ -363,7 +371,7 @@ deploy-mainnets: $(addprefix deploy-,$(MAINNETS))
 # $(1) = chain name, e.g. eth-mainnet
 define DEPLOY_CHAIN_RULE_TEMPLATE
 .PHONY: deploy-$(1)
-deploy-$(1):
+deploy-$(1): $$(DEPENDENCIES_STAMP)
 	@echo "🌐 Running deployment script against $(LABEL.$(1))..."
 	@$$(DEPLOY_CMD) $$(CHAIN_OPTS.$(1)) $$(DEPLOY_OPTS)
 	@echo "✅ Deployment script successfully ran against $(LABEL.$(1))."
@@ -392,6 +400,13 @@ check-foundry-version:
 		fi; \
 	done; \
 	echo "✅ Foundry $(FOUNDRY_VERSION) confirmed (forge, cast, anvil)."
+
+install-deps: $(DEPENDENCIES_STAMP)
+
+$(DEPENDENCIES_STAMP): foundry.toml soldeer.lock
+	@$(FORGE) soldeer install
+	@mkdir -p $(@D)
+	@touch $@
 
 install-foundry:
 	@$(FOUNDRYUP) -i "$(FOUNDRY_VERSION)"
@@ -424,7 +439,7 @@ $(RELEASE_ARTIFACTS): | $(DIST)
 $(DIST):
 	mkdir -p "$@"
 
-rust-bindings:
+rust-bindings: $(DEPENDENCIES_STAMP)
 	@$(FORGE) bind $(FORGE_BIND_OPTS)
 
 verify-livenets: verify-testnets verify-mainnets
