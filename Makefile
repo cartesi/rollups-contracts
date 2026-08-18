@@ -3,6 +3,7 @@
 .NOTPARALLEL:
 
 .PHONY: build
+.PHONY: build-all
 .PHONY: check-foundry-version
 .PHONY: clean
 .PHONY: codegen
@@ -281,6 +282,9 @@ LIVENET_DEPLOYMENTS_DIRS := $(addprefix $(DEPLOYMENTS)/, $(LIVENET_CHAIN_IDS))
 
 build: $(DEPENDENCIES_STAMP)
 	@$(FORGE) build --skip test
+
+build-all: $(DEPENDENCIES_STAMP)
+	@$(FORGE) build
 
 # -X honors personal (local or global) ignore rules
 # -d removes directories recursively
