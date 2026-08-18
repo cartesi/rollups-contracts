@@ -31,18 +31,16 @@ deposit assets, submit claims, execute asset withdrawal orders, and more.
 
 ## Getting started
 
-First, please ensure [Foundry] 1.5.1 is installed.
-
-Then, you may clone the repository...
+First, clone this repository.
 
 ```sh
 git clone https://github.com/cartesi/rollups-contracts.git
 ```
 
-... and install the Solidity dependencies from Soldeer.
+Then, make sure the correct version of [Foundry] is installed.
 
 ```sh
-forge soldeer install
+make check-foundry-version
 ```
 
 Having done that, you can build a local devnet.

@@ -15,4 +15,4 @@ runs:
 
     - name: Install Solidity packages
       shell: bash
-      run: forge soldeer install
+      run: make install-deps

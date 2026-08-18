@@ -14,7 +14,7 @@ make check-foundry-version
 2. Install the project dependencies through Soldeer.
 
 ```bash
-forge soldeer install
+make install-deps
 ```
 
 3. Set the `*_RPC_URL` environment variable to the JSON-RPC API entrypoint of the target chain.
