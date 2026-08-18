@@ -229,6 +229,7 @@ PUBLIC_CONTRACTS += TestUsdc
 
 CRATE_DESCRIPTION := Rust bindings for Cartesi Rollups contracts
 
+FORGE_BIND_OPTS  += --skip test
 FORGE_BIND_OPTS  += --select "^($(subst $(SPACE),|,$(PUBLIC_CONTRACTS)))$$"
 FORGE_BIND_OPTS  += --crate-name "$(PROJECT_NAME)"
 FORGE_BIND_OPTS  += --crate-version "$(VERSION)"
