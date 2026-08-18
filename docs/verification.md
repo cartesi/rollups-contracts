@@ -42,7 +42,7 @@ make check-foundry-version
 2. Install the project dependencies through Soldeer.
 
 ```bash
-forge soldeer install
+make install-deps
 ```
 
 3. Make sure the deployment artifacts of the target chain
@@ -99,7 +99,7 @@ same bytecode as deployed.
 
 Verification is only possible if the local build reproduces the deployed bytecode.
 Please make sure you checked out the revision that was used for the deployment,
-that dependencies were installed with `forge soldeer install`,
+that dependencies were installed with `make install-deps`,
 and that no compiler option was overridden.
 
 ### Contract source code already verified

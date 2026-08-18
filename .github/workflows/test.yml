@@ -21,7 +21,7 @@ jobs:
       - uses: ./.github/actions/setup
 
       - name: Run tests
-        run: forge test -vvv
+        run: make test
 
       - name: Upload signatures
         run: forge selectors upload --all
