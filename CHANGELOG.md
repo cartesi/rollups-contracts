@@ -1,5 +1,11 @@
 # @cartesi/rollups
 
+## 3.0.0-alpha.10
+
+### Minor Changes
+
+- Publish compilation artifacts from OpenZeppelin's ERC interfaces
+
 ## 3.0.0-alpha.9
 
 ### Minor Changes

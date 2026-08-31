@@ -6,5 +6,5 @@ pragma solidity ^0.8.30;
 uint64 constant MAJOR = 3;
 uint64 constant MINOR = 0;
 uint64 constant PATCH = 0;
-string constant PRE_RELEASE = "alpha.9";
+string constant PRE_RELEASE = "alpha.10";
 string constant BUILD_METADATA = "";
