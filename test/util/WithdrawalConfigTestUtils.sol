@@ -13,6 +13,14 @@ abstract contract WithdrawalConfigTestUtils is Test {
         internal
         pure
     {
+        withdrawalConfig.processedInputCountLeafIndex = uint64(
+            bound(
+                withdrawalConfig.processedInputCountLeafIndex,
+                0,
+                (1 << CanonicalMachine.MEMORY_TREE_HEIGHT) - 1
+            )
+        );
+
         withdrawalConfig.log2LeavesPerAccount = uint8(
             bound(
                 withdrawalConfig.log2LeavesPerAccount,
@@ -47,7 +55,8 @@ abstract contract WithdrawalConfigTestUtils is Test {
         WithdrawalConfig memory withdrawalConfig,
         uint256 seed
     ) internal pure {
-        if (seed % 2 == 0) {
+        uint256 x = (seed % 3);
+        if (x == 0) {
             if (
                 withdrawalConfig.log2MaxNumOfAccounts
                     <= CanonicalMachine.MEMORY_TREE_HEIGHT
@@ -61,6 +70,14 @@ abstract contract WithdrawalConfigTestUtils is Test {
                     )
                 );
             }
+        } else if (x == 1) {
+            withdrawalConfig.processedInputCountLeafIndex = uint64(
+                bound(
+                    withdrawalConfig.processedInputCountLeafIndex,
+                    1 << CanonicalMachine.MEMORY_TREE_HEIGHT,
+                    type(uint64).max
+                )
+            );
         } else {
             uint256 log2AccountsDriveSize = uint256(CanonicalMachine.LOG2_DATA_BLOCK_SIZE)
                 + uint256(withdrawalConfig.log2LeavesPerAccount)

@@ -10,11 +10,13 @@ import {IWithdrawalOutputBuilder} from "../withdrawal/IWithdrawalOutputBuilder.s
 // @param log2LeavesPerAccount The base-2 log of leaves per account
 // @param log2MaxNumOfAccounts The base-2 log of max. num. of accounts
 // @param accountsDriveStartIndex The offset of the accounts drive
+// @param processedInputCountLeafIndex The index of the processed-input-count leaf
 // @param withdrawalOutputBuilder The address of the withdrawal output builder
 struct WithdrawalConfig {
     address guardian;
     uint8 log2LeavesPerAccount;
     uint8 log2MaxNumOfAccounts;
     uint64 accountsDriveStartIndex;
+    uint64 processedInputCountLeafIndex;
     IWithdrawalOutputBuilder withdrawalOutputBuilder;
 }

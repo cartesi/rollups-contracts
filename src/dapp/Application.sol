@@ -73,6 +73,10 @@ contract Application is
     /// @dev See the `getAccountsDriveStartIndex` function.
     uint64 immutable ACCOUNTS_DRIVE_START_INDEX;
 
+    /// @notice The index of the processed-input-count leaf.
+    /// @dev See the `getProcessedInputCountLeafIndex` function.
+    uint64 immutable PROCESSED_INPUT_COUNT_LEAF_INDEX;
+
     /// @notice The refund output builder contract.
     /// @dev See the `getRefundOutputBuilder` function.
     IRefundOutputBuilder immutable REFUND_OUTPUT_BUILDER;
@@ -110,6 +114,16 @@ contract Application is
     /// @dev See the `getAccountsDriveMerkleRoot` and
     /// `proveAccountsDriveMerkleRoot` functions.
     bytes32 internal _accountsDriveMerkleRoot;
+
+    /// @notice Whether the processed-input count was proved.
+    /// @dev See the `getProcessedInputCount` and
+    /// `proveProcessedInputCount` functions.
+    bool internal _wasProcessedInputCountProved;
+
+    /// @notice The processed-input count.
+    /// @dev See the `getProcessedInputCount` and
+    /// `proveProcessedInputCount` functions.
+    uint256 internal _processedInputCount;
 
     /// @notice The number of outputs executed by the application.
     /// @dev See the `getNumberOfExecutedOutputs` function.
@@ -149,6 +163,7 @@ contract Application is
         LOG2_LEAVES_PER_ACCOUNT = withdrawalConfig.log2LeavesPerAccount;
         LOG2_MAX_NUM_OF_ACCOUNTS = withdrawalConfig.log2MaxNumOfAccounts;
         ACCOUNTS_DRIVE_START_INDEX = withdrawalConfig.accountsDriveStartIndex;
+        PROCESSED_INPUT_COUNT_LEAF_INDEX = withdrawalConfig.processedInputCountLeafIndex;
         REFUND_OUTPUT_BUILDER = refundOutputBuilder;
         WITHDRAWAL_OUTPUT_BUILDER = withdrawalConfig.withdrawalOutputBuilder;
         _outputsMerkleRootValidator = outputsMerkleRootValidator;
@@ -198,7 +213,19 @@ contract Application is
             validateInput(inputIndex, input);
 
         if (_wasInputFinalized(inputIndex, blockNumber)) {
-            revert CannotRefundFinalizedInput(inputIndex);
+            // If the input was finalized,
+            // we need to check whether it was actually processed.
+            // For that, the processed-input count must have been proved already.
+            if (!_wasProcessedInputCountProved) {
+                revert ProcessedInputCountNotProved();
+            }
+
+            // If the processed-input count was proved,
+            // then we can check if the input was actually processed
+            // by comparing its index against the proved processed-input count.
+            if (inputIndex < _processedInputCount) {
+                revert CannotRefundFinalizedAndProcessedInput(inputIndex);
+            }
         }
 
         bytes memory output = _buildRefundOutput(sender, payload);
@@ -252,6 +279,45 @@ contract Application is
         _wasAccountsDriveMerkleRootProved = true;
 
         emit AccountsDriveMerkleRootProved(accountsDriveMerkleRoot);
+    }
+
+    function proveProcessedInputCount(
+        uint256 processedInputCount,
+        bytes32[] calldata proof
+    ) external override onlyForeclosed {
+        if (_wasProcessedInputCountProved) {
+            revert ProcessedInputCountAlreadyProved();
+        }
+
+        if (proof.length != CanonicalMachine.MEMORY_TREE_HEIGHT) {
+            revert InvalidProcessedInputCountProofSize();
+        }
+
+        // The Merkle root computation below should not raise an InvalidNodeIndex error
+        // because the LibWithdrawalConfig.isValid function run at the constructor
+        // guarantees that getProcessedInputCountLeafIndex() >> proof.length == 0.
+        // The processed-input count is written in big-endian order.
+
+        bytes32 machineMerkleRoot = proof.merkleRootAfterReplacement(
+            getProcessedInputCountLeafIndex(),
+            keccak256(abi.encode(processedInputCount)),
+            LibKeccak256.hashPair
+        );
+
+        // There is no risk of reentrancy attacks when retrieving the last-finalized
+        // machine Merkle root from the outputs Merkle root validator because it is done
+        // through a static call, which reverts on any state change.
+
+        bytes32 lastFinalizedMachineMerkleRoot = _getLastFinalizedMachineMerkleRoot();
+
+        if (machineMerkleRoot != lastFinalizedMachineMerkleRoot) {
+            revert InvalidMachineMerkleRoot(machineMerkleRoot);
+        }
+
+        _processedInputCount = processedInputCount;
+        _wasProcessedInputCountProved = true;
+
+        emit ProcessedInputCountProved(processedInputCount);
     }
 
     function withdraw(bytes calldata account, AccountValidityProof calldata proof)
@@ -486,6 +552,10 @@ contract Application is
         return ACCOUNTS_DRIVE_START_INDEX;
     }
 
+    function getProcessedInputCountLeafIndex() public view override returns (uint64) {
+        return PROCESSED_INPUT_COUNT_LEAF_INDEX;
+    }
+
     function getGuardian() public view override returns (address) {
         return GUARDIAN;
     }
@@ -523,6 +593,7 @@ contract Application is
             log2LeavesPerAccount: getLog2LeavesPerAccount(),
             log2MaxNumOfAccounts: getLog2MaxNumOfAccounts(),
             accountsDriveStartIndex: getAccountsDriveStartIndex(),
+            processedInputCountLeafIndex: getProcessedInputCountLeafIndex(),
             withdrawalOutputBuilder: getWithdrawalOutputBuilder()
         });
     }
@@ -535,6 +606,16 @@ contract Application is
     {
         wasAccountsDriveMerkleRootProved = _wasAccountsDriveMerkleRootProved;
         accountsDriveMerkleRoot = _accountsDriveMerkleRoot;
+    }
+
+    function getProcessedInputCount()
+        external
+        view
+        override
+        returns (bool wasProcessedInputCountProved, uint256 processedInputCount)
+    {
+        wasProcessedInputCountProved = _wasProcessedInputCountProved;
+        processedInputCount = _processedInputCount;
     }
 
     /// @inheritdoc Ownable

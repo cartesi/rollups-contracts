@@ -135,6 +135,7 @@ contract ApplicationTest is
                         log2LeavesPerAccount: LibEmulator.LOG2_LEAVES_PER_ACCOUNT,
                         log2MaxNumOfAccounts: LibEmulator.LOG2_MAX_NUM_OF_ACCOUNTS,
                         accountsDriveStartIndex: LibEmulator.ACCOUNTS_DRIVE_START_INDEX,
+                        processedInputCountLeafIndex: LibEmulator.PROCESSED_INPUT_COUNT_LEAF_INDEX,
                         withdrawalOutputBuilder: _contracts.dev
                         .testUsdWithdrawalOutputBuilder
                     }),
@@ -1119,7 +1120,16 @@ contract ApplicationTest is
         _addInputs(_contracts.core.inputBox, appContract, payloads);
         uint256 inputIndex = _contracts.core.inputBox.getNumberOfInputs(appContract);
 
-        // 1.1. Randomly submit and accept claim
+        // 1.1. Randomly update processed-input count
+        // We give some slack after the deposit input to simulate a bug in the
+        // application in which the machine advertises that it has processed more
+        // inputs than it has even received. The contracts should protect against this
+        // bug and still allow refunds for unfinalized inputs according to the outputs
+        // Merkle root validator contract.
+        uint256 processedInputCount = vm.randomUint(0, inputIndex + 5);
+        _emulator.setProcessedInputCount(processedInputCount);
+
+        // 1.2. Randomly submit and accept claim
         if (vm.randomBool()) _submitAndAcceptClaim();
 
         // 2. Randomize deposit environment
@@ -1440,9 +1450,17 @@ contract ApplicationTest is
         vm.prank(vm.randomAddress());
         _appContract.issueRefund(inputIndex, input);
 
-        // 8.1 Try issuing refund of finalized input after foreclosure
-        vm.expectRevert(_encodeCannotRefundFinalizedInput(inputIndex));
+        // 8.1 Try issuing refund of finalized input after foreclosure without a processed-input count proof
+        vm.expectRevert(_encodeProcessedInputCountNotProved());
         this.simulateClaimSubmissionAcceptanceForeclosureAndRefund(inputIndex, input);
+
+        // 8.2 Try issuing refund of finalized input after foreclosure and processed-input count proof
+        vm.expectRevert(
+            (inputIndex < processedInputCount)
+                ? _encodeCannotRefundFinalizedAndProcessedInput(inputIndex)
+                : abi.encodeWithSignature("Error(string)", "Successful refund")
+        );
+        this.simulateClaimSubmissionAcceptanceForeclosureProofAndRefund(inputIndex, input);
 
         // 9. Make guardian foreclose the application
         vm.prank(_appContract.getGuardian());
@@ -2090,8 +2108,8 @@ contract ApplicationTest is
     }
 
     /// @notice This function is used to simulate a claim acceptance, a foreclosure and
-    /// a refund issuance. If the proof succeeds, then the function reverts with
-    /// error message "Successful refund". If the proof fails, then the function propagates
+    /// a refund issuance. If the refund succeeds, then the function reverts with
+    /// error message "Successful refund". If the refund fails, then the function propagates
     /// the error from the app contract.
     function simulateClaimSubmissionAcceptanceForeclosureAndRefund(
         uint256 inputIndex,
@@ -2112,6 +2130,39 @@ contract ApplicationTest is
         );
         vm.prank(_appContract.getGuardian());
         _appContract.foreclose();
+        vm.prank(vm.randomAddress());
+        _appContract.issueRefund(inputIndex, input);
+        revert("Successful refund");
+    }
+
+    /// @notice This function is used to simulate a claim acceptance, a foreclosure,
+    /// processed-input-count proof and a refund issuance. If the refund succeeds,
+    /// then the function reverts with error message "Successful refund".
+    /// If the refund fails, then the function propagates the error from the app contract.
+    function simulateClaimSubmissionAcceptanceForeclosureProofAndRefund(
+        uint256 inputIndex,
+        bytes calldata input
+    ) external {
+        assertEq(msg.sender, address(this), "called by external account");
+        uint256 lastProcessedBlockNumber = vm.getBlockNumber();
+        vm.roll(vm.randomUint(lastProcessedBlockNumber + 1, type(uint256).max));
+        bytes32 machineMerkleRoot = _proofComponents.getMachineMerkleRoot();
+        MachineValidityProof memory proof = _proofComponents.getMachineValidityProof();
+        vm.prank(_authority.owner());
+        _authority.submitClaim(
+            address(_appContract), lastProcessedBlockNumber, machineMerkleRoot, proof
+        );
+        vm.prank(vm.randomAddress());
+        _authority.acceptClaim(
+            address(_appContract), lastProcessedBlockNumber, machineMerkleRoot
+        );
+        vm.prank(_appContract.getGuardian());
+        _appContract.foreclose();
+        vm.prank(vm.randomAddress());
+        _appContract.proveProcessedInputCount(
+            _emulator.getProcessedInputCount(),
+            _proofComponents.getProcessedInputCountProof()
+        );
         vm.prank(vm.randomAddress());
         _appContract.issueRefund(inputIndex, input);
         revert("Successful refund");
@@ -2195,13 +2246,13 @@ contract ApplicationTest is
             abi.encodeWithSelector(IApplication.RefundAlreadyIssued.selector, inputIndex);
     }
 
-    function _encodeCannotRefundFinalizedInput(uint256 inputIndex)
+    function _encodeCannotRefundFinalizedAndProcessedInput(uint256 inputIndex)
         internal
         pure
         returns (bytes memory)
     {
         return abi.encodeWithSelector(
-            IApplication.CannotRefundFinalizedInput.selector, inputIndex
+            IApplication.CannotRefundFinalizedAndProcessedInput.selector, inputIndex
         );
     }
 
@@ -2257,6 +2308,10 @@ contract ApplicationTest is
         return abi.encodeWithSelector(
             IApplication.AccountsDriveMerkleRootNotProved.selector
         );
+    }
+
+    function _encodeProcessedInputCountNotProved() internal pure returns (bytes memory) {
+        return abi.encodeWithSelector(IApplication.ProcessedInputCountNotProved.selector);
     }
 
     function _encodeInvalidAccountsDriveMerkleRoot(bytes32 accountsDriveMerkleRoot)

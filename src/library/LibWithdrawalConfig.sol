@@ -12,6 +12,17 @@ library LibWithdrawalConfig {
         pure
         returns (bool)
     {
+        // Check if the processed-input counter lies within memory limits.
+        // This is another way of writing `processedInputCountLeafIndex < memoryTreeLeafCount`.
+        // This check is important so that `LibBinaryMerkleTree.merkleRootAfterReplacement`
+        // doesn't revert when proving the processed-input count in the last-finalized state.
+        if (
+            (withdrawalConfig.processedInputCountLeafIndex
+                        >> CanonicalMachine.MEMORY_TREE_HEIGHT) != 0
+        ) {
+            return false;
+        }
+
         // The addition below cannot overflow because `3 * type(uint8).max <= type(uint256).max`.
         uint256 log2AccountsDriveSize = uint256(CanonicalMachine.LOG2_DATA_BLOCK_SIZE)
             + uint256(withdrawalConfig.log2MaxNumOfAccounts)

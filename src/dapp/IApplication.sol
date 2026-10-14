@@ -66,6 +66,10 @@ interface IApplication is
     /// @param accountsDriveMerkleRoot The accounts drive Merkle root
     event AccountsDriveMerkleRootProved(bytes32 accountsDriveMerkleRoot);
 
+    /// @notice MUST trigger when the processed-input count is proved.
+    /// @param processedInputCount The processed-input count
+    event ProcessedInputCountProved(uint256 processedInputCount);
+
     /// @notice MUST trigger when the funds of an account are withdrawn.
     /// @param accountIndex The account index in the accounts drive
     /// @param account The account as encoded in the accounts drive
@@ -118,9 +122,11 @@ interface IApplication is
     /// the canonical input box contract.
     error IllFormedInput();
 
-    /// @notice Raised when trying to issue a refund for a finalized input.
+    /// @notice Raised when trying to issue a refund for a finalized and processed input.
     /// @param inputIndex The input index
-    error CannotRefundFinalizedInput(uint256 inputIndex);
+    /// @dev An input is said to be processed iff the processed-input count
+    /// inside the machine is strictly greater than the index of said input.
+    error CannotRefundFinalizedAndProcessedInput(uint256 inputIndex);
 
     /// @notice Raised when trying to re-issue a refund for the same input.
     /// @param inputIndex The input index
@@ -132,16 +138,32 @@ interface IApplication is
     /// `getLog2MaxNumOfAccounts` and `getLog2LeavesPerAccount` functions.
     error InvalidAccountsDriveMerkleRootProofSize();
 
+    /// @notice Raised when the processed-input count proof size is invalid.
+    /// @dev The array length should be log2 of the machine memory size.
+    /// See the `CanonicalMachine` library.
+    error InvalidProcessedInputCountProofSize();
+
     /// @notice Raised when someone tries to prove the accounts drive Merkle root but it
     /// has already been proved. This error adds an extra layer of protection against
     /// consensus-takeover attacks in which `getLastFinalizedMachineMerkleRoot` returns
     /// a different value after the application is foreclosed.
     error AccountsDriveMerkleRootAlreadyProved();
 
+    /// @notice Raised when someone tries to prove the processed-input count but it
+    /// has already been proved. This error adds an extra layer of protection against
+    /// consensus-takeover attacks in which `getLastFinalizedMachineMerkleRoot` returns
+    /// a different value after the application is foreclosed.
+    error ProcessedInputCountAlreadyProved();
+
     /// @notice Raised when someone tries to validate an accounts Merkle root but the
     /// accounts drive Merkle root has not yet been proved through the
     /// `proveAccountsDriveMerkleRoot` function.
     error AccountsDriveMerkleRootNotProved();
+
+    /// @notice Raised when someone tries to issue a refund but the
+    /// processed-input count has not yet been proved through the
+    /// `proveProcessedInputCount` function.
+    error ProcessedInputCountNotProved();
 
     /// @notice Raised when the account root siblings array has an invalid length.
     /// @dev The array length should be log2 of the maximum number of accounts. See the
@@ -204,8 +226,9 @@ interface IApplication is
     /// @notice Issue a refund for an unprocessed input.
     /// @param inputIndex The index of the input in the application's input box.
     /// @param input The input that was sent to the application
-    /// @dev May raise `CannotRefundFinalizedInput`, `RefundAlreadyIssued`,
-    /// `UnknownInputSender`, as well as any of the errors raised by `validateInput`.
+    /// @dev May raise `ProcessedInputCountNotProved`, `CannotRefundFinalizedInput`,
+    /// `RefundAlreadyIssued`, `UnknownInputSender`, as well as any of the errors
+    /// raised by `validateInput`.
     /// On success, marks the input as refunded, and emits a `RefundIssued` event.
     function issueRefund(uint256 inputIndex, bytes calldata input) external;
 
@@ -222,6 +245,22 @@ interface IApplication is
     /// `AccountsDriveMerkleRootProved` event.
     function proveAccountsDriveMerkleRoot(
         bytes32 accountsDriveMerkleRoot,
+        bytes32[] calldata proof
+    ) external;
+
+    /// @notice Prove the processed-input count in the last-finalized machine state
+    /// provided by the application's outputs Merkle root validator or in the initial
+    /// machine Merkle root (template hash) if no machine Merkle root has been finalized
+    /// yet. This function can be called by anyone after the app is foreclosed so that
+    /// unprocessed deposit inputs can be refunded.
+    /// @param processedInputCount The processed-input count
+    /// @param proof Siblings of the processed-input-count leaf in the machine
+    /// @dev May raise `NotForeclosed`, `ProcessedInputCountAlreadyProved`,
+    /// `InvalidProcessedInputCountProofSize` or `InvalidMachineMerkleRoot`.
+    /// On success, stores the proved processed-input count and emits a
+    /// `ProcessedInputCountProved` event.
+    function proveProcessedInputCount(
+        uint256 processedInputCount,
         bytes32[] calldata proof
     ) external;
 
@@ -314,6 +353,14 @@ interface IApplication is
         view
         returns (bool wasAccountsDriveMerkleRootProved, bytes32 accountsDriveMerkleRoot);
 
+    /// @notice Check whether the processed-input count was proved and its value.
+    /// @return wasProcessedInputCountProved Whether the processed-input count was proved
+    /// @return processedInputCount The processed-input count (if proved)
+    function getProcessedInputCount()
+        external
+        view
+        returns (bool wasProcessedInputCountProved, uint256 processedInputCount);
+
     /// @notice Get the number of withdrawals.
     /// Useful for fast-syncing `Withdrawal` events.
     function getNumberOfWithdrawals() external view returns (uint256);
@@ -334,6 +381,10 @@ interface IApplication is
     /// @notice This is equivalent to the depth of the accounts
     /// drive tree whose leaves are the account roots.
     function getLog2MaxNumOfAccounts() external view returns (uint8);
+
+    /// @notice Get the index of the processed-input-count leaf in the
+    /// machine memory Merkle tree. The counter is written in big-endian order.
+    function getProcessedInputCountLeafIndex() external view returns (uint64);
 
     /// @notice Get the factor that, when multiplied by the size of the accounts
     /// drive, yields the start memory address of the accounts drive.

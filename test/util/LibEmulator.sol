@@ -34,6 +34,7 @@ library LibEmulator {
         bytes[] accounts;
         uint64 iflagsY;
         uint64 htifTohost;
+        uint256 processedInputCount;
     }
 
     struct ProofComponents {
@@ -67,6 +68,13 @@ library LibEmulator {
     uint8 constant LOG2_MAX_NUM_OF_ACCOUNTS = 17;
     uint64 constant ACCOUNTS_DRIVE_START_INDEX = 0x240000000;
     uint64 constant MEMORY_TREE_HEIGHT = CanonicalMachine.MEMORY_TREE_HEIGHT;
+
+    /// @dev The processed-input counter is placed right after the accounts drive,
+    /// just like in a real application. This placement allows for the app to place
+    /// the account recovery states and processed-input counter in the same drive,
+    /// which can improve runtime performance.
+    uint64 constant PROCESSED_INPUT_COUNT_LEAF_INDEX = (ACCOUNTS_DRIVE_START_INDEX + 1)
+        << (LOG2_LEAVES_PER_ACCOUNT + LOG2_MAX_NUM_OF_ACCOUNTS);
 
     // -------------
     // state changes
@@ -126,6 +134,12 @@ library LibEmulator {
         state.htifTohost = htifTohost;
     }
 
+    function setProcessedInputCount(State storage state, uint256 processedInputCount)
+        internal
+    {
+        state.processedInputCount = processedInputCount;
+    }
+
     // -------------
     // state queries
     // -------------
@@ -136,6 +150,10 @@ library LibEmulator {
         returns (bytes storage)
     {
         return state.outputs[OutputIndex.unwrap(outputIndex)];
+    }
+
+    function getProcessedInputCount(State storage state) internal view returns (uint256) {
+        return state.processedInputCount;
     }
 
     function getOutputValidityProof(State storage state, OutputIndex outputIndex)
@@ -249,7 +267,7 @@ library LibEmulator {
         uint256 numOfAccounts = state.accounts.length;
         uint256 maxNumOfAccounts = 1 << LOG2_MAX_NUM_OF_ACCOUNTS;
 
-        uint256 sparseNodeCount = 3 + numOfAccounts;
+        uint256 sparseNodeCount = 4 + numOfAccounts;
 
         require(numOfAccounts <= maxNumOfAccounts, TooManyAccounts());
 
@@ -297,6 +315,12 @@ library LibEmulator {
                 extra: maxNumOfAccounts - numOfAccounts - 1
             });
         }
+
+        sparseNodes[sparseNodeIndex++] = SparseNode({
+            value: keccak256(abi.encode(state.processedInputCount)),
+            index: PROCESSED_INPUT_COUNT_LEAF_INDEX,
+            extra: 0
+        });
 
         assert(sparseNodeIndex == sparseNodeCount);
 
@@ -378,6 +402,14 @@ library LibEmulator {
 
         (, accountsDriveMerkleRootProof) =
             siblings.split(LOG2_LEAVES_PER_ACCOUNT + LOG2_MAX_NUM_OF_ACCOUNTS);
+    }
+
+    function getProcessedInputCountProof(ProofComponents memory pc)
+        internal
+        pure
+        returns (bytes32[] memory processedInputCountProof)
+    {
+        return getSiblings(pc, PROCESSED_INPUT_COUNT_LEAF_INDEX);
     }
 
     // -----------------
