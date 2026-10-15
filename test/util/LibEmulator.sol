@@ -14,6 +14,7 @@ import {CanonicalMachine} from "../../src/common/CanonicalMachine.sol";
 import {LeafProof} from "../../src/common/LeafProof.sol";
 import {MachineValidityProof} from "../../src/common/MachineValidityProof.sol";
 import {OutputValidityProof} from "../../src/common/OutputValidityProof.sol";
+import {LibEndianness} from "../../src/library/LibEndianness.sol";
 
 import {LibBinaryKeccak256MerkleTree} from "../util/LibBinaryKeccak256MerkleTree.sol";
 import {LibBytes32Array} from "../util/LibBytes32Array.sol";
@@ -23,6 +24,7 @@ import {SparseNode} from "./SparseNode.sol";
 
 library LibEmulator {
     using SafeCast for uint256;
+    using LibEndianness for bytes32;
     using LibBytes32Array for bytes32[];
     using LibSparseNodeArray for SparseNode[];
     using LibBinaryKeccak256MerkleTree for bytes;
@@ -316,8 +318,10 @@ library LibEmulator {
             });
         }
 
+        bytes32 picDataBlock = bytes32(state.processedInputCount).swapEndianness();
+
         sparseNodes[sparseNodeIndex++] = SparseNode({
-            value: keccak256(abi.encode(state.processedInputCount)),
+            value: keccak256(abi.encode(picDataBlock)),
             index: PROCESSED_INPUT_COUNT_LEAF_INDEX,
             extra: 0
         });

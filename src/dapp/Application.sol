@@ -17,6 +17,7 @@ import {LibAccountValidityProof} from "../library/LibAccountValidityProof.sol";
 import {LibAddress} from "../library/LibAddress.sol";
 import {LibBinaryMerkleTree} from "../library/LibBinaryMerkleTree.sol";
 import {LibBytes} from "../library/LibBytes.sol";
+import {LibEndianness} from "../library/LibEndianness.sol";
 import {LibKeccak256} from "../library/LibKeccak256.sol";
 import {LibOutputValidityProof} from "../library/LibOutputValidityProof.sol";
 import {LibWithdrawalConfig} from "../library/LibWithdrawalConfig.sol";
@@ -43,6 +44,7 @@ contract Application is
     using LibBinaryMerkleTree for bytes;
     using LibBinaryMerkleTree for bytes32[];
     using LibBytes for bytes;
+    using LibEndianness for bytes32;
     using LibOutputValidityProof for OutputValidityProof;
     using LibWithdrawalConfig for WithdrawalConfig;
 
@@ -296,11 +298,11 @@ contract Application is
         // The Merkle root computation below should not raise an InvalidNodeIndex error
         // because the LibWithdrawalConfig.isValid function run at the constructor
         // guarantees that getProcessedInputCountLeafIndex() >> proof.length == 0.
-        // The processed-input count is written in big-endian order.
+        // The processed-input count is written in little-endian order.
 
         bytes32 machineMerkleRoot = proof.merkleRootAfterReplacement(
             getProcessedInputCountLeafIndex(),
-            keccak256(abi.encode(processedInputCount)),
+            keccak256(abi.encode(bytes32(processedInputCount).swapEndianness())),
             LibKeccak256.hashPair
         );
 
