@@ -30,7 +30,7 @@ interface ISelfHostedApplicationFactory is
     /// @notice Deploy new application and authority contracts deterministically.
     /// @param authorityOwner The initial authority owner
     /// @param epochLength The epoch length
-    /// @param claimStagingPeriod The claim staging period
+    /// @param claimStagingPeriod The claim staging period, in base-layer blocks (see `IConsensus`)
     /// @param templateHash The initial machine state hash
     /// @param inputBox The input box contract
     /// @param withdrawalConfig The withdrawal configuration
@@ -59,7 +59,7 @@ interface ISelfHostedApplicationFactory is
     /// to be deployed deterministically.
     /// @param authorityOwner The initial authority owner
     /// @param epochLength The epoch length
-    /// @param claimStagingPeriod The claim staging period
+    /// @param claimStagingPeriod The claim staging period, in base-layer blocks (see `IConsensus`)
     /// @param templateHash The initial machine state hash
     /// @param inputBox The input box contract
     /// @param withdrawalConfig The withdrawal configuration

@@ -21,7 +21,7 @@ interface IAuthorityFactory is IVersionGetter, IConsensusFactoryErrors {
     /// @notice Deploy a new authority.
     /// @param authorityOwner The initial authority owner
     /// @param epochLength The epoch length
-    /// @param claimStagingPeriod The claim staging period
+    /// @param claimStagingPeriod The claim staging period, in base-layer blocks (see `IConsensus`)
     /// @return The authority
     /// @dev On success, MUST emit an `AuthorityCreated` event.
     /// @dev Reverts if the authority owner address is zero.
@@ -35,7 +35,7 @@ interface IAuthorityFactory is IVersionGetter, IConsensusFactoryErrors {
     /// @notice Deploy a new authority deterministically.
     /// @param authorityOwner The initial authority owner
     /// @param epochLength The epoch length
-    /// @param claimStagingPeriod The claim staging period
+    /// @param claimStagingPeriod The claim staging period, in base-layer blocks (see `IConsensus`)
     /// @param salt The salt used to deterministically generate the authority address
     /// @return The authority
     /// @dev On success, MUST emit an `AuthorityCreated` event.
@@ -51,7 +51,7 @@ interface IAuthorityFactory is IVersionGetter, IConsensusFactoryErrors {
     /// @notice Calculate the address of an authority to be deployed deterministically.
     /// @param authorityOwner The initial authority owner
     /// @param epochLength The epoch length
-    /// @param claimStagingPeriod The claim staging period
+    /// @param claimStagingPeriod The claim staging period, in base-layer blocks (see `IConsensus`)
     /// @param salt The salt used to deterministically generate the authority address
     /// @return The deterministic authority address
     /// @dev Beware that only the `newAuthority` function with the `salt` parameter
