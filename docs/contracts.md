@@ -80,6 +80,10 @@ In upcoming sections, we'll explain how applications are able to manage such ass
 
 The Application Factory allows anyone to deploy `Application` contracts with a simple function call.
 It provides greater security to users, as they know the bytecode could not have been altered.
+Applications can also be deployed deterministically, with a salt, at an address that can be calculated beforehand.
+This address depends only on the constructor arguments and the salt, not on who deploys the application.
+Assets should only be transferred to an application after it is deployed, through the portals,
+so that the application is informed of the deposit through an input.
 
 ### Portals
 

@@ -39,6 +39,12 @@ interface ISelfHostedApplicationFactory is
     /// @return The authority contract
     /// @dev Reverts if the authority owner address is zero.
     /// @dev Reverts if the epoch length is zero.
+    /// @dev Reverts if either address already contains code. Since the underlying
+    ///      factories are permissionless and their addresses do not depend on
+    ///      the caller, anyone can deploy either contract beforehand.
+    ///      In that case, deploy the missing contract (if any) directly through
+    ///      the authority or application factory, with the same arguments,
+    ///      or pick a different, random salt.
     function deployContracts(
         address authorityOwner,
         uint256 epochLength,
@@ -60,6 +66,12 @@ interface ISelfHostedApplicationFactory is
     /// @param salt The salt used to deterministically generate the addresses
     /// @return The application address
     /// @return The authority address
+    /// @dev The contracts at these addresses may have been deployed by anyone,
+    ///      through this factory or directly through the underlying ones.
+    ///      Either way, if both addresses hold code, the contracts are sound.
+    /// @dev Do not transfer assets to the application address before deployment:
+    ///      deposit through the portals afterwards, so that the application
+    ///      is informed through an input.
     function calculateAddresses(
         address authorityOwner,
         uint256 epochLength,
