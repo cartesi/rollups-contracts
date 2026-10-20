@@ -340,6 +340,13 @@ interface IApplication is
     /// @dev If `a = getLog2LeavesPerAccount()` `b = getLog2MaxNumOfAccounts()`,
     /// and `c = getAccountsDriveStartIndex()`, then the accounts drive starts
     /// at memory address `c*2^{a+b+5}` and has `2^{a+b+5}` bytes in size.
+    /// @dev Because `c` is measured in multiples of the accounts drive size,
+    /// changing `a` or `b` without adjusting `c` moves the accounts drive.
+    /// For example, incrementing `b` while keeping `c` doubles the start address.
+    /// @dev The accounts drive must coincide with a flash drive of the machine
+    /// that the application back-end keeps updated with the accounts.
+    /// The contracts cannot check this, so it must be verified off-chain,
+    /// against the machine configuration.
     function getAccountsDriveStartIndex() external view returns (uint64);
 
     /// @notice Get the refund output builder, which gets static-called

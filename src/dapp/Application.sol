@@ -69,7 +69,7 @@ contract Application is
     /// @dev See the `getLog2MaxNumOfAccounts` function.
     uint8 immutable LOG2_MAX_NUM_OF_ACCOUNTS;
 
-    /// @notice The offset of the accounts drive.
+    /// @notice The accounts drive start, in multiples of its size.
     /// @dev See the `getAccountsDriveStartIndex` function.
     uint64 immutable ACCOUNTS_DRIVE_START_INDEX;
 
