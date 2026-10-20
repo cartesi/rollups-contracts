@@ -26,7 +26,7 @@ interface IQuorumFactory is
     /// @notice Deploy a new quorum.
     /// @param validators the list of validators
     /// @param epochLength The epoch length
-    /// @param claimStagingPeriod The claim staging period
+    /// @param claimStagingPeriod The claim staging period, in base-layer blocks (see `IConsensus`)
     /// @return The quorum
     /// @dev On success, MUST emit a `QuorumCreated` event.
     /// @dev Duplicates in the `validators` array are ignored.
@@ -40,7 +40,7 @@ interface IQuorumFactory is
     /// @notice Deploy a new quorum deterministically.
     /// @param validators the list of validators
     /// @param epochLength The epoch length
-    /// @param claimStagingPeriod The claim staging period
+    /// @param claimStagingPeriod The claim staging period, in base-layer blocks (see `IConsensus`)
     /// @param salt The salt used to deterministically generate the quorum address
     /// @return The quorum
     /// @dev On success, MUST emit a `QuorumCreated` event.
@@ -56,7 +56,7 @@ interface IQuorumFactory is
     /// @notice Calculate the address of a quorum to be deployed deterministically.
     /// @param validators the list of validators
     /// @param epochLength The epoch length
-    /// @param claimStagingPeriod The claim staging period
+    /// @param claimStagingPeriod The claim staging period, in base-layer blocks (see `IConsensus`)
     /// @param salt The salt used to deterministically generate the quorum address
     /// @return The deterministic quorum address
     /// @dev Beware that only the `newQuorum` function with the `salt` parameter

@@ -41,6 +41,13 @@ import {IOutputsMerkleRootValidator} from "./IOutputsMerkleRootValidator.sol";
 /// If a malicious claim is ever staged, the application guardian should have enough time
 /// to foreclose the application, preventing the claim from ever being accepted, and
 /// allowing users to withdraw their funds from the last-finalized machine Merkle root.
+/// Foreclosing the application does not revoke claims that were already accepted.
+///
+/// The claim staging period is set at deployment and measured in base-layer blocks.
+/// The contracts enforce no minimum. With a claim staging period of zero, a claim could
+/// theoretically be staged and accepted in the same transaction, leaving no time for the
+/// guardian to react. Deployers should therefore pick a claim staging period that exceeds
+/// the guardian's reaction time, and take the base-layer block time into consideration.
 ///
 /// If the claim staging period is elapsed, and the application was not foreclosed, the
 /// claim can be finally accepted, and any outputs generated during that epoch can now be
