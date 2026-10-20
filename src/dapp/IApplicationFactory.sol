@@ -78,6 +78,11 @@ interface IApplicationFactory is IVersionGetter, IApplicationFactoryErrors {
     /// @return The deterministic application contract address
     /// @dev Beware that only the `newApplication` function with the `salt` parameter
     ///      is able to deterministically deploy an application.
+    /// @dev The address does not depend on the caller,
+    ///      so anyone can deploy any given application.
+    ///      Factories that configure applications after deploying them should
+    ///      therefore not assume they have deployed an application simply from
+    ///      the fact that its pre-calculated address contains some code.
     function calculateApplicationAddress(
         IOutputsMerkleRootValidator outputsMerkleRootValidator,
         address appOwner,
