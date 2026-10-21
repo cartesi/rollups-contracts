@@ -189,3 +189,19 @@ First, the application runs on a deterministic virtual machine, which means that
 Second, the inputs are known and agreed upon beforehand, thanks to the `InputBox` contract.
 When such a situation happens, the dispute resolution mechanism employed by the consensus will trigger.
 One such type of consensus is [Dave](https://github.com/cartesi/dave), which is under active development.
+
+### Experimental networks
+
+Deployments to Arbitrum and Arbitrum Sepolia are experimental.
+On Arbitrum chains, `block.number` does not return the chain's own block number,
+but an approximation of the Ethereum block number, which the sequencer updates every few seconds
+(see [Block numbers and time](https://docs.arbitrum.io/time)).
+Since the contracts measure time through `block.number`, this has the following consequences:
+
+- Epoch lengths, claim staging periods, and deployment block numbers are measured in Ethereum blocks.
+- The block numbers recorded in inputs and returned by `IApplication.getDeploymentBlockNumber`
+  differ from the ones used by the JSON-RPC API (in logs and block headers, for example), which are Arbitrum block numbers.
+  Off-chain components must determine the epoch of each input from the block number recorded in it.
+- The claim staging period depends on the sequencer's view of Ethereum.
+  If this view lags behind and then catches up, a staged claim can be accepted sooner than expected,
+  shortening the time the guardian has to react.
