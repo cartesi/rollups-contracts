@@ -69,6 +69,9 @@ Each hash is derived from the input and some metadata, such as the input sender,
 All the data needed to reconstruct a hash is available forever on-chain.
 As a result, one does not need to trust data providers in order to sync the off-chain machine with the latest input.
 Note that this module is completely permissionless, and we leave the off-chain machine to judge whether an input is valid or not.
+Each application chooses its input box at deployment (see `IApplication.getInputBox`).
+The guarantees above only hold for the canonical input box:
+a custom one can forge inputs, which includes portal deposits, and through them, refunds.
 
 ### Application
 
