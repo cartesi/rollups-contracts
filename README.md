@@ -5,6 +5,8 @@ that provide Data Availability, Consensus and Settlement to Cartesi Rollups appl
 They are completely permissionless, and can be deployed by anyone to any EVM-compatible chain.
 Nevertheless, the Cartesi Foundation, as a form of public good, kindly deploys them
 to Ethereum, Arbitrum, Optimism, Base, and their respective testnets.
+Deployments to Arbitrum and Arbitrum Sepolia are experimental
+(see [Experimental networks](./docs/contracts.md#experimental-networks)).
 
 Data Availability of user transactions and Consensus over their order is provided by the `InputBox` contract,
 while Settlement is provided by the `Application` contract in conjunction with a settlement module.
