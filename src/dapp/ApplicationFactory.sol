@@ -9,6 +9,7 @@ import {RollupsContract} from "../common/RollupsContract.sol";
 import {WithdrawalConfig} from "../common/WithdrawalConfig.sol";
 import {IOutputsMerkleRootValidator} from "../consensus/IOutputsMerkleRootValidator.sol";
 import {IInputBox} from "../inputs/IInputBox.sol";
+import {LibCreate2Salt} from "../library/LibCreate2Salt.sol";
 import {IRefundOutputBuilder} from "../refund/IRefundOutputBuilder.sol";
 import {Application} from "./Application.sol";
 import {IApplication} from "./IApplication.sol";
@@ -59,6 +60,79 @@ contract ApplicationFactory is IApplicationFactory, RollupsContract {
         WithdrawalConfig calldata withdrawalConfig,
         bytes32 salt
     ) external override returns (IApplication appContract) {
+        appContract = _newApplication(
+            outputsMerkleRootValidator,
+            appOwner,
+            templateHash,
+            inputBox,
+            withdrawalConfig,
+            LibCreate2Salt.permissionless(salt)
+        );
+    }
+
+    function newReservedApplication(
+        IOutputsMerkleRootValidator outputsMerkleRootValidator,
+        address appOwner,
+        bytes32 templateHash,
+        IInputBox inputBox,
+        WithdrawalConfig calldata withdrawalConfig,
+        bytes32 salt
+    ) external override returns (IApplication appContract) {
+        appContract = _newApplication(
+            outputsMerkleRootValidator,
+            appOwner,
+            templateHash,
+            inputBox,
+            withdrawalConfig,
+            LibCreate2Salt.reserved(salt, msg.sender)
+        );
+    }
+
+    function calculateApplicationAddress(
+        IOutputsMerkleRootValidator outputsMerkleRootValidator,
+        address appOwner,
+        bytes32 templateHash,
+        IInputBox inputBox,
+        WithdrawalConfig calldata withdrawalConfig,
+        bytes32 salt
+    ) external view override returns (address) {
+        return _calculateApplicationAddress(
+            outputsMerkleRootValidator,
+            appOwner,
+            templateHash,
+            inputBox,
+            withdrawalConfig,
+            LibCreate2Salt.permissionless(salt)
+        );
+    }
+
+    function calculateReservedApplicationAddress(
+        IOutputsMerkleRootValidator outputsMerkleRootValidator,
+        address appOwner,
+        bytes32 templateHash,
+        IInputBox inputBox,
+        WithdrawalConfig calldata withdrawalConfig,
+        bytes32 salt,
+        address caller
+    ) external view override returns (address) {
+        return _calculateApplicationAddress(
+            outputsMerkleRootValidator,
+            appOwner,
+            templateHash,
+            inputBox,
+            withdrawalConfig,
+            LibCreate2Salt.reserved(salt, caller)
+        );
+    }
+
+    function _newApplication(
+        IOutputsMerkleRootValidator outputsMerkleRootValidator,
+        address appOwner,
+        bytes32 templateHash,
+        IInputBox inputBox,
+        WithdrawalConfig calldata withdrawalConfig,
+        bytes32 salt
+    ) internal returns (IApplication appContract) {
         appContract = new Application{salt: salt}(
             outputsMerkleRootValidator,
             appOwner,
@@ -78,14 +152,14 @@ contract ApplicationFactory is IApplicationFactory, RollupsContract {
         );
     }
 
-    function calculateApplicationAddress(
+    function _calculateApplicationAddress(
         IOutputsMerkleRootValidator outputsMerkleRootValidator,
         address appOwner,
         bytes32 templateHash,
         IInputBox inputBox,
         WithdrawalConfig calldata withdrawalConfig,
         bytes32 salt
-    ) external view override returns (address) {
+    ) internal view returns (address) {
         return Create2.computeAddress(
             salt,
             keccak256(

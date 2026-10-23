@@ -25,9 +25,11 @@ import {LibTopic} from "../util/LibTopic.sol";
 import {OwnableTest} from "../util/OwnableTest.sol";
 import {RollupsTest} from "../util/RollupsTest.sol";
 import {VersionGetterTestUtils} from "../util/VersionGetterTestUtils.sol";
+import {WithdrawalConfigTestUtils} from "../util/WithdrawalConfigTestUtils.sol";
 
 struct DeploymentArgs {
     bool deterministic;
+    bool reserved;
     IOutputsMerkleRootValidator outputsMerkleRootValidator;
     address appOwner;
     bytes32 templateHash;
@@ -42,14 +44,23 @@ library LibApplicationFactory {
         DeploymentArgs calldata deploymentArgs
     ) external returns (IApplication) {
         return deploymentArgs.deterministic
-            ? factory.newApplication(
-                deploymentArgs.outputsMerkleRootValidator,
-                deploymentArgs.appOwner,
-                deploymentArgs.templateHash,
-                deploymentArgs.inputBox,
-                deploymentArgs.withdrawalConfig,
-                deploymentArgs.salt
-            )
+            ? deploymentArgs.reserved
+                ? factory.newReservedApplication(
+                    deploymentArgs.outputsMerkleRootValidator,
+                    deploymentArgs.appOwner,
+                    deploymentArgs.templateHash,
+                    deploymentArgs.inputBox,
+                    deploymentArgs.withdrawalConfig,
+                    deploymentArgs.salt
+                )
+                : factory.newApplication(
+                    deploymentArgs.outputsMerkleRootValidator,
+                    deploymentArgs.appOwner,
+                    deploymentArgs.templateHash,
+                    deploymentArgs.inputBox,
+                    deploymentArgs.withdrawalConfig,
+                    deploymentArgs.salt
+                )
             : factory.newApplication(
                 deploymentArgs.outputsMerkleRootValidator,
                 deploymentArgs.appOwner,
@@ -63,14 +74,26 @@ library LibApplicationFactory {
         IApplicationFactory factory,
         DeploymentArgs calldata deploymentArgs
     ) external view returns (address) {
-        return factory.calculateApplicationAddress(
-            deploymentArgs.outputsMerkleRootValidator,
-            deploymentArgs.appOwner,
-            deploymentArgs.templateHash,
-            deploymentArgs.inputBox,
-            deploymentArgs.withdrawalConfig,
-            deploymentArgs.salt
-        );
+        // External library functions run by delegatecall, so `address(this)`
+        // is the calling contract, which is the caller the factory sees.
+        return deploymentArgs.reserved
+            ? factory.calculateReservedApplicationAddress(
+                deploymentArgs.outputsMerkleRootValidator,
+                deploymentArgs.appOwner,
+                deploymentArgs.templateHash,
+                deploymentArgs.inputBox,
+                deploymentArgs.withdrawalConfig,
+                deploymentArgs.salt,
+                address(this)
+            )
+            : factory.calculateApplicationAddress(
+                deploymentArgs.outputsMerkleRootValidator,
+                deploymentArgs.appOwner,
+                deploymentArgs.templateHash,
+                deploymentArgs.inputBox,
+                deploymentArgs.withdrawalConfig,
+                deploymentArgs.salt
+            );
     }
 }
 
@@ -78,7 +101,8 @@ contract ApplicationFactoryTest is
     RollupsTest,
     VersionGetterTestUtils,
     OwnableTest,
-    ConsensusTestUtils
+    ConsensusTestUtils,
+    WithdrawalConfigTestUtils
 {
     using LibApplicationFactory for IApplicationFactory;
     using LibBinaryKeccak256MerkleTree for bytes32[];
@@ -106,6 +130,17 @@ contract ApplicationFactoryTest is
     // ----------
 
     function testNewApplication(DeploymentArgs calldata deploymentArgs) external {
+        _testNewApplication(deploymentArgs);
+    }
+
+    function testNewApplicationWithValidWithdrawalConfig(DeploymentArgs memory deploymentArgs)
+        external
+    {
+        _makeWithdrawalConfigValidInPlace(deploymentArgs.withdrawalConfig);
+        _testNewApplication(deploymentArgs);
+    }
+
+    function _testNewApplication(DeploymentArgs memory deploymentArgs) internal {
         uint256 blockNumber = _randomizeBlockNumber();
         address appContractAddress = _factory.calculateApplicationAddress(deploymentArgs);
 
@@ -319,6 +354,60 @@ contract ApplicationFactoryTest is
                 );
             }
         }
+    }
+
+    function testReservedApplicationAddressIsCallerSpecific(
+        DeploymentArgs calldata deploymentArgs,
+        address callerA,
+        address callerB
+    ) external view {
+        vm.assume(callerA != callerB);
+
+        address addrA = _calculateReservedApplicationAddress(deploymentArgs, callerA);
+        address addrB = _calculateReservedApplicationAddress(deploymentArgs, callerB);
+
+        address addr = _factory.calculateApplicationAddress(
+            deploymentArgs.outputsMerkleRootValidator,
+            deploymentArgs.appOwner,
+            deploymentArgs.templateHash,
+            deploymentArgs.inputBox,
+            deploymentArgs.withdrawalConfig,
+            deploymentArgs.salt
+        );
+
+        assertNotEq(addrA, addrB);
+        assertNotEq(addrA, addr);
+        assertNotEq(addrB, addr);
+    }
+
+    function testApplicationAddressIsSaltSpecific(
+        DeploymentArgs calldata deploymentArgs,
+        bytes32 otherSalt
+    ) external view {
+        vm.assume(otherSalt != deploymentArgs.salt);
+
+        DeploymentArgs memory otherDeploymentArgs = deploymentArgs;
+        otherDeploymentArgs.salt = otherSalt;
+
+        assertNotEq(
+            _factory.calculateApplicationAddress(deploymentArgs),
+            _factory.calculateApplicationAddress(otherDeploymentArgs)
+        );
+    }
+
+    function testCalculateReservedApplicationAddressIgnoresSender(
+        DeploymentArgs calldata deploymentArgs,
+        address caller,
+        address senderA,
+        address senderB
+    ) external {
+        vm.prank(senderA);
+        address addrA = _calculateReservedApplicationAddress(deploymentArgs, caller);
+
+        vm.prank(senderB);
+        address addrB = _calculateReservedApplicationAddress(deploymentArgs, caller);
+
+        assertEq(addrA, addrB);
     }
 
     // ---------------------------------------
@@ -773,6 +862,21 @@ contract ApplicationFactoryTest is
     {
         vm.assumeNoRevert();
         return _factory.newApplication(deploymentArgs);
+    }
+
+    function _calculateReservedApplicationAddress(
+        DeploymentArgs memory deploymentArgs,
+        address caller
+    ) internal view returns (address) {
+        return _factory.calculateReservedApplicationAddress(
+            deploymentArgs.outputsMerkleRootValidator,
+            deploymentArgs.appOwner,
+            deploymentArgs.templateHash,
+            deploymentArgs.inputBox,
+            deploymentArgs.withdrawalConfig,
+            deploymentArgs.salt,
+            caller
+        );
     }
 
     function _getAccountsDriveMerkleRootProofSize(DeploymentArgs memory deploymentArgs)
