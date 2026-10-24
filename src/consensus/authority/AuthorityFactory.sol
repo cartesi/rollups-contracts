@@ -6,6 +6,7 @@ pragma solidity ^0.8.30;
 import {Create2} from "@openzeppelin-contracts-5.2.0/utils/Create2.sol";
 
 import {RollupsContract} from "../../common/RollupsContract.sol";
+import {LibCreate2Salt} from "../../library/LibCreate2Salt.sol";
 import {Authority} from "./Authority.sol";
 import {IAuthority} from "./IAuthority.sol";
 import {IAuthorityFactory} from "./IAuthorityFactory.sol";
@@ -29,11 +30,26 @@ contract AuthorityFactory is IAuthorityFactory, RollupsContract {
         uint256 claimStagingPeriod,
         bytes32 salt
     ) external override returns (IAuthority authority) {
-        authority = new Authority{salt: salt}(
-            authorityOwner, epochLength, claimStagingPeriod
+        authority = _newAuthority(
+            authorityOwner,
+            epochLength,
+            claimStagingPeriod,
+            LibCreate2Salt.permissionless(salt)
         );
+    }
 
-        emit AuthorityCreated(authority);
+    function newReservedAuthority(
+        address authorityOwner,
+        uint256 epochLength,
+        uint256 claimStagingPeriod,
+        bytes32 salt
+    ) external override returns (IAuthority authority) {
+        authority = _newAuthority(
+            authorityOwner,
+            epochLength,
+            claimStagingPeriod,
+            LibCreate2Salt.reserved(salt, msg.sender)
+        );
     }
 
     function calculateAuthorityAddress(
@@ -42,6 +58,48 @@ contract AuthorityFactory is IAuthorityFactory, RollupsContract {
         uint256 claimStagingPeriod,
         bytes32 salt
     ) external view override returns (address) {
+        return _calculateAuthorityAddress(
+            authorityOwner,
+            epochLength,
+            claimStagingPeriod,
+            LibCreate2Salt.permissionless(salt)
+        );
+    }
+
+    function calculateReservedAuthorityAddress(
+        address authorityOwner,
+        uint256 epochLength,
+        uint256 claimStagingPeriod,
+        bytes32 salt,
+        address caller
+    ) external view override returns (address) {
+        return _calculateAuthorityAddress(
+            authorityOwner,
+            epochLength,
+            claimStagingPeriod,
+            LibCreate2Salt.reserved(salt, caller)
+        );
+    }
+
+    function _newAuthority(
+        address authorityOwner,
+        uint256 epochLength,
+        uint256 claimStagingPeriod,
+        bytes32 salt
+    ) internal returns (IAuthority authority) {
+        authority = new Authority{salt: salt}(
+            authorityOwner, epochLength, claimStagingPeriod
+        );
+
+        emit AuthorityCreated(authority);
+    }
+
+    function _calculateAuthorityAddress(
+        address authorityOwner,
+        uint256 epochLength,
+        uint256 claimStagingPeriod,
+        bytes32 salt
+    ) internal view returns (address) {
         return Create2.computeAddress(
             salt,
             keccak256(
