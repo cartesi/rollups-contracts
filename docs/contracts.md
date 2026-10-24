@@ -84,7 +84,12 @@ In upcoming sections, we'll explain how applications are able to manage such ass
 The Application Factory allows anyone to deploy `Application` contracts with a simple function call.
 It provides greater security to users, as they know the bytecode could not have been altered.
 Applications can also be deployed deterministically, with a salt, at an address that can be calculated beforehand.
-This address depends only on the constructor arguments and the salt, not on who deploys the application.
+With `newApplication`, this address depends only on the constructor arguments and the salt, not on who deploys the application, so anyone can deploy it first.
+With `newReservedApplication`, the address also depends on the caller, so only that caller can deploy an application there.
+Contracts that deploy applications and then rely on having deployed them should use the reserved variant.
+Such contracts should also derive the salt they pass to each factory from every argument of their own that the deployed contract does not receive,
+so that each set of arguments deploys a unique instance.
+For example, the `SelfHostedApplicationFactory` reserves the addresses of both the application and its authority, through `newReservedApplication` and `newReservedAuthority`, respectively.
 Assets should only be transferred to an application after it is deployed, through the portals,
 so that the application is informed of the deposit through an input.
 
