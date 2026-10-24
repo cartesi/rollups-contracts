@@ -28,6 +28,7 @@ import {VersionGetterTestUtils} from "../../util/VersionGetterTestUtils.sol";
 
 struct DeploymentArgs {
     bool deterministic;
+    bool reserved;
     address authorityOwner;
     uint256 epochLength;
     uint256 claimStagingPeriod;
@@ -40,12 +41,19 @@ library LibAuthorityFactory {
         DeploymentArgs calldata deploymentArgs
     ) external returns (IAuthority) {
         return deploymentArgs.deterministic
-            ? factory.newAuthority(
-                deploymentArgs.authorityOwner,
-                deploymentArgs.epochLength,
-                deploymentArgs.claimStagingPeriod,
-                deploymentArgs.salt
-            )
+            ? deploymentArgs.reserved
+                ? factory.newReservedAuthority(
+                    deploymentArgs.authorityOwner,
+                    deploymentArgs.epochLength,
+                    deploymentArgs.claimStagingPeriod,
+                    deploymentArgs.salt
+                )
+                : factory.newAuthority(
+                    deploymentArgs.authorityOwner,
+                    deploymentArgs.epochLength,
+                    deploymentArgs.claimStagingPeriod,
+                    deploymentArgs.salt
+                )
             : factory.newAuthority(
                 deploymentArgs.authorityOwner,
                 deploymentArgs.epochLength,
@@ -57,12 +65,22 @@ library LibAuthorityFactory {
         IAuthorityFactory factory,
         DeploymentArgs calldata deploymentArgs
     ) external view returns (address) {
-        return factory.calculateAuthorityAddress(
-            deploymentArgs.authorityOwner,
-            deploymentArgs.epochLength,
-            deploymentArgs.claimStagingPeriod,
-            deploymentArgs.salt
-        );
+        // External library functions run by delegatecall, so `address(this)`
+        // is the calling contract, which is the caller the factory sees.
+        return deploymentArgs.reserved
+            ? factory.calculateReservedAuthorityAddress(
+                deploymentArgs.authorityOwner,
+                deploymentArgs.epochLength,
+                deploymentArgs.claimStagingPeriod,
+                deploymentArgs.salt,
+                address(this)
+            )
+            : factory.calculateAuthorityAddress(
+                deploymentArgs.authorityOwner,
+                deploymentArgs.epochLength,
+                deploymentArgs.claimStagingPeriod,
+                deploymentArgs.salt
+            );
     }
 }
 
@@ -225,6 +243,58 @@ contract AuthorityFactoryTest is
                 revert UnexpectedError(errorData);
             }
         }
+    }
+
+    function testReservedAuthorityAddressIsCallerSpecific(
+        DeploymentArgs calldata deploymentArgs,
+        address callerA,
+        address callerB
+    ) external view {
+        vm.assume(callerA != callerB);
+
+        address addrA = _calculateReservedAuthorityAddress(deploymentArgs, callerA);
+        address addrB = _calculateReservedAuthorityAddress(deploymentArgs, callerB);
+
+        address addr = _factory.calculateAuthorityAddress(
+            deploymentArgs.authorityOwner,
+            deploymentArgs.epochLength,
+            deploymentArgs.claimStagingPeriod,
+            deploymentArgs.salt
+        );
+
+        assertNotEq(addrA, addrB);
+        assertNotEq(addrA, addr);
+        assertNotEq(addrB, addr);
+    }
+
+    function testAuthorityAddressIsSaltSpecific(
+        DeploymentArgs calldata deploymentArgs,
+        bytes32 otherSalt
+    ) external view {
+        vm.assume(otherSalt != deploymentArgs.salt);
+
+        DeploymentArgs memory otherDeploymentArgs = deploymentArgs;
+        otherDeploymentArgs.salt = otherSalt;
+
+        assertNotEq(
+            _factory.calculateAuthorityAddress(deploymentArgs),
+            _factory.calculateAuthorityAddress(otherDeploymentArgs)
+        );
+    }
+
+    function testCalculateReservedAuthorityAddressIgnoresSender(
+        DeploymentArgs calldata deploymentArgs,
+        address caller,
+        address senderA,
+        address senderB
+    ) external {
+        vm.prank(senderA);
+        address addrA = _calculateReservedAuthorityAddress(deploymentArgs, caller);
+
+        vm.prank(senderB);
+        address addrB = _calculateReservedAuthorityAddress(deploymentArgs, caller);
+
+        assertEq(addrA, addrB);
     }
 
     function testRenounceOwnership(DeploymentArgs calldata deploymentArgs) external {
@@ -862,6 +932,19 @@ contract AuthorityFactoryTest is
     {
         vm.assumeNoRevert();
         return _factory.newAuthority(deploymentArgs);
+    }
+
+    function _calculateReservedAuthorityAddress(
+        DeploymentArgs calldata deploymentArgs,
+        address caller
+    ) internal view returns (address) {
+        return _factory.calculateReservedAuthorityAddress(
+            deploymentArgs.authorityOwner,
+            deploymentArgs.epochLength,
+            deploymentArgs.claimStagingPeriod,
+            deploymentArgs.salt,
+            caller
+        );
     }
 
     function _newAuthorityAndClaim(DeploymentArgs calldata deploymentArgs)
