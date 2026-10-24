@@ -52,11 +52,14 @@ contract SelfHostedApplicationFactory is ISelfHostedApplicationFactory, RollupsC
         WithdrawalConfig calldata withdrawalConfig,
         bytes32 salt
     ) external returns (IApplication application, IAuthority authority) {
-        authority = AUTHORITY_FACTORY.newAuthority(
-                authorityOwner, epochLength, claimStagingPeriod, salt
+        authority = AUTHORITY_FACTORY.newReservedAuthority(
+                authorityOwner,
+                epochLength,
+                claimStagingPeriod,
+                _authoritySalt(templateHash, inputBox, withdrawalConfig, salt)
             );
 
-        application = APPLICATION_FACTORY.newApplication(
+        application = APPLICATION_FACTORY.newReservedApplication(
             authority, address(this), templateHash, inputBox, withdrawalConfig, salt
         );
 
@@ -72,17 +75,36 @@ contract SelfHostedApplicationFactory is ISelfHostedApplicationFactory, RollupsC
         WithdrawalConfig calldata withdrawalConfig,
         bytes32 salt
     ) external view returns (address application, address authority) {
-        authority = AUTHORITY_FACTORY.calculateAuthorityAddress(
-                authorityOwner, epochLength, claimStagingPeriod, salt
+        authority = AUTHORITY_FACTORY.calculateReservedAuthorityAddress(
+                authorityOwner,
+                epochLength,
+                claimStagingPeriod,
+                _authoritySalt(templateHash, inputBox, withdrawalConfig, salt),
+                address(this)
             );
 
-        application = APPLICATION_FACTORY.calculateApplicationAddress(
+        application = APPLICATION_FACTORY.calculateReservedApplicationAddress(
             IOutputsMerkleRootValidator(authority),
             address(this),
             templateHash,
             inputBox,
             withdrawalConfig,
-            salt
+            salt,
+            address(this)
         );
+    }
+
+    /// @notice Derive the authority salt from the application arguments
+    /// and the user-provided salt.
+    /// @dev Both addresses of a deployment must depend on every argument and
+    /// the user-provided salt. The application address already does, so we mix
+    /// the application arguments into the authority salt.
+    function _authoritySalt(
+        bytes32 templateHash,
+        IInputBox inputBox,
+        WithdrawalConfig calldata withdrawalConfig,
+        bytes32 salt
+    ) internal pure returns (bytes32) {
+        return keccak256(abi.encode(templateHash, inputBox, withdrawalConfig, salt));
     }
 }

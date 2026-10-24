@@ -37,14 +37,13 @@ interface ISelfHostedApplicationFactory is
     /// @param salt The salt used to deterministically generate the addresses
     /// @return The application contract
     /// @return The authority contract
-    /// @dev Reverts if the authority owner address is zero.
-    /// @dev Reverts if the epoch length is zero.
-    /// @dev Reverts if either address already contains code. Since the underlying
-    ///      factories are permissionless and their addresses do not depend on
-    ///      the caller, anyone can deploy either contract beforehand.
-    ///      In that case, deploy the missing contract (if any) directly through
-    ///      the authority or application factory, with the same arguments,
-    ///      or pick a different, random salt.
+    /// @dev Propagates any error raised by the authority or application factory
+    ///      (see `IAuthorityFactory.newReservedAuthority` and
+    ///      `IApplicationFactory.newReservedApplication`).
+    /// @dev Reverts if the contracts were already deployed. Their addresses are
+    ///      reserved for this factory, and each of them depends on every argument,
+    ///      so only an earlier call to this function, with the same arguments,
+    ///      could have deployed them.
     function deployContracts(
         address authorityOwner,
         uint256 epochLength,
@@ -66,9 +65,8 @@ interface ISelfHostedApplicationFactory is
     /// @param salt The salt used to deterministically generate the addresses
     /// @return The application address
     /// @return The authority address
-    /// @dev The contracts at these addresses may have been deployed by anyone,
-    ///      through this factory or directly through the underlying ones.
-    ///      Either way, if both addresses hold code, the contracts are sound.
+    /// @dev The addresses are reserved for this factory in the underlying ones,
+    ///      so only `deployContracts` can deploy contracts at them, both at once.
     /// @dev Do not transfer assets to the application address before deployment:
     ///      deposit through the portals afterwards, so that the application
     ///      is informed through an input.
