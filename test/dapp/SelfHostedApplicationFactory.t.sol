@@ -217,7 +217,7 @@ contract SelfHostedApplicationFactoryTest is
             assertTrue(
                 deploymentArgs.withdrawalConfig.isValid(), "Invalid withdrawal config"
             );
-            assertEq(application.isForeclosed(), false, "isForeclosed() != false");
+            assertFalse(application.isForeclosed(), "isForeclosed() != false");
 
             (appAddr, authorityAddr) = _factory._calculateAddresses(deploymentArgs);
 

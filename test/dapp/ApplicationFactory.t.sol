@@ -295,12 +295,10 @@ contract ApplicationFactoryTest is
                 appContract.wereAccountFundsWithdrawn(vm.randomUint()),
                 "initially, wereAccountFundsWithdrawn(...) = false"
             );
-            assertEq(
-                deploymentArgs.withdrawalConfig.isValid(),
-                true,
-                "Expected withdrawal config to be valid"
+            assertTrue(
+                deploymentArgs.withdrawalConfig.isValid(), "Invalid withdrawal config"
             );
-            assertEq(appContract.isForeclosed(), false, "isForeclosed() != false");
+            assertFalse(appContract.isForeclosed(), "isForeclosed() != false");
             {
                 bool wasAccountsDriveMerkleRootProved;
                 (wasAccountsDriveMerkleRootProved,) =
