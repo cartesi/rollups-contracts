@@ -219,7 +219,7 @@ contract AuthorityFactoryTest is
                     "calculateAuthorityAddress(...) is not a pure function"
                 );
 
-                // Cannot deploy an application with the same salt twice
+                // Cannot deploy an authority with the same salt twice
                 try _factory.newAuthority(deploymentArgs) {
                     revert("second deterministic deployment did not revert");
                 } catch (bytes memory errorData) {
