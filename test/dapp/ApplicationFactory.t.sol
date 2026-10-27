@@ -352,6 +352,8 @@ contract ApplicationFactoryTest is
                     deploymentArgs.withdrawalConfig.isValid(),
                     "expected withdrawal config to be invalid"
                 );
+            } else {
+                revert UnexpectedError(errorData);
             }
         }
     }
