@@ -79,6 +79,22 @@ make verify-eth-mainnet [VERIFY_OPTS="..."]
    If a single contract fails to verify,
    fix the underlying cause and simply run the target again.
 
+## Contracts deployed through factories
+
+Contracts deployed through the factories, such as `Application`, `Authority` and `Quorum`,
+are not listed in the deployment artifacts, so the `verify-*` targets do not cover them.
+They can be verified directly with `forge verify-contract`, after steps 1 and 2 above,
+from the revision of the release that deployed the factory.
+Constructor arguments are not needed, and the `--guess-constructor-args` option
+is not supported for contracts created by contracts.
+
+```bash
+forge verify-contract <address> <contract-name> --chain-id <chain-id>
+```
+
+As with the targets, contracts are verified on Etherscan if `ETHERSCAN_API_KEY` is set,
+and on Sourcify otherwise.
+
 ## Troubleshooting
 
 ### No rule to make target 'deployments/<chain-id>/<contract-name>.txt'
