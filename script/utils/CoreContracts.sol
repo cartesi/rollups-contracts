@@ -56,7 +56,7 @@ function deploy() returns (Suite memory) {
         safeErc20Transfer
     );
     ApplicationFactory applicationFactory =
-        G.deployApplicationFactory(refundOutputBuilder);
+        G.deployApplicationFactory(refundOutputBuilder, safeErc20Transfer);
     QuorumFactory quorumFactory = G.deployQuorumFactory();
     UsdWithdrawalOutputBuilderFactory usdWithdrawalOutputBuilderFactory =
         G.deployUsdWithdrawalOutputBuilderFactory(safeErc20Transfer);

@@ -11,6 +11,7 @@ import {IVersionGetter} from "../common/IVersionGetter.sol";
 import {OutputValidityProof} from "../common/OutputValidityProof.sol";
 import {WithdrawalConfig} from "../common/WithdrawalConfig.sol";
 import {IOutputsMerkleRootValidator} from "../consensus/IOutputsMerkleRootValidator.sol";
+import {ISafeErc20Transfer} from "../delegatecall/ISafeErc20Transfer.sol";
 import {IInputBox} from "../inputs/IInputBox.sol";
 import {IRefundOutputBuilder} from "../refund/IRefundOutputBuilder.sol";
 import {IRefundOutputBuilderErrors} from "../refund/IRefundOutputBuilderErrors.sol";
@@ -85,6 +86,11 @@ interface IApplication is
     /// @notice Could not execute an output, because it was already executed.
     /// @param output The output
     error OutputNotReexecutable(bytes output);
+
+    /// @notice Could not execute a delegate-call voucher, because its destination
+    /// is not the contract returned by `getSafeErc20Transfer`.
+    /// @param destination The forbidden destination
+    error ForbiddenDelegateCallVoucherDestination(address destination);
 
     /// @notice Raised when the output hashes siblings array has an invalid size.
     /// @dev Please consult `CanonicalMachine` for the maximum number of outputs.
@@ -201,7 +207,8 @@ interface IApplication is
     ///              a claim accepted to the current outputs Merkle root validator contract
     /// @dev On a successful execution, emits a `OutputExecuted` event.
     /// @dev May raise any of the errors raised by `validateOutput`,
-    /// as well as `OutputNotExecutable` and `OutputNotReexecutable`.
+    /// as well as `OutputNotExecutable`, `OutputNotReexecutable`
+    /// and `ForbiddenDelegateCallVoucherDestination`.
     function executeOutput(bytes calldata output, OutputValidityProof calldata proof)
         external;
 
@@ -209,7 +216,8 @@ interface IApplication is
     /// @param inputIndex The index of the input in the application's input box.
     /// @param input The input that was sent to the application
     /// @dev May raise `CannotRefundFinalizedInput`, `RefundAlreadyIssued`,
-    /// `UnknownInputSender`, as well as any of the errors raised by `validateInput`.
+    /// `UnknownInputSender`, `ForbiddenDelegateCallVoucherDestination`,
+    /// as well as any of the errors raised by `validateInput`.
     /// On success, marks the input as refunded, and emits a `RefundIssued` event.
     function issueRefund(uint256 inputIndex, bytes calldata input) external;
 
@@ -235,6 +243,7 @@ interface IApplication is
     /// @param account The account
     /// @param proof The proof used to validate the account
     /// @dev May raise `NotForeclosed`, `AccountFundsAlreadyWithdrawn`,
+    /// `ForbiddenDelegateCallVoucherDestination`,
     /// as well as any of the errors raised by `validateAccount`.
     /// On success, marks the account funds as withdrawn, and emits a `Withdrawal` event.
     function withdraw(bytes calldata account, AccountValidityProof calldata proof)
@@ -356,6 +365,9 @@ interface IApplication is
     /// @notice Get the refund output builder, which gets static-called
     /// whenever a deposit is to be refunded to the original depositor.
     function getRefundOutputBuilder() external view returns (IRefundOutputBuilder);
+
+    /// @notice Get the only contract that delegate-call vouchers can target.
+    function getSafeErc20Transfer() external view returns (ISafeErc20Transfer);
 
     /// @notice Validates an input that was sent to the application.
     /// @param inputIndex The index of the input in the application's input box.
