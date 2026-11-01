@@ -47,7 +47,6 @@ contract InputBox is IInputBox, RollupsContract, ApplicationChecker {
             );
         }
 
-        /// forge-lint: disable-next-line(asm-keccak256)
         inputHash = keccak256(input);
 
         inputBox.push(inputHash);
