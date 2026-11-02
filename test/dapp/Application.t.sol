@@ -17,6 +17,7 @@ import {IApplication} from "../../src/dapp/IApplication.sol";
 import {ISafeErc20Transfer} from "../../src/delegatecall/ISafeErc20Transfer.sol";
 import {IInputBox} from "../../src/inputs/IInputBox.sol";
 import {LibUsdAccount} from "../../src/library/LibUsdAccount.sol";
+import {IRefundOutputBuilder} from "../../src/refund/IRefundOutputBuilder.sol";
 import {IRefundOutputBuilderErrors} from "../../src/refund/IRefundOutputBuilderErrors.sol";
 import {IWithdrawalOutputBuilder} from "../../src/withdrawal/IWithdrawalOutputBuilder.sol";
 import {IWithdrawalOutputBuilderErrors} from "../../src/withdrawal/IWithdrawalOutputBuilderErrors.sol";
@@ -429,6 +430,34 @@ contract ApplicationTest is
         _appContract.executeOutput(output, proof);
     }
 
+    function testExecuteForbiddenDelegateCallVoucher(
+        address destination,
+        bytes calldata payload
+    ) external {
+        vm.assume(destination != address(_contracts.core.safeErc20Transfer));
+
+        bytes memory output = _encodeDelegateCallVoucher(destination, payload);
+        LibEmulator.OutputIndex outputIndex = _addOutput(output);
+        OutputValidityProof memory proof = _emulator.getOutputValidityProof(outputIndex);
+
+        _submitAndAcceptClaim();
+
+        if (vm.randomBool()) {
+            vm.prank(_appContract.getGuardian());
+            _appContract.foreclose();
+        }
+
+        vm.expectRevert(_encodeForbiddenDelegateCallVoucherDestination(destination));
+        _appContract.executeOutput(output, proof);
+    }
+
+    function testGetSafeErc20Transfer() external view {
+        assertEq(
+            address(_appContract.getSafeErc20Transfer()),
+            address(_contracts.core.safeErc20Transfer)
+        );
+    }
+
     function testExecuteErc20TransferDelegateCallVoucherSuccess() external {
         string memory name = "Erc20DelegateCallVoucher";
         bytes memory output = _getOutput(name);
@@ -710,6 +739,34 @@ contract ApplicationTest is
         _proveAccountsDriveMerkleRoot();
 
         vm.expectRevert(_encodeInvalidAccountSize(accountSize));
+        vm.prank(vm.randomAddress());
+        _appContract.withdraw(account, proof);
+    }
+
+    function testWithdrawalRevertsForbiddenDelegateCallVoucherDestination(
+        address destination,
+        bytes calldata payload
+    ) external {
+        vm.assume(destination != address(_contracts.core.safeErc20Transfer));
+
+        string memory name = "Alice";
+        bytes memory account = _getAccount(name);
+        AccountValidityProof memory proof = _getAccountValidityProof(name);
+
+        vm.mockCall(
+            address(_appContract.getWithdrawalOutputBuilder()),
+            abi.encodeCall(
+                IWithdrawalOutputBuilder.buildWithdrawalOutput,
+                (address(_appContract), account)
+            ),
+            abi.encode(_encodeDelegateCallVoucher(destination, payload))
+        );
+
+        vm.prank(_appContract.getGuardian());
+        _appContract.foreclose();
+        _proveAccountsDriveMerkleRoot();
+
+        vm.expectRevert(_encodeForbiddenDelegateCallVoucherDestination(destination));
         vm.prank(vm.randomAddress());
         _appContract.withdraw(account, proof);
     }
@@ -1001,6 +1058,43 @@ contract ApplicationTest is
             vm.prank(vm.randomAddress());
             _appContract.issueRefund(i, inputs[i]);
         }
+    }
+
+    function testIssueRefundRevertsForbiddenDelegateCallVoucherDestination(
+        address destination,
+        bytes calldata payload,
+        bytes calldata voucherPayload
+    ) external {
+        vm.assume(destination != address(_contracts.core.safeErc20Transfer));
+
+        address appContract = address(_appContract);
+        address inputSender = vm.randomAddress();
+        uint256 inputIndex = _contracts.core.inputBox.getNumberOfInputs(appContract);
+
+        vm.recordLogs();
+        vm.prank(inputSender);
+        bytes32 inputHash = _contracts.core.inputBox.addInput(appContract, payload);
+        Vm.Log[] memory logs = vm.getRecordedLogs();
+        assertEq(logs.length, 1);
+        bytes memory input;
+        (input,) = _decodeInputAdded(logs[0], appContract, inputSender, inputIndex);
+        assertEq(keccak256(input), inputHash);
+
+        vm.mockCall(
+            address(_appContract.getRefundOutputBuilder()),
+            abi.encodeCall(
+                IRefundOutputBuilder.buildRefundOutput,
+                (appContract, inputSender, payload)
+            ),
+            abi.encode(_encodeDelegateCallVoucher(destination, voucherPayload))
+        );
+
+        vm.prank(_appContract.getGuardian());
+        _appContract.foreclose();
+
+        vm.expectRevert(_encodeForbiddenDelegateCallVoucherDestination(destination));
+        vm.prank(vm.randomAddress());
+        _appContract.issueRefund(inputIndex, input);
     }
 
     function testValidateIllformedInputs(bytes calldata randomBytes) external {
@@ -2156,6 +2250,16 @@ contract ApplicationTest is
         returns (bytes memory)
     {
         return abi.encodeWithSelector(IApplication.OutputNotExecutable.selector, output);
+    }
+
+    function _encodeForbiddenDelegateCallVoucherDestination(address destination)
+        internal
+        pure
+        returns (bytes memory)
+    {
+        return abi.encodeWithSelector(
+            IApplication.ForbiddenDelegateCallVoucherDestination.selector, destination
+        );
     }
 
     function _encodeOutputNotReexecutable(bytes memory output)

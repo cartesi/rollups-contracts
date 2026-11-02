@@ -6,6 +6,7 @@ pragma solidity ^0.8.30;
 import {IVersionGetter} from "../common/IVersionGetter.sol";
 import {WithdrawalConfig} from "../common/WithdrawalConfig.sol";
 import {IOutputsMerkleRootValidator} from "../consensus/IOutputsMerkleRootValidator.sol";
+import {ISafeErc20Transfer} from "../delegatecall/ISafeErc20Transfer.sol";
 import {IInputBox} from "../inputs/IInputBox.sol";
 import {IApplication} from "./IApplication.sol";
 import {IApplicationFactoryErrors} from "./IApplicationFactoryErrors.sol";
@@ -141,4 +142,12 @@ interface IApplicationFactory is IVersionGetter, IApplicationFactoryErrors {
         bytes32 salt,
         address caller
     ) external view returns (address);
+
+    /// @notice Get the safe ERC-20 transfer contract passed down to the applications.
+    /// This contract is their only allowed delegate-call voucher destination.
+    /// @return safeErc20Transfer The safe ERC-20 transfer contract
+    function getSafeErc20Transfer()
+        external
+        view
+        returns (ISafeErc20Transfer safeErc20Transfer);
 }
