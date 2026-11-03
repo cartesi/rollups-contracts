@@ -8,6 +8,18 @@ import {IERC1155} from "@openzeppelin-contracts-5.2.0/token/ERC1155/IERC1155.sol
 
 /// @title ERC-1155 Batch Transfer Portal interface
 interface IErc1155BatchPortal is IPortal {
+    // Errors
+
+    /// @notice The token IDs and values arrays have different lengths
+    /// @param tokenIdsLength The length of the token IDs array
+    /// @param valuesLength The length of the values array
+    error ArrayLengthMismatch(uint256 tokenIdsLength, uint256 valuesLength);
+
+    /// @notice Batch has more token IDs than the portal accepts
+    /// @param batchSize The number of token IDs in the batch
+    /// @param maxBatchSize The maximum batch size
+    error BatchTooLarge(uint256 batchSize, uint256 maxBatchSize);
+
     // Permissionless functions
 
     /// @notice Transfer a batch of ERC-1155 tokens of multiple types to an application contract
@@ -23,7 +35,7 @@ interface IErc1155BatchPortal is IPortal {
     /// @param baseLayerData Additional data to be interpreted by the base layer
     /// @param execLayerData Additional data to be interpreted by the execution layer
     ///
-    /// @dev Please make sure the arrays `tokenIds` and `values` have the same length.
+    /// @dev May raise ArrayLengthMismatch or BatchTooLarge.
     /// If the application is foreclosed, and the deposit input is not processed,
     /// the user can issue a refund. If the user deposits ERC-1155 tokens through a smart contract,
     /// a refund will only succeed if the smart contract accepts it through the `onERC1155Received`/`onERC1155BatchReceived` callback.
@@ -36,4 +48,10 @@ interface IErc1155BatchPortal is IPortal {
         bytes calldata baseLayerData,
         bytes calldata execLayerData
     ) external;
+
+    // View functions
+
+    /// @notice Get the maximum number of token IDs per batch deposit.
+    /// @dev Users should split larger deposits into several batches.
+    function getMaxBatchSize() external view returns (uint256);
 }

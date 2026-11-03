@@ -14,6 +14,8 @@ import {Portal} from "./Portal.sol";
 /// @notice This contract allows anyone to perform batch transfers of
 /// ERC-1155 tokens to an application contract while informing the off-chain machine.
 contract Erc1155BatchPortal is IErc1155BatchPortal, Portal {
+    uint256 constant MAX_BATCH_SIZE = 128;
+
     function depositBatchErc1155Token(
         IERC1155 token,
         address appContract,
@@ -22,6 +24,15 @@ contract Erc1155BatchPortal is IErc1155BatchPortal, Portal {
         bytes calldata baseLayerData,
         bytes calldata execLayerData
     ) external override {
+        require(
+            tokenIds.length == values.length,
+            ArrayLengthMismatch(tokenIds.length, values.length)
+        );
+        require(
+            tokenIds.length <= MAX_BATCH_SIZE,
+            BatchTooLarge(tokenIds.length, MAX_BATCH_SIZE)
+        );
+
         token.safeBatchTransferFrom(
             msg.sender, appContract, tokenIds, values, baseLayerData
         );
@@ -31,5 +42,9 @@ contract Erc1155BatchPortal is IErc1155BatchPortal, Portal {
         );
 
         _addInput(appContract, payload);
+    }
+
+    function getMaxBatchSize() external pure override returns (uint256) {
+        return MAX_BATCH_SIZE;
     }
 }
