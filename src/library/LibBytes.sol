@@ -13,12 +13,10 @@ library LibBytes {
             isBufferValid = false;
         } else {
             isBufferValid = true;
-            for (uint256 i; i < 4; ++i) {
-                selector |= (bytes4(buffer[i]) >> (8 * i));
-            }
             arguments = new bytes(buffer.length - 4);
-            for (uint256 i; i < arguments.length; ++i) {
-                arguments[i] = buffer[i + 4];
+            assembly ("memory-safe") {
+                selector := and(mload(add(buffer, 0x20)), shl(224, 0xffffffff))
+                mcopy(add(arguments, 0x20), add(buffer, 0x24), mload(arguments))
             }
         }
     }
