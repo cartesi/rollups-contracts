@@ -3,8 +3,8 @@
 
 pragma solidity ^0.8.30;
 
-import {EmulatorCompat} from "cartesi-machine-solidity-step-0.15.0/src/EmulatorCompat.sol";
-import {EmulatorConstants} from "cartesi-machine-solidity-step-0.15.0/src/EmulatorConstants.sol";
+import {EmulatorCompat} from "cartesi-machine-solidity-step-0.16.0/src/EmulatorCompat.sol";
+import {EmulatorConstants} from "cartesi-machine-solidity-step-0.16.0/src/EmulatorConstants.sol";
 
 import {LeafProof} from "../common/LeafProof.sol";
 import {MachineValidationErrors} from "../common/MachineValidationErrors.sol";
