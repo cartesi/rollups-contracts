@@ -3,7 +3,7 @@
 
 pragma solidity ^0.8.30;
 
-import {AccessLogs} from "cartesi-machine-solidity-step-0.15.0/src/AccessLogs.sol";
+import {AccessLogs} from "cartesi-machine-solidity-step-0.16.0/src/AccessLogs.sol";
 
 import {CanonicalMachine} from "../common/CanonicalMachine.sol";
 import {LeafProof} from "../common/LeafProof.sol";
