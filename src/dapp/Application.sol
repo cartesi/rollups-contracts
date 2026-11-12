@@ -12,6 +12,7 @@ import {Outputs} from "../common/Outputs.sol";
 import {RollupsContract} from "../common/RollupsContract.sol";
 import {WithdrawalConfig} from "../common/WithdrawalConfig.sol";
 import {IOutputsMerkleRootValidator} from "../consensus/IOutputsMerkleRootValidator.sol";
+import {ISafeErc20Transfer} from "../delegatecall/ISafeErc20Transfer.sol";
 import {IInputBox} from "../inputs/IInputBox.sol";
 import {LibAccountValidityProof} from "../library/LibAccountValidityProof.sol";
 import {LibAddress} from "../library/LibAddress.sol";
@@ -81,6 +82,10 @@ contract Application is
     /// @dev See the `getWithdrawalOutputBuilder` function.
     IWithdrawalOutputBuilder immutable WITHDRAWAL_OUTPUT_BUILDER;
 
+    /// @notice The safe ERC-20 transfer contract.
+    /// @dev See the `getSafeErc20Transfer` function.
+    ISafeErc20Transfer immutable SAFE_ERC20_TRANSFER;
+
     /// @notice Keeps track of which outputs have been executed.
     /// @dev See the `wasOutputExecuted` function.
     BitMaps.BitMap internal _executed;
@@ -129,6 +134,7 @@ contract Application is
     /// @param templateHash The initial machine state hash
     /// @param inputBox The input box contract
     /// @param refundOutputBuilder The refund output builder
+    /// @param safeErc20Transfer The safe ERC-20 transfer contract
     /// @param withdrawalConfig The withdrawal configuration
     /// @dev Reverts if the initial application owner address is zero.
     constructor(
@@ -137,6 +143,7 @@ contract Application is
         bytes32 templateHash,
         IInputBox inputBox,
         IRefundOutputBuilder refundOutputBuilder,
+        ISafeErc20Transfer safeErc20Transfer,
         WithdrawalConfig memory withdrawalConfig
     ) Ownable(initialOwner) {
         require(
@@ -150,6 +157,7 @@ contract Application is
         LOG2_MAX_NUM_OF_ACCOUNTS = withdrawalConfig.log2MaxNumOfAccounts;
         ACCOUNTS_DRIVE_START_INDEX = withdrawalConfig.accountsDriveStartIndex;
         REFUND_OUTPUT_BUILDER = refundOutputBuilder;
+        SAFE_ERC20_TRANSFER = safeErc20Transfer;
         WITHDRAWAL_OUTPUT_BUILDER = withdrawalConfig.withdrawalOutputBuilder;
         _outputsMerkleRootValidator = outputsMerkleRootValidator;
     }
@@ -499,6 +507,10 @@ contract Application is
         return REFUND_OUTPUT_BUILDER;
     }
 
+    function getSafeErc20Transfer() public view override returns (ISafeErc20Transfer) {
+        return SAFE_ERC20_TRANSFER;
+    }
+
     function getWithdrawalOutputBuilder()
         public
         view
@@ -680,13 +692,18 @@ contract Application is
         destination.safeCall(value, payload);
     }
 
-    /// @notice Executes a delegatecall voucher
+    /// @notice Executes a delegate-call voucher
     /// @param arguments ABI-encoded arguments
     function _executeDelegateCallVoucher(bytes memory arguments) internal {
         address destination;
         bytes memory payload;
 
         (destination, payload) = abi.decode(arguments, (address, bytes));
+
+        require(
+            destination == address(getSafeErc20Transfer()),
+            ForbiddenDelegateCallVoucherDestination(destination)
+        );
 
         destination.safeDelegateCall(payload);
     }

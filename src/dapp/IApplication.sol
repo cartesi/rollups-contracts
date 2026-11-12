@@ -11,6 +11,7 @@ import {IVersionGetter} from "../common/IVersionGetter.sol";
 import {OutputValidityProof} from "../common/OutputValidityProof.sol";
 import {WithdrawalConfig} from "../common/WithdrawalConfig.sol";
 import {IOutputsMerkleRootValidator} from "../consensus/IOutputsMerkleRootValidator.sol";
+import {ISafeErc20Transfer} from "../delegatecall/ISafeErc20Transfer.sol";
 import {IInputBox} from "../inputs/IInputBox.sol";
 import {IRefundOutputBuilder} from "../refund/IRefundOutputBuilder.sol";
 import {IRefundOutputBuilderErrors} from "../refund/IRefundOutputBuilderErrors.sol";
@@ -85,6 +86,11 @@ interface IApplication is
     /// @notice Could not execute an output, because it was already executed.
     /// @param output The output
     error OutputNotReexecutable(bytes output);
+
+    /// @notice Could not execute a delegate-call voucher, because its destination
+    /// is not the contract returned by `getSafeErc20Transfer`.
+    /// @param destination The forbidden destination
+    error ForbiddenDelegateCallVoucherDestination(address destination);
 
     /// @notice Raised when the output hashes siblings array has an invalid size.
     /// @dev Please consult `CanonicalMachine` for the maximum number of outputs.
@@ -200,16 +206,20 @@ interface IApplication is
     /// @param proof The proof used to validate the output against
     ///              a claim accepted to the current outputs Merkle root validator contract
     /// @dev On a successful execution, emits a `OutputExecuted` event.
-    /// @dev May raise any of the errors raised by `validateOutput`,
-    /// as well as `OutputNotExecutable` and `OutputNotReexecutable`.
+    /// @dev May raise `OutputNotReexecutable`, `OutputNotExecutable`,
+    /// `ForbiddenDelegateCallVoucherDestination`,
+    /// as well as any of the errors in `AddressErrors`,
+    /// and any of the errors raised by `validateOutput` or by the output destination.
     function executeOutput(bytes calldata output, OutputValidityProof calldata proof)
         external;
 
     /// @notice Issue a refund for an unprocessed input.
     /// @param inputIndex The index of the input in the application's input box.
     /// @param input The input that was sent to the application
-    /// @dev May raise `CannotRefundFinalizedInput`, `RefundAlreadyIssued`,
-    /// `UnknownInputSender`, as well as any of the errors raised by `validateInput`.
+    /// @dev May raise `NotForeclosed`, `CannotRefundFinalizedInput`, `RefundAlreadyIssued`,
+    /// `OutputNotExecutable`, `ForbiddenDelegateCallVoucherDestination`,
+    /// as well as any of the errors in `IRefundOutputBuilderErrors` and `AddressErrors`,
+    /// and any of the errors raised by `validateInput` or by the output destination.
     /// On success, marks the input as refunded, and emits a `RefundIssued` event.
     function issueRefund(uint256 inputIndex, bytes calldata input) external;
 
@@ -235,7 +245,9 @@ interface IApplication is
     /// @param account The account
     /// @param proof The proof used to validate the account
     /// @dev May raise `NotForeclosed`, `AccountFundsAlreadyWithdrawn`,
-    /// as well as any of the errors raised by `validateAccount`.
+    /// `OutputNotExecutable`, `ForbiddenDelegateCallVoucherDestination`,
+    /// as well as any of the errors in `IWithdrawalOutputBuilderErrors` and `AddressErrors`,
+    /// and any of the errors raised by `validateAccount` or by the output destination.
     /// On success, marks the account funds as withdrawn, and emits a `Withdrawal` event.
     function withdraw(bytes calldata account, AccountValidityProof calldata proof)
         external;
@@ -356,6 +368,9 @@ interface IApplication is
     /// @notice Get the refund output builder, which gets static-called
     /// whenever a deposit is to be refunded to the original depositor.
     function getRefundOutputBuilder() external view returns (IRefundOutputBuilder);
+
+    /// @notice Get the only contract that delegate-call vouchers can target.
+    function getSafeErc20Transfer() external view returns (ISafeErc20Transfer);
 
     /// @notice Validates an input that was sent to the application.
     /// @param inputIndex The index of the input in the application's input box.
