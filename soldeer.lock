@@ -7,9 +7,9 @@ integrity = "4cb7f3777f67fdf4b7d0e2f94d2f93f198b2e5dce718b7062ac7c2c83e1183bd"
 
 [[dependencies]]
 name = "cartesi-machine-solidity-step"
-version = "0.15.0"
+version = "0.16.0"
 git = "https://github.com/cartesi/machine-solidity-step.git"
-rev = "23765c8841103912755bb3d80952c2a8e1adf4d3"
+rev = "fb00a32c38248edc5672e689dfa8cc58c0a2c3cd"
 
 [[dependencies]]
 name = "forge-std"

@@ -5,9 +5,9 @@ pragma solidity ^0.8.30;
 
 import {SafeCast} from "@openzeppelin-contracts-5.2.0/utils/math/SafeCast.sol";
 
-import {AccessLogs} from "cartesi-machine-solidity-step-0.15.0/src/AccessLogs.sol";
-import {EmulatorCompat} from "cartesi-machine-solidity-step-0.15.0/src/EmulatorCompat.sol";
-import {EmulatorConstants} from "cartesi-machine-solidity-step-0.15.0/src/EmulatorConstants.sol";
+import {AccessLogs} from "cartesi-machine-solidity-step-0.16.0/src/AccessLogs.sol";
+import {EmulatorCompat} from "cartesi-machine-solidity-step-0.16.0/src/EmulatorCompat.sol";
+import {EmulatorConstants} from "cartesi-machine-solidity-step-0.16.0/src/EmulatorConstants.sol";
 
 import {AccountValidityProof} from "../../src/common/AccountValidityProof.sol";
 import {CanonicalMachine} from "../../src/common/CanonicalMachine.sol";
