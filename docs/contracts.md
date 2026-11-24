@@ -90,8 +90,6 @@ Contracts that deploy applications and then rely on having deployed them should 
 Such contracts should also derive the salt they pass to each factory from every argument of their own that the deployed contract does not receive,
 so that each set of arguments deploys a unique instance.
 For example, the `SelfHostedApplicationFactory` reserves the addresses of both the application and its authority, through `newReservedApplication` and `newReservedAuthority`, respectively.
-Assets should only be transferred to an application after it is deployed, through the portals,
-so that the application is informed of the deposit through an input.
 
 ### Portals
 
@@ -102,6 +100,7 @@ Second, the user tells the portal to transfer the asset(s) from their account to
 The portal then adds an input to the application's input box to inform the machine of the transfer that just took place in the base layer.
 Finally, the off-chain machine is made aware of the transfer through the input sent by the portal.
 Note that the machine must know the address of the portal beforehand in order to validate such input.
+Assets transferred to the application contract directly, without a portal, are not reported to the machine.
 
 The application developer can do whatever they want with this information.
 For example, they might choose to create a wallet for each user in the execution layer.

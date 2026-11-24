@@ -67,9 +67,6 @@ interface ISelfHostedApplicationFactory is
     /// @return The authority address
     /// @dev The addresses are reserved for this factory in the underlying ones,
     ///      so only `deployContracts` can deploy contracts at them, both at once.
-    /// @dev Do not transfer assets to the application address before deployment:
-    ///      deposit through the portals afterwards, so that the application
-    ///      is informed through an input.
     function calculateAddresses(
         address authorityOwner,
         uint256 epochLength,
