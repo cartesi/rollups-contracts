@@ -1,5 +1,26 @@
 # @cartesi/rollups
 
+## 3.0.0-alpha.11
+
+### Minor Changes
+
+- Add reserved deterministic deployments to the application and authority factories ([#561](https://github.com/cartesi/rollups-contracts/pull/561))
+
+  The existing deterministic deployment functions deploy contracts to addresses that depend only on the constructor arguments and the salt, so anyone can deploy a given contract first. The new reserved deployment functions deploy contracts to addresses that also depend on the caller, so only that caller can deploy contracts there. Contracts that deploy applications or authorities and then rely on having deployed them should use the reserved functions.
+
+  - Add `newReservedApplication` and `calculateReservedApplicationAddress` to `IApplicationFactory`
+  - Add `newReservedAuthority` and `calculateReservedAuthorityAddress` to `IAuthorityFactory`
+  - Emit the existing `ApplicationCreated` and `AuthorityCreated` events from the reserved functions too
+
+### Patch Changes
+
+- Make `SelfHostedApplicationFactory` deploy the application and its authority through the reserved functions, so that only `deployContracts` can deploy contracts at the addresses returned by `calculateAddresses`; previously, anyone could deploy contracts at these addresses directly through the underlying factories, making `deployContracts` revert ([#561](https://github.com/cartesi/rollups-contracts/pull/561))
+- Bump `cartesi-machine-solidity-step` from 0.15.0 to 0.17.0; the definitions used by the contracts are unchanged ([#566](https://github.com/cartesi/rollups-contracts/pull/566))
+- Document application trust assumptions, the claim staging period, the accounts drive start index, deterministic deployments, and experimental networks (Arbitrum and Arbitrum Sepolia) ([#560](https://github.com/cartesi/rollups-contracts/pull/560))
+- Document how to verify contracts deployed through factories ([#562](https://github.com/cartesi/rollups-contracts/pull/562))
+- Document that deterministic deployments revert with empty error data if the address already contains code
+- Exclude the `asm-keccak256` lint in `foundry.toml` ([#563](https://github.com/cartesi/rollups-contracts/pull/563))
+
 ## 3.0.0-alpha.10
 
 ### Minor Changes
