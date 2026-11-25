@@ -1,5 +1,11 @@
 # @cartesi/rollups
 
+## 3.0.0-beta.1
+
+### Patch Changes
+
+- No changes since 3.0.0-alpha.11
+
 ## 3.0.0-alpha.11
 
 ### Minor Changes
