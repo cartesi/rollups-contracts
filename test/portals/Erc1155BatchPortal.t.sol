@@ -165,6 +165,65 @@ contract Erc1155BatchPortalTest is
         );
     }
 
+    function testDepositRevertArrayLengthMismatch(
+        bytes calldata baseLayerData,
+        bytes calldata execLayerData
+    ) external {
+        address sender = _randomAccountWithNoCode();
+        address appContract = _newActiveAppMock();
+
+        uint256 maxBatchSize = _portal.getMaxBatchSize();
+        uint256 tokenIdsLength = vm.randomUint(0, 2 * maxBatchSize);
+        uint256 valuesLength = vm.randomUint(0, 2 * maxBatchSize);
+        vm.assume(tokenIdsLength != valuesLength);
+        uint256[] memory tokenIds = vm.randomUniqueUint256Array(tokenIdsLength);
+        uint256[] memory values = vm.randomUint256Array(valuesLength);
+
+        vm.prank(sender);
+        vm.expectRevert(_encodeArrayLengthMismatch(tokenIdsLength, valuesLength));
+        _portal.depositBatchErc1155Token(
+            _contracts.dev.testMultiToken,
+            appContract,
+            tokenIds,
+            values,
+            baseLayerData,
+            execLayerData
+        );
+    }
+
+    function testDepositRevertBatchTooLarge(
+        bytes calldata baseLayerData,
+        bytes calldata execLayerData
+    ) external {
+        address sender = _randomAccountWithNoCode();
+        address appContract = _newActiveAppMock();
+
+        uint256 maxBatchSize = _portal.getMaxBatchSize();
+        uint256 batchSize = vm.randomUint(maxBatchSize + 1, 2 * maxBatchSize);
+        uint256[] memory tokenIds = vm.randomUniqueUint256Array(batchSize);
+        uint256[] memory values = vm.randomUint256Array(batchSize);
+
+        vm.prank(sender);
+        vm.expectRevert(_encodeBatchTooLarge(batchSize, maxBatchSize));
+        _portal.depositBatchErc1155Token(
+            _contracts.dev.testMultiToken,
+            appContract,
+            tokenIds,
+            values,
+            baseLayerData,
+            execLayerData
+        );
+    }
+
+    function testDepositMaxBatchSize(
+        bytes calldata baseLayerData,
+        bytes calldata execLayerData,
+        bytes[] calldata payloads
+    ) external {
+        uint256[] memory values = vm.randomUint256Array(_portal.getMaxBatchSize());
+        this.testDeposit(values, baseLayerData, execLayerData, payloads);
+    }
+
     function testDeposit(
         uint256[] calldata values,
         bytes calldata baseLayerData,
@@ -284,6 +343,9 @@ contract Erc1155BatchPortalTest is
         internal
         returns (IERC1155 token, uint256[] memory tokenIds)
     {
+        // Larger batches are covered by testDepositRevertBatchTooLarge.
+        vm.assume(values.length <= _portal.getMaxBatchSize());
+
         // Generate an array of unique uint256 values with the same size as `values`.
         tokenIds = vm.randomUniqueUint256Array(values.length);
 
@@ -328,5 +390,25 @@ contract Erc1155BatchPortalTest is
                 abi.encode(IERC1155Receiver.onERC1155BatchReceived.selector)
             );
         }
+    }
+
+    function _encodeArrayLengthMismatch(uint256 tokenIdsLength, uint256 valuesLength)
+        internal
+        pure
+        returns (bytes memory)
+    {
+        return abi.encodeWithSelector(
+            IErc1155BatchPortal.ArrayLengthMismatch.selector, tokenIdsLength, valuesLength
+        );
+    }
+
+    function _encodeBatchTooLarge(uint256 batchSize, uint256 maxBatchSize)
+        internal
+        pure
+        returns (bytes memory)
+    {
+        return abi.encodeWithSelector(
+            IErc1155BatchPortal.BatchTooLarge.selector, batchSize, maxBatchSize
+        );
     }
 }
