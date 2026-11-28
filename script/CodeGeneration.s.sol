@@ -145,8 +145,9 @@ contract DeployersCodeGenerationScript is CodeGenerationScript {
         }
 
         {
-            string[] memory paramTypes = new string[](1);
+            string[] memory paramTypes = new string[](2);
             paramTypes[0] = "IRefundOutputBuilder";
+            paramTypes[1] = "ISafeErc20Transfer";
             _addDeployer("ApplicationFactory", paramTypes);
         }
 

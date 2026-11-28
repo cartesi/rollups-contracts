@@ -125,6 +125,13 @@ contract ApplicationFactoryTest is
         _testVersion(_factory);
     }
 
+    function testGetSafeErc20Transfer() external view {
+        assertEq(
+            address(_factory.getSafeErc20Transfer()),
+            address(_contracts.core.safeErc20Transfer)
+        );
+    }
+
     // ----------
     // deployment
     // ----------
@@ -278,6 +285,11 @@ contract ApplicationFactoryTest is
                 address(appContract.getRefundOutputBuilder()),
                 address(_contracts.core.refundOutputBuilder),
                 "getRefundOutputBuilder() != RefundOutputBuilder"
+            );
+            assertEq(
+                address(appContract.getSafeErc20Transfer()),
+                address(_contracts.core.safeErc20Transfer),
+                "getSafeErc20Transfer() != SafeErc20Transfer"
             );
             assertEq(
                 appContract.getNumberOfIssuedRefunds(),

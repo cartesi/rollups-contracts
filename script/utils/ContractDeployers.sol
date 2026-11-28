@@ -284,17 +284,17 @@ function deployRefundOutputBuilder(
     }
 }
 
-function deployApplicationFactory(IRefundOutputBuilder param1)
+function deployApplicationFactory(IRefundOutputBuilder param1, ISafeErc20Transfer param2)
     returns (ApplicationFactory deployment)
 {
     bytes32 salt;
     bytes memory creationCode = type(ApplicationFactory).creationCode;
-    bytes memory encodedArgs = abi.encode(param1);
+    bytes memory encodedArgs = abi.encode(param1, param2);
     bytes memory initCode = abi.encodePacked(creationCode, encodedArgs);
     bytes32 initCodeHash = keccak256(initCode);
     address precomputedAddress = computeAddress(salt, initCodeHash);
     if (precomputedAddress.code.length == 0) {
-        deployment = new ApplicationFactory{salt: salt}(param1);
+        deployment = new ApplicationFactory{salt: salt}(param1, param2);
         assert(address(deployment) == precomputedAddress);
         assert(address(deployment).code.length > 0);
     } else {
